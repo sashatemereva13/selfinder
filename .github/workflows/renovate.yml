@@ -6,11 +6,6 @@ on:
 
   #    for the manual
   workflow_dispatch:
-    inputs:
-      runNow:
-        description: "run renovate now"
-        required: true
-        default: "true"
 
 jobs:
   renovate:
