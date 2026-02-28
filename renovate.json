@@ -17,5 +17,7 @@
       //   to merge the PR, not directly to branch
       "automergeType": "pr"
     }
-  ]
+  ],
+
+  "assignees": ["sashatemereva13"]
 }
