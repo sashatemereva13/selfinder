@@ -25,14 +25,14 @@
     {
       "matchUpdateTypes": ["major"],
       "matchDepTypes": ["dependencies"],
-      "label": ["dependencies", "major-update"],
+      "labels": ["dependencies", "major-update"],
       "addLabels": ["needs-review"],
       "prPriority": 5
     },
 
     {
       "matchDepTypes": ["devDependencies"],
-      "matchUpdates": ["minor", "patch"],
+      "matchUpdateTypes": ["minor", "patch"],
       "groupName": "dev dependenciesn (minor + patch)",
       "automerge": true,
       "automergeType": "pr",
