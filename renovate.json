@@ -1,9 +1,13 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
 
+  "assignees": ["sashatemereva13"],
+
   "extends": ["config:recommended"],
 
   "labels": ["dependencies"],
+
+  "separateMajorMinor": true,
 
   "prConcurrentLimit": 5,
 
@@ -12,12 +16,41 @@
   "packageRules": [
     {
       "matchUpdateTypes": ["minor", "patch"],
-      "automerge": true,
+      "matchDepTypes": ["dependencies"],
 
-      //   to merge the PR, not directly to branch
-      "automergeType": "pr"
+      "groupName": "production dependencies (minor + patch)",
+      "groupSlug": "prod-minor-patch"
+    },
+
+    {
+      "matchUpdateTypes": ["major"],
+      "matchDepTypes": ["dependencies"],
+      "label": ["dependencies", "major-update"],
+      "addLabels": ["needs-review"],
+      "prPriority": 5
+    },
+
+    {
+      "matchDepTypes": ["devDependencies"],
+      "matchUpdates": ["minor", "patch"],
+      "groupName": "dev dependenciesn (minor + patch)",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
+    },
+
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "automerge": true,
+      "automergeType": "pr",
+      "platformAutomerge": true
     }
   ],
 
-  "assignees": ["sashatemereva13"]
+  "commitMessagePrefix": "chore(deps):",
+  "commitMessageAction": "update",
+
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "renovate dependency dashboard"
 }
