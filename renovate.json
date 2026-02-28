@@ -1,0 +1,21 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+
+  "extends": ["config:recommended"],
+
+  "labels": ["dependencies"],
+
+  "prConcurrentLimit": 5,
+
+  "rangeStrategy": "bump",
+
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+
+      //   to merge the PR, not directly to branch
+      "automergeType": "pr"
+    }
+  ]
+}
