@@ -52,5 +52,6 @@
   "commitMessageAction": "update",
 
   "dependencyDashboard": true,
+  "prCreation": "immediate",
   "dependencyDashboardTitle": "renovate dependency dashboard"
 }
