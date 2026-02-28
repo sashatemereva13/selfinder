@@ -1,0 +1,711 @@
+/* =====================================================
+   PAGE LAYOUT
+===================================================== */
+
+.levelsPage {
+  position: relative;
+  min-height: 100vh;
+  padding: 5rem 1.5rem;
+  box-sizing: border-box;
+  color: #f1f5ea;
+}
+
+/* title */
+.levelsPage h1 {
+  text-align: center;
+  font-size: 2rem;
+  color: #8e879c;
+  font-family: "Panchang-Medium";
+  text-transform: uppercase;
+  margin-bottom: 3rem;
+}
+
+/* =====================================================
+   CANVAS (background 3D)
+===================================================== */
+
+.levelsCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* =====================================================
+   GRID
+===================================================== */
+
+.levelsGrid {
+  position: relative;
+  z-index: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+}
+
+/* =====================================================
+   CARD
+===================================================== */
+
+.levelCard {
+  height: 160px;
+  opacity: 0;
+  display: flex;
+  flex-direction: row;
+  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  cursor: pointer;
+
+  transition: 0.3s ease;
+}
+
+.levelCard:hover {
+  transform: translateY(-6px) scale(1.02);
+}
+
+.levelCard[data-inview="true"] {
+  box-shadow: 0 0 30px rgba(191, 233, 255, 0.25);
+}
+
+/* fake shard (until you attach real 3D anchors) */
+.levelShardFake {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #bfe9ff 0%, transparent 70%);
+  opacity: 0.7;
+}
+
+.levelCard p {
+  font-family: "Panchang-Light";
+  font-size: 0.95rem;
+  text-align: center;
+  text-transform: lowercase;
+}
+
+/* =====================================================
+   MODAL — SELFINDER GLASS
+===================================================== */
+
+.levelModalOverlay {
+  position: fixed;
+  inset: 0;
+
+  display: grid;
+  place-items: center;
+
+  background: radial-gradient(
+    circle at center,
+    rgba(10, 12, 20, 0.65),
+    rgba(0, 0, 0, 0.85)
+  );
+
+  backdrop-filter: blur(12px);
+
+  z-index: 50;
+}
+
+/* main glass card */
+.levelModal {
+  width: min(420px, 90vw);
+
+  padding: 42px 38px;
+
+  border-radius: 26px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+
+  background: rgba(121, 57, 158, 0.07);
+  backdrop-filter: blur(28px);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  box-shadow:
+    0 20px 80px rgba(0, 0, 0, 0.6),
+    0 0 60px rgba(191, 233, 255, 0.08);
+
+  text-align: center;
+}
+
+/* title */
+.levelModal h2 {
+  font-family: "Panchang-Medium";
+  font-size: 1.4rem;
+  letter-spacing: 0.04em;
+  text-transform: lowercase;
+  color: #e8f6ff;
+}
+
+/* buttons container */
+.modalButtons {
+  width: 100%;
+  display: flex;
+  gap: 14px;
+}
+
+/* buttons */
+.modalBtn {
+  flex: 1;
+
+  padding: 12px 0;
+
+  border-radius: 14px;
+
+  text-decoration: none;
+  text-align: center;
+
+  font-family: "Panchang-Light";
+  font-size: 0.95rem;
+
+  backdrop-filter: blur(10px);
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  transition: 0.25s ease;
+}
+
+/* hover glow */
+.modalBtn:hover {
+  transform: translateY(-2px);
+
+  background: rgba(255, 255, 255, 0.18);
+
+  box-shadow: 0 0 25px rgba(191, 233, 255, 0.35);
+}
+
+/* subtle differentiation */
+.modalBtn.learn {
+  box-shadow: 0 0 20px rgba(120, 200, 255, 0.12);
+}
+
+.modalBtn.play {
+  box-shadow: 0 0 20px rgba(255, 160, 220, 0.12);
+}
+
+/* =====================================================
+   LEARNING PAGE (shared style for all levels)
+===================================================== */
+
+.levelPage {
+  min-height: 100vh;
+  padding: 6rem 1.5rem 4rem;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  background:
+    radial-gradient(circle at 12% 10%, rgba(191, 233, 255, 0.06), transparent 40%),
+    radial-gradient(circle at 88% 16%, rgba(190, 145, 255, 0.05), transparent 42%),
+    linear-gradient(180deg, rgba(8, 10, 16, 0.95), rgba(12, 15, 25, 0.98));
+  overflow-x: clip;
+}
+
+/* =====================================================
+   LEVEL PAGE — GLASS CONTAINER
+===================================================== */
+
+.aLevelContainer {
+  --level-glow-a: rgba(191, 233, 255, 0.11);
+  --level-glow-b: rgba(204, 161, 255, 0.1);
+  --level-glow-c: rgba(160, 215, 255, 0.04);
+  --level-orb-a: rgba(185, 140, 255, 0.2);
+  --level-orb-b: rgba(191, 233, 255, 0.1);
+  --level-title: #eaf7ff;
+  --level-title-shadow: rgba(191, 233, 255, 0.12);
+  --level-title-rule: rgba(255, 255, 255, 0.07);
+  --level-back-accent: rgba(191, 233, 255, 0.2);
+  --level-back-accent-strong: rgba(191, 233, 255, 0.34);
+  --level-back-text: #c8d3e6;
+  width: min(860px, 94vw);
+  margin: clamp(2.75rem, 6vh, 4.25rem) auto 0;
+  padding: 2.6rem 1.25rem 3.25rem;
+  position: relative;
+}
+
+.aLevelContainer::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at 20% 18%, var(--level-glow-a), transparent 48%),
+    radial-gradient(circle at 78% 22%, var(--level-glow-b), transparent 52%),
+    radial-gradient(circle at 50% 75%, var(--level-glow-c), transparent 56%);
+  filter: blur(2px);
+  opacity: 0.75;
+  animation: levelAuraShift 18s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.aLevelContainer::after {
+  content: "";
+  position: absolute;
+  inset: -10px -6px auto auto;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, var(--level-orb-a), transparent 60%),
+    radial-gradient(circle at 35% 35%, var(--level-orb-b), transparent 62%);
+  filter: blur(26px);
+  opacity: 0.6;
+  animation: levelAuraPulse 14s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.aLevelContainer.level-theme-shame,
+.backButton.level-theme-shame {
+  --level-glow-a: rgba(118, 126, 161, 0.12);
+  --level-glow-b: rgba(164, 116, 150, 0.11);
+  --level-glow-c: rgba(120, 146, 170, 0.05);
+  --level-orb-a: rgba(156, 116, 154, 0.2);
+  --level-orb-b: rgba(131, 156, 194, 0.09);
+  --level-title: #dbcfe6;
+  --level-title-shadow: rgba(172, 145, 210, 0.2);
+  --level-title-rule: rgba(186, 163, 216, 0.18);
+  --level-back-accent: rgba(186, 163, 216, 0.18);
+  --level-back-accent-strong: rgba(186, 163, 216, 0.3);
+  --level-back-text: #cbb8dd;
+}
+
+.aLevelContainer.level-theme-guilt,
+.backButton.level-theme-guilt {
+  --level-glow-a: rgba(180, 122, 122, 0.11);
+  --level-glow-b: rgba(155, 120, 190, 0.1);
+  --level-glow-c: rgba(171, 140, 122, 0.05);
+  --level-orb-a: rgba(201, 126, 144, 0.18);
+  --level-orb-b: rgba(166, 148, 214, 0.09);
+  --level-title: #f1d4dc;
+  --level-title-shadow: rgba(220, 146, 166, 0.2);
+  --level-title-rule: rgba(225, 162, 184, 0.16);
+  --level-back-accent: rgba(225, 162, 184, 0.18);
+  --level-back-accent-strong: rgba(225, 162, 184, 0.32);
+  --level-back-text: #e1c0cc;
+}
+
+.aLevelContainer.level-theme-apathy,
+.backButton.level-theme-apathy {
+  --level-glow-a: rgba(120, 145, 155, 0.1);
+  --level-glow-b: rgba(128, 128, 152, 0.09);
+  --level-glow-c: rgba(103, 129, 141, 0.05);
+  --level-orb-a: rgba(140, 156, 174, 0.16);
+  --level-orb-b: rgba(117, 141, 158, 0.08);
+  --level-title: #d8e2e7;
+  --level-title-shadow: rgba(144, 172, 190, 0.16);
+  --level-title-rule: rgba(155, 180, 197, 0.14);
+  --level-back-accent: rgba(155, 180, 197, 0.14);
+  --level-back-accent-strong: rgba(155, 180, 197, 0.26);
+  --level-back-text: #bcc9d1;
+}
+
+.aLevelContainer.level-theme-grief,
+.backButton.level-theme-grief {
+  --level-glow-a: rgba(121, 165, 201, 0.12);
+  --level-glow-b: rgba(145, 129, 198, 0.11);
+  --level-glow-c: rgba(117, 170, 181, 0.05);
+  --level-orb-a: rgba(122, 178, 214, 0.2);
+  --level-orb-b: rgba(170, 159, 225, 0.09);
+  --level-title: #d8eeff;
+  --level-title-shadow: rgba(141, 190, 232, 0.2);
+  --level-title-rule: rgba(154, 196, 236, 0.16);
+  --level-back-accent: rgba(154, 196, 236, 0.16);
+  --level-back-accent-strong: rgba(154, 196, 236, 0.3);
+  --level-back-text: #c2ddf3;
+}
+
+.aLevelContainer.level-theme-fear,
+.backButton.level-theme-fear {
+  --level-glow-a: rgba(105, 154, 227, 0.12);
+  --level-glow-b: rgba(92, 130, 188, 0.1);
+  --level-glow-c: rgba(120, 160, 230, 0.05);
+  --level-orb-a: rgba(101, 142, 230, 0.18);
+  --level-orb-b: rgba(148, 187, 255, 0.1);
+  --level-title: #d2e4ff;
+  --level-title-shadow: rgba(117, 157, 242, 0.22);
+  --level-title-rule: rgba(132, 171, 248, 0.18);
+  --level-back-accent: rgba(132, 171, 248, 0.18);
+  --level-back-accent-strong: rgba(132, 171, 248, 0.34);
+  --level-back-text: #bfd4f6;
+}
+
+.aLevelContainer.level-theme-desire,
+.backButton.level-theme-desire {
+  --level-glow-a: rgba(255, 177, 120, 0.12);
+  --level-glow-b: rgba(215, 121, 147, 0.11);
+  --level-glow-c: rgba(220, 168, 108, 0.05);
+  --level-orb-a: rgba(255, 161, 107, 0.22);
+  --level-orb-b: rgba(255, 214, 151, 0.08);
+  --level-title: #ffe1c7;
+  --level-title-shadow: rgba(255, 171, 106, 0.22);
+  --level-title-rule: rgba(255, 190, 132, 0.17);
+  --level-back-accent: rgba(255, 190, 132, 0.18);
+  --level-back-accent-strong: rgba(255, 190, 132, 0.34);
+  --level-back-text: #f5d1ad;
+}
+
+.aLevelContainer.level-theme-anger,
+.backButton.level-theme-anger {
+  --level-glow-a: rgba(255, 123, 123, 0.14);
+  --level-glow-b: rgba(214, 108, 149, 0.12);
+  --level-glow-c: rgba(204, 94, 94, 0.05);
+  --level-orb-a: rgba(255, 98, 98, 0.24);
+  --level-orb-b: rgba(255, 174, 174, 0.08);
+  --level-title: #ffd3d3;
+  --level-title-shadow: rgba(255, 106, 106, 0.24);
+  --level-title-rule: rgba(255, 139, 139, 0.19);
+  --level-back-accent: rgba(255, 139, 139, 0.18);
+  --level-back-accent-strong: rgba(255, 139, 139, 0.34);
+  --level-back-text: #f1b9b9;
+}
+
+.aLevelContainer.level-theme-pride,
+.backButton.level-theme-pride {
+  --level-glow-a: rgba(255, 203, 113, 0.13);
+  --level-glow-b: rgba(204, 151, 86, 0.11);
+  --level-glow-c: rgba(232, 182, 104, 0.05);
+  --level-orb-a: rgba(255, 208, 122, 0.22);
+  --level-orb-b: rgba(255, 234, 170, 0.08);
+  --level-title: #ffe8bd;
+  --level-title-shadow: rgba(255, 207, 118, 0.22);
+  --level-title-rule: rgba(255, 219, 150, 0.18);
+  --level-back-accent: rgba(255, 219, 150, 0.18);
+  --level-back-accent-strong: rgba(255, 219, 150, 0.34);
+  --level-back-text: #efd7a4;
+}
+
+.aLevelContainer.level-theme-courage,
+.backButton.level-theme-courage {
+  --level-glow-a: rgba(255, 187, 120, 0.11);
+  --level-glow-b: rgba(255, 226, 134, 0.1);
+  --level-glow-c: rgba(204, 170, 114, 0.05);
+  --level-orb-a: rgba(255, 190, 103, 0.18);
+  --level-orb-b: rgba(255, 235, 173, 0.09);
+  --level-title: #ffe7c8;
+  --level-title-shadow: rgba(255, 189, 108, 0.2);
+  --level-title-rule: rgba(255, 210, 150, 0.16);
+  --level-back-accent: rgba(255, 210, 150, 0.16);
+  --level-back-accent-strong: rgba(255, 210, 150, 0.3);
+  --level-back-text: #efd5b4;
+}
+
+.aLevelContainer.level-theme-neutrality,
+.backButton.level-theme-neutrality {
+  --level-glow-a: rgba(164, 227, 183, 0.11);
+  --level-glow-b: rgba(141, 205, 222, 0.1);
+  --level-glow-c: rgba(156, 215, 187, 0.05);
+  --level-orb-a: rgba(137, 230, 177, 0.18);
+  --level-orb-b: rgba(170, 232, 255, 0.09);
+  --level-title: #d9fff0;
+  --level-title-shadow: rgba(138, 232, 191, 0.2);
+  --level-title-rule: rgba(156, 235, 209, 0.16);
+  --level-back-accent: rgba(156, 235, 209, 0.16);
+  --level-back-accent-strong: rgba(156, 235, 209, 0.3);
+  --level-back-text: #c8eadf;
+}
+
+.aLevelContainer.level-theme-willingness,
+.backButton.level-theme-willingness {
+  --level-glow-a: rgba(141, 255, 190, 0.12);
+  --level-glow-b: rgba(145, 223, 255, 0.1);
+  --level-glow-c: rgba(160, 232, 190, 0.05);
+  --level-orb-a: rgba(131, 255, 184, 0.2);
+  --level-orb-b: rgba(191, 242, 255, 0.08);
+  --level-title: #d9ffe9;
+  --level-title-shadow: rgba(139, 255, 191, 0.22);
+  --level-title-rule: rgba(162, 247, 205, 0.17);
+  --level-back-accent: rgba(162, 247, 205, 0.17);
+  --level-back-accent-strong: rgba(162, 247, 205, 0.32);
+  --level-back-text: #caecdc;
+}
+
+.aLevelContainer.level-theme-acceptance,
+.backButton.level-theme-acceptance {
+  --level-glow-a: rgba(152, 232, 255, 0.12);
+  --level-glow-b: rgba(178, 201, 255, 0.11);
+  --level-glow-c: rgba(170, 223, 255, 0.05);
+  --level-orb-a: rgba(146, 222, 255, 0.2);
+  --level-orb-b: rgba(201, 229, 255, 0.1);
+  --level-title: #daf4ff;
+  --level-title-shadow: rgba(147, 220, 255, 0.22);
+  --level-title-rule: rgba(168, 229, 255, 0.18);
+  --level-back-accent: rgba(168, 229, 255, 0.18);
+  --level-back-accent-strong: rgba(168, 229, 255, 0.32);
+  --level-back-text: #cae3ef;
+}
+
+.aLevelContainer.level-theme-reason,
+.backButton.level-theme-reason {
+  --level-glow-a: rgba(134, 180, 255, 0.12);
+  --level-glow-b: rgba(170, 156, 255, 0.11);
+  --level-glow-c: rgba(133, 181, 233, 0.05);
+  --level-orb-a: rgba(141, 172, 255, 0.2);
+  --level-orb-b: rgba(200, 188, 255, 0.09);
+  --level-title: #dde3ff;
+  --level-title-shadow: rgba(145, 168, 255, 0.22);
+  --level-title-rule: rgba(167, 183, 255, 0.18);
+  --level-back-accent: rgba(167, 183, 255, 0.18);
+  --level-back-accent-strong: rgba(167, 183, 255, 0.32);
+  --level-back-text: #cdd4ef;
+}
+
+.aLevelContainer.level-theme-love,
+.backButton.level-theme-love {
+  --level-glow-a: rgba(255, 166, 218, 0.12);
+  --level-glow-b: rgba(255, 205, 160, 0.11);
+  --level-glow-c: rgba(255, 183, 222, 0.05);
+  --level-orb-a: rgba(255, 168, 212, 0.2);
+  --level-orb-b: rgba(255, 228, 190, 0.09);
+  --level-title: #ffe0f0;
+  --level-title-shadow: rgba(255, 174, 215, 0.24);
+  --level-title-rule: rgba(255, 195, 221, 0.18);
+  --level-back-accent: rgba(255, 195, 221, 0.18);
+  --level-back-accent-strong: rgba(255, 195, 221, 0.34);
+  --level-back-text: #efd0e0;
+}
+
+.aLevelContainer.level-theme-unconditionallove,
+.backButton.level-theme-unconditionallove {
+  --level-glow-a: rgba(255, 175, 228, 0.13);
+  --level-glow-b: rgba(208, 188, 255, 0.12);
+  --level-glow-c: rgba(255, 208, 244, 0.05);
+  --level-orb-a: rgba(255, 179, 238, 0.22);
+  --level-orb-b: rgba(224, 205, 255, 0.1);
+  --level-title: #ffe4fb;
+  --level-title-shadow: rgba(255, 187, 239, 0.24);
+  --level-title-rule: rgba(243, 204, 255, 0.19);
+  --level-back-accent: rgba(243, 204, 255, 0.19);
+  --level-back-accent-strong: rgba(243, 204, 255, 0.34);
+  --level-back-text: #ecd6f4;
+}
+
+.aLevelContainer.level-theme-peace,
+.backButton.level-theme-peace {
+  --level-glow-a: rgba(188, 255, 238, 0.12);
+  --level-glow-b: rgba(174, 225, 255, 0.11);
+  --level-glow-c: rgba(200, 255, 247, 0.05);
+  --level-orb-a: rgba(177, 255, 230, 0.2);
+  --level-orb-b: rgba(211, 245, 255, 0.1);
+  --level-title: #ddfff7;
+  --level-title-shadow: rgba(176, 255, 233, 0.24);
+  --level-title-rule: rgba(199, 248, 234, 0.18);
+  --level-back-accent: rgba(199, 248, 234, 0.18);
+  --level-back-accent-strong: rgba(199, 248, 234, 0.32);
+  --level-back-text: #d3ece6;
+}
+
+.aLevelContainer.level-theme-enlightenment,
+.backButton.level-theme-enlightenment {
+  --level-glow-a: rgba(255, 244, 176, 0.14);
+  --level-glow-b: rgba(212, 201, 255, 0.12);
+  --level-glow-c: rgba(255, 232, 164, 0.05);
+  --level-orb-a: rgba(255, 238, 154, 0.24);
+  --level-orb-b: rgba(232, 223, 255, 0.11);
+  --level-title: #fff4c7;
+  --level-title-shadow: rgba(255, 233, 144, 0.26);
+  --level-title-rule: rgba(255, 236, 171, 0.2);
+  --level-back-accent: rgba(255, 236, 171, 0.2);
+  --level-back-accent-strong: rgba(255, 236, 171, 0.36);
+  --level-back-text: #f0e2ad;
+}
+
+.aLevelContainer > * {
+  position: relative;
+  z-index: 1;
+}
+
+.aLevelContainer h1 {
+  font-family: "Panchang-Medium";
+  font-size: clamp(1.35rem, 1.6vw + 1rem, 2rem);
+  margin: 0 0 1.25rem;
+  padding: 0.35rem 0.2rem 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--level-title);
+  text-align: center;
+  border-bottom: 1px solid var(--level-title-rule);
+  text-shadow: 0 0 18px var(--level-title-shadow);
+  text-wrap: balance;
+}
+
+.levelContent {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.aLevelContainer > * + * {
+  margin-top: 1.1rem;
+}
+
+.aLevelContainer p {
+  font-family: "Panchang-Light";
+  font-size: clamp(0.98rem, 0.25vw + 0.95rem, 1.08rem);
+  line-height: 1.95;
+  color: rgba(235, 240, 255, 0.9);
+  letter-spacing: 0.01em;
+  margin: 0;
+  max-width: 68ch;
+  padding: 0 0.3rem;
+  text-wrap: pretty;
+}
+
+.aLevelContainer p + p {
+  margin-top: 1rem;
+}
+
+.aLevelContainer p:first-of-type {
+  font-size: clamp(1.05rem, 0.4vw + 1rem, 1.18rem);
+  color: rgba(245, 248, 255, 0.97);
+  text-shadow: 0 0 14px rgba(191, 233, 255, 0.08);
+}
+
+.aLevelContainer p:first-of-type::first-letter {
+  float: left;
+  font-family: "Panchang-Medium";
+  font-size: 1.85em;
+  line-height: 0.92;
+  margin-right: 0.22rem;
+  margin-top: 0.12rem;
+  color: #d7efff;
+}
+
+.aLevelContainer .levelContent > div {
+  margin: 0;
+}
+
+.aLevelContainer .levelContent > div + div {
+  margin-top: 0;
+}
+
+.aLevelContainer em,
+.aLevelContainer strong {
+  color: #f4f7ff;
+}
+
+.aLevelContainer hr {
+  border: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 1.5rem 0;
+}
+
+@keyframes levelAuraShift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.68;
+  }
+  50% {
+    transform: translate3d(0, 6px, 0) scale(1.02);
+    opacity: 0.86;
+  }
+}
+
+@keyframes levelAuraPulse {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate3d(-8px, 6px, 0) scale(1.08);
+    opacity: 0.7;
+  }
+}
+
+/* =====================================================
+   BACK BUTTON (shared utility)
+===================================================== */
+
+.backButton {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  color: #9f94a7;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(12, 14, 20, 0.42);
+  backdrop-filter: blur(8px);
+  font-size: 0.9rem;
+  z-index: 10;
+  transition:
+    opacity 180ms ease,
+    border-color 180ms ease,
+    color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.backButton:hover {
+  opacity: 1;
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.14);
+  background: rgba(12, 14, 20, 0.54);
+}
+
+.backButton[class*="level-theme-"] {
+  color: var(--level-back-text);
+  border-color: var(--level-back-accent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--level-back-accent) 45%, transparent);
+}
+
+.backButton[class*="level-theme-"]:hover {
+  border-color: var(--level-back-accent-strong);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--level-back-accent) 60%, transparent),
+    0 0 18px color-mix(in srgb, var(--level-back-accent-strong) 35%, transparent);
+}
+
+/* =====================================================
+   MOBILE
+===================================================== */
+
+@media (max-width: 768px) {
+  .levelsPage h1 {
+    font-size: 1.5rem;
+  }
+
+  .levelCard {
+    height: 130px;
+  }
+
+  .levelPage {
+    padding: 5.25rem 0.85rem 2.5rem;
+  }
+
+  .aLevelContainer {
+    width: min(96vw, 860px);
+    margin-top: 4rem;
+    padding: 1.3rem 0.75rem 1.65rem;
+  }
+
+  .aLevelContainer::before {
+    border-radius: 20px;
+  }
+
+  .aLevelContainer::after {
+    width: 130px;
+    height: 130px;
+    inset: -8px -6px auto auto;
+    opacity: 0.45;
+  }
+
+  .aLevelContainer p {
+    padding: 0 0.15rem;
+    line-height: 1.82;
+  }
+
+  .aLevelContainer p:first-of-type::first-letter {
+    font-size: 1.55em;
+    margin-top: 0.08rem;
+  }
+}

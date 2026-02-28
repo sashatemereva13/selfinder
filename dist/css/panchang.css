@@ -1,0 +1,39 @@
+/**
+* @license
+*
+* Font Family: Panchang
+* Designed by: Barbara Bigosinska, Hitesh Malaviya
+* URL: https://www.fontshare.com/fonts/panchang
+* © 2024 Indian Type Foundry
+*
+* Panchang Extralight 
+* Panchang Light 
+* Panchang Regular 
+* Panchang Medium 
+* Panchang Semibold 
+* Panchang Bold 
+* Panchang Extrabold 
+* Panchang Variable (Variable font)
+
+*
+*/
+
+@font-face {
+  font-family: "Panchang-Light";
+  src: url("/fontsCSS/Panchang-Light.woff2") format("woff2"),
+    url("/fontsCSS/Panchang-Light.woff") format("woff"),
+    url("/fontsCSS/Panchang-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-display: swap;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Panchang-Medium";
+  src: url("/fontsCSS/Panchang-Medium.woff2") format("woff2"),
+    url("/fontsCSS/Panchang-Medium.woff") format("woff"),
+    url("/fontsCSS/Panchang-Medium.ttf") format("truetype");
+  font-weight: 500;
+  font-display: swap;
+  font-style: normal;
+}

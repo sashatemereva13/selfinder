@@ -1,0 +1,434 @@
+@import url("/css/panchang.css");
+@import url("./pulsingBackground.css");
+/* ========== BASE ========== */
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  font-family: "Panchang-Light";
+  color: #f5e5ff;
+  background: #0b0716;
+}
+
+.noScroll {
+  overflow: hidden;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  background:
+    radial-gradient(circle at 68% 38%, rgba(121, 70, 164, 0.12), transparent 42%),
+    radial-gradient(circle at 25% 70%, rgba(66, 180, 174, 0.07), transparent 46%),
+    linear-gradient(180deg, #06060c, #090814 45%, #0b0716);
+}
+
+.frontPageShell {
+  position: relative;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 68% 38%, rgba(121, 70, 164, 0.12), transparent 42%),
+    radial-gradient(circle at 25% 70%, rgba(66, 180, 174, 0.07), transparent 46%),
+    linear-gradient(180deg, #06060c, #090814 45%, #0b0716);
+}
+
+.frontPageHero {
+  position: relative;
+  min-height: 100svh;
+  height: 100svh;
+}
+
+.frontPageHero canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.frontPageHeroOverlay {
+  position: absolute;
+  top: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(42rem, calc(100vw - 2rem));
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 173, 228, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(7, 7, 11, 0.42);
+  backdrop-filter: blur(10px);
+}
+
+.frontPageHeroTag {
+  color: rgba(233, 223, 248, 0.9);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.frontPageUnlockHint {
+  color: rgba(233, 223, 248, 0.72);
+  font-size: 0.73rem;
+  text-align: right;
+}
+
+.frontPageUnlockHint.is-unlocked {
+  color: rgba(211, 247, 241, 0.88);
+}
+
+.frontPageJourneyStage {
+  position: relative;
+  z-index: 2;
+  width: min(1200px, 100%);
+  margin: 0 auto;
+  padding: 1rem 1rem 2rem;
+  transition: opacity 260ms ease, transform 260ms ease;
+}
+
+.frontPageJourneyStage.is-locked {
+  opacity: 0.72;
+}
+
+.frontPageJourneyStage.is-unlocked {
+  opacity: 1;
+}
+
+.frontPageJourneyIntro {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 10% 12%, rgba(195, 153, 255, 0.12), transparent 48%),
+    rgba(9, 9, 13, 0.48);
+  padding: 0.9rem;
+  backdrop-filter: blur(10px);
+}
+
+.frontPageJourneyIntro h2 {
+  margin: 0.35rem 0 0;
+  padding: 0;
+  color: #f2ebfd;
+  font-family: "Panchang-Medium";
+  font-size: clamp(1.05rem, 1vw + 0.8rem, 1.45rem);
+  line-height: 1.2;
+}
+
+.frontPageJourneyIntro p:not(.sf-kicker) {
+  margin: 0.7rem 0 0;
+  color: rgba(235, 226, 247, 0.84);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.frontPageJourneyPanelInline {
+  margin-top: 0.85rem;
+}
+
+.frontPageJourneyLinks {
+  margin-top: 0.85rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.frontPageJourneyCards {
+  margin-top: 0.9rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.frontPageJourneyCard {
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(10, 10, 14, 0.45);
+  padding: 0.85rem;
+  backdrop-filter: blur(8px);
+}
+
+.frontPageJourneyCard h3 {
+  margin: 0.35rem 0 0;
+  color: #f0e8fc;
+  font-family: "Panchang-Medium";
+  font-size: 0.9rem;
+  line-height: 1.3;
+}
+
+.frontPageJourneyCard p:last-child {
+  margin: 0.55rem 0 0;
+  color: rgba(232, 223, 246, 0.8);
+  line-height: 1.6;
+  font-size: 0.85rem;
+}
+
+h1 {
+  font-family: "Panchang-Medium";
+  padding: 0.2rem 0.2rem 1rem;
+  color: #e3ffd6;
+}
+
+/* ========== LINKS & BUTTONS ========== */
+a,
+button {
+  text-decoration: none;
+  color: #f5e5ffa8;
+  background-color: transparent;
+  padding: 0;
+  font-size: 1rem;
+
+  transition: 0.5s ease-in-out;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a:hover,
+button:hover {
+  color: white;
+  cursor: pointer;
+}
+
+/* ========== STRUCTURE & POSITIONING ========== */
+
+.buttons {
+  position: absolute;
+  z-index: 1;
+  bottom: 5%;
+  right: 10%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+}
+
+.backButton {
+  position: absolute;
+  z-index: 1;
+  top: 1rem;
+  left: 1rem;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.05);
+  transition: 0.4s ease;
+}
+
+.backButton:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ========== SELFINDER BOTTOM BLOCK ========== */
+.smoothTypewriter {
+  width: min(42rem, 72vw);
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(204, 183, 233, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+    radial-gradient(circle at 10% 10%, rgba(138, 95, 180, 0.12), transparent 52%),
+    rgba(8, 8, 12, 0.52);
+  backdrop-filter: blur(12px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 12px 36px rgba(0, 0, 0, 0.26);
+  font-size: 0.98rem;
+  line-height: 1.55;
+  color: #e8dbff;
+  text-shadow: 0 0 18px rgba(169, 94, 187, 0.18);
+  letter-spacing: 0.06em;
+}
+
+.smooth-typewriter-text {
+  white-space: pre-line;
+  text-align: center;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  hyphens: none;
+}
+
+@keyframes shimmer {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.loading-glow {
+  animation: shimmer 2s infinite;
+  color: #dfd1f5;
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  text-shadow: 0 0 14px rgba(169, 94, 187, 0.35);
+  padding: 0.65rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(203, 173, 242, 0.12);
+  background: rgba(8, 8, 12, 0.45);
+  backdrop-filter: blur(8px);
+  font-family: "Panchang-Light";
+  width: auto;
+  min-width: 12rem;
+}
+
+.htmlText {
+  font-size: 1.2rem;
+  font-family: "Panchang-Light";
+  max-width: min(80vw, 50rem);
+}
+
+.links {
+  z-index: 1000;
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.65rem;
+  border-radius: 0.95rem;
+  border: 1px solid rgba(193, 173, 224, 0.12);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+    rgba(7, 7, 11, 0.4);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 14px 38px rgba(0, 0, 0, 0.28);
+}
+
+.links::before {
+  content: "Neural Lab";
+  margin-bottom: 0.25rem;
+  color: rgba(221, 206, 245, 0.72);
+  font-size: 0.64rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-family: "Panchang-Light";
+}
+
+.links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.012);
+  color: rgba(233, 225, 248, 0.84);
+  font-size: 0.84rem;
+  letter-spacing: 0.04em;
+}
+
+.links a:hover {
+  color: #f4eeff;
+  border-color: rgba(196, 154, 255, 0.16);
+  background:
+    radial-gradient(circle at 12% 12%, rgba(116, 220, 214, 0.08), transparent 58%),
+    rgba(255, 255, 255, 0.02);
+  box-shadow: 0 0 0 1px rgba(196, 154, 255, 0.04) inset;
+}
+
+.frontPageJourneyPanel {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1000;
+}
+
+.frontPageJourneyPanel .sf-journeyNav-overlay {
+  background:
+    radial-gradient(circle at 12% 12%, rgba(195, 153, 255, 0.18), transparent 48%),
+    radial-gradient(circle at 88% 14%, rgba(116, 221, 214, 0.12), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0)),
+    rgba(6, 7, 10, 0.62);
+}
+
+.links-secondary {
+  top: 1.25rem;
+  left: 1.25rem;
+  max-width: 15rem;
+}
+
+@media screen and (max-width: 786px) {
+  .smoothTypewriter {
+    width: min(86vw, 32rem);
+    padding: 0.8rem 0.85rem;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    letter-spacing: 0.04em;
+  }
+
+  .links {
+    top: 0.8rem;
+    left: 0.8rem;
+    padding: 0.45rem;
+    gap: 0.25rem;
+  }
+
+  .links::before {
+    font-size: 0.58rem;
+    letter-spacing: 0.12em;
+  }
+
+  .links a {
+    min-height: 1.75rem;
+    padding: 0.35rem 0.55rem;
+    font-size: 0.75rem;
+  }
+
+  .frontPageJourneyPanel {
+    top: auto;
+    right: 0.8rem;
+    left: 0.8rem;
+    bottom: 1rem;
+  }
+
+  .links-secondary {
+    max-width: 12rem;
+  }
+
+  .frontPageHero {
+    min-height: 100svh;
+    height: 100svh;
+  }
+
+  .frontPageHeroOverlay {
+    top: 0.7rem;
+    width: calc(100vw - 1rem);
+    flex-direction: column;
+    align-items: flex-start;
+    border-radius: 0.9rem;
+  }
+
+  .frontPageUnlockHint {
+    text-align: left;
+  }
+
+  .frontPageJourneyStage {
+    padding: 0.75rem 0.75rem 1.3rem;
+  }
+
+  .frontPageJourneyLinks {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .frontPageJourneyLinks .sf-btn {
+    width: 100%;
+  }
+
+  .frontPageJourneyCards {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+  }
+}

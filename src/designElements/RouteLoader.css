@@ -1,0 +1,86 @@
+.sf-routeLoader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(circle at 16% 14%, rgba(195, 153, 255, 0.08), transparent 42%),
+    radial-gradient(circle at 84% 16%, rgba(116, 221, 214, 0.07), transparent 44%),
+    linear-gradient(180deg, rgba(6, 6, 10, 0.92), rgba(8, 8, 14, 0.92));
+  backdrop-filter: blur(8px);
+}
+
+.sf-routeLoader::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(circle at center, black 35%, transparent 82%);
+  opacity: 0.8;
+}
+
+.sf-routeLoaderPanel {
+  position: relative;
+  z-index: 1;
+  width: min(26rem, calc(100vw - 2rem));
+  padding: 1rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 10% 12%, rgba(195, 153, 255, 0.16), transparent 48%),
+    radial-gradient(circle at 92% 12%, rgba(116, 221, 214, 0.12), transparent 52%),
+    rgba(9, 9, 13, 0.55);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 20px 48px rgba(0, 0, 0, 0.24);
+}
+
+.sf-routeLoaderTitle {
+  margin-top: 0.35rem;
+  color: rgba(242, 235, 253, 0.96);
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+}
+
+.sf-routeLoaderBar {
+  margin-top: 0.7rem;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.07);
+  overflow: hidden;
+}
+
+.sf-routeLoaderBar span {
+  display: block;
+  width: 34%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, rgba(116, 221, 214, 0.65), rgba(195, 153, 255, 0.9));
+  box-shadow: 0 0 16px rgba(195, 153, 255, 0.35);
+  animation: sfRouteLoaderPulse 1s ease-in-out infinite alternate;
+}
+
+@keyframes sfRouteLoaderPulse {
+  from {
+    transform: translateX(-30%);
+    opacity: 0.75;
+  }
+  to {
+    transform: translateX(190%);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-routeLoaderBar span {
+    animation: none;
+    width: 60%;
+    transform: translateX(20%);
+  }
+}

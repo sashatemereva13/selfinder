@@ -1,0 +1,243 @@
+:root {
+  --sf-ink: #f1eafd;
+  --sf-ink-soft: rgba(241, 234, 253, 0.78);
+  --sf-ink-muted: rgba(241, 234, 253, 0.58);
+  --sf-line: rgba(255, 255, 255, 0.1);
+  --sf-surface: rgba(11, 10, 17, 0.48);
+  --sf-surface-2: rgba(255, 255, 255, 0.02);
+  --sf-accent-violet: rgba(195, 153, 255, 0.32);
+  --sf-accent-cyan: rgba(116, 221, 214, 0.24);
+  --sf-radius-lg: 18px;
+  --sf-radius-pill: 999px;
+  --sf-shadow-lg: 0 18px 42px rgba(0, 0, 0, 0.24);
+  --sf-font: "Panchang-Light", sans-serif;
+  --sf-font-strong: "Panchang-Medium", sans-serif;
+}
+
+.sf-kicker {
+  margin: 0;
+  color: rgba(224, 206, 247, 0.82);
+  font-family: var(--sf-font);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sf-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0.7rem 0.95rem;
+  border-radius: var(--sf-radius-pill);
+  border: 1px solid var(--sf-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.022), rgba(255, 255, 255, 0)),
+    rgba(255, 255, 255, 0.015);
+  color: rgba(241, 234, 253, 0.9);
+  font-family: var(--sf-font);
+  font-size: 0.78rem;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    background-color 180ms ease;
+}
+
+.sf-btn:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 10px 18px rgba(0, 0, 0, 0.16);
+}
+
+.sf-btn-primary {
+  border-color: rgba(195, 153, 255, 0.26);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(195, 153, 255, 0.12), transparent 56%),
+    rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 0 0 1px rgba(195, 153, 255, 0.08);
+}
+
+.sf-journeyNav {
+  border-radius: 18px;
+  border: 1px solid var(--sf-line);
+  background:
+    radial-gradient(circle at 10% 12%, var(--sf-accent-violet), transparent 48%),
+    radial-gradient(circle at 88% 15%, var(--sf-accent-cyan), transparent 52%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(10, 10, 15, 0.48);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    var(--sf-shadow-lg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.sf-journeyNav-inline {
+  padding: 0.9rem;
+}
+
+.sf-journeyNav-overlay {
+  width: min(28rem, calc(100vw - 2rem));
+  padding: 0.8rem;
+}
+
+.sf-journeyNav-compact {
+  padding: 0.75rem;
+}
+
+.sf-journeyHeader {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.sf-journeySubtitle {
+  margin: 0;
+  color: var(--sf-ink-muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.sf-journeyTrack {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.sf-journeyNav-overlay .sf-journeyTrack {
+  grid-template-columns: 1fr;
+}
+
+.sf-journeyStep {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.012);
+  padding: 0.45rem 0.5rem;
+  text-decoration: none;
+  color: var(--sf-ink-soft);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease,
+    transform 180ms ease;
+}
+
+.sf-journeyStep:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.sf-journeyStep.is-current {
+  border-color: rgba(195, 153, 255, 0.2);
+  background:
+    radial-gradient(circle at 8% 10%, rgba(195, 153, 255, 0.09), transparent 50%),
+    rgba(255, 255, 255, 0.018);
+}
+
+.sf-journeyStep.is-complete .sf-journeyIndex {
+  border-color: rgba(116, 221, 214, 0.22);
+  background: rgba(116, 221, 214, 0.08);
+}
+
+.sf-journeyIndex {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--sf-ink);
+  font-size: 0.66rem;
+}
+
+.sf-journeyCopy {
+  min-width: 0;
+  display: grid;
+  gap: 0.05rem;
+}
+
+.sf-journeyLabel {
+  color: var(--sf-ink);
+  font-size: 0.76rem;
+  line-height: 1.1;
+}
+
+.sf-journeyStage {
+  color: var(--sf-ink-muted);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+}
+
+.sf-journeyActions {
+  margin-top: 0.7rem;
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+
+.sf-journeyNav-compact .sf-journeySubtitle {
+  font-size: 0.74rem;
+}
+
+.sf-journeyNav-compact .sf-journeyTrack {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.sf-journeyNav-compact .sf-journeyStep {
+  flex-direction: column;
+  align-items: flex-start;
+  min-height: 58px;
+  gap: 0.3rem;
+  padding: 0.45rem;
+}
+
+.sf-journeyNav-compact .sf-journeyCopy {
+  gap: 0.08rem;
+}
+
+.sf-journeyNav-compact .sf-journeyStage {
+  font-size: 0.6rem;
+}
+
+@media (max-width: 900px) {
+  .sf-journeyNav-compact .sf-journeyTrack {
+    grid-template-columns: 1fr;
+  }
+
+  .sf-journeyNav-compact .sf-journeyStep {
+    flex-direction: row;
+    align-items: center;
+    min-height: unset;
+  }
+}
+
+@media (max-width: 740px) {
+  .sf-journeyNav-overlay {
+    width: min(28rem, calc(100vw - 1.5rem));
+  }
+
+  .sf-journeyNav-inline,
+  .sf-journeyNav-overlay,
+  .sf-journeyNav-compact {
+    border-radius: 16px;
+  }
+
+  .sf-journeySubtitle {
+    font-size: 0.76rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sf-btn,
+  .sf-journeyStep {
+    transition: none;
+  }
+}

@@ -1,0 +1,80 @@
+import { CameraControls, Html, MeshDistortMaterial, Sphere } from "@react-three/drei";
+import { useRef, useState } from "react";
+import Message from "./frontpage/Message";
+import MagicBall from "./designElements/MagicBall";
+import Shelves from "./designElements/Shelves";
+import Torch from "./designElements/Torch";
+import Wizard from "./frontpage/Wizard";
+import WizardMessage from "./frontpage/WizardMessage";
+
+const Experience = ({ quality, onJourneyTransferComplete }) => {
+  const controls = useRef();
+  const [controlsEnabled, setControlsEnabled] = useState(true);
+  const [wizardMessageReady, setWizardMessageReady] = useState(false);
+  const [selectedMessage, setSelectedMessage] = useState(null);
+
+  const isLowQuality = quality?.tier === "low";
+
+  return (
+    <>
+      {/* Perf panel disabled due r3f-perf/three version mismatch warning during builds. */}
+
+      <CameraControls ref={controls} makeDefault enabled={controlsEnabled} />
+      <MagicBall
+        quality={quality}
+        controls={controls}
+        setControlsEnabled={setControlsEnabled}
+        setWizardMessageReady={setWizardMessageReady}
+        onJourneyTransferComplete={onJourneyTransferComplete}
+        selectedMessage={selectedMessage}
+        setSelectedMessage={setSelectedMessage}
+      />
+
+      {!isLowQuality && (
+        <Sphere args={[3, 64, 64]} position={[17, 21, -20]}>
+          <MeshDistortMaterial
+            color="#3fa9f5"
+            roughness={0.7}
+            metalness={0.8}
+            speed={2}
+            distort={0.4}
+          />
+        </Sphere>
+      )}
+
+      {selectedMessage && (
+        <Html fullscreen style={{ pointerEvents: "auto", zIndex: 1000 }}>
+          <Message
+            controls={controls}
+            selectedMessage={selectedMessage}
+            setSelectedMessage={setSelectedMessage}
+            setControlsEnabled={setControlsEnabled}
+          />
+        </Html>
+      )}
+
+      <directionalLight position={[0, -30, -10]} intensity={isLowQuality ? 4 : 5} />
+      <ambientLight intensity={isLowQuality ? 0.65 : 0.8} />
+
+      <Torch color="#685584" />
+      <Shelves position={[0, -10, 0]} />
+
+      {/* <WizardDoor
+        rotation={[0, -Math.PI / 2, 0]}
+        position={[-500, -150, -400]}
+        scale={[1, 3, 6]}
+      /> */}
+
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-35, -120, -150]}>
+        <circleGeometry args={[80, 64, 64]} />
+        <meshStandardMaterial color="#000000" transparent opacity={1} />
+      </mesh>
+      <WizardMessage controls={controls} showMessage={wizardMessageReady} />
+      <group position={[-30, -80, -150]}>
+        <Wizard scale={20} />
+      </group>
+    </>
+  );
+};
+
+export default Experience;
