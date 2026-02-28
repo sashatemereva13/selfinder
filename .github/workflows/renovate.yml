@@ -43,7 +43,7 @@ jobs:
         uses: renovatebot/github-action@v40.1.7
         with:
           configurationFile: renovate.json
-          token: ${{ secrets.RENOVATE_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           # Allow RENOVATE_* and LOG_LEVEL env vars to pass through to the container
           # Without this regex, only the token is forwarded
           env-regex: "^(RENOVATE_|LOG_LEVEL)"
