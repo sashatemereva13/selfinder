@@ -1,0 +1,56 @@
+/* 🌌 The container for the animated background */
+.pulsingBackground {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at center, #1a102b 0%, #0b0716 70%);
+  overflow: hidden;
+  z-index: -1;
+}
+
+/* ✨ Create thin glowing lines using repeating conic gradient */
+.pulsingBackground::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(255, 255, 255, 0.05) 0deg,
+    rgba(255, 255, 255, 0.05) 1deg,
+    transparent 1deg,
+    transparent 10deg
+  );
+  mask-image: radial-gradient(circle at center, black 0%, transparent 80%);
+  animation: rotateLines 20s linear infinite, pulse 4s ease-in-out infinite;
+  transform-origin: center;
+  mix-blend-mode: screen;
+}
+
+/* 🌀 Rotation animation */
+@keyframes rotateLines {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 💓 Soft pulsing effect */
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulsingBackground::before {
+    animation: none;
+    opacity: 0.28;
+  }
+}

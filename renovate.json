@@ -52,6 +52,8 @@
   "commitMessageAction": "update",
 
   "dependencyDashboard": true,
+
+  //   THIS WAS THE FIX!!!!
   "prCreation": "immediate",
   "dependencyDashboardTitle": "renovate dependency dashboard"
 }

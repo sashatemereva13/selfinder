@@ -1,0 +1,258 @@
+.tuneInPage {
+  --tune-bg-0: #08090f;
+  --tune-bg-1: #10111d;
+  --tune-bg-2: #15172a;
+  --tune-ink: #f2ebfd;
+  --tune-ink-soft: rgba(242, 235, 253, 0.76);
+  --tune-line: rgba(255, 255, 255, 0.1);
+  position: relative;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  padding: 1rem 1rem 1.2rem;
+  color: var(--tune-ink);
+  background:
+    radial-gradient(circle at 14% 10%, rgba(195, 153, 255, 0.14), transparent 42%),
+    radial-gradient(circle at 84% 14%, rgba(116, 221, 214, 0.09), transparent 46%),
+    linear-gradient(180deg, var(--tune-bg-0), var(--tune-bg-1) 46%, var(--tune-bg-2));
+}
+
+.tuneInTopbar {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.tuneInBackBtn {
+  min-width: 8.4rem;
+}
+
+.tuneInIntro {
+  width: min(1120px, 100%);
+  margin: 0.7rem auto 0;
+  border-radius: 18px;
+  border: 1px solid var(--tune-line);
+  background:
+    radial-gradient(circle at 14% 10%, rgba(195, 153, 255, 0.13), transparent 52%),
+    rgba(10, 10, 14, 0.54);
+  padding: 0.95rem;
+}
+
+.tuneInIntro h1 {
+  margin: 0.4rem 0 0;
+  padding: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: clamp(1.2rem, 1.6vw + 0.6rem, 1.9rem);
+  color: var(--tune-ink);
+}
+
+.tuneInIntro p:last-child {
+  margin: 0.7rem 0 0;
+  color: var(--tune-ink-soft);
+  line-height: 1.6;
+  font-size: 0.9rem;
+}
+
+.tuneInShell {
+  width: min(1120px, 100%);
+  margin: 0.8rem auto 0;
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: 0.85rem;
+}
+
+.tuneInLeftPanel {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.tuneInControlsCard,
+.freqList,
+.orbContainer {
+  border-radius: 18px;
+  border: 1px solid var(--tune-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
+    rgba(10, 10, 14, 0.5);
+  backdrop-filter: blur(10px);
+}
+
+.tuneInControlsCard {
+  padding: 0.9rem;
+}
+
+.tuneInControlsCard h2 {
+  margin: 0.35rem 0 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  color: var(--tune-ink);
+}
+
+.tuneInIntent {
+  margin: 0.55rem 0 0;
+  color: var(--tune-ink-soft);
+  line-height: 1.5;
+  font-size: 0.84rem;
+}
+
+.tuneInControlRow {
+  margin-top: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.tuneInPlayBtn {
+  appearance: none;
+  min-height: 42px;
+  border-radius: 999px;
+  border: 1px solid rgba(195, 153, 255, 0.3);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(195, 153, 255, 0.14), transparent 56%),
+    rgba(255, 255, 255, 0.02);
+  color: rgba(241, 234, 253, 0.95);
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.76rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+}
+
+.tuneInStatus {
+  color: var(--tune-ink-soft);
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.tuneInStatus.is-playing {
+  color: rgba(159, 255, 208, 0.95);
+}
+
+.tuneInVolume {
+  margin-top: 0.75rem;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.55rem;
+  color: var(--tune-ink-soft);
+  font-size: 0.78rem;
+}
+
+.tuneInVolume input[type="range"] {
+  width: 100%;
+  accent-color: #9fd3ff;
+}
+
+.tuneInVolume strong {
+  color: var(--tune-ink);
+  font-size: 0.75rem;
+}
+
+.freqList {
+  padding: 0.6rem;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.freqItem {
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--tune-ink-soft);
+  text-align: left;
+  border-radius: 12px;
+  padding: 0.6rem 0.65rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  cursor: pointer;
+  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.freqItem:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.freqItem.active {
+  color: var(--tune-ink);
+  border-color: rgba(159, 211, 255, 0.45);
+  background:
+    radial-gradient(circle at 12% 10%, rgba(159, 211, 255, 0.12), transparent 52%),
+    rgba(255, 255, 255, 0.05);
+}
+
+.freqName {
+  font-size: 0.83rem;
+  font-family: "Panchang-Light", sans-serif;
+}
+
+.freqHz {
+  font-size: 0.73rem;
+  color: rgba(241, 234, 253, 0.72);
+}
+
+.orbContainer {
+  min-height: 460px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.75rem;
+}
+
+.orbContainer canvas {
+  width: min(520px, 100%) !important;
+  height: min(520px, 58vh) !important;
+  max-height: 520px;
+}
+
+.freqLabel {
+  color: var(--tune-ink-soft);
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+.freqItem:focus-visible,
+.tuneInPlayBtn:focus-visible,
+.tuneInBackBtn:focus-visible {
+  outline: 2px solid rgba(159, 211, 255, 0.95);
+  outline-offset: 2px;
+}
+
+@media (max-width: 920px) {
+  .tuneInShell {
+    grid-template-columns: 1fr;
+  }
+
+  .orbContainer {
+    min-height: 360px;
+  }
+}
+
+@media (max-width: 640px) {
+  .tuneInPage {
+    padding: 0.8rem 0.75rem 1rem;
+  }
+
+  .tuneInIntro,
+  .tuneInShell,
+  .tuneInTopbar {
+    width: 100%;
+  }
+
+  .tuneInVolume {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  .orbContainer canvas {
+    height: min(420px, 52vh) !important;
+  }
+}

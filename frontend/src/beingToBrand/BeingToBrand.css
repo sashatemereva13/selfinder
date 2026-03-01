@@ -1,0 +1,21 @@
+.pageBeingToBrand {
+  padding: 0;
+
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageBeingToBrand p {
+  padding: 0 2rem;
+}
+.desExample {
+  width: min(380px, calc(100vw - 2rem));
+  margin: 1rem;
+}

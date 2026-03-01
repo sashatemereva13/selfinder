@@ -1,0 +1,43 @@
+# --------------------
+# Node / Frontend
+# --------------------
+frontend/node_modules
+frontend/dist
+frontend/.vite
+frontend/.env
+frontend/.env.*
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# --------------------
+# Backend (future)
+# --------------------
+backend/venv
+backend/__pycache__
+backend/*.pyc
+backend/.env
+backend/.env.*
+
+# Python
+*.py[cod]
+__pycache__/
+
+# --------------------
+# IDE
+# --------------------
+.vscode/
+.idea/
+
+# --------------------
+# Build artifacts
+# --------------------
+dist/
+node_modules/
