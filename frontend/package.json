@@ -13,7 +13,7 @@
     "vite-plugin-restart": "^0.4.0"
   },
   "dependencies": {
-    "@react-three/drei": "^9.74.0",
+    "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^8.12.1",
     "@react-three/postprocessing": "^2.5.1",
     "framer-motion": "^12.34.0",
