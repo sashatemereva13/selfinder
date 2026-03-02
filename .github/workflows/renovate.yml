@@ -1,5 +1,9 @@
 name: renovate
 
+concurrency:
+  group: renovate
+  cancel-in-progress: true
+
 on:
   schedule:
     - cron: "0 3 * * 1"
