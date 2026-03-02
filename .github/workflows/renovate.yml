@@ -54,8 +54,7 @@ jobs:
 
         env:
           LOG_LEVEL: ${{ github.event.inputs.log_level || 'info' }}
-
-          # RENOVATE_REPOSITORIES: ${{ github.repository }}
+          RENOVATE_REPOSITORIES: ${{ github.repository }}
 
           # When triggered manually with ignore_schedule=true, null out the schedule
           # so PRs open immediatly. On cron runs this is {} (no-op)
