@@ -6,8 +6,6 @@ on:
       - main
     paths:
       - "frontend/**"
-    branches-ignore:
-      - "renovate/**"
 
   workflow_dispatch:
 
