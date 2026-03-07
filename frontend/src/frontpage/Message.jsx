@@ -21,7 +21,7 @@ const Message = ({
 
     const font = new FontFace(
       "Panchang",
-      `url(data:font/woff2;base64,${PanchangBase64})`
+      `url(data:font/woff2;base64,${PanchangBase64})`,
     );
 
     if (!CanvasRenderingContext2D.prototype.roundRect) {
@@ -141,7 +141,8 @@ const Message = ({
       const textAreaTop = cardY + 160;
       const textAreaBottom = cardY + cardHeight - 150;
       const textBlockHeight = messageLines.length * lineHeight;
-      const startY = textAreaTop + (textAreaBottom - textAreaTop - textBlockHeight) / 2;
+      const startY =
+        textAreaTop + (textAreaBottom - textAreaTop - textBlockHeight) / 2;
 
       messageLines.forEach((line, index) => {
         ctx.fillText(line, canvas.width / 2, startY + index * lineHeight);
@@ -167,7 +168,7 @@ const Message = ({
       ctx.fillText(
         "selfinder.online  |  with love, sasha",
         canvas.width / 2,
-        cardY + cardHeight - 58
+        cardY + cardHeight - 58,
       );
 
       ctx.fillStyle = "rgba(196, 173, 226, 0.78)";
@@ -194,8 +195,13 @@ const Message = ({
   if (!selectedMessage) return null;
 
   return (
-    <div className="messageOverlay" role="dialog" aria-modal="true" aria-labelledby="message-title">
-      <div className="messageModal">
+    <div
+      className="messageOverlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="message-title"
+    >
+      <div className="messageModal messsageModal">
         <button
           type="button"
           onClick={() => setSelectedMessage(null)}
@@ -209,11 +215,14 @@ const Message = ({
           {randomLabel}
         </div>
         <div className="tickerMessage">{selectedMessage.message}</div>
-        <p className="messageHint">If this resonates, save it and return to it later.</p>
-        <button type="button" onClick={downloadAsPNG} className="saveButton">
-          <img src={saveIcon} alt="" aria-hidden="true" />
-          Save for later
-        </button>
+
+        <div className="saveitDiv">
+          <p className="messageHint">resonates? save it for later</p>
+          <button type="button" onClick={downloadAsPNG} className="saveButton">
+            <img src={saveIcon} alt="" aria-hidden="true" />
+            &nbsp; save it
+          </button>
+        </div>
       </div>
     </div>
   );

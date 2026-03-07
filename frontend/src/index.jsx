@@ -6,13 +6,13 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  useLocation,
 } from "react-router-dom";
 import { AnimatePresence } from "framer-motion";
 import { PageWrapper } from "./designElements/PageWrapper";
 import MenuTab from "./designElements/MenuTab";
 import RouteLoader from "./designElements/RouteLoader";
 import ScrollToTop from "./utils/ScrollToTop";
+import EntryGate from "./entryGate/EntryGate";
 
 const ThresholdPage = lazy(() => import("./ThresholdPage"));
 const FrontPage = lazy(() => import("./FrontPage"));
@@ -42,48 +42,13 @@ const Measure = lazy(() => import("./measure/Measure"));
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
-function EntryGate({ onEnter }) {
-  useEffect(() => {
-    const onKeyDown = (event) => {
-      if (event.key === "Enter") {
-        onEnter();
-      }
-    };
-
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, [onEnter]);
-
-  return (
-    <section className="entryGate" aria-label="Entry screen">
-      <p className="entryGateText">
-        You can always come back to your heart and live your life from your
-        heart
-        <br />
-        <br />
-        …
-        <br />
-        <br />
-        This is how love wins fear
-      </p>
-      <button className="entryGateButton" type="button" onClick={onEnter}>
-        Enter
-      </button>
-    </section>
-  );
-}
-
 function AnimatedRoutes() {
-  const location = useLocation();
-
   return (
     <>
       <ScrollToTop />
       <Suspense fallback={<RouteLoader />}>
         <AnimatePresence mode="wait">
-          <Routes location={location} key={location.pathname}>
+          <Routes>
             <Route
               path="/"
               element={
@@ -294,26 +259,6 @@ function AnimatedRoutes() {
   );
 }
 
-function RouteScrollPolicy() {
-  const location = useLocation();
-
-  useEffect(() => {
-    const { pathname } = location;
-    const shouldLockScroll =
-      pathname.startsWith("/measure") ||
-      pathname.startsWith("/luna") ||
-      pathname.startsWith("/tunein");
-
-    document.body.classList.toggle("sf-routeScrollLocked", shouldLockScroll);
-
-    return () => {
-      document.body.classList.remove("sf-routeScrollLocked");
-    };
-  }, [location]);
-
-  return null;
-}
-
 function App() {
   const [hasEntered, setHasEntered] = useState(false);
 
@@ -323,7 +268,6 @@ function App() {
 
   return (
     <Router>
-      <RouteScrollPolicy />
       <MenuTab />
       <AnimatedRoutes />
     </Router>

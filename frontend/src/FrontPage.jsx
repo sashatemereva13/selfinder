@@ -6,18 +6,14 @@ import { Loader } from "@react-three/drei";
 import { Link } from "react-router-dom";
 import JourneyNav from "./designElements/JourneyNav";
 import { useAdaptiveQuality } from "./utils/useAdaptiveQuality";
-import { useRef, useState } from "react";
+import { useState } from "react";
 
 const FrontPage = () => {
   const quality = useAdaptiveQuality();
-  const journeySectionRef = useRef(null);
   const [journeyUnlocked, setJourneyUnlocked] = useState(false);
 
   const handleJourneyTransferComplete = () => {
     setJourneyUnlocked(true);
-    window.setTimeout(() => {
-      journeySectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 120);
   };
 
   return (
@@ -49,10 +45,7 @@ const FrontPage = () => {
         </Canvas>
       </section>
 
-      <section
-        ref={journeySectionRef}
-        className={`frontPageJourneyStage ${journeyUnlocked ? "is-unlocked" : "is-locked"}`}
-      >
+      <section className={`frontPageJourneyStage ${journeyUnlocked ? "is-unlocked" : "is-locked"}`}>
         <div className="frontPageJourneyIntro">
           <p className="sf-kicker">Primary Journey</p>
           <h2>Choose how you want to continue the signal mapping</h2>

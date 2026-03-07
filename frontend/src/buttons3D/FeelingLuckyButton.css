@@ -1,7 +1,11 @@
 /* Shared surface from the Feeling Lucky message card */
 :root {
   --sf-message-surface-bg:
-    radial-gradient(circle at 16% 12%, rgba(179, 132, 238, 0.18), transparent 55%),
+    radial-gradient(
+      circle at 16% 12%,
+      rgba(179, 132, 238, 0.18),
+      transparent 55%
+    ),
     rgba(44, 32, 62, 0.78);
 }
 
@@ -17,12 +21,15 @@
   font-size: 1.2rem;
   color: #e6ddff;
 
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
   animation: float 4s ease-in-out infinite;
 }
 
 .feelingLuckyButton:hover {
-  box-shadow: 0 0 10px rgba(96, 45, 133, 0.55),
+  box-shadow:
+    0 0 10px rgba(96, 45, 133, 0.55),
     0 0 100px rgba(233, 179, 221, 0.4);
 }
 
@@ -70,7 +77,7 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0)),
     var(--sf-message-surface-bg);
   border-radius: 999px;
-  padding: 0.6rem 1rem;
+  padding: 0.7rem 1.4rem;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
@@ -156,7 +163,11 @@
 .choiceButtons .downloadButtons:first-child {
   border-color: rgba(117, 221, 214, 0.18);
   background:
-    radial-gradient(circle at 18% 14%, rgba(117, 221, 214, 0.12), transparent 54%),
+    radial-gradient(
+      circle at 18% 14%,
+      rgba(117, 221, 214, 0.12),
+      transparent 54%
+    ),
     var(--sf-message-surface-bg);
 }
 
@@ -168,11 +179,13 @@
     0 0 0 1px rgba(117, 221, 214, 0.07);
 }
 
-.messageModal::before {
+.messageModal::before,
+.messsageModal::before {
   content: "";
   position: absolute;
   inset: 0;
-  background-image: repeating-radial-gradient(
+  background-image:
+    repeating-radial-gradient(
       circle,
       rgba(255, 255, 255, 0.02) 0px,
       transparent 20px
@@ -188,7 +201,6 @@
 }
 
 .messageOverlay {
-  position: fixed;
   inset: 0;
   width: 100%;
   min-height: 100vh;
@@ -205,7 +217,8 @@
   pointer-events: auto;
 }
 
-.messageModal {
+.messageModal,
+.messsageModal {
   position: relative;
   background: var(--sf-message-surface-bg);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -219,19 +232,22 @@
 
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
   gap: 1.5rem;
   animation: magicalReveal 0.8s ease forwards;
 }
 
-.messageModal .tickerLabel {
+.messageModal .tickerLabel,
+.messsageModal .tickerLabel {
   font-size: 1.2rem;
   text-align: center;
   color: #b49adb;
   font-family: "Panchang-Medium";
 }
 
-.messageModal .tickerMessage {
+.messageModal .tickerMessage,
+.messsageModal .tickerMessage {
   white-space: normal;
   text-align: center;
   font-size: 1.03rem;
@@ -244,22 +260,27 @@
 
 .messageHint {
   margin: -0.35rem 0 0;
-  color: rgba(230, 219, 247, 0.78);
-  font-size: 0.82rem;
+  color: rgba(230, 219, 247, 0.38);
+  font-size: 0.72rem;
   text-align: center;
 }
 
-.messageModal .saveButton {
+.messageModal .saveButton,
+.messsageModal .saveButton {
   margin-top: 0.4rem;
   display: flex;
   flex-direction: row;
   gap: 0.5rem;
   font-family: "Panchang-Light";
   color: #eddfff;
-  transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    background-color 180ms ease;
 }
 
-.messageModal .saveButton:hover {
+.messageModal .saveButton:hover,
+.messsageModal .saveButton:hover {
   transform: translateY(-1px);
   border-color: rgba(197, 161, 242, 0.45);
   background:
@@ -267,7 +288,8 @@
     rgba(12, 10, 18, 0.66);
 }
 
-.messageModal .closeButton {
+.messageModal .closeButton,
+.messsageModal .closeButton {
   position: absolute;
   top: 0.6rem;
   right: 0.8rem;
@@ -281,7 +303,23 @@
   background: rgba(8, 8, 14, 0.42);
 }
 
+.saveitDiv {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 /* ========== FADE ANIMATION ========== */
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+  }
+
+  100% {
+    opacity: 1;
+  }
+}
+
 @keyframes magicalReveal {
   0% {
     transform: translateY(-100%);
@@ -315,7 +353,8 @@
 }
 
 @media screen and (max-width: 768px) {
-  .messageModal {
+  .messageModal,
+  .messsageModal {
     padding: 1.3rem 1.05rem;
     gap: 1rem;
   }

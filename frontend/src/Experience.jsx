@@ -1,5 +1,5 @@
 import { CameraControls, Html, MeshDistortMaterial, Sphere } from "@react-three/drei";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Message from "./frontpage/Message";
 import MagicBall from "./designElements/MagicBall";
 import Shelves from "./designElements/Shelves";
@@ -9,11 +9,16 @@ import WizardMessage from "./frontpage/WizardMessage";
 
 const Experience = ({ quality, onJourneyTransferComplete }) => {
   const controls = useRef();
+  const htmlPortal = useRef(null);
   const [controlsEnabled, setControlsEnabled] = useState(true);
   const [wizardMessageReady, setWizardMessageReady] = useState(false);
   const [selectedMessage, setSelectedMessage] = useState(null);
 
   const isLowQuality = quality?.tier === "low";
+
+  useEffect(() => {
+    htmlPortal.current = document.body;
+  }, []);
 
   return (
     <>
@@ -43,7 +48,7 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
       )}
 
       {selectedMessage && (
-        <Html fullscreen style={{ pointerEvents: "auto", zIndex: 1000 }}>
+        <Html fullscreen portal={htmlPortal} style={{ pointerEvents: "auto", zIndex: 1000 }}>
           <Message
             controls={controls}
             selectedMessage={selectedMessage}
