@@ -1,15 +1,37 @@
 import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import Experience from "./Experience";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useProgress } from "@react-three/drei";
 import JourneyNav from "./designElements/JourneyNav";
 import { useAdaptiveQuality } from "./utils/useAdaptiveQuality";
 import { useState } from "react";
+import RouteLoader from "./designElements/RouteLoader";
 
 const FrontPage = () => {
   const quality = useAdaptiveQuality();
   const [journeyUnlocked, setJourneyUnlocked] = useState(false);
+  const [sceneReady, setSceneReady] = useState(false);
+  const { active } = useProgress();
+
+  useEffect(() => {
+    let readyTimer;
+
+    if (active) {
+      setSceneReady(false);
+    } else {
+      readyTimer = window.setTimeout(() => {
+        setSceneReady(true);
+      }, 120);
+    }
+
+    return () => {
+      if (readyTimer) {
+        window.clearTimeout(readyTimer);
+      }
+    };
+  }, [active]);
 
   const handleJourneyTransferComplete = () => {
     setJourneyUnlocked(true);
@@ -18,6 +40,7 @@ const FrontPage = () => {
   return (
     <div className="frontPageShell">
       <div className="pulsingBackground"></div>
+      {!sceneReady && <RouteLoader />}
 
       <section className="frontPageHero">
         <div className="frontPageHeroOverlay">
