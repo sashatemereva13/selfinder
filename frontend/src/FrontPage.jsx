@@ -2,7 +2,6 @@ import { Canvas } from "@react-three/fiber";
 import * as THREE from "three";
 import Experience from "./Experience";
 import { Suspense } from "react";
-import { Loader } from "@react-three/drei";
 import { Link } from "react-router-dom";
 import JourneyNav from "./designElements/JourneyNav";
 import { useAdaptiveQuality } from "./utils/useAdaptiveQuality";
@@ -99,44 +98,6 @@ const FrontPage = () => {
         </div>
       </section>
 
-      <Loader
-        containerStyles={{
-          backgroundColor: "#0b0b0b",
-          position: "absolute",
-
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100svh",
-          zIndex: 999,
-        }}
-        innerStyles={{
-          background: "#2b1635",
-          padding: "0.1rem",
-          borderRadius: "0.3rem",
-          boxShadow: "0 0 20px #A95EBB",
-
-          // display: "flex",
-          // flexDirection: "column",
-          // alignItems: "center", // ⬅️ horizontally center the bar
-          // justifyContent: "center", // ⬅️ vertically center the text + bar
-        }}
-        barStyles={{
-          background: "#A95EBB",
-          height: "0.05rem",
-          padding: "0.1rem",
-          borderRadius: "0.3rem",
-          width: "90%",
-        }}
-        dataStyles={{
-          marginTop: "3rem",
-          color: "#C89DD9",
-          fontSize: "1rem",
-          textAlign: "center",
-          textShadow: "0 0 5px #A95EBB",
-          fontFamily: "Panchang-Light, sans-serif",
-        }}
-      />
     </div>
   );
 };
