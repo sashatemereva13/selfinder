@@ -13,6 +13,8 @@ import MenuTab from "./designElements/MenuTab";
 import RouteLoader from "./designElements/RouteLoader";
 import ScrollToTop from "./utils/ScrollToTop";
 import EntryGate from "./entryGate/EntryGate";
+import UserPathTracker from "./tracking/UserPathTracker.jsx";
+import { appendPathStep } from "./tracking/userPathTracker";
 
 const ThresholdPage = lazy(() => import("./ThresholdPage"));
 const FrontPage = lazy(() => import("./FrontPage"));
@@ -262,12 +264,19 @@ function AnimatedRoutes() {
 function App() {
   const [hasEntered, setHasEntered] = useState(false);
 
+  useEffect(() => {
+    if (!hasEntered) {
+      appendPathStep({ path: "/entry-gate", source: "gate", navType: null });
+    }
+  }, [hasEntered]);
+
   if (!hasEntered) {
     return <EntryGate onEnter={() => setHasEntered(true)} />;
   }
 
   return (
     <Router>
+      <UserPathTracker />
       <MenuTab />
       <AnimatedRoutes />
     </Router>
