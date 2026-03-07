@@ -1,6 +1,7 @@
 import { useEffect, useId } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import { createPortal } from "react-dom";
 import "./levels.css";
 
 export default function LevelModal({ name, slug, onClose }) {
@@ -22,7 +23,7 @@ export default function LevelModal({ name, slug, onClose }) {
     };
   }, [onClose]);
 
-  return (
+  const modal = (
     <AnimatePresence>
       <motion.div
         className="levelModalOverlay"
@@ -70,4 +71,6 @@ export default function LevelModal({ name, slug, onClose }) {
       </motion.div>
     </AnimatePresence>
   );
+
+  return createPortal(modal, document.body);
 }
