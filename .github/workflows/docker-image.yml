@@ -25,10 +25,12 @@ jobs:
         run: |
           docker build -t ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }} .
 
+        #   Publish the image to the github registry
       - name: Push Docker image
         run: |
           docker push ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }}
 
+        #   Pull the image into hostinger provider
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.3
         with:
