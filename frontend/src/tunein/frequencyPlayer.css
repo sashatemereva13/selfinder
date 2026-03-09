@@ -252,7 +252,11 @@
     justify-items: start;
   }
 
+  .orbContainer {
+    min-height: 300px;
+  }
+
   .orbContainer canvas {
-    height: min(420px, 52vh) !important;
+    height: min(340px, 42vh) !important;
   }
 }

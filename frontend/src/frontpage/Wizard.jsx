@@ -36,12 +36,12 @@ export default function Wizard({ ...props }) {
         scale={30}
       />
       {/* sparkle-halo */}
-      <points ref={pointsRef} position={[-4.37, 2, 0]} scale={6.5}>
+      <points ref={pointsRef} position={[-27.37, 10, 0]} scale={16.5}>
         <sphereGeometry args={[1.1, 20, 200]} />
         <pointsMaterial size={0.01} color="#e3affa" />
       </points>
 
-      <group position={[-4, -7, 0]} ref={group} {...props} dispose={null}>
+      <group position={[-8, -7, 0]} ref={group} {...props} dispose={null}>
         <primitive object={scene} position={[0, -1, 0]} scale={0.8} />
         <mesh ref={dodecahedron} position={[-0.01, 0.45, 0]}>
           <dodecahedronGeometry args={[0.4, 0]} />

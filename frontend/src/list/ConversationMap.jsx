@@ -1,6 +1,8 @@
 const ConversationMap = {
   start: {
-    message: "glad to see you, let's measure your vibration",
+    message: `
+as jung suggested, what remains unconscious tends to run the script.
+ready to measure your vibration?`,
     options: [{ label: "let's!", next: "goToMeasure" }],
   },
   prettyGood: {

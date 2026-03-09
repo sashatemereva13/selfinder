@@ -22,7 +22,7 @@ export default function MenuTab() {
         aria-controls="sf-menuTabPanel"
         onClick={() => setIsOpen((prev) => !prev)}
       >
-        {isOpen ? "Close" : "Menu"}
+        {isOpen ? "Close" : "rooms"}
       </button>
 
       {isOpen && (

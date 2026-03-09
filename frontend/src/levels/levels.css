@@ -845,6 +845,13 @@
     font-size: 1.55em;
     margin-top: 0.08rem;
   }
+
+  .backButton {
+    top: calc(env(safe-area-inset-top, 0px) + 0.55rem);
+    left: 0.6rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.82rem;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

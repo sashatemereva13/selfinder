@@ -25,7 +25,46 @@
       transparent 42%
     ),
     linear-gradient(180deg, var(--measure-bg-1), var(--measure-bg-2));
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+.measure-page.is-portal-arrival .measure-shell {
+  animation: measureShellArrival 720ms cubic-bezier(0.2, 0.74, 0.22, 1) both;
+}
+
+.measure-portalArrival {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(181, 228, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(8, 14, 20, 0.28), rgba(5, 8, 14, 0.94));
+  animation: measurePortalVeil 1250ms ease-out forwards;
+}
+
+.measure-portalArrivalRing {
+  width: min(56vw, 26rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(188, 230, 255, 0.36);
+  box-shadow:
+    0 0 26px rgba(159, 211, 255, 0.45),
+    inset 0 0 34px rgba(159, 211, 255, 0.22);
+  animation: measurePortalRing 780ms cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
+}
+
+.measure-portalArrival p {
+  position: absolute;
+  bottom: clamp(1.2rem, 4vh, 2.2rem);
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  color: rgba(231, 244, 255, 0.8);
 }
 
 .measure-page.phase-guidance {
@@ -1765,6 +1804,45 @@
   }
 }
 
+@keyframes measureShellArrival {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 1.2rem, 0) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes measurePortalVeil {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes measurePortalRing {
+  0% {
+    transform: scale(0.22);
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.45);
+    opacity: 0;
+  }
+}
+
 @media (max-width: 860px) {
   .measure-options-color {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1852,7 +1930,10 @@
   .measure-progressFill,
   .measure-optionCard,
   .measure-btn,
-  .measure-backButton {
+  .measure-backButton,
+  .measure-shell,
+  .measure-portalArrival,
+  .measure-portalArrivalRing {
     animation: none !important;
     transition: none !important;
   }

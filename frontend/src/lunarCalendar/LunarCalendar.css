@@ -39,7 +39,8 @@
       var(--moon-bg-1) 45%,
       var(--moon-bg-2)
     );
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .lunarCalendar::before {
@@ -64,7 +65,7 @@
   transform: translateX(-50%);
   z-index: 2;
   margin: 0;
-  width: min(560px, calc(100vw - 8.5rem));
+  width: min(560px, calc(100vw - 1.5rem));
   text-align: center;
   color: rgba(231, 221, 244, 0.72);
   font-size: 0.83rem;

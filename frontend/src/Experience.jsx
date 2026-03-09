@@ -1,4 +1,9 @@
-import { CameraControls, Html, MeshDistortMaterial, Sphere } from "@react-three/drei";
+import {
+  CameraControls,
+  Html,
+  MeshDistortMaterial,
+  Sphere,
+} from "@react-three/drei";
 import { useEffect, useRef, useState } from "react";
 import Message from "./frontpage/Message";
 import MagicBall from "./designElements/MagicBall";
@@ -36,9 +41,9 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
       />
 
       {!isLowQuality && (
-        <Sphere args={[3, 64, 64]} position={[17, 21, -20]}>
+        <Sphere args={[10, 64, 64]} position={[-65, -90, -150]}>
           <MeshDistortMaterial
-            color="#3fa9f5"
+            color="#a1eb90"
             roughness={0.7}
             metalness={0.8}
             speed={2}
@@ -48,7 +53,11 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
       )}
 
       {selectedMessage && (
-        <Html fullscreen portal={htmlPortal} style={{ pointerEvents: "auto", zIndex: 1000 }}>
+        <Html
+          fullscreen
+          portal={htmlPortal}
+          style={{ pointerEvents: "auto", zIndex: 1000 }}
+        >
           <Message
             controls={controls}
             selectedMessage={selectedMessage}
@@ -58,17 +67,14 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
         </Html>
       )}
 
-      <directionalLight position={[0, -30, -10]} intensity={isLowQuality ? 4 : 5} />
+      <directionalLight
+        position={[-30, 0, 20]}
+        intensity={isLowQuality ? 0.3 : 1}
+      />
       <ambientLight intensity={isLowQuality ? 0.65 : 0.8} />
 
       <Torch color="#685584" />
-      <Shelves position={[0, -10, 0]} />
-
-      {/* <WizardDoor
-        rotation={[0, -Math.PI / 2, 0]}
-        position={[-500, -150, -400]}
-        scale={[1, 3, 6]}
-      /> */}
+      <Shelves position={[0, 0, 0]} />
 
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-35, -120, -150]}>
         <circleGeometry args={[80, 64, 64]} />

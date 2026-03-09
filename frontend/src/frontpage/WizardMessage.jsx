@@ -20,6 +20,7 @@ export default function WizardMessage({ showMessage, controls }) {
 
   const [conversationPhase, setConversationPhase] = useState("start");
   const [isFlying, setIsFlying] = useState(false);
+  const [portalFxStage, setPortalFxStage] = useState("idle");
 
   // Optional: prep OrbitControls for smooth flights
   useEffect(() => {
@@ -57,27 +58,54 @@ export default function WizardMessage({ showMessage, controls }) {
   // utility
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
+  const tweenFov = async (targetFov, duration = 80) => {
+    const startFov = camera.fov;
+    const t0 = performance.now();
+
+    await new Promise((resolve) => {
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / duration);
+        const eased = 1 - (1 - t) ** 3;
+        camera.fov = startFov + (targetFov - startFov) * eased;
+        camera.updateProjectionMatrix();
+
+        if (t < 1) {
+          requestAnimationFrame(step);
+        } else {
+          resolve();
+        }
+      };
+
+      requestAnimationFrame(step);
+    });
+  };
+
   const flyTo = async (endPos, lookAt) => {
     if (controls?.current) {
-      controls.current.setLookAt(
-        endPos.x,
-        endPos.y,
-        endPos.z,
-        lookAt.x,
-        lookAt.y,
-        lookAt.z,
-        true
+      await Promise.resolve(
+        controls.current.setLookAt(
+          endPos.x,
+          endPos.y,
+          endPos.z,
+          lookAt.x,
+          lookAt.y,
+          lookAt.z,
+          true,
+        ),
       );
-
-      return true;
+      return;
     }
     // fallback: direct
     await flyDirect(endPos, lookAt, 1.2);
-    return false;
   };
 
   // pass through the black hole center along the current approach vector
-  const flyThroughBlackHole = async (center, entryDist = 40, exitDist = 30) => {
+  const flyThroughBlackHole = async (
+    center,
+    entryDist = 40,
+    exitDist = 30,
+    lookDownOffset = 0,
+  ) => {
     const cam = controls?.current?.object || camera;
 
     // direction from camera → hole
@@ -87,14 +115,20 @@ export default function WizardMessage({ showMessage, controls }) {
 
     const entryPos = center.clone().addScaledVector(dir, -entryDist); // before the hole
     const exitPos = center.clone().addScaledVector(dir, exitDist); // past the hole
-    const lookPast = center.clone().addScaledVector(dir, exitDist + 50);
+    const lookTarget = center
+      .clone()
+      .add(new THREE.Vector3(0, lookDownOffset, 0));
+    const lookPast = center
+      .clone()
+      .addScaledVector(dir, exitDist + 50)
+      .add(new THREE.Vector3(0, lookDownOffset, 0));
 
     // optional: make the pass a bit snappier
     const originalSmooth = controls?.current?.smoothTime;
     if (controls?.current) controls.current.smoothTime = 0.6;
 
     // 1) approach to entry (look at center)
-    await flyTo(entryPos, center);
+    await flyTo(entryPos, lookTarget);
     // 2) go through to the far side (keep looking slightly beyond)
     await flyTo(exitPos, lookPast);
 
@@ -105,8 +139,6 @@ export default function WizardMessage({ showMessage, controls }) {
   };
 
   const flyToExploration = async () => {
-    const cam = controls?.current?.object || camera;
-
     if (isFlying) return;
     setIsFlying(true);
 
@@ -118,18 +150,84 @@ export default function WizardMessage({ showMessage, controls }) {
       : new THREE.Vector3(8, -1, 10);
 
     // keep looking toward the portal area so the next move feels continuous
-    const destLook = new THREE.Vector3(-35, -110, -150);
+    const destLook = new THREE.Vector3(-35, -180, -150);
 
     await flyTo(destPos, destLook);
 
     // 2) brief pause
-    await delay(900); // tweak to taste (700–1200ms feels nice)
+    await delay(35);
 
     // 3) fly through the black hole
     const holeCenter = new THREE.Vector3(-35, -120, -150);
-    await flyThroughBlackHole(holeCenter, /*entry*/ 42, /*exit*/ 36);
+    await flyThroughBlackHole(
+      holeCenter,
+      /*entry*/ 42,
+      /*exit*/ 36,
+      /*lookDown*/ -8,
+    );
 
     setIsFlying(false);
+  };
+
+  const flyIntoMeasurePortal = async () => {
+    if (isFlying) return;
+    setIsFlying(true);
+
+    const holeCenter = new THREE.Vector3(-35, -120, -150);
+    const cameraObject = controls?.current?.object || camera;
+    const toHole = new THREE.Vector3()
+      .subVectors(holeCenter, cameraObject.position)
+      .normalize();
+
+    const anticipationPos = cameraObject.position
+      .clone()
+      .addScaledVector(toHole, -8)
+      .add(new THREE.Vector3(0, 1.2, 0));
+    const approachPos = holeCenter.clone().addScaledVector(toHole, -56);
+    const originalSmooth = controls?.current?.smoothTime;
+    const originalFov = camera.fov;
+
+    try {
+      if (controls?.current) {
+        controls.current.smoothTime = 0.28;
+      }
+
+      await flyTo(
+        anticipationPos,
+        holeCenter.clone().add(new THREE.Vector3(0, -8, 0)),
+      );
+      await delay(1);
+
+      await flyTo(
+        approachPos,
+        holeCenter.clone().add(new THREE.Vector3(0, -14, 0)),
+      );
+      setPortalFxStage("tunnel");
+
+      if (controls?.current) {
+        controls.current.smoothTime = 0.16;
+      }
+
+      await Promise.all([
+        flyThroughBlackHole(
+          holeCenter,
+          /*entry*/ 70,
+          /*exit*/ 105,
+          /*lookDown*/ -18,
+        ),
+        tweenFov(Math.min(originalFov + 26, 95), 250),
+      ]);
+
+      setPortalFxStage("blackout");
+      await delay(0);
+    } finally {
+      await tweenFov(originalFov, 10);
+      if (controls?.current && originalSmooth != null) {
+        controls.current.smoothTime = originalSmooth;
+      }
+      setIsFlying(false);
+      setPortalFxStage("idle");
+    }
   };
 
   // -------------------------------------
@@ -154,7 +252,8 @@ export default function WizardMessage({ showMessage, controls }) {
                 className="downloadButtons"
                 onClick={async () => {
                   if (next === "goToMeasure") {
-                    navigate("/measure");
+                    await flyIntoMeasurePortal();
+                    navigate("/measure", { state: { fromPortalJump: true } });
                     return;
                   }
 
@@ -175,6 +274,15 @@ export default function WizardMessage({ showMessage, controls }) {
               </button>
             ))}
           </div>
+        </Html>
+      )}
+      {portalFxStage !== "idle" && (
+        <Html
+          fullscreen
+          style={{ pointerEvents: "none", zIndex: 2500 }}
+          className={`portalJumpOverlay is-${portalFxStage}`}
+        >
+          <div className="portalJumpOverlayInner" />
         </Html>
       )}
     </>

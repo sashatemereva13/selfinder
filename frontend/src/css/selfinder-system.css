@@ -1,5 +1,5 @@
 :root {
-  --sf-ink: #f1eafd;
+  --sf-ink: #90b691;
   --sf-ink-soft: rgba(241, 234, 253, 0.78);
   --sf-ink-muted: rgba(241, 234, 253, 0.58);
   --sf-line: rgba(255, 255, 255, 0.1);
@@ -259,7 +259,7 @@
 
 .sf-menuTab {
   position: fixed;
-  top: calc(env(safe-area-inset-top, 0px) + 0.95rem);
+  top: calc(env(safe-area-inset-top, 0px) + 1.95rem);
   right: calc(env(safe-area-inset-right, 0px) + 2.95rem);
   z-index: 1400;
   display: grid;

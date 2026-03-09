@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import "./measure.css";
 import {
   MEASURE_RESULT_STORAGE_KEY,
@@ -20,12 +21,16 @@ import {
 } from "./MeasurePhaseViews";
 
 const Measure = () => {
+  const location = useLocation();
   const [phase, setPhase] = useState("entry");
   const [stepIndex, setStepIndex] = useState(0);
   const [choices, setChoices] = useState(INITIAL_CHOICES);
   const [activePreview, setActivePreview] = useState(null);
   const [isPreviewMuted, setIsPreviewMuted] = useState(false);
   const [previewVolume, setPreviewVolume] = useState(0.55);
+  const [showPortalArrival, setShowPortalArrival] = useState(
+    Boolean(location.state?.fromPortalJump),
+  );
   const audioContextRef = useRef(null);
   const activePreviewNodesRef = useRef([]);
   const previewTimerRef = useRef(null);
@@ -176,6 +181,16 @@ const Measure = () => {
   };
 
   useEffect(() => {
+    if (!showPortalArrival) return undefined;
+
+    const timer = window.setTimeout(() => {
+      setShowPortalArrival(false);
+    }, 1250);
+
+    return () => window.clearTimeout(timer);
+  }, [showPortalArrival]);
+
+  useEffect(() => {
     if (phase !== "selection" || currentStep?.key !== "sound") {
       stopSoundPreview();
     }
@@ -305,7 +320,15 @@ const Measure = () => {
   const showWizardNav = phase !== "entry";
 
   return (
-    <div className={`measure-page phase-${phase}`}>
+    <div
+      className={`measure-page phase-${phase} ${showPortalArrival ? "is-portal-arrival" : ""}`}
+    >
+      {showPortalArrival && (
+        <div className="measure-portalArrival" aria-hidden="true">
+          <div className="measure-portalArrivalRing" />
+          <p>Signal lock acquired. Entering measurement protocol.</p>
+        </div>
+      )}
       <div className="measure-bg-orb orb-a" aria-hidden="true" />
       <div className="measure-bg-orb orb-b" aria-hidden="true" />
       <div className="measure-grid" aria-hidden="true" />
