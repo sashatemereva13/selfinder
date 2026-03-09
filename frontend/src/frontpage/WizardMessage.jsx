@@ -11,6 +11,10 @@ import * as THREE from "three";
 import ConversationMap from "../list/ConversationMap";
 import { SmoothTypewriter } from "../designElements/SmoothTypewriter";
 
+const MIN_ACTION_DELAY_MS = 0;
+const MIN_FOV_TWEEN_MS = 60;
+const MIN_FOV_RESET_MS = 1;
+
 export default function WizardMessage({ showMessage, controls }) {
   const group = useRef();
   const dodecahedron = useRef();
@@ -58,7 +62,7 @@ export default function WizardMessage({ showMessage, controls }) {
   // utility
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  const tweenFov = async (targetFov, duration = 80) => {
+  const tweenFov = async (targetFov, duration = MIN_FOV_TWEEN_MS) => {
     const startFov = camera.fov;
     const t0 = performance.now();
 
@@ -154,8 +158,8 @@ export default function WizardMessage({ showMessage, controls }) {
 
     await flyTo(destPos, destLook);
 
-    // 2) brief pause
-    await delay(35);
+    // 2) remove pause between actions
+    await delay(MIN_ACTION_DELAY_MS);
 
     // 3) fly through the black hole
     const holeCenter = new THREE.Vector3(-35, -120, -150);
@@ -174,39 +178,14 @@ export default function WizardMessage({ showMessage, controls }) {
     setIsFlying(true);
 
     const holeCenter = new THREE.Vector3(-35, -120, -150);
-    const cameraObject = controls?.current?.object || camera;
-    const toHole = new THREE.Vector3()
-      .subVectors(holeCenter, cameraObject.position)
-      .normalize();
-
-    const anticipationPos = cameraObject.position
-      .clone()
-      .addScaledVector(toHole, -8)
-      .add(new THREE.Vector3(0, 1.2, 0));
-    const approachPos = holeCenter.clone().addScaledVector(toHole, -56);
     const originalSmooth = controls?.current?.smoothTime;
     const originalFov = camera.fov;
 
     try {
       if (controls?.current) {
-        controls.current.smoothTime = 0.28;
+        controls.current.smoothTime = 0.1;
       }
-
-      await flyTo(
-        anticipationPos,
-        holeCenter.clone().add(new THREE.Vector3(0, -8, 0)),
-      );
-      await delay(1);
-
-      await flyTo(
-        approachPos,
-        holeCenter.clone().add(new THREE.Vector3(0, -14, 0)),
-      );
       setPortalFxStage("tunnel");
-
-      if (controls?.current) {
-        controls.current.smoothTime = 0.16;
-      }
 
       await Promise.all([
         flyThroughBlackHole(
@@ -215,13 +194,13 @@ export default function WizardMessage({ showMessage, controls }) {
           /*exit*/ 105,
           /*lookDown*/ -18,
         ),
-        tweenFov(Math.min(originalFov + 26, 95), 250),
+        tweenFov(Math.min(originalFov + 26, 95), MIN_FOV_TWEEN_MS),
       ]);
 
       setPortalFxStage("blackout");
-      await delay(0);
+      await delay(MIN_ACTION_DELAY_MS);
     } finally {
-      await tweenFov(originalFov, 10);
+      await tweenFov(originalFov, MIN_FOV_RESET_MS);
       if (controls?.current && originalSmooth != null) {
         controls.current.smoothTime = originalSmooth;
       }
