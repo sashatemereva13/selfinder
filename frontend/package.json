@@ -17,7 +17,7 @@
     "@react-three/fiber": "^8.12.1",
     "@react-three/postprocessing": "^2.5.1",
     "framer-motion": "^12.34.0",
-    "jspdf": "^3.0.1",
+    "jspdf": "^4.2.0",
     "leva": "^0.9.35",
     "postprocessing": "^6.37.4",
     "r3f-perf": "7.2",
