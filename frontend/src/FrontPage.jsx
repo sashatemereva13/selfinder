@@ -44,13 +44,13 @@ const FrontPage = () => {
 
       <section className="frontPageHero">
         <div className="frontPageHeroOverlay">
-          <div className="frontPageHeroTag">Neural Core / Arrival</div>
+          <div className="frontPageHeroTag">The Threshold / Arrival</div>
           <div
             className={`frontPageUnlockHint ${journeyUnlocked ? "is-unlocked" : ""}`}
           >
             {journeyUnlocked
               ? "You are ready to measure your vibe."
-              : "After the message, press the core again to start the journey."}
+              : "After the message, touch the sphere again to cross the threshold."}
           </div>
         </div>
 
@@ -80,26 +80,29 @@ const FrontPage = () => {
       >
         <div className="frontPageJourneyIntro">
           <p className="sf-kicker">Primary Journey</p>
-          <h2>Choose how you want to continue the signal mapping</h2>
+          <h2>Cross inward, then step into the social identity layer</h2>
           <p>
-            You reached the lower chamber. From here, follow the recommended
-            path or jump directly to the part of the system you need most right
-            now.
+            The threshold opens the inward turn. From here, move into Core to
+            meet the persona layer, or jump directly to the part of the system
+            you need most right now.
           </p>
         </div>
 
         <div className="frontPageJourneyPanelInline">
           <JourneyNav
             variant="inline"
-            currentKey="core"
+            currentKey="threshold"
             title="Recommended Journey"
-            subtitle="Continue from the core into measure, lunar timing, regulation, and reflection."
-            primaryAction={{ to: "/measure", label: "Begin Signal Mapping" }}
+            subtitle="Enter the psyche through the threshold, then continue into Core, Measure, lunar timing, regulation, and reflection."
+            primaryAction={{ to: "/core", label: "Enter Core Room" }}
           />
         </div>
 
         <div className="frontPageJourneyLinks">
-          <Link to="/measure" className="sf-btn sf-btn-primary">
+          <Link to="/core" className="sf-btn sf-btn-primary">
+            Core
+          </Link>
+          <Link to="/measure" className="sf-btn">
             Measure
           </Link>
           <Link to="/luna" className="sf-btn">
@@ -115,7 +118,15 @@ const FrontPage = () => {
 
         <div className="frontPageJourneyCards">
           <div className="frontPageJourneyCard">
-            <p className="sf-kicker">Vibration First</p>
+            <p className="sf-kicker">Persona Layer</p>
+            <h3>Enter the mirror chamber</h3>
+            <p>
+              Step into the social identity layer and notice the roles and
+              masks that organize your public self.
+            </p>
+          </div>
+          <div className="frontPageJourneyCard">
+            <p className="sf-kicker">Signal Mapping</p>
             <h3>Measure your current state</h3>
             <p>
               Use the questionnaire to identify your present signal and
@@ -128,14 +139,6 @@ const FrontPage = () => {
             <p>
               Use moon phase timing to shape the type of action or reflection
               that fits now.
-            </p>
-          </div>
-          <div className="frontPageJourneyCard">
-            <p className="sf-kicker">Regulation Layer</p>
-            <h3>Tune the field</h3>
-            <p>
-              Use sound and focus tools to settle, sharpen, or regulate before
-              the next step.
             </p>
           </div>
         </div>

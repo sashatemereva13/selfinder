@@ -305,11 +305,134 @@
 }
 
 .sf-menuTabPanel {
-  width: min(20rem, calc(100vw - 1.9rem));
+  width: min(22rem, calc(100vw - 1.9rem));
 }
 
 .sf-menuTabPanel .sf-journeyNav-overlay {
   width: 100%;
+}
+
+/* ─── Room directory (overlay variant) ─────────────────── */
+.sf-roomList {
+  margin-top: 0.55rem;
+  display: grid;
+  gap: 0.28rem;
+}
+
+.sf-roomItem {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.6rem 0.65rem 0.6rem 0.6rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  background: rgba(255, 255, 255, 0.01);
+  text-decoration: none;
+  color: var(--sf-ink-soft);
+  transition:
+    border-color 180ms ease,
+    background-color 180ms ease;
+}
+
+.sf-roomItem:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.sf-roomItem.is-current {
+  border-color: rgba(195, 153, 255, 0.22);
+  background:
+    radial-gradient(circle at 0% 50%, rgba(195, 153, 255, 0.07), transparent 60%),
+    rgba(255, 255, 255, 0.018);
+}
+
+.sf-roomItem.is-current::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 2px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, rgba(195, 153, 255, 0.9), rgba(116, 221, 214, 0.7));
+}
+
+.sf-roomItem.is-complete .sf-roomIcon {
+  color: rgba(116, 221, 214, 0.65);
+}
+
+.sf-roomIcon {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  color: var(--sf-ink-muted);
+  transition: color 180ms ease;
+}
+
+.sf-roomItem.is-current .sf-roomIcon {
+  color: rgba(195, 153, 255, 0.85);
+}
+
+.sf-roomItem:hover .sf-roomIcon {
+  color: var(--sf-ink-soft);
+}
+
+.sf-roomBody {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.sf-roomTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.sf-roomLabel {
+  font-family: var(--sf-font-strong);
+  font-size: 0.8rem;
+  color: var(--sf-ink-soft);
+  line-height: 1.1;
+}
+
+.sf-roomItem.is-current .sf-roomLabel {
+  color: rgba(241, 234, 253, 0.96);
+}
+
+.sf-roomStage {
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--sf-ink-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.sf-roomItem.is-current .sf-roomStage {
+  color: rgba(195, 153, 255, 0.7);
+}
+
+.sf-roomDesc {
+  font-size: 0.74rem;
+  color: var(--sf-ink-muted);
+  line-height: 1.45;
+}
+
+.sf-roomDot {
+  position: absolute;
+  right: 0.65rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(195, 153, 255, 0.7);
+  box-shadow: 0 0 6px rgba(195, 153, 255, 0.5);
 }
 
 @media (max-width: 900px) {

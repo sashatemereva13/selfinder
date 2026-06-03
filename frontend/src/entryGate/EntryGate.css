@@ -273,6 +273,22 @@
   outline-offset: 2px;
 }
 
+.entryGateNote {
+  position: absolute;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+  transform: translateX(-50%);
+  width: min(38rem, calc(100vw - 2rem));
+  margin: 0;
+  color: rgba(241, 234, 253, 0.62);
+  font-family: "Panchang-Light";
+  font-size: clamp(0.62rem, 0.5vw + 0.54rem, 0.76rem);
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+  text-align: center;
+  z-index: 1;
+}
+
 @keyframes entryGateAuraDrift {
   0%,
   100% {

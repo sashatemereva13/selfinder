@@ -70,7 +70,7 @@ span {
 
 .frontPageHeroOverlay {
   position: absolute;
-  left: 1rem;
+  right: 1rem;
   bottom: 1.2rem;
   z-index: 1000;
   width: min(38rem, calc(100vw - 2rem));
@@ -419,8 +419,16 @@ button:hover {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 50% 50%, rgba(205, 236, 255, 0.2) 0%, transparent 20%),
-    radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.2) 30%, rgba(0, 0, 0, 0.9) 100%);
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(205, 236, 255, 0.2) 0%,
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(0, 0, 0, 0.2) 30%,
+      rgba(0, 0, 0, 0.9) 100%
+    );
   opacity: 0;
 }
 
@@ -505,7 +513,6 @@ button:hover {
   }
 
   .frontPageHeroOverlay {
-    left: 0.5rem;
     right: 0.5rem;
     bottom: calc(env(safe-area-inset-bottom, 0px) + 0.6rem);
     width: calc(100vw - 1rem);

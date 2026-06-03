@@ -121,7 +121,7 @@ export default function MagicBall({
       {phase === Phase.INTRO && (
         <SmoothTypewriter className="smooth-typewriter-text">
           {`Welcome traveller. 
-Touch the core to initiate signal mapping.`}
+Touch the sphere to cross the threshold.`}
         </SmoothTypewriter>
       )}
 
@@ -133,7 +133,7 @@ Touch the core to initiate signal mapping.`}
 
       {phase === Phase.READY && (
         <SmoothTypewriter className="smooth-typewriter-text">
-          {`Press the core again to start the journey.`}
+          {`Touch the sphere again to enter the psyche.`}
         </SmoothTypewriter>
       )}
     </Html>

@@ -7,7 +7,6 @@ import {
 import { useEffect, useRef, useState } from "react";
 import Message from "./frontpage/Message";
 import MagicBall from "./designElements/MagicBall";
-import Shelves from "./designElements/Shelves";
 import Torch from "./designElements/Torch";
 import Wizard from "./frontpage/Wizard";
 import WizardMessage from "./frontpage/WizardMessage";
@@ -40,7 +39,7 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
         setSelectedMessage={setSelectedMessage}
       />
 
-      {!isLowQuality && (
+      {/* {!isLowQuality && (
         <Sphere args={[10, 64, 64]} position={[-65, -90, -150]}>
           <MeshDistortMaterial
             color="#a1eb90"
@@ -50,7 +49,7 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
             distort={0.4}
           />
         </Sphere>
-      )}
+      )} */}
 
       {selectedMessage && (
         <Html
@@ -73,17 +72,17 @@ const Experience = ({ quality, onJourneyTransferComplete }) => {
       />
       <ambientLight intensity={isLowQuality ? 0.65 : 0.8} />
 
-      <Torch color="#685584" />
-      <Shelves position={[0, 0, 0]} />
+      {/* <Torch color="#685584" /> */}
+      {/* <RoomSurfaceGrid position={[0, 0, 0]} /> */}
 
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[-35, -120, -150]}>
-        <circleGeometry args={[80, 64, 64]} />
+      <mesh rotation={[-Math.PI / 3.5, 0, 0]} position={[-35, -110, -130]}>
+        <circleGeometry args={[30, 64, 64]} />
         <meshStandardMaterial color="#000000" transparent opacity={1} />
       </mesh>
       <WizardMessage controls={controls} showMessage={wizardMessageReady} />
-      <group position={[-30, -80, -150]}>
+      {/* <group position={[0, -50, -150]}>
         <Wizard scale={20} />
-      </group>
+      </group> */}
     </>
   );
 };

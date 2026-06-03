@@ -34,6 +34,10 @@ function EntryGate({ onEnter }) {
       <button className="entryGateButton" type="button" onClick={onEnter}>
         begin
       </button>
+      <p className="entryGateNote">
+        Selfinder is an exploratory experience inspired by psychological and
+        philosophical ideas about consciousness and self-reflection.
+      </p>
     </section>
   );
 }

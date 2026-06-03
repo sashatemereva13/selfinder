@@ -10,14 +10,18 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { PageWrapper } from "./designElements/PageWrapper";
 import MenuTab from "./designElements/MenuTab";
+import ThoughtBubble from "./designElements/ThoughtBubble";
+import FloatingGuide from "./designElements/FloatingGuide";
 import RouteLoader from "./designElements/RouteLoader";
 import ScrollToTop from "./utils/ScrollToTop";
 import EntryGate from "./entryGate/EntryGate";
 import UserPathTracker from "./tracking/UserPathTracker.jsx";
 import { appendPathStep } from "./tracking/userPathTracker";
+import { ChatProvider } from "./guide/ChatContext";
 
 const ThresholdPage = lazy(() => import("./ThresholdPage"));
 const FrontPage = lazy(() => import("./FrontPage"));
+const CoreRoom = lazy(() => import("./coreRoom/CoreRoom"));
 const BeingToBrand = lazy(() => import("./beingToBrand/BeingToBrand"));
 const LevelsFullPage = lazy(() => import("./levels/LevelsFullPage"));
 const FrequencyUpgrade = lazy(() => import("./upgrade/FrequencyUpgrade"));
@@ -41,6 +45,7 @@ const Shame = lazy(() => import("./levels/Shame"));
 const LunarCalendar = lazy(() => import("./lunarCalendar/LunarCalendar"));
 const TuneIn = lazy(() => import("./tunein/TuneIn"));
 const Measure = lazy(() => import("./measure/Measure"));
+const GuideChat = lazy(() => import("./guide/GuideChat"));
 
 const root = ReactDOM.createRoot(document.querySelector("#root"));
 
@@ -63,7 +68,7 @@ function AnimatedRoutes() {
               path="/core"
               element={
                 <PageWrapper>
-                  <FrontPage />
+                  <CoreRoom />
                 </PageWrapper>
               }
             />
@@ -71,7 +76,7 @@ function AnimatedRoutes() {
               path="/threshold"
               element={
                 <PageWrapper>
-                  <ThresholdPage />
+                  <FrontPage />
                 </PageWrapper>
               }
             />
@@ -254,6 +259,14 @@ function AnimatedRoutes() {
                 </PageWrapper>
               }
             />
+            <Route
+              path="/guide"
+              element={
+                <PageWrapper>
+                  <GuideChat />
+                </PageWrapper>
+              }
+            />
           </Routes>
         </AnimatePresence>
       </Suspense>
@@ -271,13 +284,20 @@ function App() {
   }, [hasEntered]);
 
   if (!hasEntered) {
-    return <EntryGate onEnter={() => setHasEntered(true)} />;
+    return (
+      <>
+        <EntryGate onEnter={() => setHasEntered(true)} />
+        <ThoughtBubble />
+      </>
+    );
   }
 
   return (
     <Router>
       <UserPathTracker />
       <MenuTab />
+      <ThoughtBubble />
+      <FloatingGuide />
       <AnimatedRoutes />
     </Router>
   );
@@ -285,6 +305,8 @@ function App() {
 
 root.render(
   <StrictMode>
-    <App />
+    <ChatProvider>
+      <App />
+    </ChatProvider>
   </StrictMode>,
 );

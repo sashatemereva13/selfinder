@@ -29,8 +29,8 @@ export default function MenuTab() {
         <div id="sf-menuTabPanel" className="sf-menuTabPanel">
           <JourneyNav
             variant="overlay"
-            title="Narrative Flow"
-            subtitle="keep track of your journey"
+            title="Rooms"
+            subtitle="Choose where to go next."
             showProgress
           />
         </div>
