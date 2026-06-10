@@ -15,7 +15,7 @@ permissions:
 
 concurrency:
   group: deploy-frontend-production
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
@@ -30,11 +30,10 @@ jobs:
     steps:
       # checkout repo
       - name: checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
-      #   setup node
       - name: setup nodejs
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: "npm"
@@ -51,9 +50,8 @@ jobs:
       - name: build project
         run: npm run build
 
-      # deploy via rsync
       - name: deploy to VPS
-        uses: burnett01/rsync-deployments@7.0.2
+        uses: burnett01/rsync-deployments@8.0.5
         with:
           switches: -avzr --delete
           path: frontend/dist/

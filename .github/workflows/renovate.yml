@@ -41,10 +41,10 @@ jobs:
 
     steps:
       - name: checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: run
-        uses: renovatebot/github-action@v40.1.7
+        uses: renovatebot/github-action@v46
         with:
           configurationFile: renovate.json
           token: ${{ secrets.RENOVATE_TOKEN }}
