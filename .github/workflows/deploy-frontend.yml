@@ -39,7 +39,7 @@ jobs:
 
       #  install dependencies
       - name: install dependencies
-        run: npm install
+        run: npm cache clean --force && npm install
 
       - name: run tests
         run: npm test

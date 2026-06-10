@@ -34,7 +34,7 @@ jobs:
           node-version: 20
 
       - name: install dependencies
-        run: npm install
+        run: npm cache clean --force && npm install
 
       - name: run tests
         run: npm test
