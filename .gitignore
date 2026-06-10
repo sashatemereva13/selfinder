@@ -20,15 +20,9 @@ Thumbs.db
 # --------------------
 # Backend
 # --------------------
-backend/venv
-backend/__pycache__
-backend/*.pyc
 backend/.env
 backend/.env.*
 
-# Python
-*.py[cod]
-__pycache__/
 
 # --------------------
 # IDE
