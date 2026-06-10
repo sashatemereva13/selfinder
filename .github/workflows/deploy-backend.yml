@@ -20,7 +20,7 @@ concurrency:
 env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/selfinder-backend
   CONTAINER_NAME: selfinder-backend
-  BACKEND_PORT: ${{ vars.BACKEND_PORT || '3001' }}
+  BACKEND_PORT: ${{ vars.BACKEND_PORT || '3002' }}
   BACKEND_ENV_FILE: ${{ vars.BACKEND_ENV_FILE || '/opt/selfinder/backend/.env' }}
 
 jobs:
@@ -90,5 +90,6 @@ jobs:
               -p ${{ env.BACKEND_PORT }}:${{ env.BACKEND_PORT }} \
               ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+            sleep 3
             curl --fail --silent --show-error \
               "http://127.0.0.1:${{ env.BACKEND_PORT }}/api/health"
