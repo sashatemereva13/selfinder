@@ -4,9 +4,18 @@ import {
 } from 'three';
 
 /**
- * TODO
+ * @module SAOShader
+ * @three_import import { SAOShader } from 'three/addons/shaders/SAOShader.js';
  */
 
+/**
+ * SAO shader.
+ *
+ * Used by {@link SAOPass}.
+ *
+ * @constant
+ * @type {ShaderMaterial~Shader}
+ */
 const SAOShader = {
 
 	name: 'SAOShader',
@@ -49,7 +58,6 @@ const SAOShader = {
 		}`,
 
 	fragmentShader: /* glsl */`
-
 		#include <common>
 
 		varying vec2 vUv;
@@ -58,8 +66,8 @@ const SAOShader = {
 		uniform sampler2D tDiffuse;
 		#endif
 
-		uniform sampler2D tDepth;
-		uniform sampler2D tNormal;
+		uniform highp sampler2D tDepth;
+		uniform highp sampler2D tNormal;
 
 		uniform float cameraNear;
 		uniform float cameraFar;
@@ -145,9 +153,15 @@ const SAOShader = {
 				angle += ANGLE_STEP;
 
 				float sampleDepth = getDepth( sampleUv );
-				if( sampleDepth >= ( 1.0 - EPSILON ) ) {
+				#ifdef USE_REVERSED_DEPTH_BUFFER
+				if( sampleDepth <= 0.0 + EPSILON ) {
 					continue;
 				}
+				#else
+					if( sampleDepth >= 1.0 - EPSILON ) {
+						continue;
+					}
+				#endif
 
 				float sampleViewZ = getViewZ( sampleDepth );
 				vec3 sampleViewPosition = getViewPosition( sampleUv, sampleDepth, sampleViewZ );
@@ -162,9 +176,16 @@ const SAOShader = {
 
 		void main() {
 			float centerDepth = getDepth( vUv );
-			if( centerDepth >= ( 1.0 - EPSILON ) ) {
-				discard;
-			}
+			
+			#ifdef USE_REVERSED_DEPTH_BUFFER
+				if( centerDepth <= 0.0 + EPSILON ) {
+					discard;
+				}
+			#else
+				if( centerDepth >= 1.0 - EPSILON ) {
+					discard;
+				}
+			#endif
 
 			float centerViewZ = getViewZ( centerDepth );
 			vec3 viewPosition = getViewPosition( vUv, centerDepth, centerViewZ );

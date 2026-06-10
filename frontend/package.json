@@ -14,17 +14,17 @@
     "vite-plugin-restart": "^0.4.2"
   },
   "dependencies": {
-    "@react-three/drei": "^9.122.0",
-    "@react-three/fiber": "^8.18.0",
-    "@react-three/postprocessing": "^2.19.1",
-    "framer-motion": "^12.34.0",
+    "@react-three/drei": "^10",
+    "@react-three/fiber": "^9",
+    "@react-three/postprocessing": "^3",
+    "framer-motion": "^12.40.0",
     "jspdf": "^4.2.1",
-    "leva": "^0.9.35",
-    "postprocessing": "^6.37.4",
-    "r3f-perf": "7.2",
+    "leva": "^0.10.1",
+    "postprocessing": "^6.39.1",
+    "r3f-perf": "7.2.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "react-router-dom": "^7.13.2",
-    "three": "^0.158.0"
+    "react-router-dom": "^7.15.1",
+    "three": "^0.184.0"
   }
 }
