@@ -52,6 +52,9 @@ function ChatInterface() {
   const messagesRef = useRef(null);
   const inputRef = useRef(null);
   const hasMountedRef = useRef(false);
+  const philosopherRef = useRef(activePhilosopher);
+  if (activePhilosopher) philosopherRef.current = activePhilosopher;
+  const philosopher = philosopherRef.current;
 
   useEffect(() => {
     const messagesEl = messagesRef.current;
@@ -86,7 +89,7 @@ function ChatInterface() {
   return (
     <motion.div
       className="guide-chat"
-      style={{ '--philo-color': activePhilosopher.color, '--philo-rgb': activePhilosopher.accentRgb }}
+      style={{ '--philo-color': philosopher.color, '--philo-rgb': philosopher.accentRgb }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -94,8 +97,8 @@ function ChatInterface() {
     >
       <header className="guide-chat-header">
         <div className="guide-chat-identity">
-          <span className="guide-chat-mode">{activePhilosopher.mode}</span>
-          <span className="guide-chat-name">{activePhilosopher.name}</span>
+          <span className="guide-chat-mode">{philosopher.mode}</span>
+          <span className="guide-chat-name">{philosopher.name}</span>
         </div>
         <div className="guide-chat-controls">
           {messages.length > 0 && (
@@ -112,7 +115,7 @@ function ChatInterface() {
       <div className="guide-chat-messages" ref={messagesRef}>
         {messages.length === 0 && (
           <div className="guide-chat-empty">
-            <p className="guide-empty-desc">{activePhilosopher.description}</p>
+            <p className="guide-empty-desc">{philosopher.description}</p>
             <p className="guide-empty-prompt">Begin wherever you are.</p>
           </div>
         )}
