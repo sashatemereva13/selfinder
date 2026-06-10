@@ -1,55 +1,36 @@
-name: Docker Build Publish Deploy
+name: Docker Image Check
 
 on:
-  # Create a docker image at every pull request
   pull_request:
     branches:
       - main
+    paths:
+      - "frontend/**"
+      - "Dockerfile"
+      - ".github/workflows/docker-image.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "frontend/**"
+      - "Dockerfile"
+      - ".github/workflows/docker-image.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: docker-check-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  docker:
+  docker-check:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: read
-      packages: write
+    timeout-minutes: 15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Login to GitHub Container Registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Build Docker image
-        run: |
-          docker build -t ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }} .
-
-        #   Publish the image to the github registry
-      - name: Push Docker image
-        run: |
-          docker push ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }}
-
-        #   Pull the image into hostinger provider
-      - name: Deploy to server
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST}}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
-
-            IMAGE=ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }}
-
-            docker login ghcr.io -u ${{ github.repository_owner }} -p ${{ secrets.GHCR_PAT }}
-
-            docker pull $IMAGE
-
-            docker stop selfinder || true
-            docker rm selfinder || true
-
-            docker run -d \
-              --name selfinder \
-              -p 8080:80 \
-              --restart unless-stopped \
-              ghcr.io/${{ github.repository_owner }}/selfinder:${{ github.sha }}
+      - name: Build frontend image
+        run: docker build -t selfinder-frontend:${{ github.sha }} .

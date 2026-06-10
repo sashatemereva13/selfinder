@@ -12,8 +12,10 @@ import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
 
 const app = express();
+const port = Number(process.env.PORT || 3001);
+const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
 
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(cors({ origin: clientOrigin }));
 app.use(express.json());
 
 app.use("/api/health",        healthRouter); 
@@ -25,4 +27,4 @@ app.use("/api/measure",       measureRouter);
 app.use("/api/conversation",  conversationRouter);
 app.use("/api/feedback",      feedbackRouter);
 
-app.listen(3001, () => console.log("Backend running on :3001"));
+app.listen(port, () => console.log(`Backend running on :${port}`));

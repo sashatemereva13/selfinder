@@ -1,4 +1,4 @@
-name: Build & Deploy Selfider
+name: Deploy Frontend
 
 on:
   push:
@@ -6,12 +6,22 @@ on:
       - main
     paths:
       - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
 
   workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-frontend-production
+  cancel-in-progress: true
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
 
     defaults:
       run:
@@ -33,6 +43,9 @@ jobs:
       #  install dependencies
       - name: install dependencies
         run: npm ci
+
+      - name: run tests
+        run: npm test
 
       # build project
       - name: build project
