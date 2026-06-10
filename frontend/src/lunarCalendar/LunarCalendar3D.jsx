@@ -381,9 +381,12 @@ export default function LunarCalendar3D() {
           <div className="moonContainer">
             <Canvas
               dpr={quality.dpr}
-              gl={{ antialias: quality.tier !== "low", powerPreference: "high-performance" }}
+              gl={{ antialias: quality.tier !== "low", powerPreference: "default" }}
               performance={{ min: 0.5 }}
               camera={{ position: [0, 0, 7], fov: 45 }}
+              onCreated={({ gl }) => {
+                gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+              }}
             >
               <Moon3D phase={phaseData.fraction} qualityTier={quality.tier} />
             </Canvas>

@@ -75,8 +75,9 @@ const FrontPage = () => {
           }}
           performance={{ min: 0.5 }}
           camera={{ fov: 55, near: 0.1, far: 500, position: [0, 0, 20] }}
-          onCreated={({ camera }) => {
+          onCreated={({ camera, gl }) => {
             camera.layers.enable(1);
+            gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
           }}
         >
           <Suspense fallback={null}>

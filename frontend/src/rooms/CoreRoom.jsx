@@ -328,6 +328,9 @@ export default function CoreRoom() {
             powerPreference: "high-performance",
           }}
           camera={{ position: [0, 0.2, 10], fov: 52, near: 0.1, far: 120 }}
+          onCreated={({ gl }) => {
+            gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+          }}
         >
           <Suspense fallback={null}>
             <CameraControls

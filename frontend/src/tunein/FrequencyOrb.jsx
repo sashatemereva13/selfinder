@@ -53,8 +53,11 @@ export default function FrequencyOrb({ color, qualityTier = "medium" }) {
     <Canvas
       className="frequencyOrbCanvas"
       dpr={isLowQuality ? [1, 1.2] : isMediumQuality ? [1, 1.4] : [1, 1.7]}
-      gl={{ antialias: !isLowQuality, powerPreference: "high-performance" }}
+      gl={{ antialias: !isLowQuality, powerPreference: "default" }}
       camera={{ position: [0, 0, 3] }}
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+      }}
     >
       <ambientLight intensity={isLowQuality ? 0.24 : 0.3} />
       <pointLight position={[5, 5, 5]} intensity={isLowQuality ? 1.1 : 1.5} />

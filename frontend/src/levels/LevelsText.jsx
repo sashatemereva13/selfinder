@@ -32,8 +32,11 @@ export default function LevelsText() {
       <Canvas
         className="levelsCanvas"
         dpr={quality.dpr}
-        gl={{ antialias: quality.tier !== "low", powerPreference: "high-performance" }}
+        gl={{ antialias: quality.tier !== "low", powerPreference: "default" }}
         camera={{ position: [0, 0, 8] }}
+        onCreated={({ gl }) => {
+          gl.domElement.addEventListener('webglcontextlost', (e) => { e.preventDefault(); }, false);
+        }}
       >
         <LevelsScene qualityTier={quality.tier} />
       </Canvas>
