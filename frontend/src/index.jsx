@@ -72,7 +72,7 @@ function AnimatedRoutes() {
               path="/persona"
               element={
                 <PageWrapper>
-                  <CoreRoom />
+                  <JungianRoom roomKey="persona" />
                 </PageWrapper>
               }
             />

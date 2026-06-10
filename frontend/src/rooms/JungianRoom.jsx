@@ -6,6 +6,16 @@ import { useChat } from "../guide/ChatContext";
 import "./JungianRoom.css";
 
 const ROOM_VISUALS = {
+  persona: (
+    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
+      <ellipse cx="60" cy="52" rx="36" ry="42" stroke="rgba(195,153,255,0.22)" strokeWidth="1" />
+      <ellipse cx="60" cy="52" rx="24" ry="28" stroke="rgba(195,153,255,0.14)" strokeWidth="1" />
+      <path d="M44 48 Q48 44 52 48" stroke="rgba(195,153,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M68 48 Q72 44 76 48" stroke="rgba(195,153,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M50 64 Q60 70 70 64" stroke="rgba(116,221,214,0.4)" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M36 38 Q60 20 84 38" stroke="rgba(195,153,255,0.12)" strokeWidth="1" />
+    </svg>
+  ),
   shadow: (
     <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
       <circle cx="60" cy="60" r="50" stroke="rgba(168,122,201,0.2)" strokeWidth="1" />
@@ -42,6 +52,7 @@ const ROOM_VISUALS = {
 };
 
 const ROOM_INVITATIONS = {
+  persona: "The mask fits so well you've forgotten you're wearing it. Your companion helps you remember.",
   shadow: "The shadow doesn't disappear when you ignore it. Your companion walks beside you here.",
   anima: "What we see in others is often ourselves, looking back. Your companion can help you look.",
   innerchild: "What did you leave behind? Your companion walks back with you.",
