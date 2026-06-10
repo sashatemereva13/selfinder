@@ -2,11 +2,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth/AuthContext";
+import { apiUrl } from "../api/baseUrl";
 import { useChat } from "../guide/ChatContext";
 import { HOUSE_ROOMS } from "../content/narrativeFlow";
 import "./PersonalSpace.css";
 
-const API = "http://localhost:3001/api/user";
+const API = apiUrl("/user");
 
 function useUserProfile(token) {
   const [profile, setProfile] = useState(null);

@@ -1,3 +1,5 @@
+import { apiUrl } from "../api/baseUrl";
+
 function authHeaders() {
   try {
     const raw = localStorage.getItem("sf_auth");
@@ -9,7 +11,7 @@ function authHeaders() {
 }
 
 export async function sendMessage(messages, philosopher) {
-  const res = await fetch("http://localhost:3001/api/chat", {
+  const res = await fetch(apiUrl("/chat"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
@@ -20,5 +22,4 @@ export async function sendMessage(messages, philosopher) {
   const { reply } = await res.json();
   return reply;
 }
-
 

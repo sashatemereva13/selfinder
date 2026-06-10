@@ -13,9 +13,26 @@ import userRouter         from "./routes/user.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
-const clientOrigin = process.env.CLIENT_ORIGIN || "http://localhost:5173";
+const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+const localOrigins = [
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
+const allowedOrigins = new Set([...localOrigins, ...configuredOrigins]);
 
-app.use(cors({ origin: clientOrigin }));
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.has(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+}));
 app.use(express.json());
 
 app.use("/api/health",        healthRouter); 

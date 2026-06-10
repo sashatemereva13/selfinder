@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useState } from "react";
+import { apiUrl } from "../api/baseUrl";
 
 const AuthContext = createContext(null);
 
-const API = "http://localhost:3001/api/auth";
+const API = apiUrl("/auth");
 
 function loadStored() {
   try {

@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { apiUrl } from "../api/baseUrl";
 import { useChat } from "../guide/ChatContext";
 
-const JOURNEY_LINE_API = "http://localhost:3001/api/chat/journey-line";
+const JOURNEY_LINE_API = apiUrl("/chat/journey-line");
 const JOURNEY_LINE_DELAY_MS = 480;
 
 // Shared so the portal jump (which pre-warms this line while the player is

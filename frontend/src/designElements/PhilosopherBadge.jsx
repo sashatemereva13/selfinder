@@ -7,11 +7,12 @@ import {
   getPhilosopherComment,
   resolveCommentPath,
 } from "../content/philosopherComments";
+import { apiUrl } from "../api/baseUrl";
 import { AVATARS } from "../content/philosopherAvatars";
 import "./PhilosopherBadge.css";
 
 const COMMENT_DELAY_MS = 520;
-const COMMENT_API = "http://localhost:3001/api/chat/badge-comment";
+const COMMENT_API = apiUrl("/chat/badge-comment");
 const badgeCommentCache = new Map();
 let badgeCommentEndpointMissing = false;
 
