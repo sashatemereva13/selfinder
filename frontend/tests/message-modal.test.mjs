@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const messagePath = resolve('src/frontpage/Message.jsx');
-const cssPath = resolve('src/buttons3D/FeelingLuckyButton.css');
+const cssPath = resolve('src/designElements/FeelingLuckyButton.css');
 
 const messageFile = readFileSync(messagePath, 'utf8');
 const cssFile = readFileSync(cssPath, 'utf8');

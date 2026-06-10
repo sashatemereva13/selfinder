@@ -1,5 +1,5 @@
 import PanchangBase64 from "/fontsCSS/panchang-base64.txt?raw";
-import Labels from "../list/LabelsList";
+import Labels from "./LabelsList";
 import { useEffect, useState } from "react";
 import saveIcon from "/saveIcon.svg";
 

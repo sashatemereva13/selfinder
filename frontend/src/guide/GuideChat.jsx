@@ -49,11 +49,25 @@ function PhilosopherGrid() {
 function ChatInterface() {
   const { activePhilosopher, messages, send, isLoading, clearConversation, selectPhilosopher } = useChat();
   const [input, setInput] = useState('');
-  const bottomRef = useRef(null);
+  const messagesRef = useRef(null);
+  const inputRef = useRef(null);
+  const hasMountedRef = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    const messagesEl = messagesRef.current;
+    if (!messagesEl) return;
+
+    messagesEl.scrollTo({
+      top: messagesEl.scrollHeight,
+      behavior: hasMountedRef.current ? 'smooth' : 'auto',
+    });
+
+    hasMountedRef.current = true;
   }, [messages.length, isLoading]);
+
+  useEffect(() => {
+    inputRef.current?.focus({ preventScroll: true });
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -95,7 +109,7 @@ function ChatInterface() {
         </div>
       </header>
 
-      <div className="guide-chat-messages">
+      <div className="guide-chat-messages" ref={messagesRef}>
         {messages.length === 0 && (
           <div className="guide-chat-empty">
             <p className="guide-empty-desc">{activePhilosopher.description}</p>
@@ -128,12 +142,11 @@ function ChatInterface() {
             <span className="guide-dot" />
           </motion.div>
         )}
-
-        <div ref={bottomRef} />
       </div>
 
       <form className="guide-chat-form" onSubmit={handleSubmit}>
         <textarea
+          ref={inputRef}
           className="guide-chat-input"
           value={input}
           onChange={e => setInput(e.target.value)}
@@ -141,7 +154,6 @@ function ChatInterface() {
           placeholder="Speak honestly…"
           disabled={isLoading}
           rows={1}
-          autoFocus
         />
         <button
           className="guide-send-btn"

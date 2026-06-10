@@ -75,10 +75,6 @@
 
 .thresholdTopRow .sf-journeyNav-overlay {
   width: min(29rem, 100%);
-  background:
-    radial-gradient(circle at 10% 12%, rgba(195, 153, 255, 0.2), transparent 48%),
-    radial-gradient(circle at 88% 15%, rgba(116, 221, 214, 0.12), transparent 52%),
-    rgba(8, 8, 12, 0.58);
 }
 
 .thresholdGrid {

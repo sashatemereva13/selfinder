@@ -1,0 +1,416 @@
+.ps-page {
+  min-height: 100svh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 5.5rem 1.5rem 3rem;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 25% 15%, rgba(195, 153, 255, 0.08), transparent 48%),
+    radial-gradient(circle at 75% 85%, rgba(116, 221, 214, 0.06), transparent 48%),
+    linear-gradient(180deg, #06060d, #090813 46%, #0c0717);
+  color: #f1eafd;
+}
+
+.ps-inner {
+  width: min(44rem, 100%);
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.ps-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.ps-kicker {
+  margin: 0;
+}
+
+.ps-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: clamp(1.6rem, 3.5vw + 0.8rem, 2.4rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(241, 234, 253, 0.95);
+}
+
+.ps-subtitle {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.52);
+  line-height: 1.65;
+  max-width: 30rem;
+}
+
+/* ─── Card grid ─────────────────────────────────────────────────────────────── */
+.ps-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(18rem, 100%), 1fr));
+}
+
+.ps-card {
+  padding: 1.4rem;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(195, 153, 255, 0.06), transparent 52%),
+    rgba(10, 9, 18, 0.5);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.28);
+  backdrop-filter: blur(10px);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ps-card--journey {
+  grid-column: span 2;
+}
+
+@media (max-width: 640px) {
+  .ps-card--journey {
+    grid-column: span 1;
+  }
+}
+
+.ps-cardLabel {
+  margin: 0;
+}
+
+/* ─── Companion section ─────────────────────────────────────────────────────── */
+.ps-philosopher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ps-philosopherName {
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--philo-color);
+}
+
+.ps-philosopherMode {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  color: rgba(241, 234, 253, 0.48);
+}
+
+.ps-changeBtn {
+  margin-top: 0.6rem;
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: rgba(195, 153, 255, 0.6);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(195, 153, 255, 0.25);
+  width: fit-content;
+  transition: color 160ms ease;
+}
+
+.ps-changeBtn:hover {
+  color: rgba(195, 153, 255, 0.9);
+}
+
+.ps-noPhilosopher {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ps-noPhilosopherText {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  color: rgba(241, 234, 253, 0.45);
+}
+
+/* ─── Journey section ───────────────────────────────────────────────────────── */
+.ps-roomList {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.ps-roomRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  text-decoration: none;
+  color: rgba(241, 234, 253, 0.72);
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.ps-roomRow:hover {
+  border-color: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(241, 234, 253, 0.92);
+}
+
+.ps-roomStage {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.36);
+  width: 4rem;
+  flex-shrink: 0;
+}
+
+.ps-roomLabel {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+}
+
+/* ─── Stats section ─────────────────────────────────────────────────────────── */
+.ps-statList {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.ps-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ps-statValue {
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.5rem;
+  color: rgba(195, 153, 255, 0.9);
+  line-height: 1;
+}
+
+.ps-statName {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  color: rgba(241, 234, 253, 0.45);
+  text-transform: uppercase;
+}
+
+.ps-statsNote {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  color: rgba(241, 234, 253, 0.3);
+  line-height: 1.5;
+}
+
+/* ─── GDPR section ──────────────────────────────────────────────────────────── */
+.ps-gdpr {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ps-gdprKicker {
+  margin: 0 0 0.25rem;
+}
+
+.ps-gdprCard {
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(10, 9, 18, 0.42);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ps-gdprCard--danger {
+  border-color: rgba(255, 80, 90, 0.14);
+  background: rgba(20, 8, 8, 0.42);
+}
+
+.ps-gdprCardHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.ps-gdprCardTitle {
+  margin: 0 0 0.3rem;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  color: rgba(241, 234, 253, 0.82);
+}
+
+.ps-gdprCardDesc {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.38);
+  line-height: 1.65;
+  max-width: 30rem;
+}
+
+.ps-gdprTimestamp {
+  margin: 0.45rem 0 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.06em;
+  color: rgba(195, 153, 255, 0.45);
+}
+
+.ps-gdprMsg {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.74rem;
+  line-height: 1.55;
+  background: rgba(195, 153, 255, 0.07);
+  border: 1px solid rgba(195, 153, 255, 0.14);
+  color: rgba(195, 153, 255, 0.9);
+}
+
+.ps-gdprMsg--error {
+  background: rgba(255, 80, 90, 0.08);
+  border-color: rgba(255, 80, 90, 0.2);
+  color: rgba(255, 160, 170, 0.92);
+}
+
+.ps-gdprBtn {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(241, 234, 253, 0.7);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.ps-gdprBtn:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(241, 234, 253, 0.92);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ps-gdprBtn--danger {
+  border-color: rgba(255, 80, 90, 0.24);
+  color: rgba(255, 140, 148, 0.82);
+}
+
+.ps-gdprBtn--danger:hover:not(:disabled) {
+  border-color: rgba(255, 80, 90, 0.44);
+  color: rgba(255, 150, 160, 1);
+  background: rgba(255, 80, 90, 0.08);
+}
+
+.ps-consentToggle {
+  flex-shrink: 0;
+  padding: 0.55rem 1rem;
+  border-radius: 999px;
+  border: 1px solid;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.ps-consentToggle.is-off {
+  border-color: rgba(195, 153, 255, 0.3);
+  background: rgba(195, 153, 255, 0.06);
+  color: rgba(195, 153, 255, 0.82);
+}
+
+.ps-consentToggle.is-off:hover:not(:disabled) {
+  border-color: rgba(195, 153, 255, 0.5);
+  color: rgba(195, 153, 255, 1);
+  background: rgba(195, 153, 255, 0.1);
+}
+
+.ps-consentToggle.is-on {
+  border-color: rgba(255, 80, 90, 0.24);
+  background: rgba(255, 80, 90, 0.04);
+  color: rgba(255, 140, 148, 0.72);
+}
+
+.ps-consentToggle.is-on:hover:not(:disabled) {
+  border-color: rgba(255, 80, 90, 0.44);
+  color: rgba(255, 150, 160, 1);
+  background: rgba(255, 80, 90, 0.08);
+}
+
+.ps-consentToggle:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Delete confirmation */
+.ps-deleteConfirm {
+  overflow: hidden;
+}
+
+.ps-deleteWarning {
+  margin: 0 0 0.75rem;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.74rem;
+  color: rgba(241, 234, 253, 0.52);
+  line-height: 1.6;
+}
+
+.ps-deleteWarning strong {
+  color: rgba(255, 140, 148, 0.82);
+  font-family: "Panchang-Light", sans-serif;
+  font-weight: 400;
+}
+
+.ps-deleteRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.ps-deleteInput {
+  flex: 1;
+  min-width: 10rem;
+  padding: 0.58rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 80, 90, 0.24);
+  background: rgba(255, 80, 90, 0.04);
+  color: rgba(241, 234, 253, 0.9);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.ps-deleteInput:focus {
+  border-color: rgba(255, 80, 90, 0.44);
+}
+
+/* ─── Footer ────────────────────────────────────────────────────────────────── */
+.ps-footer {
+  display: flex;
+  justify-content: flex-start;
+}

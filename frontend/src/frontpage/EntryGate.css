@@ -1,0 +1,602 @@
+.entryGate {
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 100svh;
+  min-height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 2rem 1.2rem 1.6rem;
+  box-sizing: border-box;
+  background:
+    radial-gradient(
+      circle at 50% 42%,
+      rgba(187, 143, 255, 0.18),
+      rgba(187, 143, 255, 0) 34%
+    ),
+    radial-gradient(
+      circle at 50% 40%,
+      rgba(188, 64, 184, 0.12),
+      rgba(188, 64, 184, 0) 52%
+    ),
+    radial-gradient(
+      circle at 60% 20%,
+      rgba(179, 132, 238, 0.18),
+      transparent 55%
+    ),
+    radial-gradient(
+      circle at 18% 76%,
+      rgba(116, 221, 214, 0.12),
+      transparent 44%
+    ),
+    linear-gradient(180deg, #06060d, #090813 46%, #0c0717);
+  color: #f1eafd;
+  text-align: center;
+  isolation: isolate;
+  animation: entryGateWorldBreath 4.8s ease-in-out infinite;
+}
+
+.entryGate::before,
+.entryGate::after {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.entryGate::before {
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(223, 148, 255, 0.13),
+      transparent 42%
+    ),
+    conic-gradient(
+      from 15deg at 50% 50%,
+      rgba(187, 143, 255, 0.16),
+      rgba(116, 221, 214, 0.1),
+      rgba(188, 64, 184, 0.15),
+      rgba(187, 143, 255, 0.16)
+    );
+  filter: blur(34px) saturate(112%);
+  opacity: 0.72;
+  animation: entryGateAuraDrift 18s ease-in-out infinite;
+}
+
+.entryGate::after {
+  inset: 0;
+  background-image:
+    radial-gradient(
+      circle at 12% 30%,
+      rgba(255, 255, 255, 0.5) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 34% 72%,
+      rgba(223, 148, 255, 0.36) 0 1px,
+      transparent 2px
+    ),
+    radial-gradient(
+      circle at 74% 26%,
+      rgba(116, 221, 214, 0.4) 0 1.2px,
+      transparent 2.2px
+    ),
+    radial-gradient(
+      circle at 88% 78%,
+      rgba(255, 255, 255, 0.42) 0 1px,
+      transparent 2px
+    );
+  background-size:
+    220px 220px,
+    270px 270px,
+    340px 340px,
+    280px 280px;
+  opacity: 0.34;
+  animation: entryGateStarDrift 24s linear infinite;
+}
+
+.entryGateHero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  width: min(44rem, calc(100vw - 2.2rem));
+  z-index: 1;
+}
+
+.entryGateKicker {
+  margin: 0;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  font-family: "Panchang-Medium";
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(231, 213, 255, 0.92);
+}
+
+.entryGateTitle {
+  margin: 0;
+  max-width: 18ch;
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  font-family: "Panchang-Medium";
+  font-size: clamp(1.5rem, 2.2vw + 0.8rem, 2.45rem);
+  line-height: 1.18;
+  color: rgba(249, 244, 255, 0.96);
+  text-shadow: 0 0 24px rgba(188, 64, 184, 0.2);
+}
+
+.entryGateHeart {
+  position: relative;
+  width: clamp(7rem, 15vw, 10rem);
+  aspect-ratio: 1 / 1;
+  z-index: 1;
+  pointer-events: none;
+  animation: entryGateCoreFloat 5.8s ease-in-out infinite;
+  transition: filter 520ms ease;
+}
+
+.entryGateHeart.is-attuned {
+  filter: saturate(1.22);
+}
+
+.entryGateCoreField {
+  position: absolute;
+  inset: -80%;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(var(--philo-rgb, 214, 175, 255), 0.24),
+      rgba(var(--philo-rgb, 214, 175, 255), 0.08) 36%,
+      transparent 72%
+    ),
+    radial-gradient(
+      circle at 45% 48%,
+      rgba(var(--philo-rgb, 116, 221, 214), 0.14),
+      transparent 60%
+    );
+  filter: blur(14px) saturate(112%);
+  animation: entryGateCorePulse 3.8s ease-in-out infinite;
+  transition: background 520ms ease;
+}
+
+.entryGateCoreRing {
+  position: absolute;
+  inset: 15%;
+  border-radius: 50%;
+  border: 1px solid rgba(223, 208, 255, 0.6);
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.34),
+      rgba(255, 255, 255, 0.04)
+    ),
+    linear-gradient(
+      220deg,
+      rgba(var(--philo-rgb, 153, 121, 214), 0.4),
+      rgba(var(--philo-rgb, 116, 221, 214), 0.2)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    0 0 20px rgba(var(--philo-rgb, 191, 155, 255), 0.24);
+  animation: entryGateCoreRingPulse 3.8s ease-in-out infinite;
+  transition:
+    background 520ms ease,
+    box-shadow 520ms ease;
+}
+
+.entryGateCore {
+  position: absolute;
+  inset: 29%;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  background:
+    linear-gradient(
+      140deg,
+      rgba(255, 255, 255, 0.44),
+      rgba(255, 255, 255, 0.02) 48%
+    ),
+    linear-gradient(
+      225deg,
+      rgba(var(--philo-rgb, 255, 82, 188), 0.78),
+      rgba(var(--philo-rgb, 142, 198, 255), 0.6)
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -10px 12px rgba(30, 10, 55, 0.24),
+    0 10px 20px rgba(6, 5, 18, 0.32),
+    0 0 18px rgba(var(--philo-rgb, 255, 120, 208), 0.28);
+  animation: entryGateCorePulse 3.8s ease-in-out infinite;
+  transition:
+    background 520ms ease,
+    box-shadow 520ms ease;
+}
+
+.entryGateButton {
+  position: relative;
+  z-index: 1;
+  min-height: 46px;
+  border: 1px solid rgba(195, 153, 255, 0.44);
+  border-radius: 999px;
+  min-width: min(24rem, calc(100vw - 2.4rem));
+  padding: 0.88rem 1.9rem;
+  background:
+    radial-gradient(
+      circle at 78% 16%,
+      rgba(116, 221, 214, 0.25),
+      transparent 44%
+    ),
+    radial-gradient(
+      circle at 15% 10%,
+      rgba(195, 153, 255, 0.22),
+      transparent 56%
+    ),
+    rgba(255, 255, 255, 0.03);
+  color: rgba(241, 234, 253, 0.94);
+  font-family: "Panchang-Medium";
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 0 0 1px rgba(188, 64, 184, 0.22),
+    0 10px 22px rgba(0, 0, 0, 0.26),
+    0 0 22px rgba(187, 143, 255, 0.2);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease,
+    filter 180ms ease,
+    opacity 180ms ease;
+}
+
+.entryGateButton:hover:not(.is-locked) {
+  transform: translateY(-2px) scale(1.01);
+  border-color: rgba(195, 153, 255, 0.64);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 12px 24px rgba(0, 0, 0, 0.3),
+    0 0 26px rgba(187, 143, 255, 0.32);
+  filter: saturate(116%);
+}
+
+.entryGateButton:focus-visible {
+  outline: 2px solid rgba(159, 211, 255, 0.95);
+  outline-offset: 2px;
+}
+
+/* Locked state — no philosopher chosen yet. Reads as "waiting", not broken:
+   a soft breathing glow keeps it alive and nudges the eye back to the grid. */
+.entryGateButton.is-locked {
+  border-color: rgba(195, 153, 255, 0.22);
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.025);
+  cursor: default;
+  animation: entryGateButtonInvite 2.6s ease-in-out infinite;
+}
+
+@keyframes entryGateButtonInvite {
+  0%,
+  100% {
+    opacity: 0.56;
+  }
+  50% {
+    opacity: 0.76;
+  }
+}
+
+@keyframes entryGateAuraDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.68;
+  }
+  50% {
+    transform: translate3d(0, 10px, 0) scale(1.05);
+    opacity: 0.92;
+  }
+}
+
+@keyframes entryGateWorldBreath {
+  0%,
+  100% {
+    background-size:
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      100% 100%,
+      100% 100%;
+    filter: saturate(100%);
+  }
+  50% {
+    background-size:
+      108% 108%,
+      106% 106%,
+      104% 104%,
+      106% 106%,
+      100% 100%;
+    filter: saturate(116%);
+  }
+}
+
+@keyframes entryGateStarDrift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-40px, -56px, 0);
+  }
+}
+
+@keyframes entryGateCoreFloat {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0);
+  }
+}
+
+@keyframes entryGateCorePulse {
+  0%,
+  100% {
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes entryGateCoreRingPulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.04);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .entryGate::before,
+  .entryGate::after,
+  .entryGateHeart,
+  .entryGateCoreField,
+  .entryGateCoreRing,
+  .entryGateCore,
+  .entryGatePhiloCard.is-selected,
+  .entryGateButton.is-locked {
+    animation: none;
+  }
+}
+
+/* ── Philosopher selection ─────────────────────────────────────────────────── */
+.entryGateCompanion {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  z-index: 1;
+  width: min(46rem, calc(100vw - 2.2rem));
+}
+
+.entryGatePhiloGrid {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.entryGatePhiloCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 210px;
+  max-width: 248px;
+  gap: 0.4rem;
+  min-height: 118px;
+  padding: 1rem 1rem 0.95rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(var(--philo-rgb), 0.08),
+      transparent 64%
+    ),
+    rgba(255, 255, 255, 0.035);
+  color: rgba(241, 234, 253, 0.8);
+  cursor: pointer;
+  text-align: left;
+  backdrop-filter: blur(10px);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease,
+    transform 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.entryGatePhiloCard:hover {
+  transform: translateY(-2px);
+  border-color: rgba(var(--philo-rgb), 0.32);
+  background: rgba(var(--philo-rgb), 0.07);
+  box-shadow: 0 0 14px rgba(var(--philo-rgb), 0.14);
+}
+
+.entryGatePhiloCard.is-selected {
+  border-color: rgba(var(--philo-rgb), 0.62);
+  background:
+    radial-gradient(
+      circle at 0% 0%,
+      rgba(var(--philo-rgb), 0.2),
+      transparent 64%
+    ),
+    rgba(var(--philo-rgb), 0.13);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 6px 22px rgba(var(--philo-rgb), 0.22),
+    0 0 0 1px rgba(var(--philo-rgb), 0.4);
+  color: rgba(241, 234, 253, 0.98);
+  animation: entryGatePhiloSelectPop 320ms ease;
+}
+
+@keyframes entryGatePhiloSelectPop {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.04);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.entryGatePhiloGlyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--philo-rgb), 0.3);
+  background: rgba(var(--philo-rgb), 0.1);
+  transition:
+    border-color 180ms ease,
+    background 180ms ease;
+}
+
+.entryGatePhiloGlyph svg {
+  width: 18px;
+  height: 18px;
+}
+
+.entryGatePhiloCard.is-selected .entryGatePhiloGlyph {
+  border-color: rgba(var(--philo-rgb), 0.6);
+  background: rgba(var(--philo-rgb), 0.22);
+}
+
+.entryGatePhiloNeed {
+  font-family: "Panchang-Light";
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: rgba(247, 243, 253, 0.76);
+}
+
+.entryGatePhiloName {
+  margin-top: auto;
+  font-family: "Panchang-Medium";
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+  text-shadow: 0 0 14px rgba(var(--philo-rgb), 0.38);
+}
+
+/* Selection check — confirms the choice the moment a card is picked */
+.entryGatePhiloCheck {
+  position: absolute;
+  top: 0.7rem;
+  right: 0.7rem;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--philo-rgb), 0.3);
+  background: rgba(var(--philo-rgb), 0.1);
+  opacity: 0;
+  transform: scale(0.6);
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease,
+    background 180ms ease,
+    border-color 180ms ease;
+}
+
+.entryGatePhiloCheck::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 7px;
+  height: 4px;
+  border-left: 1.6px solid var(--philo-color);
+  border-bottom: 1.6px solid var(--philo-color);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.entryGatePhiloCard.is-selected .entryGatePhiloCheck {
+  opacity: 1;
+  transform: scale(1);
+  background: rgba(var(--philo-rgb), 0.26);
+  border-color: rgba(var(--philo-rgb), 0.7);
+}
+
+/* Nudge animation — plays when user tries to begin without a philosopher */
+@keyframes entryGateGridNudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15% {
+    transform: translateX(-7px);
+  }
+  30% {
+    transform: translateX(7px);
+  }
+  45% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(4px);
+  }
+  78% {
+    transform: translateX(-2px);
+  }
+  90% {
+    transform: translateX(2px);
+  }
+}
+
+.entryGatePhiloGrid.is-nudge {
+  animation: entryGateGridNudge 0.6s ease;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .entryGate {
+    justify-content: flex-start;
+    gap: 1.1rem;
+    padding: 1.2rem 0.85rem 1rem;
+  }
+
+  .entryGateHero {
+    gap: 0.55rem;
+  }
+
+  .entryGateTitle {
+    max-width: 15ch;
+  }
+
+  .entryGatePhiloCard {
+    flex-basis: 100%;
+    max-width: 100%;
+    min-height: 104px;
+    padding: 0.9rem;
+  }
+}

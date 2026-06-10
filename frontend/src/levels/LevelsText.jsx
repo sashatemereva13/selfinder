@@ -1,6 +1,7 @@
 import { Canvas } from "@react-three/fiber";
 import LevelsScene from "./LevelsScene";
 import LevelCard from "./LevelCard";
+import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";
 import "./levels.css";
 
 const levels = [
@@ -24,10 +25,17 @@ const levels = [
 ];
 
 export default function LevelsText() {
+  const quality = useAdaptiveQuality();
+
   return (
     <div className="levelsPage">
-      <Canvas className="levelsCanvas" camera={{ position: [0, 0, 8] }}>
-        <LevelsScene />
+      <Canvas
+        className="levelsCanvas"
+        dpr={quality.dpr}
+        gl={{ antialias: quality.tier !== "low", powerPreference: "high-performance" }}
+        camera={{ position: [0, 0, 8] }}
+      >
+        <LevelsScene qualityTier={quality.tier} />
       </Canvas>
 
       <section className="levelsIntro">

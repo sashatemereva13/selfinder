@@ -2,6 +2,11 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./measure.css";
 import {
+  useJourneyLine,
+  MEASURE_ARRIVAL_SCENE_ID,
+  MEASURE_ARRIVAL_LINE,
+} from "../content/journeyLines";
+import {
   MEASURE_RESULT_STORAGE_KEY,
   STEP_CONFIG,
   INITIAL_CHOICES,
@@ -31,6 +36,7 @@ const Measure = () => {
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
   );
+  const arrivalLine = useJourneyLine(MEASURE_ARRIVAL_SCENE_ID, MEASURE_ARRIVAL_LINE);
   const audioContextRef = useRef(null);
   const activePreviewNodesRef = useRef([]);
   const previewTimerRef = useRef(null);
@@ -326,7 +332,7 @@ const Measure = () => {
       {showPortalArrival && (
         <div className="measure-portalArrival" aria-hidden="true">
           <div className="measure-portalArrivalRing" />
-          <p>Signal lock acquired. Entering measurement protocol.</p>
+          <p>{arrivalLine ?? MEASURE_ARRIVAL_LINE}</p>
         </div>
       )}
       <div className="measure-bg-orb orb-a" aria-hidden="true" />

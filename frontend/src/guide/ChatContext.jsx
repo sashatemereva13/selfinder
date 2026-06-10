@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useState } from 'react';
-import { PHILOSOPHERS } from './philosophers';
+import { PHILOSOPHERS } from '../content/philosophers';
 import { sendMessage } from './chatApi';
 
 const ChatContext = createContext(null);
@@ -53,6 +53,7 @@ export function ChatProvider({ children }) {
       activePhilosopher,
       selectPhilosopher,
       messages,
+      conversations,
       send,
       isLoading,
       clearConversation,

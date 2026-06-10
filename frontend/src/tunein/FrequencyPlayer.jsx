@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FrequencyOrb from "./FrequencyOrb";
+import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";
 import "./frequencyPlayer.css";
 
 const frequencies = [
@@ -13,6 +14,7 @@ const frequencies = [
 ];
 
 function FrequencyPlayer() {
+  const quality = useAdaptiveQuality();
   const [active, setActive] = useState(frequencies[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.18);
@@ -198,7 +200,7 @@ function FrequencyPlayer() {
       </aside>
 
       <div className="orbContainer">
-        <FrequencyOrb color={active.color} />
+        <FrequencyOrb color={active.color} qualityTier={quality.tier} />
         <div className="freqLabel">{activeLabel}</div>
       </div>
     </section>

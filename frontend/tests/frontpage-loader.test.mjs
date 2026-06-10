@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const frontPagePath = resolve('src/FrontPage.jsx');
+const frontPagePath = resolve('src/frontpage/FrontPage.jsx');
 const frontPageFile = readFileSync(frontPagePath, 'utf8');
 
 test('FrontPage should not render a second Drei Loader overlay', () => {

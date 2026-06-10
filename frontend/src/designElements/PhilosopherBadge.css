@@ -1,0 +1,134 @@
+/* ─── Badge (fixed top-left) ─────────────────────────────────────────────────── */
+.philoBadge {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 1.55rem);
+  left: calc(env(safe-area-inset-left, 0px) + 1.4rem);
+  z-index: 1300;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  opacity: 0.82;
+  transition: opacity 200ms ease;
+}
+
+.philoBadge:hover {
+  opacity: 1;
+}
+
+.philoBadge--right {
+  left: auto;
+  right: calc(env(safe-area-inset-right, 0px) + 1.4rem);
+}
+
+/* ─── Avatar circle ──────────────────────────────────────────────────────────── */
+.philoAvatarWrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1px solid rgba(var(--philo-rgb), 0.28);
+  background: rgba(var(--philo-rgb), 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 200ms ease, background 200ms ease;
+}
+
+.philoBadge:hover .philoAvatarWrap {
+  border-color: rgba(var(--philo-rgb), 0.5);
+  background: rgba(var(--philo-rgb), 0.14);
+}
+
+.philoAvatarSvg {
+  width: 17px;
+  height: 17px;
+}
+
+/* ─── Name ───────────────────────────────────────────────────────────────────── */
+.philoBadgeName {
+  font-family: var(--sf-font);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--philo-color);
+  white-space: nowrap;
+}
+
+/* ─── Speech bubble ──────────────────────────────────────────────────────────── */
+.philoBubble {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 4.1rem);
+  left: calc(env(safe-area-inset-left, 0px) + 1.4rem);
+  z-index: 1299;
+  max-width: min(270px, calc(100vw - 3rem));
+  padding: 0.85rem 2.4rem 0.85rem 1rem;
+  border-radius: 2px 14px 14px 14px;
+  border: 1px solid rgba(var(--philo-rgb), 0.2);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(var(--philo-rgb), 0.07), transparent 60%),
+    rgba(7, 7, 13, 0.86);
+  backdrop-filter: blur(18px);
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.38),
+    0 0 0 1px rgba(var(--philo-rgb), 0.07);
+  pointer-events: auto;
+}
+
+.philoBubble--right {
+  left: auto;
+  right: calc(env(safe-area-inset-right, 0px) + 1.4rem);
+  border-radius: 14px 2px 14px 14px;
+  padding: 0.85rem 1rem 0.85rem 2.4rem;
+}
+
+.philoBubbleText {
+  margin: 0;
+  font-family: var(--sf-font);
+  font-size: 0.74rem;
+  line-height: 1.68;
+  letter-spacing: 0.02em;
+  color: rgba(241, 234, 253, 0.86);
+}
+
+.philoBubbleDismiss {
+  position: absolute;
+  top: 0.45rem;
+  right: 0.6rem;
+  background: none;
+  border: none;
+  padding: 0.1rem 0.3rem;
+  color: rgba(241, 234, 253, 0.3);
+  font-family: var(--sf-font);
+  font-size: 0.95rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.philoBubbleDismiss:hover {
+  color: rgba(241, 234, 253, 0.65);
+}
+
+.philoBubble--right .philoBubbleDismiss {
+  right: auto;
+  left: 0.6rem;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .philoBadgeName {
+    display: none;
+  }
+
+  .philoBubble {
+    max-width: calc(100vw - 2.5rem);
+  }
+
+  .philoBadge--right {
+    right: calc(env(safe-area-inset-right, 0px) + 0.8rem);
+  }
+
+  .philoBubble--right {
+    right: calc(env(safe-area-inset-right, 0px) + 0.8rem);
+  }
+}

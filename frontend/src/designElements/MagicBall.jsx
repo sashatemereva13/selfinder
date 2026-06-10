@@ -4,15 +4,20 @@ import { Html, Sparkles, Float } from "@react-three/drei";
 import { Text } from "@react-three/drei";
 
 import * as THREE from "three";
-import "../buttons3D/FeelingLuckyButton.css";
+import "./FeelingLuckyButton.css";
 
 import DistortBall from "./DistortBall";
-import FeelingLuckyList from "../list/FeelingLuckyList.json";
+import FeelingLuckyList from "./FeelingLuckyList.json";
 import Message from "../frontpage/Message";
 import { SmoothTypewriter } from "./SmoothTypewriter";
 import Selfinder from "../frontpage/Selfinder";
+import { useJourneyLine } from "../content/journeyLines";
 
 export const Phase = { INTRO: "intro", MESSAGE: "message", READY: "ready" };
+
+const INTRO_LINE = `Welcome traveller.
+Touch the sphere to cross the threshold.`;
+const READY_LINE = `Touch the sphere again to enter the psyche.`;
 
 export default function MagicBall({
   quality,
@@ -42,6 +47,10 @@ export default function MagicBall({
   const [hovered, setHovered] = useState(false);
   const [phase, setPhase] = useState(Phase.INTRO);
 
+  /* ---------- guide-voiced overlay lines ---------- */
+  const introLine = useJourneyLine("threshold-intro", INTRO_LINE);
+  const readyLine = useJourneyLine("threshold-ready", READY_LINE);
+
   /* ---------- colour palette ---------- */
   const lightColor = hovered ? "#402289" : "#BB8FFF";
   const baseColor = hovered ? "#234f28" : "#BB8FFF";
@@ -62,8 +71,7 @@ export default function MagicBall({
     // disable user interaction but allow programmatic movement
     if (controls.current) {
       controls.current.enabled = true; // required for `.setLookAt()` to work
-      controls.current.enableDamping = true; // ≤ smooth interpolation
-      controls.current.dampingFactor = 0.12;
+      controls.current.smoothTime = 0.12;
       controls.current.mouseButtons.left = 0;
       controls.current.mouseButtons.middle = 0;
       controls.current.mouseButtons.right = 0;
@@ -118,10 +126,9 @@ export default function MagicBall({
       distanceFactor={isMobile ? 70 : 25}
       zIndexRange={[90, 90]}
     >
-      {phase === Phase.INTRO && (
+      {phase === Phase.INTRO && introLine && (
         <SmoothTypewriter className="smooth-typewriter-text">
-          {`Welcome traveller. 
-Touch the sphere to cross the threshold.`}
+          {introLine}
         </SmoothTypewriter>
       )}
 
@@ -131,9 +138,9 @@ Touch the sphere to cross the threshold.`}
         </SmoothTypewriter>
       )}
 
-      {phase === Phase.READY && (
+      {phase === Phase.READY && readyLine && (
         <SmoothTypewriter className="smooth-typewriter-text">
-          {`Touch the sphere again to enter the psyche.`}
+          {readyLine}
         </SmoothTypewriter>
       )}
     </Html>

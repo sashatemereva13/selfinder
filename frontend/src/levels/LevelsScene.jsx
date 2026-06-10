@@ -1,14 +1,19 @@
 import { Float } from "@react-three/drei";
 
-function Shard({ position }) {
+function Shard({ position, qualityTier = "medium" }) {
+  const isLowQuality = qualityTier === "low";
+
   return (
-    <Float speed={1.5} floatIntensity={2}>
+    <Float
+      speed={isLowQuality ? 1 : qualityTier === "medium" ? 1.3 : 1.5}
+      floatIntensity={isLowQuality ? 0.85 : qualityTier === "medium" ? 1.35 : 2}
+    >
       <mesh position={position}>
         <icosahedronGeometry args={[0.4, 0]} />
         <meshPhysicalMaterial
           color="#bfe9ff"
-          transmission={1}
-          roughness={0.15}
+          transmission={isLowQuality ? 0.78 : 1}
+          roughness={isLowQuality ? 0.28 : 0.15}
           thickness={1}
         />
       </mesh>
@@ -16,16 +21,31 @@ function Shard({ position }) {
   );
 }
 
-export default function LevelsScene() {
+export default function LevelsScene({ qualityTier = "medium" }) {
+  const shardPositions =
+    qualityTier === "low"
+      ? [
+          [2, 2, -3],
+          [-3, -1, -4],
+        ]
+      : [
+          [2, 2, -3],
+          [-3, -1, -4],
+          [1, -4, -5],
+          [-2, 4, -6],
+        ];
+
   return (
     <>
-      <ambientLight intensity={1.2} />
+      <ambientLight intensity={qualityTier === "low" ? 1 : 1.2} />
 
-      {/* background floating shards */}
-      <Shard position={[2, 2, -3]} />
-      <Shard position={[-3, -1, -4]} />
-      <Shard position={[1, -4, -5]} />
-      <Shard position={[-2, 4, -6]} />
+      {shardPositions.map((position) => (
+        <Shard
+          key={position.join(":")}
+          position={position}
+          qualityTier={qualityTier}
+        />
+      ))}
     </>
   );
 }

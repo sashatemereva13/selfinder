@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const entryGateCss = readFileSync(resolve('src/entryGate/EntryGate.css'), 'utf8');
+const entryGateCss = readFileSync(resolve('src/frontpage/EntryGate.css'), 'utf8');
 const measureCss = readFileSync(resolve('src/measure/measure.css'), 'utf8');
 const lunarCss = readFileSync(resolve('src/lunarCalendar/LunarCalendar.css'), 'utf8');
 const tuneCss = readFileSync(resolve('src/tunein/frequencyPlayer.css'), 'utf8');

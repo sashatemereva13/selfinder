@@ -1,0 +1,133 @@
+.jr-page {
+  min-height: 100svh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 1.5rem 3rem;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 30% 20%, rgba(195, 153, 255, 0.08), transparent 50%),
+    radial-gradient(circle at 70% 80%, rgba(116, 221, 214, 0.06), transparent 50%),
+    linear-gradient(180deg, #06060d, #090813 46%, #0c0717);
+  color: #f1eafd;
+  isolation: isolate;
+}
+
+.jr-inner {
+  width: min(38rem, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  text-align: center;
+}
+
+.jr-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.jr-stage {
+  margin: 0;
+}
+
+.jr-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: clamp(1.6rem, 4vw + 0.8rem, 2.6rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(241, 234, 253, 0.95);
+  line-height: 1.15;
+}
+
+.jr-description {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: clamp(0.88rem, 1vw + 0.6rem, 1.05rem);
+  color: rgba(241, 234, 253, 0.6);
+  line-height: 1.75;
+  letter-spacing: 0.02em;
+  max-width: 30rem;
+}
+
+.jr-visualWrap {
+  width: clamp(6rem, 18vw, 10rem);
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.jr-visual {
+  width: 100%;
+  height: 100%;
+  animation: jr-breathe 5.5s ease-in-out infinite;
+}
+
+@keyframes jr-breathe {
+  0%, 100% { opacity: 0.7; transform: scale(0.97); }
+  50% { opacity: 1; transform: scale(1.04); }
+}
+
+.jr-themes {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.jr-theme {
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.5);
+}
+
+.jr-invitation {
+  padding: 1.2rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(195, 153, 255, 0.1);
+  background:
+    radial-gradient(circle at 15% 15%, rgba(195, 153, 255, 0.07), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  max-width: 28rem;
+}
+
+.jr-invitationText {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.9rem;
+  color: rgba(241, 234, 253, 0.68);
+  line-height: 1.7;
+  letter-spacing: 0.02em;
+}
+
+.jr-invitationPhilo {
+  font-family: "Panchang-Medium", sans-serif;
+}
+
+.jr-next {
+  margin-top: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jr-visual {
+    animation: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .jr-page {
+    padding: 4.5rem 1rem 2.5rem;
+  }
+}

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const frontPagePath = resolve('src/FrontPage.jsx');
+const frontPagePath = resolve('src/frontpage/FrontPage.jsx');
 const frontPageFile = readFileSync(frontPagePath, 'utf8');
 
 test('FrontPage keeps route loader visible until scene assets finish loading', () => {
@@ -15,7 +15,7 @@ test('FrontPage keeps route loader visible until scene assets finish loading', (
 
   assert.match(
     frontPageFile,
-    /import\s+RouteLoader\s+from\s+"\.\/designElements\/RouteLoader";/,
+    /import\s+RouteLoader\s+from\s+"\.\.\/designElements\/RouteLoader";/,
     'FrontPage should reuse RouteLoader for scene loading state'
   );
 

@@ -135,6 +135,9 @@
   grid-template-columns: auto 1fr;
   gap: 1rem;
   align-items: center;
+  /* Clears the fixed philosopher badge's avatar+name row (ends ~3.43rem from
+     the viewport top) so the back button and progress bar never sit under it. */
+  margin-top: 2.4rem;
   margin-bottom: 1rem;
 }
 
@@ -198,7 +201,7 @@
     var(--measure-accent-2),
     var(--measure-accent)
   );
-  box-shadow: 0 0 18px rgba(159, 211, 255, 0.35);
+  box-shadow: 0 0 18px color-mix(in srgb, var(--measure-accent) 35%, transparent);
   transition: width 260ms ease;
 }
 
@@ -226,7 +229,7 @@
 
 .measure-kicker {
   margin: 0 0 0.75rem;
-  color: var(--measure-ink-soft);
+  color: color-mix(in srgb, var(--measure-accent) 65%, var(--measure-ink) 35%);
   font-size: 0.84rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
@@ -234,9 +237,14 @@
 
 .measure-title {
   margin: 0;
+  /* The entry phase renders this as an <h1>; without an explicit color it
+     inherits the global `h1 { color: #e3ffd6 }` from style.css (a mint tint
+     meant for other pages) instead of this page's --measure-ink. */
+  color: var(--measure-ink);
   font-family: "Panchang-Medium", sans-serif;
   font-size: clamp(1.3rem, 2vw + 0.7rem, 2rem);
   line-height: 1.25;
+  text-shadow: 0 0 32px color-mix(in srgb, var(--measure-accent) 38%, transparent);
 }
 
 .measure-copy {

@@ -8,12 +8,23 @@ import { useGLTF, Html, Float, Sparkles } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useNavigate } from "react-router-dom";
 import * as THREE from "three";
-import ConversationMap from "../list/ConversationMap";
+import ConversationMap from "./ConversationMap";
+import { BLACK_HOLE_POSITION } from "./portalConfig";
 import { SmoothTypewriter } from "../designElements/SmoothTypewriter";
+import {
+  useJourneyLine,
+  MEASURE_ARRIVAL_SCENE_ID,
+  MEASURE_ARRIVAL_LINE,
+} from "../content/journeyLines";
 
 const MIN_ACTION_DELAY_MS = 0;
-const MIN_FOV_TWEEN_MS = 60;
-const MIN_FOV_RESET_MS = 1;
+const PORTAL_FOV_TWEEN_MS = 420;
+const PORTAL_FOV_RESET_MS = 180;
+const PORTAL_BLACKOUT_HOLD_MS = 320;
+
+function getBlackHoleCenter() {
+  return new THREE.Vector3(...BLACK_HOLE_POSITION);
+}
 
 export default function WizardMessage({ showMessage, controls }) {
   const group = useRef();
@@ -30,8 +41,7 @@ export default function WizardMessage({ showMessage, controls }) {
   useEffect(() => {
     if (!controls?.current) return;
     controls.current.enabled = true;
-    controls.current.enableDamping = true;
-    controls.current.dampingFactor = 0.12;
+    controls.current.smoothTime = 0.12;
 
     // prevent manual drag during flights (keeps setLookAt buttery)
     controls.current.mouseButtons.left = 0;
@@ -62,7 +72,7 @@ export default function WizardMessage({ showMessage, controls }) {
   // utility
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  const tweenFov = async (targetFov, duration = MIN_FOV_TWEEN_MS) => {
+  const tweenFov = async (targetFov, duration = PORTAL_FOV_TWEEN_MS) => {
     const startFov = camera.fov;
     const t0 = performance.now();
 
@@ -104,12 +114,14 @@ export default function WizardMessage({ showMessage, controls }) {
   };
 
   // pass through the black hole center along the current approach vector
-  const flyThroughBlackHole = async (
-    center,
-    entryDist = 40,
-    exitDist = 30,
-    lookDownOffset = 0,
-  ) => {
+  const flyThroughBlackHole = async (center, options = {}) => {
+    const {
+      entryDist = 40,
+      exitDist = 30,
+      lookDownOffset = 0,
+      lookPastDistance = 50,
+      passSmoothTime = 0.42,
+    } = options;
     const cam = controls?.current?.object || camera;
 
     // direction from camera → hole
@@ -124,19 +136,15 @@ export default function WizardMessage({ showMessage, controls }) {
       .add(new THREE.Vector3(0, lookDownOffset, 0));
     const lookPast = center
       .clone()
-      .addScaledVector(dir, exitDist + 50)
+      .addScaledVector(dir, exitDist + lookPastDistance)
       .add(new THREE.Vector3(0, lookDownOffset, 0));
 
-    // optional: make the pass a bit snappier
     const originalSmooth = controls?.current?.smoothTime;
-    if (controls?.current) controls.current.smoothTime = 0.6;
+    if (controls?.current) controls.current.smoothTime = passSmoothTime;
 
-    // 1) approach to entry (look at center)
     await flyTo(entryPos, lookTarget);
-    // 2) go through to the far side (keep looking slightly beyond)
     await flyTo(exitPos, lookPast);
 
-    // restore smoothness
     if (controls?.current && originalSmooth != null) {
       controls.current.smoothTime = originalSmooth;
     }
@@ -162,13 +170,13 @@ export default function WizardMessage({ showMessage, controls }) {
     await delay(MIN_ACTION_DELAY_MS);
 
     // 3) fly through the black hole
-    const holeCenter = new THREE.Vector3(-35, -120, -150);
-    await flyThroughBlackHole(
-      holeCenter,
-      /*entry*/ 42,
-      /*exit*/ 36,
-      /*lookDown*/ -8,
-    );
+    await flyThroughBlackHole(getBlackHoleCenter(), {
+      entryDist: 42,
+      exitDist: 36,
+      lookDownOffset: -8,
+      lookPastDistance: 42,
+      passSmoothTime: 0.42,
+    });
 
     setIsFlying(false);
   };
@@ -177,62 +185,78 @@ export default function WizardMessage({ showMessage, controls }) {
     if (isFlying) return;
     setIsFlying(true);
 
-    const holeCenter = new THREE.Vector3(-35, -120, -150);
-    const originalSmooth = controls?.current?.smoothTime;
     const originalFov = camera.fov;
 
+    // Warm the Measure route's code while the portal animation plays, so the
+    // lazy-loaded chamber never shows a generic loading screen mid-jump.
+    import("../measure/Measure").catch(() => {});
+
     try {
-      if (controls?.current) {
-        controls.current.smoothTime = 0.1;
-      }
       setPortalFxStage("tunnel");
 
       await Promise.all([
-        flyThroughBlackHole(
-          holeCenter,
-          /*entry*/ 70,
-          /*exit*/ 105,
-          /*lookDown*/ -18,
-        ),
-        tweenFov(Math.min(originalFov + 26, 95), MIN_FOV_TWEEN_MS),
+        flyThroughBlackHole(getBlackHoleCenter(), {
+          entryDist: 58,
+          exitDist: 86,
+          lookDownOffset: -10,
+          lookPastDistance: 56,
+          passSmoothTime: 0.24,
+        }),
+        tweenFov(Math.min(originalFov + 16, 82), PORTAL_FOV_TWEEN_MS),
       ]);
 
       setPortalFxStage("blackout");
-      await delay(MIN_ACTION_DELAY_MS);
-    } finally {
-      await tweenFov(originalFov, MIN_FOV_RESET_MS);
-      if (controls?.current && originalSmooth != null) {
-        controls.current.smoothTime = originalSmooth;
-      }
+      await delay(PORTAL_BLACKOUT_HOLD_MS);
+
+      // Cross over while the screen is still fully black — this is what
+      // keeps the fall feeling continuous instead of flashing back to the
+      // scene (with its FOV reset) right before the page swaps.
+      navigate("/measure", { state: { fromPortalJump: true } });
+    } catch (err) {
+      tweenFov(originalFov, PORTAL_FOV_RESET_MS);
       setIsFlying(false);
       setPortalFxStage("idle");
+      throw err;
     }
   };
 
   // -------------------------------------
 
   const currentPhase = ConversationMap[conversationPhase];
+  const currentMessage = currentPhase?.message?.trim() ?? "";
+  const guideMessage = useJourneyLine(conversationPhase, currentMessage);
+  const isPortalPrompt = conversationPhase === "start";
+
+  // Pre-warm the Measure arrival caption while the player is still reading
+  // the jump prompt — by the time they land, useJourneyLine's shared cache
+  // already holds the resolved line, so it appears instantly with no pop-in.
+  useJourneyLine(MEASURE_ARRIVAL_SCENE_ID, MEASURE_ARRIVAL_LINE);
+
+  const htmlPosition = isPortalPrompt ? [-35, -103, -74] : [-30, -104, -60];
+  const htmlDistanceFactor = isPortalPrompt ? 10.6 : 12;
 
   return (
     <>
       {showMessage && currentPhase && (
         <Html
-          position={[-30, -104, -60]}
-          distanceFactor={12}
+          position={htmlPosition}
+          distanceFactor={htmlDistanceFactor}
           transform
           style={{ pointerEvents: "auto" }}
         >
-          <SmoothTypewriter>{currentPhase.message}</SmoothTypewriter>
+          <div className={isPortalPrompt ? "portalPromptShell" : undefined}>
+            {currentMessage && guideMessage ? (
+              <SmoothTypewriter>{guideMessage}</SmoothTypewriter>
+            ) : null}
 
-          <div className="choiceButtons">
+          <div className={isPortalPrompt ? "portalPromptActions" : "choiceButtons"}>
             {currentPhase.options?.map(({ label, next }) => (
               <button
                 key={label}
-                className="downloadButtons"
+                className={isPortalPrompt ? "portalJumpButton" : "downloadButtons"}
                 onClick={async () => {
                   if (next === "goToMeasure") {
                     await flyIntoMeasurePortal();
-                    navigate("/measure", { state: { fromPortalJump: true } });
                     return;
                   }
 
@@ -253,6 +277,7 @@ export default function WizardMessage({ showMessage, controls }) {
               </button>
             ))}
           </div>
+          </div>
         </Html>
       )}
       {portalFxStage !== "idle" && (
@@ -261,7 +286,8 @@ export default function WizardMessage({ showMessage, controls }) {
           style={{ pointerEvents: "none", zIndex: 2500 }}
           className={`portalJumpOverlay is-${portalFxStage}`}
         >
-          <div className="portalJumpOverlayInner" />
+          <div className="portalJumpOverlayTunnel" />
+          <div className="portalJumpOverlayVoid" />
         </Html>
       )}
     </>

@@ -1,6 +1,7 @@
 .guide-root {
   min-height: 100dvh;
-  display: flex;
+  box-sizing: border-box;
+  display: grid;
   align-items: flex-start;
   padding: 5rem 1.5rem 2rem;
   background:
@@ -118,8 +119,8 @@
   max-width: 52rem;
   margin: 0 auto;
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  height: calc(100dvh - 6rem);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: calc(100dvh - 7rem);
 }
 
 .guide-chat-header {
@@ -337,6 +338,6 @@
   }
 
   .guide-chat {
-    height: calc(100dvh - 5.5rem);
+    height: calc(100dvh - 6rem);
   }
 }

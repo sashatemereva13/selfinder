@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { Stars } from "@react-three/drei";
-import MoonDictionary from "../list/MoonList.jsx";
+import MoonDictionary from "./MoonList.jsx";
 import * as THREE from "three";
 import { Link } from "react-router-dom";
 import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";

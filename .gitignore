@@ -18,7 +18,7 @@ yarn-error.log*
 Thumbs.db
 
 # --------------------
-# Backend (future)
+# Backend
 # --------------------
 backend/venv
 backend/__pycache__

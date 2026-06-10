@@ -10,21 +10,24 @@ import {
 import { AnimatePresence } from "framer-motion";
 import { PageWrapper } from "./designElements/PageWrapper";
 import MenuTab from "./designElements/MenuTab";
-import ThoughtBubble from "./designElements/ThoughtBubble";
 import FloatingGuide from "./designElements/FloatingGuide";
+import PhilosopherBadge from "./designElements/PhilosopherBadge";
 import RouteLoader from "./designElements/RouteLoader";
 import ScrollToTop from "./utils/ScrollToTop";
-import EntryGate from "./entryGate/EntryGate";
+import EntryGate from "./frontpage/EntryGate";
 import UserPathTracker from "./tracking/UserPathTracker.jsx";
 import { appendPathStep } from "./tracking/userPathTracker";
 import { ChatProvider } from "./guide/ChatContext";
+import { AuthProvider } from "./auth/AuthContext";
 
-const ThresholdPage = lazy(() => import("./ThresholdPage"));
-const FrontPage = lazy(() => import("./FrontPage"));
-const CoreRoom = lazy(() => import("./coreRoom/CoreRoom"));
-const BeingToBrand = lazy(() => import("./beingToBrand/BeingToBrand"));
+const ThresholdPage = lazy(() => import("./frontpage/ThresholdPage"));
+const AuthPage = lazy(() => import("./auth/AuthPage"));
+const FrontPage = lazy(() => import("./frontpage/FrontPage"));
+const CoreRoom = lazy(() => import("./rooms/CoreRoom"));
+const JungianRoom = lazy(() => import("./rooms/JungianRoom"));
+const PersonalSpace = lazy(() => import("./space/PersonalSpace"));
 const LevelsFullPage = lazy(() => import("./levels/LevelsFullPage"));
-const FrequencyUpgrade = lazy(() => import("./upgrade/FrequencyUpgrade"));
+const FrequencyUpgrade = lazy(() => import("./levels/FrequencyUpgrade"));
 const Enlightenment = lazy(() => import("./levels/Enlightenment"));
 const Peace = lazy(() => import("./levels/Peace"));
 const UnconditionalLove = lazy(() => import("./levels/UnconditionalLove"));
@@ -64,6 +67,15 @@ function AnimatedRoutes() {
                 </PageWrapper>
               }
             />
+            {/* The House — 5 Jungian rooms */}
+            <Route
+              path="/persona"
+              element={
+                <PageWrapper>
+                  <CoreRoom />
+                </PageWrapper>
+              }
+            />
             <Route
               path="/core"
               element={
@@ -73,14 +85,39 @@ function AnimatedRoutes() {
               }
             />
             <Route
-              path="/threshold"
+              path="/shadow"
               element={
                 <PageWrapper>
-                  <FrontPage />
+                  <JungianRoom roomKey="shadow" />
                 </PageWrapper>
               }
             />
-            <Route path="/beingtobrand" element={<BeingToBrand />} />
+            <Route
+              path="/anima"
+              element={
+                <PageWrapper>
+                  <JungianRoom roomKey="anima" />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/innerchild"
+              element={
+                <PageWrapper>
+                  <JungianRoom roomKey="innerchild" />
+                </PageWrapper>
+              }
+            />
+            <Route
+              path="/self"
+              element={
+                <PageWrapper>
+                  <JungianRoom roomKey="self" />
+                </PageWrapper>
+              }
+            />
+            <Route path="/threshold" element={<PageWrapper><FrontPage /></PageWrapper>} />
+            <Route path="/space" element={<PageWrapper><PersonalSpace /></PageWrapper>} />
             <Route path="/frequencyupgrade" element={<FrequencyUpgrade />} />
             <Route
               path="/levels"
@@ -267,6 +304,7 @@ function AnimatedRoutes() {
                 </PageWrapper>
               }
             />
+            <Route path="/login" element={<AuthPage />} />
           </Routes>
         </AnimatePresence>
       </Suspense>
@@ -287,7 +325,7 @@ function App() {
     return (
       <>
         <EntryGate onEnter={() => setHasEntered(true)} />
-        <ThoughtBubble />
+
       </>
     );
   }
@@ -295,8 +333,8 @@ function App() {
   return (
     <Router>
       <UserPathTracker />
+      <PhilosopherBadge />
       <MenuTab />
-      <ThoughtBubble />
       <FloatingGuide />
       <AnimatedRoutes />
     </Router>
@@ -305,8 +343,10 @@ function App() {
 
 root.render(
   <StrictMode>
-    <ChatProvider>
-      <App />
-    </ChatProvider>
+    <AuthProvider>
+      <ChatProvider>
+        <App />
+      </ChatProvider>
+    </AuthProvider>
   </StrictMode>,
 );

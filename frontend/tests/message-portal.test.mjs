@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const experiencePath = resolve('src/Experience.jsx');
+const experiencePath = resolve('src/frontpage/Experience.jsx');
 const experienceFile = readFileSync(experiencePath, 'utf8');
 
 test('Message Html overlay portals to document.body', () => {

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const indexJsxPath = resolve('src/index.jsx');
-const entryGatePath = resolve('src/entryGate/EntryGate.jsx');
+const entryGatePath = resolve('src/frontpage/EntryGate.jsx');
 const indexHtmlPath = resolve('src/index.html');
 
 const indexJsx = readFileSync(indexJsxPath, 'utf8');
@@ -20,8 +20,12 @@ test('Tracker import is explicit to avoid case-insensitive resolver collisions',
 });
 
 test('EntryGate keeps heart visual outside paragraph semantics', () => {
-  assert.match(entryGate, /<p\s+className=\"entryGateText\">/, 'EntryGate text paragraph missing');
-  assert.match(entryGate, /<\/p>\s*\n\s*<div\s+className=\"entryGateHeart\"/, 'Heart should render after paragraph closes');
+  assert.match(entryGate, /<\/header>[\s\S]*?<div\s+className=\{`entryGateHeart/, 'Heart visual should render outside the text header block');
+  assert.doesNotMatch(
+    entryGate,
+    /<p\b[^>]*>[\s\S]*?<div\s+className=\{`entryGateHeart[\s\S]*?<\/p>/,
+    'Heart visual should not be nested inside a paragraph'
+  );
 });
 
 test('index.html includes share/seo metadata expected for submission', () => {
