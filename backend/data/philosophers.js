@@ -12,7 +12,7 @@ export const PHILOSOPHERS = [
   },
   {
     id: "stoics",
-    name: "The Stoics",
+    name: "Marcus Aurelius",
     mode: "The Grounding Voice",
     color: "#4dada8",
     accentRgb: "77, 173, 168",
