@@ -1,0 +1,1149 @@
+/* ═══════════════════════════════════════════════════════════════
+   RoomExperience.css  —  class prefix: re-
+   Accent: var(--philo-color) / var(--philo-rgb)
+   Dark base matching app aesthetic
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ─── Root ─────────────────────────────────────────────────── */
+.re-root {
+  width: 100%;
+  max-width: 52rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  box-sizing: border-box;
+  font-family: "Panchang-Light", sans-serif;
+  color: rgba(241, 234, 253, 0.85);
+}
+
+/* ─── Stage transitions ────────────────────────────────────── */
+.re-stage {
+  width: 100%;
+}
+
+/* ─── Shared buttons ───────────────────────────────────────── */
+.re-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 999px;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.88rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+  text-decoration: none;
+  border: none;
+}
+
+.re-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.re-btn--primary {
+  background: var(--philo-color, rgba(195, 153, 255, 1));
+  color: #08080c;
+  font-family: "Panchang-Medium", sans-serif;
+}
+
+.re-btn--primary:not(:disabled):hover {
+  opacity: 0.85;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(var(--philo-rgb, 195 153 255), 0.28);
+}
+
+.re-btn--ghost {
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(241, 234, 253, 0.65);
+}
+
+.re-btn--ghost:not(:disabled):hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(241, 234, 253, 0.9);
+}
+
+/* ─── Stage: Intro ─────────────────────────────────────────── */
+.re-stage--intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.4rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.re-stage-kicker {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--philo-color, rgba(195, 153, 255, 1));
+}
+
+.re-stage-desc {
+  margin: 0;
+  font-size: 0.92rem;
+  color: rgba(241, 234, 253, 0.6);
+  line-height: 1.7;
+  max-width: 32rem;
+}
+
+.re-no-philosopher {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(241, 234, 253, 0.5);
+  line-height: 1.6;
+}
+
+.re-link {
+  color: var(--philo-color);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* ─── Stage: Revisit ───────────────────────────────────────── */
+.re-stage--revisit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.re-revisit-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.2rem;
+  color: rgba(241, 234, 253, 0.92);
+  line-height: 1.3;
+}
+
+.re-revisit-artefact {
+  padding: 1.2rem 1.6rem;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.18);
+  background: rgba(255, 255, 255, 0.02);
+  max-width: 32rem;
+  width: 100%;
+}
+
+.re-revisit-artefact-label {
+  margin: 0 0 0.5rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+}
+
+.re-revisit-quote {
+  margin: 0;
+  font-size: 0.96rem;
+  color: rgba(241, 234, 253, 0.85);
+  line-height: 1.65;
+  font-style: italic;
+}
+
+.re-revisit-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: center;
+}
+
+/* ─── Stage: Mechanic wrapper ──────────────────────────────── */
+.re-stage--mechanic {
+  padding: 1rem 0;
+}
+
+/* ─── Mechanic shared ──────────────────────────────────────── */
+.re-mechanic {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.re-mechanic-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.re-mechanic-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.15rem;
+  color: rgba(241, 234, 253, 0.95);
+}
+
+.re-mechanic-desc {
+  margin: 0;
+  font-size: 0.88rem;
+  color: rgba(241, 234, 253, 0.55);
+  line-height: 1.65;
+  max-width: 36rem;
+}
+
+.re-mechanic-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ─── Word Chips ───────────────────────────────────────────── */
+.re-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.re-chip-grid--small .re-chip {
+  font-size: 0.78rem;
+  padding: 0.22rem 0.6rem;
+}
+
+.re-chip {
+  padding: 0.32rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-family: "Panchang-Light", sans-serif;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(241, 234, 253, 0.65);
+  transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+  user-select: none;
+}
+
+button.re-chip:hover {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.4);
+  color: rgba(241, 234, 253, 0.9);
+}
+
+.re-chip--selected {
+  border-color: var(--philo-color);
+  background: rgba(var(--philo-rgb, 195 153 255), 0.14);
+  color: rgba(241, 234, 253, 0.95);
+}
+
+.re-chip--public {
+  border-color: rgba(195, 153, 255, 0.4);
+  background: rgba(195, 153, 255, 0.08);
+  color: rgba(195, 153, 255, 0.9);
+  cursor: default;
+}
+
+.re-chip--private {
+  border-color: rgba(116, 221, 214, 0.4);
+  background: rgba(116, 221, 214, 0.08);
+  color: rgba(116, 221, 214, 0.9);
+  cursor: default;
+}
+
+.re-chip--both {
+  border-color: rgba(201, 168, 76, 0.4);
+  background: rgba(201, 168, 76, 0.08);
+  color: rgba(201, 168, 76, 0.9);
+  cursor: default;
+}
+
+.re-chip--shadow {
+  border-color: rgba(168, 122, 201, 0.5);
+  background: rgba(168, 122, 201, 0.1);
+  color: rgba(168, 122, 201, 0.9);
+  cursor: default;
+}
+
+/* ─── MaskBuilder ──────────────────────────────────────────── */
+.re-wordpool {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.re-wordpool-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.re-wordpool-phase {
+  margin: 0;
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+}
+
+.re-wordpool-label {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.1rem;
+  color: rgba(241, 234, 253, 0.95);
+}
+
+.re-wordpool-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.5);
+  line-height: 1.6;
+  max-width: 34rem;
+}
+
+.re-chip-count {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--philo-color);
+  opacity: 0.75;
+}
+
+/* Gap Analysis */
+.re-gap-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+  padding: 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.14);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.re-gap-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1rem;
+  color: rgba(241, 234, 253, 0.9);
+}
+
+.re-gap-intro {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.5);
+  line-height: 1.65;
+}
+
+.re-gap-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.re-gap-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.re-gap-section-label {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.45);
+}
+
+/* ─── WantedList ───────────────────────────────────────────── */
+.re-progress-bar {
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.re-progress-fill {
+  height: 100%;
+  background: var(--philo-color);
+  border-radius: 999px;
+  transition: width 280ms ease;
+}
+
+.re-progress-label {
+  margin: 0.4rem 0 0;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.4);
+  letter-spacing: 0.04em;
+}
+
+.re-wanted-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.re-wanted-card {
+  padding: 0.9rem 1rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  transition: border-color 180ms ease;
+}
+
+.re-wanted-card--assigned {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.2);
+}
+
+.re-wanted-quality {
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.92rem;
+  color: rgba(241, 234, 253, 0.9);
+}
+
+.re-wanted-buckets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.re-wanted-bucket-btn {
+  padding: 0.26rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  color: rgba(241, 234, 253, 0.5);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.re-wanted-bucket-btn:hover {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.35);
+  color: rgba(241, 234, 253, 0.8);
+}
+
+.re-wanted-bucket-btn--active {
+  border-color: var(--philo-color);
+  background: rgba(var(--philo-rgb, 195 153 255), 0.12);
+  color: rgba(241, 234, 253, 0.92);
+}
+
+.re-wanted-reveal {
+  display: flex;
+  flex-direction: column;
+  gap: 1.4rem;
+}
+
+.re-wanted-crossref {
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(168, 122, 201, 0.2);
+  background: rgba(168, 122, 201, 0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.re-wanted-crossref-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.9rem;
+  color: rgba(241, 234, 253, 0.9);
+}
+
+.re-wanted-crossref-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(241, 234, 253, 0.5);
+  line-height: 1.6;
+}
+
+.re-wanted-crossref-empty {
+  margin: 0;
+  font-size: 0.82rem;
+  color: rgba(241, 234, 253, 0.4);
+  font-style: italic;
+}
+
+/* ─── TimelineWriter ───────────────────────────────────────── */
+.re-timeline-prompts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.re-timeline-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.015);
+  transition: border-color 200ms ease;
+}
+
+.re-timeline-prompt--filled {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.2);
+}
+
+.re-timeline-prompt--optional {
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.06);
+}
+
+.re-timeline-label {
+  font-size: 0.88rem;
+  color: rgba(241, 234, 253, 0.75);
+  line-height: 1.65;
+  cursor: default;
+}
+
+.re-timeline-label--optional {
+  color: rgba(241, 234, 253, 0.55);
+}
+
+.re-timeline-optional-tag {
+  font-size: 0.72rem;
+  opacity: 0.65;
+  letter-spacing: 0.05em;
+}
+
+.re-timeline-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.7rem 0.9rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(241, 234, 253, 0.88);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  outline: none;
+  transition: border-color 180ms ease;
+  min-height: 88px;
+}
+
+.re-timeline-textarea::placeholder {
+  color: rgba(241, 234, 253, 0.25);
+}
+
+.re-timeline-textarea:focus {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.35);
+}
+
+.re-timeline-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(var(--philo-rgb, 195 153 255), 0.55);
+  letter-spacing: 0.03em;
+}
+
+/* ─── SpectrumPlacer ───────────────────────────────────────── */
+.re-spectrum-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.re-spectrum-item {
+  position: relative;
+  padding: 1.2rem 1.4rem;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.015);
+  transition: border-color 200ms ease;
+}
+
+.re-spectrum-item--extreme {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.25);
+}
+
+.re-spectrum-extreme-tag {
+  display: inline-block;
+  margin-bottom: 0.6rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: rgba(var(--philo-rgb, 195 153 255), 0.12);
+  color: var(--philo-color);
+}
+
+.re-spectrum-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.re-spectrum-labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.re-spectrum-left-label,
+.re-spectrum-right-label {
+  font-size: 0.78rem;
+  color: rgba(241, 234, 253, 0.4);
+  transition: color 160ms ease;
+  min-width: 60px;
+}
+
+.re-spectrum-right-label {
+  text-align: right;
+}
+
+.re-spectrum-label--active {
+  color: var(--philo-color);
+  font-family: "Panchang-Medium", sans-serif;
+}
+
+.re-spectrum-dimension {
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.35);
+  flex: 1;
+  text-align: center;
+}
+
+.re-spectrum-slider {
+  width: 100%;
+  height: 4px;
+  -webkit-appearance: none;
+  appearance: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  outline: none;
+  cursor: pointer;
+}
+
+.re-spectrum-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--philo-color);
+  cursor: pointer;
+  border: 2px solid #08080c;
+  box-shadow: 0 0 8px rgba(var(--philo-rgb, 195 153 255), 0.4);
+  transition: box-shadow 160ms ease;
+}
+
+.re-spectrum-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--philo-color);
+  cursor: pointer;
+  border: 2px solid #08080c;
+  box-shadow: 0 0 8px rgba(var(--philo-rgb, 195 153 255), 0.4);
+}
+
+.re-spectrum-reading {
+  margin: 0;
+  font-size: 0.75rem;
+  color: rgba(241, 234, 253, 0.4);
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.re-spectrum-insight {
+  margin: 0;
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.7);
+  line-height: 1.6;
+  background: rgba(var(--philo-rgb, 195 153 255), 0.06);
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.14);
+}
+
+.re-spectrum-insight strong {
+  color: rgba(241, 234, 253, 0.92);
+}
+
+/* ─── EchoReflection ───────────────────────────────────────── */
+.re-echo-artefacts {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.re-echo-artefact {
+  padding: 1rem 1.3rem;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.14);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.re-echo-room-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+}
+
+.re-echo-statement {
+  margin: 0;
+  font-size: 0.96rem;
+  color: rgba(241, 234, 253, 0.85);
+  line-height: 1.65;
+  font-style: italic;
+}
+
+.re-echo-pause {
+  padding: 1.5rem;
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.re-echo-pause-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.4);
+  font-style: italic;
+  letter-spacing: 0.03em;
+}
+
+.re-echo-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  text-align: center;
+  padding: 3rem 1.5rem;
+}
+
+.re-echo-lock-icon {
+  width: 48px;
+  height: 48px;
+  color: rgba(241, 234, 253, 0.25);
+}
+
+.re-echo-lock-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.re-echo-locked-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1rem;
+  color: rgba(241, 234, 253, 0.75);
+  line-height: 1.45;
+  max-width: 30rem;
+}
+
+.re-echo-locked-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.45);
+  line-height: 1.65;
+  max-width: 28rem;
+}
+
+.re-echo-locked-progress {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--philo-color);
+  opacity: 0.65;
+}
+
+/* ─── RoomChat ─────────────────────────────────────────────── */
+.re-chat {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 70vh;
+  min-height: 420px;
+  border-radius: 18px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.12);
+  background: rgba(255, 255, 255, 0.015);
+  overflow: hidden;
+}
+
+.re-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.1);
+  background: rgba(8, 8, 12, 0.4);
+}
+
+.re-chat-identity {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+}
+
+.re-chat-mode {
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+}
+
+.re-chat-name {
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.95rem;
+  color: rgba(241, 234, 253, 0.9);
+}
+
+.re-unlock-hint-btn {
+  padding: 0.3rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.3);
+  background: rgba(var(--philo-rgb, 195 153 255), 0.08);
+  color: var(--philo-color);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.re-unlock-hint-btn:hover {
+  border-color: var(--philo-color);
+  background: rgba(var(--philo-rgb, 195 153 255), 0.15);
+}
+
+.re-chat-messages {
+  overflow-y: auto;
+  padding: 1.2rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--philo-rgb, 195 153 255), 0.15) transparent;
+}
+
+.re-msg {
+  max-width: 78%;
+  padding: 0.85rem 1.05rem;
+  border-radius: 14px;
+  line-height: 1.6;
+}
+
+.re-msg p {
+  margin: 0;
+  font-size: 0.88rem;
+}
+
+.re-msg-user {
+  align-self: flex-end;
+  background: rgba(var(--philo-rgb, 195 153 255), 0.1);
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.18);
+  color: rgba(241, 234, 253, 0.92);
+  border-bottom-right-radius: 4px;
+}
+
+.re-msg-assistant {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  color: rgba(241, 234, 253, 0.88);
+  border-bottom-left-radius: 4px;
+}
+
+.re-msg-thinking {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 2.5rem;
+  padding: 0.75rem 1rem;
+}
+
+.re-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--philo-color);
+  opacity: 0.5;
+  animation: reDotPulse 1.4s ease-in-out infinite;
+}
+
+.re-dot:nth-child(2) { animation-delay: 0.2s; }
+.re-dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes reDotPulse {
+  0%, 80%, 100% { transform: scale(1); opacity: 0.35; }
+  40% { transform: scale(1.35); opacity: 0.9; }
+}
+
+.re-chat-form {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  padding: 0.85rem 1.2rem;
+  border-top: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.1);
+  background: rgba(8, 8, 12, 0.4);
+}
+
+.re-chat-input {
+  flex: 1;
+  resize: none;
+  padding: 0.7rem 0.95rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(241, 234, 253, 0.9);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.87rem;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 180ms ease;
+  min-height: 44px;
+  max-height: 130px;
+  overflow-y: auto;
+  field-sizing: content;
+}
+
+.re-chat-input::placeholder {
+  color: rgba(241, 234, 253, 0.22);
+}
+
+.re-chat-input:focus {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.35);
+}
+
+.re-send-btn {
+  width: 42px;
+  height: 42px;
+  flex: 0 0 auto;
+  border-radius: 12px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.28);
+  background:
+    radial-gradient(circle at 30% 20%, rgba(var(--philo-rgb, 195 153 255), 0.14), transparent 60%),
+    rgba(255, 255, 255, 0.02);
+  color: var(--philo-color);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: border-color 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.re-send-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.re-send-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.55);
+}
+
+.re-send-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ─── Stage: Unlock ────────────────────────────────────────── */
+.re-stage--unlock {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: 2.5rem 1rem;
+}
+
+.re-unlock-prompt {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.05rem;
+  color: rgba(241, 234, 253, 0.9);
+  line-height: 1.5;
+}
+
+.re-unlock-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.re-unlock-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  padding: 0.9rem 1.1rem;
+  border-radius: 14px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.2);
+  background: rgba(255, 255, 255, 0.025);
+  color: rgba(241, 234, 253, 0.92);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  outline: none;
+  transition: border-color 180ms ease;
+  min-height: 88px;
+}
+
+.re-unlock-input::placeholder {
+  color: rgba(241, 234, 253, 0.22);
+}
+
+.re-unlock-input:focus {
+  border-color: rgba(var(--philo-rgb, 195 153 255), 0.45);
+}
+
+.re-unlock-actions {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ─── Stage: Complete ──────────────────────────────────────── */
+.re-stage--complete {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.8rem;
+  text-align: center;
+  padding: 2.5rem 1rem;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.re-complete-artefact {
+  width: 100%;
+  padding: 1.4rem 1.8rem;
+  border-radius: 16px;
+  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.2);
+  background:
+    radial-gradient(circle at 15% 15%, rgba(var(--philo-rgb, 195 153 255), 0.07), transparent 55%),
+    rgba(255, 255, 255, 0.02);
+}
+
+.re-complete-artefact-label {
+  margin: 0 0 0.6rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--philo-color);
+}
+
+.re-complete-quote {
+  margin: 0;
+  font-size: 1.05rem;
+  color: rgba(241, 234, 253, 0.92);
+  line-height: 1.65;
+  font-style: italic;
+}
+
+.re-complete-message {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.45);
+  line-height: 1.6;
+}
+
+.re-complete-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  align-items: center;
+  width: 100%;
+}
+
+/* ─── Locked state (RoomExperience level) ──────────────────── */
+.re-locked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.2rem;
+  text-align: center;
+  padding: 4rem 1.5rem;
+}
+
+.re-locked-icon {
+  width: 52px;
+  height: 52px;
+  color: rgba(241, 234, 253, 0.2);
+}
+
+.re-locked-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.re-locked-title {
+  margin: 0;
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.05rem;
+  color: rgba(241, 234, 253, 0.72);
+  line-height: 1.45;
+  max-width: 28rem;
+}
+
+.re-locked-desc {
+  margin: 0;
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.42);
+  line-height: 1.65;
+  max-width: 26rem;
+}
+
+.re-locked-progress {
+  margin: 0;
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  color: var(--philo-color);
+  opacity: 0.65;
+}
+
+/* ─── Responsive ───────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .re-root {
+    padding: 2rem 1rem 3rem;
+  }
+
+  .re-chat {
+    height: 60vh;
+    border-radius: 14px;
+  }
+
+  .re-msg {
+    max-width: 92%;
+  }
+
+  .re-mechanic-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .re-unlock-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .re-complete-actions {
+    align-items: stretch;
+  }
+
+  .re-btn {
+    justify-content: center;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .re-dot {
+    animation: none;
+    opacity: 0.6;
+  }
+
+  .re-progress-fill {
+    transition: none;
+  }
+}

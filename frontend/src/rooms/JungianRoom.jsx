@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { HOUSE_ROOMS, getNextHouseRoom } from "../content/narrativeFlow";
 import { useChat } from "../guide/ChatContext";
+import RoomExperience from "./RoomExperience";
 import "./JungianRoom.css";
 
 const ROOM_VISUALS = {
@@ -134,6 +135,8 @@ export default function JungianRoom({ roomKey }) {
           </div>
         )}
       </div>
+
+      <RoomExperience roomKey={roomKey} />
     </motion.div>
   );
 }

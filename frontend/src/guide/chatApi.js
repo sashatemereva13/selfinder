@@ -10,13 +10,17 @@ function authHeaders() {
   }
 }
 
-export async function sendMessage(messages, philosopher) {
+export async function sendMessage(messages, philosopher, additionalContext = "") {
+  const systemPrompt = additionalContext
+    ? `${philosopher.systemPrompt}\n\n${additionalContext}`
+    : philosopher.systemPrompt;
+
   const res = await fetch(apiUrl("/chat"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({
       messages,
-      systemPrompt: philosopher.systemPrompt,
+      systemPrompt,
     }),
   });
   const { reply } = await res.json();
