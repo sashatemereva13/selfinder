@@ -1,5 +1,5 @@
 // Symbolic SVG avatar per philosopher — 24×24 viewBox.
-// Shared between PhilosopherBadge (in-app corner badge) and EntryGate
+// Shared between GuideAnchor (persistent corner guide) and EntryGate
 // (first-screen picker cards) so every philosopher reads as one consistent
 // "character" across the whole experience.
 export const AVATARS = {

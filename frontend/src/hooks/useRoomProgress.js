@@ -1,5 +1,10 @@
 import { useState, useCallback } from "react";
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+export const LOCAL_CONSENT_KEY = "sfr_local_consent";
+export const ROOM_KEYS = ["self"];
+const MEASURE_KEY = "selfinder.latestMeasureResult";
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function makeVisitId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -41,6 +46,67 @@ function writeSummary(data) {
   } catch {
     // fail silently
   }
+}
+
+// ─── Non-hook utilities (for data management outside room context) ─────────────
+
+export function readAllRooms() {
+  return Object.fromEntries(ROOM_KEYS.map((k) => [k, readRoom(k)]));
+}
+
+export function readMeasureResult() {
+  try {
+    const raw = localStorage.getItem(MEASURE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function deleteVisitFromRoom(key, visitId) {
+  const current = readRoom(key);
+  if (!current) return;
+
+  const deletedIndex = current.visits.findIndex((v) => v.id === visitId);
+  if (deletedIndex === -1) return;
+
+  const newVisits = current.visits.filter((v) => v.id !== visitId);
+
+  let newActiveIndex = current.activeVisitIndex;
+  if (deletedIndex < current.activeVisitIndex) newActiveIndex--;
+  else if (deletedIndex === current.activeVisitIndex) newActiveIndex = -1;
+
+  writeRoom(key, { visits: newVisits, activeVisitIndex: Math.max(-1, newActiveIndex) });
+
+  const summary = readSummary();
+  const completedRemaining = newVisits.filter((v) => v.completedAt);
+  if (completedRemaining.length === 0) {
+    delete summary.artefacts[key];
+  } else {
+    const mostRecent = completedRemaining.sort(
+      (a, b) => new Date(b.completedAt) - new Date(a.completedAt)
+    )[0];
+    summary.artefacts[key] = {
+      unlock: mostRecent.unlock,
+      date: mostRecent.completedAt.slice(0, 10),
+      visitCount: completedRemaining.length,
+    };
+  }
+  writeSummary(summary);
+}
+
+export function clearRoomFromStorage(key) {
+  localStorage.removeItem(roomKey(key));
+  const summary = readSummary();
+  delete summary.artefacts[key];
+  writeSummary(summary);
+}
+
+export function clearAllLocalData() {
+  ROOM_KEYS.forEach((k) => localStorage.removeItem(roomKey(k)));
+  localStorage.removeItem("sfr_summary");
+  localStorage.removeItem(LOCAL_CONSENT_KEY);
+  localStorage.removeItem(MEASURE_KEY);
 }
 
 // ─── getJourneySummaryText (non-hook) ─────────────────────────────────────────

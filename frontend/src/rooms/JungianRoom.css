@@ -23,6 +23,11 @@
   text-align: center;
 }
 
+.jr-backButton {
+  align-self: flex-start;
+  min-width: auto;
+}
+
 .jr-header {
   display: flex;
   flex-direction: column;

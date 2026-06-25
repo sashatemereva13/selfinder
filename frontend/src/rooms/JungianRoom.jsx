@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { HOUSE_ROOMS, getNextHouseRoom } from "../content/narrativeFlow";
 import { useChat } from "../guide/ChatContext";
@@ -7,37 +6,6 @@ import RoomExperience from "./RoomExperience";
 import "./JungianRoom.css";
 
 const ROOM_VISUALS = {
-  persona: (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
-      <ellipse cx="60" cy="52" rx="36" ry="42" stroke="rgba(195,153,255,0.22)" strokeWidth="1" />
-      <ellipse cx="60" cy="52" rx="24" ry="28" stroke="rgba(195,153,255,0.14)" strokeWidth="1" />
-      <path d="M44 48 Q48 44 52 48" stroke="rgba(195,153,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M68 48 Q72 44 76 48" stroke="rgba(195,153,255,0.5)" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M50 64 Q60 70 70 64" stroke="rgba(116,221,214,0.4)" strokeWidth="1.2" strokeLinecap="round" />
-      <path d="M36 38 Q60 20 84 38" stroke="rgba(195,153,255,0.12)" strokeWidth="1" />
-    </svg>
-  ),
-  shadow: (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
-      <circle cx="60" cy="60" r="50" stroke="rgba(168,122,201,0.2)" strokeWidth="1" />
-      <circle cx="60" cy="60" r="35" stroke="rgba(168,122,201,0.15)" strokeWidth="1" />
-      <path d="M60 10 a50 50 0 0 1 0 100" fill="rgba(80,40,120,0.18)" />
-      <path d="M60 25 a35 35 0 0 1 0 70" fill="rgba(80,40,120,0.12)" />
-    </svg>
-  ),
-  anima: (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
-      <circle cx="42" cy="60" r="32" stroke="rgba(195,153,255,0.22)" strokeWidth="1" />
-      <circle cx="78" cy="60" r="32" stroke="rgba(116,221,214,0.22)" strokeWidth="1" />
-      <ellipse cx="60" cy="60" rx="14" ry="32" fill="rgba(195,153,255,0.07)" stroke="rgba(195,153,255,0.12)" strokeWidth="0.5" />
-    </svg>
-  ),
-  innerchild: (
-    <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
-      <polygon points="60,8 67,38 98,38 74,56 82,86 60,68 38,86 46,56 22,38 53,38" stroke="rgba(195,153,255,0.3)" strokeWidth="1" fill="rgba(195,153,255,0.05)" />
-      <polygon points="60,28 64,44 80,44 67,53 72,69 60,61 48,69 53,53 40,44 56,44" stroke="rgba(116,221,214,0.2)" strokeWidth="0.8" fill="rgba(116,221,214,0.04)" />
-    </svg>
-  ),
   self: (
     <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg" className="jr-visual" aria-hidden="true">
       <circle cx="60" cy="60" r="52" stroke="rgba(195,153,255,0.18)" strokeWidth="1" />
@@ -53,10 +21,6 @@ const ROOM_VISUALS = {
 };
 
 const ROOM_INVITATIONS = {
-  persona: "The mask fits so well you've forgotten you're wearing it. Your companion helps you remember.",
-  shadow: "The shadow doesn't disappear when you ignore it. Your companion walks beside you here.",
-  anima: "What we see in others is often ourselves, looking back. Your companion can help you look.",
-  innerchild: "What did you leave behind? Your companion walks back with you.",
   self: "You arrive here having passed through everything else.",
 };
 

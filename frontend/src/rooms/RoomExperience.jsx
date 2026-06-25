@@ -2,26 +2,23 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { useChat } from "../guide/ChatContext";
-import { useRoomProgress, useJourneySummary } from "../hooks/useRoomProgress";
+import {
+  useRoomProgress,
+  readMeasureResult,
+  LOCAL_CONSENT_KEY,
+} from "../hooks/useRoomProgress";
 import { ROOM_UNLOCK_PROMPTS } from "../content/roomContent";
 import { getNextHouseRoom } from "../content/narrativeFlow";
 import RoomChat from "./RoomChat";
-import MaskBuilder from "./mechanics/MaskBuilder";
-import WantedList from "./mechanics/WantedList";
-import TimelineWriter from "./mechanics/TimelineWriter";
-import SpectrumPlacer from "./mechanics/SpectrumPlacer";
 import EchoReflection from "./mechanics/EchoReflection";
+import DataConsentSheet from "./DataConsentSheet";
 import "./RoomExperience.css";
 
 // ─── Mechanic router ──────────────────────────────────────────────────────────
 function RoomMechanic({ roomKey, onComplete }) {
   switch (roomKey) {
-    case "persona":    return <MaskBuilder onComplete={onComplete} />;
-    case "shadow":     return <WantedList onComplete={onComplete} />;
-    case "anima":      return <SpectrumPlacer onComplete={onComplete} />;
-    case "innerchild": return <TimelineWriter onComplete={onComplete} />;
-    case "self":       return <EchoReflection onComplete={onComplete} />;
-    default:           return null;
+    case "self": return <EchoReflection onComplete={onComplete} />;
+    default:     return null;
   }
 }
 
@@ -42,7 +39,7 @@ export default function RoomExperience({ roomKey }) {
     completeVisit,
   } = useRoomProgress(roomKey);
 
-  const { completedCount } = useJourneySummary();
+  const measureResult = readMeasureResult();
 
   const [stage, setStage] = useState(() => {
     // If there is already an active visit in progress, decide where to resume
@@ -52,11 +49,13 @@ export default function RoomExperience({ roomKey }) {
 
   const [unlockInput, setUnlockInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [pendingMechanic, setPendingMechanic] = useState(null);
+  const [showConsentSheet, setShowConsentSheet] = useState(false);
 
   const nextRoom = getNextHouseRoom(roomKey);
 
-  // ── Self-room locked guard ──
-  if (roomKey === "self" && completedCount < 2 && stage === "intro") {
+  // ── Self-room locked guard — opens once the Depths have been worked through ──
+  if (roomKey === "self" && !measureResult && stage === "intro") {
     return (
       <div className="re-root">
         <div className="re-locked">
@@ -67,12 +66,10 @@ export default function RoomExperience({ roomKey }) {
               <circle cx="20" cy="26" r="2" fill="currentColor" />
             </svg>
           </div>
-          <h3 className="re-locked-title">The Self room opens after you've worked in at least two others.</h3>
+          <h3 className="re-locked-title">The Self opens once you've worked through the Depths.</h3>
           <p className="re-locked-desc">
-            Complete at least two of the other rooms first — Persona, Shadow, Anima, or Inner Child.
-            The Self integrates what came before.
+            Feel into your Life Spheres in Measure first. The Self integrates what came before.
           </p>
-          <p className="re-locked-progress">{completedCount} of 4 rooms completed</p>
         </div>
       </div>
     );
@@ -108,7 +105,21 @@ export default function RoomExperience({ roomKey }) {
   }
 
   function handleMechanicComplete(mechanicOutput) {
-    setMechanic(mechanicOutput);
+    const alreadySeen = localStorage.getItem(LOCAL_CONSENT_KEY);
+    if (!alreadySeen) {
+      setPendingMechanic(mechanicOutput);
+      setShowConsentSheet(true);
+    } else {
+      setMechanic(mechanicOutput);
+      setStage("chat");
+    }
+  }
+
+  function handleConsentDismiss() {
+    localStorage.setItem(LOCAL_CONSENT_KEY, JSON.stringify({ timestamp: new Date().toISOString() }));
+    setMechanic(pendingMechanic);
+    setPendingMechanic(null);
+    setShowConsentSheet(false);
     setStage("chat");
   }
 
@@ -131,6 +142,50 @@ export default function RoomExperience({ roomKey }) {
   function handleRevisitMechanic() {
     startNewVisit();
     setStage("mechanic");
+  }
+
+  function handleDownloadToken() {
+    const visit = activeVisit ?? lastCompletedVisit;
+    const priorArtefacts = visit?.mechanic?.priorArtefacts ?? [];
+    const selfStatement = visit?.unlock ?? "";
+    const philosopherName = activePhilosopher?.name ?? "Your companion";
+
+    const sections = priorArtefacts
+      .map(
+        ({ room, text }) =>
+          `<section><h3>${room}</h3><blockquote>${text}</blockquote></section>`,
+      )
+      .join("");
+
+    const html = `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Selfinder — Your Reflection</title>
+<style>
+  body { font-family: Georgia, serif; max-width: 640px; margin: 3rem auto; color: #1a1a1a; line-height: 1.6; padding: 0 1.5rem; }
+  h1 { font-size: 1.6rem; margin-bottom: 0.2rem; }
+  .meta { color: #666; font-size: 0.85rem; margin-bottom: 2rem; }
+  h3 { margin-bottom: 0.3rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: #555; }
+  section { margin-bottom: 1.4rem; }
+  blockquote { margin: 0.3rem 0 0; font-style: italic; }
+  .self-statement { margin-top: 2rem; padding-top: 1.4rem; border-top: 1px solid #ccc; font-size: 1.15rem; font-style: italic; }
+</style>
+</head>
+<body>
+  <h1>Selfinder — Your Reflection</h1>
+  <p class="meta">Guided by ${philosopherName} · ${new Date().toLocaleDateString()}</p>
+  ${sections}
+  ${selfStatement ? `<div class="self-statement">"${selfStatement}"</div>` : ""}
+</body>
+</html>`;
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.focus();
+    printWindow.print();
   }
 
   // ── Render ──
@@ -298,9 +353,20 @@ export default function RoomExperience({ roomKey }) {
               </blockquote>
             </div>
             <p className="re-complete-message">
-              This stays with you as you move through the house.
+              {roomKey === "self"
+                ? "This stays with you. Take it with you as you go."
+                : "This stays with you as you move through the house."}
             </p>
             <div className="re-complete-actions">
+              {roomKey === "self" && (
+                <button
+                  type="button"
+                  className="re-btn re-btn--primary"
+                  onClick={handleDownloadToken}
+                >
+                  Download your reflection
+                </button>
+              )}
               <button
                 type="button"
                 className="re-btn re-btn--ghost"
@@ -323,6 +389,10 @@ export default function RoomExperience({ roomKey }) {
             </div>
           </motion.div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showConsentSheet && <DataConsentSheet onDismiss={handleConsentDismiss} />}
       </AnimatePresence>
     </div>
   );

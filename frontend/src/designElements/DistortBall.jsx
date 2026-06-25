@@ -9,6 +9,9 @@ const DistortBall = ({
   speed = 3,
   color = "#B8BEF3",
   qualityTier = "medium",
+  opacity = 0.6,
+  distortBoost = 0,
+  speedBoost = 0,
 }) => {
   const materialRef = useRef();
   const motionScale = qualityTier === "low" ? 0.45 : qualityTier === "medium" ? 0.8 : 1;
@@ -19,8 +22,9 @@ const DistortBall = ({
 
     // Make the distortion value oscillate over time
     if (materialRef.current) {
-      materialRef.current.distort = baseDistort + Math.sin(t * 1.5) * 0.3 * motionScale;
-      materialRef.current.speed = speed + Math.sin(t * 0.8) * 0.5 * motionScale;
+      materialRef.current.distort = baseDistort + distortBoost + Math.sin(t * 1.5) * 0.3 * motionScale;
+      materialRef.current.speed = speed + speedBoost + Math.sin(t * 0.8) * 0.5 * motionScale;
+      materialRef.current.opacity = opacity;
     }
   });
 
@@ -32,7 +36,7 @@ const DistortBall = ({
         color={color}
         roughness={0}
         transparent
-        opacity={0.6}
+        opacity={opacity}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
         distort={baseDistort}

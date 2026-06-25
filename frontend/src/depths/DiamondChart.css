@@ -1,0 +1,34 @@
+.diamondChart {
+  width: 100%;
+  height: auto;
+  max-width: 240px;
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.diamondChartGuide {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+}
+
+.diamondChartShape {
+  fill: rgba(185, 140, 255, 0.14);
+  stroke: rgba(185, 140, 255, 0.55);
+  stroke-width: 1.5;
+  transition:
+    fill 600ms ease,
+    stroke 600ms ease;
+}
+
+.diamondChartDot {
+  fill: rgb(var(--dot-rgb));
+  filter: drop-shadow(0 0 4px rgba(var(--dot-rgb), 0.7));
+}
+
+.diamondChartLabel {
+  fill: rgba(243, 246, 255, 0.7);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

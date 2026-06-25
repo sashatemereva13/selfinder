@@ -1,0 +1,151 @@
+.depthsPage {
+  position: relative;
+  min-height: 100svh;
+  min-height: 100dvh;
+  width: 100%;
+  box-sizing: border-box;
+  padding: clamp(2.4rem, 5vw, 3.4rem) 1.2rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  color: #f1eafd;
+  background:
+    radial-gradient(circle at 20% 16%, rgba(168, 122, 201, 0.16), transparent 46%),
+    radial-gradient(circle at 80% 78%, rgba(116, 221, 214, 0.1), transparent 46%),
+    linear-gradient(180deg, #06060d, #0c0717);
+}
+
+.depthsPage.is-portal-arrival {
+  animation: depthsShellArrival 720ms cubic-bezier(0.2, 0.74, 0.22, 1) both;
+}
+
+.depthsPortalArrival {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(195, 153, 255, 0.18), transparent 22%),
+    radial-gradient(circle at 50% 50%, rgba(8, 14, 20, 0.28), rgba(5, 8, 14, 0.94));
+  animation: depthsPortalVeil 1250ms ease-out forwards;
+}
+
+.depthsPortalArrivalRing {
+  width: min(56vw, 26rem);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(195, 153, 255, 0.36);
+  box-shadow:
+    0 0 26px rgba(168, 122, 201, 0.45),
+    inset 0 0 34px rgba(168, 122, 201, 0.22);
+  animation: depthsPortalRing 780ms cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
+}
+
+.depthsPortalArrivalCaption {
+  position: absolute;
+  bottom: clamp(1.2rem, 4vh, 2.2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.depthsPortalArrival p {
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 0.7rem;
+  color: rgba(231, 213, 255, 0.85);
+}
+
+@keyframes depthsShellArrival {
+  0% {
+    opacity: 0.55;
+    transform: translate3d(0, 1.2rem, 0) scale(0.985);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+    filter: blur(0);
+  }
+}
+
+@keyframes depthsPortalVeil {
+  0% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes depthsPortalRing {
+  0% {
+    transform: scale(0.22);
+    opacity: 0.15;
+  }
+  50% {
+    opacity: 0.95;
+  }
+  100% {
+    transform: scale(2.45);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .depthsPage.is-portal-arrival,
+  .depthsPortalArrival,
+  .depthsPortalArrivalRing {
+    animation: none;
+  }
+}
+
+.depthsHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  width: min(40rem, calc(100vw - 2.4rem));
+  text-align: center;
+}
+
+.depthsKicker {
+  margin: 0;
+  font-family: "Panchang-Medium";
+  font-size: 0.78rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgba(231, 213, 255, 0.85);
+}
+
+.depthsTitle {
+  margin: 0;
+  font-family: "Panchang-Medium";
+  font-size: clamp(1.5rem, 2.2vw + 0.8rem, 2.2rem);
+  line-height: 1.2;
+  color: rgba(249, 244, 255, 0.96);
+}
+
+.depthsIntro {
+  margin: 0;
+  max-width: 46ch;
+  font-family: "Panchang-Light";
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(241, 234, 253, 0.78);
+}
+
+.depthsDiamondWrap {
+  width: min(280px, 80vw);
+}
+
+.depthsMeasureCta {
+  margin-top: 0.4rem;
+}

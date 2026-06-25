@@ -8,6 +8,10 @@ export function ChatProvider({ children }) {
   const [philosopherId, setPhilosopherId] = useState(null);
   const [conversations, setConversations] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  // Set once the player touches the magic ball — lets GuideAnchor (mounted
+  // outside the Canvas, with no view into the threshold's own phase state)
+  // know to stop showing the "touch the sphere" line once they've done so.
+  const [thresholdEngaged, setThresholdEngaged] = useState(false);
 
   const activePhilosopher = PHILOSOPHERS.find(p => p.id === philosopherId) ?? null;
   const messages = philosopherId ? (conversations[philosopherId] ?? []) : [];
@@ -57,6 +61,8 @@ export function ChatProvider({ children }) {
       send,
       isLoading,
       clearConversation,
+      thresholdEngaged,
+      setThresholdEngaged,
     }}>
       {children}
     </ChatContext.Provider>

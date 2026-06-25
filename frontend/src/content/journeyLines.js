@@ -5,11 +5,21 @@ import { useChat } from "../guide/ChatContext";
 const JOURNEY_LINE_API = apiUrl("/chat/journey-line");
 const JOURNEY_LINE_DELAY_MS = 480;
 
+// Shared so GuideAnchor (which renders the line, now that the magic ball's
+// own under-ball typewriter has been folded into it) and anything else that
+// touches the threshold scene resolve to the same cache entry.
+export const THRESHOLD_INTRO_SCENE_ID = "threshold-intro";
+export const THRESHOLD_INTRO_LINE = "Welcome traveller.\nTouch the sphere to cross the threshold.";
+
 // Shared so the portal jump (which pre-warms this line while the player is
 // mid-flight) and the Measure arrival caption (which renders it) resolve to
 // the same cache entry — the line is already settled by the time it's shown.
 export const MEASURE_ARRIVAL_SCENE_ID = "measure-arrival";
 export const MEASURE_ARRIVAL_LINE = "Signal lock acquired. Entering measurement protocol.";
+
+// Same pattern, for the portal jump that lands on the Depths hub.
+export const DEPTHS_ARRIVAL_SCENE_ID = "depths-arrival";
+export const DEPTHS_ARRIVAL_LINE = "Descending. Several parts of you are about to come into view.";
 
 const journeyLineCache = new Map();
 let journeyLineEndpointMissing = false;

@@ -17,6 +17,73 @@ span {
   font-family: "Panchang-Light";
 }
 
+/* ── Paint mark ─────────────────────────────────────────────────────────────
+   Reusable iridescent "energy chunk" blob — a CSS-only echo of marbled
+   oil-slick texture. Drop a <span className="paintMark" aria-hidden="true" />
+   anywhere, size/position it via inline style, and tune --mark-angle /
+   --mark-opacity per instance. Drifts slowly along --mark-dx/--mark-dy
+   (defaults give a small wander; pass bigger values for a longer cross-
+   screen float) — set --mark-duration/--mark-delay to desync instances.
+   Pair with .paintMark--behind to tuck it under in-flow text/content
+   (e.g. inside a button). */
+.paintMark {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(
+    from var(--mark-angle, 0deg) at 50% 50%,
+    rgba(255, 145, 200, 0.55),
+    rgba(255, 214, 130, 0.45),
+    rgba(150, 255, 200, 0.45),
+    rgba(120, 190, 255, 0.5),
+    rgba(200, 140, 255, 0.55),
+    rgba(255, 145, 200, 0.55)
+  );
+  filter: blur(28px) saturate(150%);
+  opacity: var(--mark-opacity, 0.45);
+  mix-blend-mode: screen;
+  animation: paintMarkDrift var(--mark-duration, 24s) ease-in-out infinite;
+  animation-delay: var(--mark-delay, 0s);
+  will-change: transform;
+}
+
+.paintMark--behind {
+  z-index: -1;
+}
+
+.paintMark--static {
+  animation: none;
+}
+
+/* Glossy single-hue variant — a colored highlight rather than a rainbow
+   swirl, for marks meant to read as "this one thing's color" (e.g. tied
+   to a specific philosopher's accent). Set --mark-rgb to the "r, g, b" triplet. */
+.paintMark--solid {
+  background: radial-gradient(
+    circle at 32% 28%,
+    rgba(255, 255, 255, 0.6),
+    rgba(var(--mark-rgb, 200, 160, 255), 0.42) 34%,
+    rgba(var(--mark-rgb, 200, 160, 255), 0.16) 62%,
+    transparent 78%
+  );
+}
+
+@keyframes paintMarkDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(var(--mark-dx, 70px), var(--mark-dy, -50px), 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paintMark {
+    animation: none;
+  }
+}
+
 .noScroll {
   overflow: hidden;
   width: 100vw;
@@ -62,6 +129,52 @@ span {
   height: 100svh;
 }
 
+/* ─── Cosmic nebula (background) ────────────────────────────────────────────
+   A fixed multi-hue painterly nebula behind the threshold canvas — CSS-only
+   blurred radial blobs, screen-blended over the dark void. The canvas above
+   it renders with gl.alpha:true so this shows through. Lives behind the
+   canvas in DOM order (no explicit z-index needed). */
+.nebulaField {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.nebulaBlob {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 38% 32%,
+    rgba(var(--blob-rgb), 0.6),
+    rgba(var(--blob-rgb), 0.24) 45%,
+    transparent 72%
+  );
+  filter: blur(var(--blob-blur, 80px));
+  mix-blend-mode: screen;
+  opacity: var(--blob-opacity, 0.45);
+  animation: nebulaDrift var(--blob-duration, 42s) ease-in-out infinite;
+  animation-delay: var(--blob-delay, 0s);
+  will-change: transform;
+}
+
+@keyframes nebulaDrift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(var(--blob-dx, 20px), var(--blob-dy, -16px), 0) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nebulaBlob {
+    animation: none;
+  }
+}
+
 .frontPageHero canvas {
   display: block;
   width: 100% !important;
@@ -72,10 +185,10 @@ span {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
+  top: calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
   z-index: 1000;
-  padding: 0.52rem 1.1rem;
-  border-radius: 999px;
+  padding: 0.6rem 1.1rem;
+  border-radius: 18px;
   border: 1px solid rgba(197, 173, 228, 0.12);
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
@@ -93,6 +206,9 @@ span {
 }
 
 .frontPageUnlockHint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   color: rgba(233, 223, 248, 0.68);
   font-size: 0.73rem;
   letter-spacing: 0.04em;
@@ -279,8 +395,8 @@ button:hover {
 }
 
 .portalPromptShell .smoothTypewriter {
-  width: min(28rem, 38vw);
-  padding: 0.55rem 0.85rem;
+  width: min(34rem, 46vw);
+  padding: 0.75rem 1.1rem;
   border-radius: 1.4rem;
   border-color: rgba(255, 233, 205, 0.1);
   background:
@@ -292,6 +408,8 @@ button:hover {
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
   backdrop-filter: blur(10px);
   color: rgba(250, 237, 222, 0.9);
+  font-size: 1.32rem;
+  line-height: 1.45;
   text-shadow: 0 0 18px rgba(255, 171, 94, 0.18);
 }
 
@@ -339,6 +457,50 @@ button:hover {
   max-width: min(80vw, 50rem);
 }
 
+.portalJumpHint {
+  appearance: none;
+  cursor: pointer;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  border: 1px solid rgba(197, 161, 242, 0.18);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0)),
+    rgba(16, 10, 26, 0.72);
+  color: rgba(243, 236, 252, 0.92);
+  font-family: "Panchang-Medium";
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, 0.24),
+    0 0 18px rgba(185, 140, 255, 0.16);
+  white-space: nowrap;
+  transition:
+    transform 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    background-color 160ms ease;
+}
+
+.portalJumpHint:hover {
+  transform: translateY(-1px) scale(1.02);
+  border-color: rgba(214, 186, 255, 0.36);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 12px 26px rgba(0, 0, 0, 0.26),
+    0 0 24px rgba(185, 140, 255, 0.24);
+}
+
+.portalJumpHint:active {
+  transform: scale(0.985);
+}
+
+.portalJumpHint:focus-visible {
+  outline: 2px solid rgba(225, 205, 255, 0.82);
+  outline-offset: 3px;
+}
+
 .portalPromptShell {
   display: grid;
   justify-items: center;
@@ -347,13 +509,25 @@ button:hover {
 
 .portalPromptActions {
   display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
+  gap: 0.45rem;
+}
+
+.portalJumpLabel {
+  font-family: "Panchang-Medium";
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 214, 166, 0.78);
+  text-shadow: 0 0 14px rgba(255, 169, 105, 0.2);
 }
 
 .portalJumpButton {
-  min-width: 6.4rem;
-  min-height: 3.1rem;
-  padding: 0.72rem 1.2rem 0.68rem;
+  min-width: 8.2rem;
+  min-height: 3.7rem;
+  padding: 0.85rem 1.5rem 0.8rem;
   border: 1px solid rgba(255, 204, 156, 0.2);
   border-radius: 999px;
   background:
@@ -362,8 +536,8 @@ button:hover {
     rgba(10, 8, 14, 0.28);
   color: rgba(255, 241, 221, 0.94);
   font-family: "Panchang-Medium";
-  font-size: 0.84rem;
-  letter-spacing: 0.26em;
+  font-size: 1.05rem;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   box-shadow:
     0 0 24px rgba(255, 169, 105, 0.14),
@@ -472,65 +646,228 @@ button:hover {
   position: fixed;
   inset: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.portalJumpOverlayTunnel,
-.portalJumpOverlayVoid {
+.portalJumpOverlayScrim {
   position: absolute;
   inset: 0;
+  background: rgba(6, 4, 12, 0.55);
   opacity: 0;
 }
 
-.portalJumpOverlayTunnel {
-  background:
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(205, 236, 255, 0.2) 0%,
-      transparent 20%
-    ),
-    radial-gradient(
-      circle at 50% 50%,
-      rgba(0, 0, 0, 0.2) 30%,
-      rgba(0, 0, 0, 0.9) 100%
-    );
+.portalJumpOverlayStreaks {
+  position: absolute;
+  inset: 0;
+}
+
+/* Each streak is a thick radial "noodle" anchored at the center, rotated to
+   its own spoke angle, that grows outward and stretches — the visual stand-in
+   for matter spaghettifying as it's pulled toward the singularity. */
+.portalJumpStreak {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 0;
+  border-radius: 999px;
+  transform: translate(-50%, -100%) rotate(var(--streak-angle));
+  transform-origin: 50% 100%;
+  background: linear-gradient(
+    to top,
+    rgba(140, 95, 207, 0) 0%,
+    rgba(185, 140, 255, 0.95) 50%,
+    rgba(255, 255, 255, 1) 100%
+  );
+  box-shadow: 0 0 14px 2px rgba(185, 140, 255, 0.75);
+  opacity: 0;
+}
+
+.portalJumpOverlaySingularity {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%) scale(0.3);
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(214, 182, 255, 0.7) 35%,
+    transparent 75%
+  );
+  opacity: 0;
+  filter: blur(1px);
+}
+
+.portalJumpOverlayFlash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(214, 182, 255, 0.75) 32%,
+    rgba(6, 4, 12, 0) 68%
+  );
+  opacity: 0;
 }
 
 .portalJumpOverlayVoid {
+  position: absolute;
+  inset: 0;
   background: #05080e;
+  opacity: 0;
 }
 
-.portalJumpOverlay.is-tunnel .portalJumpOverlayTunnel {
-  animation: portalTunnelFx 720ms cubic-bezier(0.16, 0.84, 0.2, 1) forwards;
+/* While the jump is winding up — before the streaks fire — give the screen
+   a sense of being tugged toward the singularity: the scrim darkens with a
+   small jitter and the center glow pulses twice, like energy gathering. */
+.portalJumpOverlay.is-charge .portalJumpOverlayScrim {
+  animation: portalScrimChargeFx 380ms ease-in forwards;
 }
 
-/* Hold the tunnel layer at its settled end-state (rather than letting the
-   class swap reset transform/filter/opacity) so the void fades in over a
-   continuous backdrop instead of snapping to a flat black first. */
-.portalJumpOverlay.is-blackout .portalJumpOverlayTunnel {
-  opacity: 1;
-  transform: scale(1.38);
-  filter: blur(12px);
+.portalJumpOverlay.is-charge .portalJumpOverlaySingularity {
+  animation: portalSingularityCharge 380ms ease-in-out forwards;
+}
+
+/* Hold the charge stage's settled end-state through stretch (rather than
+   letting the class swap restart these from zero) so the burst reads as a
+   continuation of the wind-up instead of snapping back to nothing. */
+.portalJumpOverlay.is-stretch .portalJumpOverlayScrim {
+  opacity: 0.55;
+}
+
+.portalJumpOverlay.is-stretch .portalJumpStreak {
+  animation: portalStreakGrow 640ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
+  animation-delay: var(--streak-delay);
+}
+
+.portalJumpOverlay.is-stretch .portalJumpOverlaySingularity {
+  animation: portalSingularityPulse 640ms ease-in forwards;
+}
+
+/* Hold the streaks/glow at their settled end-state through the collapse
+   stage (rather than letting the class swap reset them) so the flash reads
+   as a continuation of the stretch instead of snapping back to nothing. */
+.portalJumpOverlay.is-collapse .portalJumpOverlayScrim {
+  opacity: 0.55;
+}
+
+.portalJumpOverlay.is-collapse .portalJumpStreak {
+  opacity: 0;
+  transition: opacity 160ms ease-out;
+}
+
+.portalJumpOverlay.is-collapse .portalJumpOverlaySingularity {
+  opacity: 0;
+  transition: opacity 120ms ease-out;
+}
+
+.portalJumpOverlay.is-collapse .portalJumpOverlayFlash {
+  animation: portalFlashFx 220ms ease-in forwards;
+}
+
+.portalJumpOverlay.is-blackout .portalJumpOverlayScrim {
+  opacity: 0.55;
+}
+
+.portalJumpOverlay.is-blackout .portalJumpOverlayFlash {
+  opacity: 0.85;
 }
 
 .portalJumpOverlay.is-blackout .portalJumpOverlayVoid {
-  animation: portalVoidFx 360ms ease-in forwards;
+  animation: portalVoidFx 280ms ease-in forwards;
 }
 
-@keyframes portalTunnelFx {
+@keyframes portalScrimChargeFx {
   0% {
     opacity: 0;
-    transform: scale(0.88);
-    filter: blur(0px);
+    transform: translate(0, 0);
   }
-  35% {
-    opacity: 0.68;
-    transform: scale(1.06);
-    filter: blur(2px);
+  15% {
+    opacity: 0.18;
+    transform: translate(-2px, 1px);
+  }
+  30% {
+    opacity: 0.3;
+    transform: translate(2px, -1px);
+  }
+  45% {
+    opacity: 0.4;
+    transform: translate(-1px, 2px);
+  }
+  60% {
+    opacity: 0.48;
+    transform: translate(1px, -2px);
   }
   100% {
+    opacity: 0.55;
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes portalSingularityCharge {
+  0% {
+    transform: translate(-50%, -50%) scale(0.12);
+    opacity: 0;
+  }
+  28% {
+    transform: translate(-50%, -50%) scale(0.55);
+    opacity: 0.55;
+  }
+  52% {
+    transform: translate(-50%, -50%) scale(0.22);
+    opacity: 0.2;
+  }
+  78% {
+    transform: translate(-50%, -50%) scale(0.5);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.3;
+  }
+}
+
+@keyframes portalStreakGrow {
+  0% {
+    height: 0;
+    opacity: 0;
+  }
+  18% {
     opacity: 1;
-    transform: scale(1.38);
-    filter: blur(12px);
+  }
+  70% {
+    height: 72vmax;
+    opacity: 1;
+  }
+  100% {
+    height: 118vmax;
+    opacity: 0.6;
+  }
+}
+
+@keyframes portalSingularityPulse {
+  0% {
+    transform: translate(-50%, -50%) scale(0.3);
+    opacity: 0.3;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(1.6);
+    opacity: 0.9;
+  }
+}
+
+@keyframes portalFlashFx {
+  0% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.85;
   }
 }
 
@@ -545,7 +882,8 @@ button:hover {
 
 @media screen and (max-width: 786px) {
   .portalPromptShell .smoothTypewriter {
-    width: min(78vw, 24rem);
+    width: min(82vw, 28rem);
+    font-size: 1.08rem;
   }
 
   .smoothTypewriter {

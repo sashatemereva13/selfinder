@@ -5,6 +5,8 @@ import { useAuth } from "../auth/AuthContext";
 import { apiUrl } from "../api/baseUrl";
 import { useChat } from "../guide/ChatContext";
 import { HOUSE_ROOMS } from "../content/narrativeFlow";
+import { clearAllLocalData, LOCAL_CONSENT_KEY, ROOM_KEYS, readMeasureResult, readAllRooms } from "../hooks/useRoomProgress";
+import LocalDataRecord from "./LocalDataRecord";
 import "./PersonalSpace.css";
 
 const API = apiUrl("/user");
@@ -83,12 +85,28 @@ export default function PersonalSpace() {
   }
 
   async function handleExport() {
+    // Server-side data
     const res = await fetch(`${API}/me/data`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return;
-    const data = await res.json();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const serverData = res.ok ? await res.json() : null;
+
+    // Browser-side data
+    const consentRaw = localStorage.getItem(LOCAL_CONSENT_KEY);
+    const fullExport = {
+      exportedAt: new Date().toISOString(),
+      serverData,
+      browserData: {
+        localDataFirstSaved: consentRaw ? JSON.parse(consentRaw).timestamp : null,
+        rooms: readAllRooms(),
+        summary: (() => {
+          try { return JSON.parse(localStorage.getItem("sfr_summary") ?? "null"); } catch { return null; }
+        })(),
+        measureResult: readMeasureResult(),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(fullExport, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
@@ -107,6 +125,7 @@ export default function PersonalSpace() {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
+      clearAllLocalData();
       logout();
       navigate("/");
     } else {
@@ -219,6 +238,11 @@ export default function PersonalSpace() {
               </button>
             </div>
             {consentMsg && <p className="ps-gdprMsg">{consentMsg}</p>}
+          </div>
+
+          {/* Local browser data */}
+          <div className="ps-gdprCard">
+            <LocalDataRecord />
           </div>
 
           {/* Export */}

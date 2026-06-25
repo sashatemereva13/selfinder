@@ -6,7 +6,6 @@ import saveIcon from "/saveIcon.svg";
 const Message = ({
   selectedMessage,
   setSelectedMessage,
-  setControlsEnabled,
 }) => {
   const [randomLabel, setRandomLabel] = useState("");
 
@@ -182,15 +181,6 @@ const Message = ({
       link.click();
     });
   };
-
-  useEffect(() => {
-    if (selectedMessage) {
-      setControlsEnabled(false);
-    } else {
-      setControlsEnabled(true);
-    }
-    return () => setControlsEnabled(true);
-  }, [selectedMessage]);
 
   if (!selectedMessage) return null;
 

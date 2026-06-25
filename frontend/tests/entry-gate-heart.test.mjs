@@ -9,24 +9,21 @@ const cssPath = resolve('src/frontpage/EntryGate.css');
 const componentFile = readFileSync(componentPath, 'utf8');
 const cssFile = readFileSync(cssPath, 'utf8');
 
-test('EntryGate renders simplified center core visual', () => {
-  assert.match(componentFile, /className=\{`entryGateHeart \$\{activePhilosopher/, 'Missing entryGateHeart root');
-  assert.match(componentFile, /className=\"entryGateCoreField\"/, 'Missing entryGateCoreField element');
-  assert.match(componentFile, /className=\"entryGateCoreRing\"/, 'Missing entryGateCoreRing element');
-  assert.match(componentFile, /className=\"entryGateCore\"/, 'Missing entryGateCore element');
+test('EntryGate renders philosopher orb selection visuals', () => {
+  assert.match(componentFile, /className=\{`entryGatePhiloGrid \$\{nudge \? "is-nudge" : ""\}`\}/, 'Missing philosopher grid root');
+  assert.match(componentFile, /className=\"entryGatePhiloOrbField\"/, 'Missing orb field element');
+  assert.match(componentFile, /className=\"entryGatePhiloOrbRing\"/, 'Missing orb ring element');
+  assert.match(componentFile, /className=\"entryGatePhiloOrbCore\"/, 'Missing orb core element');
 });
 
-test('EntryGate includes simplified core styles and motion', () => {
-  assert.match(cssFile, /\.entryGate\s*\{[\s\S]*animation:\s*entryGateWorldBreath\s+4\.8s\s+ease-in-out\s+infinite;/, 'Environment should breathe with heart pulse');
-  assert.match(cssFile, /\.entryGateHeart\s*\{/, 'Missing .entryGateHeart styles');
-  assert.match(cssFile, /\.entryGateCoreField\s*\{/, 'Missing .entryGateCoreField styles');
-  assert.match(cssFile, /\.entryGateCoreRing\s*\{/, 'Missing .entryGateCoreRing styles');
-  assert.match(cssFile, /\.entryGateCore\s*\{/, 'Missing .entryGateCore styles');
-  assert.match(cssFile, /animation:\s*entryGateCorePulse\s+3\.8s\s+ease-in-out\s+infinite;/, 'Core should pulse');
-  assert.match(cssFile, /\.entryGateHeart\s*\{[\s\S]*animation:\s*entryGateCoreFloat\s+5\.8s\s+ease-in-out\s+infinite;/, 'Heart visual should float with its own motion');
-  assert.match(cssFile, /@keyframes\s+entryGateWorldBreath\s*\{/, 'Missing environment breathing keyframes');
-  assert.match(cssFile, /@keyframes\s+entryGateAuraDrift\s*\{/, 'Missing ambient aura drift keyframes');
-  assert.match(cssFile, /@keyframes\s+entryGateCoreFloat\s*\{/, 'Missing core float animation');
-  assert.match(cssFile, /@keyframes\s+entryGateCorePulse\s*\{/, 'Missing core pulse animation');
-  assert.match(cssFile, /@keyframes\s+entryGateCoreRingPulse\s*\{/, 'Missing ring pulse animation');
+test('EntryGate includes orb styles and selection motion', () => {
+  assert.match(cssFile, /\.entryGatePhiloGrid\s*\{/, 'Missing .entryGatePhiloGrid styles');
+  assert.match(cssFile, /\.entryGatePhiloOrbField\s*\{/, 'Missing .entryGatePhiloOrbField styles');
+  assert.match(cssFile, /\.entryGatePhiloOrbRing\s*\{/, 'Missing .entryGatePhiloOrbRing styles');
+  assert.match(cssFile, /\.entryGatePhiloOrbCore\s*\{/, 'Missing .entryGatePhiloOrbCore styles');
+  assert.match(cssFile, /animation:\s*entryGatePhiloOrbPulse\s+3\.8s\s+ease-in-out\s+infinite;/, 'Selected orb field should pulse');
+  assert.match(cssFile, /\.entryGatePhiloOrbWrap\s*\{[\s\S]*animation:\s*entryGatePhiloOrbFloat\s+5\.8s\s+ease-in-out\s+infinite;/, 'Orb visual should float');
+  assert.match(cssFile, /@keyframes\s+entryGatePhiloOrbFloat\s*\{/, 'Missing orb float animation');
+  assert.match(cssFile, /@keyframes\s+entryGatePhiloOrbPulse\s*\{/, 'Missing orb pulse animation');
+  assert.match(cssFile, /@keyframes\s+entryGatePhiloOrbRingPulse\s*\{/, 'Missing orb ring pulse animation');
 });

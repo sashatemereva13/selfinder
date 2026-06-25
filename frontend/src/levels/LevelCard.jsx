@@ -45,7 +45,7 @@ export default function LevelCard({ name, slug, score, className, index = 0 }) {
         <div className="levelShardFake" />
         <p>{name}</p>
         <span className="levelCardMeta">{score}</span>
-        <span className="levelCardHint">Open options</span>
+        <span className="levelCardHint">Meet this state</span>
       </motion.button>
 
       {open && (

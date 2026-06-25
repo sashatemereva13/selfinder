@@ -6,6 +6,8 @@ import {
   MEASURE_ARRIVAL_SCENE_ID,
   MEASURE_ARRIVAL_LINE,
 } from "../content/journeyLines";
+import { useChat } from "../guide/ChatContext";
+import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import {
   MEASURE_RESULT_STORAGE_KEY,
   STEP_CONFIG,
@@ -15,7 +17,7 @@ import {
   MEANING_VISUALS,
   HORIZON_VISUALS,
 } from "./measureConfig";
-import { buildInterpretation, getOptionSignalBars, getSelectedMeta } from "./measureLogic";
+import { buildInterpretation, getOptionSignalBars } from "./measureLogic";
 import {
   MeasureTopBar,
   MeasureEntryPhase,
@@ -27,6 +29,7 @@ import {
 
 const Measure = () => {
   const location = useLocation();
+  const { activePhilosopher } = useChat();
   const [phase, setPhase] = useState("entry");
   const [stepIndex, setStepIndex] = useState(0);
   const [choices, setChoices] = useState(INITIAL_CHOICES);
@@ -43,7 +46,6 @@ const Measure = () => {
 
   const currentStep = STEP_CONFIG[stepIndex];
   const result = buildInterpretation(choices);
-  const selectedMeta = getSelectedMeta(choices);
   const selectedOptionForCurrentStep =
     currentStep?.options.find((option) => option.value === choices[currentStep.key]) || null;
 
@@ -58,6 +60,8 @@ const Measure = () => {
   }[phase];
 
   const canContinueSelection = Boolean(currentStep && choices[currentStep.key]);
+
+  const isDepthsFacet = location.pathname.startsWith("/depths");
 
   const clearPreviewTimer = () => {
     if (previewTimerRef.current) {
@@ -222,7 +226,7 @@ const Measure = () => {
     if (!["interpretation", "guidance", "completion"].includes(phase)) return;
 
     const payload = {
-      version: 1,
+      version: 2,
       savedAt: new Date().toISOString(),
       vibrationScore: result.vibrationScore,
       rawVibrationScore: result.rawVibrationScore,
@@ -230,6 +234,8 @@ const Measure = () => {
       dominantAxis: result.dominantAxis,
       vibrationLevel: result.vibrationLevel,
       patternTitle: result.title,
+      lines: result.lines,
+      focusLine: result.focusLine,
       selected: {
         color: result.selected?.color?.label,
         sound: result.selected?.sound?.label,
@@ -318,11 +324,6 @@ const Measure = () => {
     setStepIndex(0);
   };
 
-  const jumpToStep = (index) => {
-    setPhase("selection");
-    setStepIndex(index);
-  };
-
   const showWizardNav = phase !== "entry";
 
   return (
@@ -332,15 +333,21 @@ const Measure = () => {
       {showPortalArrival && (
         <div className="measure-portalArrival" aria-hidden="true">
           <div className="measure-portalArrivalRing" />
-          <p>{arrivalLine ?? MEASURE_ARRIVAL_LINE}</p>
+          <div className="measure-portalArrivalCaption">
+            <PhilosopherVoiceTag philosopher={activePhilosopher} />
+            <p>{arrivalLine ?? MEASURE_ARRIVAL_LINE}</p>
+          </div>
         </div>
       )}
       <div className="measure-bg-orb orb-a" aria-hidden="true" />
       <div className="measure-bg-orb orb-b" aria-hidden="true" />
-      <div className="measure-grid" aria-hidden="true" />
 
       <div className="measure-shell">
-        <MeasureTopBar phaseProgress={phaseProgress} />
+        <MeasureTopBar
+          phaseProgress={phaseProgress}
+          backTo={isDepthsFacet ? "/depths" : "/"}
+          backLabel={isDepthsFacet ? "Back to the Depths" : "Back Home"}
+        />
 
         <section className="measure-panel" aria-live="polite">
           {phase === "entry" && <MeasureEntryPhase onBegin={handleBegin} />}
@@ -375,9 +382,6 @@ const Measure = () => {
           {phase === "interpretation" && result && (
             <MeasureInterpretationPhase
               result={result}
-              stepConfig={STEP_CONFIG}
-              selectedMeta={selectedMeta}
-              onJumpToStep={jumpToStep}
               onBack={handleBack}
               onNext={handleNext}
             />

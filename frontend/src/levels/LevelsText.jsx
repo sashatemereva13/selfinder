@@ -2,27 +2,10 @@ import { Canvas } from "@react-three/fiber";
 import LevelsScene from "./LevelsScene";
 import LevelCard from "./LevelCard";
 import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";
+import { LEVELS } from "./levelsContent";
 import "./levels.css";
 
-const levels = [
-  { name: "enlightenment", slug: "enlightenment", score: 700 },
-  { name: "peace", slug: "peace", score: 600 },
-  { name: "unconditional love", slug: "unconditionallove", score: 540 },
-  { name: "love", slug: "love", score: 500 },
-  { name: "reason", slug: "reason", score: 400 },
-  { name: "acceptance", slug: "acceptance", score: 350 },
-  { name: "willingness", slug: "willingness", score: 310 },
-  { name: "neutrality", slug: "neutrality", score: 250 },
-  { name: "courage", slug: "courage", score: 200 },
-  { name: "pride", slug: "pride", score: 175 },
-  { name: "anger", slug: "anger", score: 150 },
-  { name: "desire", slug: "desire", score: 125 },
-  { name: "fear", slug: "fear", score: 100 },
-  { name: "grief", slug: "grief", score: 75 },
-  { name: "apathy", slug: "apathy", score: 50 },
-  { name: "guilt", slug: "guilt", score: 30 },
-  { name: "shame", slug: "shame", score: 20 },
-];
+const levels = LEVELS.map(({ name, slug, score }) => ({ name, slug, score }));
 
 export default function LevelsText() {
   const quality = useAdaptiveQuality();
@@ -45,8 +28,10 @@ export default function LevelsText() {
         <p className="sf-kicker">Perspective Layer</p>
         <h1>vibration levels</h1>
         <p>
-          Select a level to open options. Choose <strong>Learn</strong> for context or{" "}
-          <strong>Play</strong> to move into Tune In.
+          This isn't a ladder to climb — every state here is complete and valid information about
+          where you are, and a different one can be true for your body, mind, heart, and spirit
+          at the same time. Open one to see what it's communicating. Choose <strong>Learn</strong>{" "}
+          for context or <strong>Play</strong> to move into Tune In.
         </p>
       </section>
 

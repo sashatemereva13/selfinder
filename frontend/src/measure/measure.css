@@ -1,11 +1,8 @@
 .measure-page {
-  --measure-bg-1: #0b1018;
-  --measure-bg-2: #13141f;
+  --measure-bg-1: #06060d;
+  --measure-bg-2: #0c0717;
   --measure-ink: #f3f6ff;
   --measure-ink-soft: rgba(243, 246, 255, 0.76);
-  --measure-line: rgba(255, 255, 255, 0.1);
-  --measure-card: rgba(9, 13, 23, 0.72);
-  --measure-card-strong: rgba(13, 19, 33, 0.9);
   --measure-accent: #9fd3ff;
   --measure-accent-2: #b98cff;
   position: relative;
@@ -15,14 +12,14 @@
   color: var(--measure-ink);
   background:
     radial-gradient(
-      circle at 15% 20%,
-      rgba(159, 211, 255, 0.15),
-      transparent 45%
+      circle at 22% 18%,
+      rgba(195, 153, 255, 0.12),
+      transparent 46%
     ),
     radial-gradient(
-      circle at 80% 15%,
-      rgba(185, 140, 255, 0.16),
-      transparent 42%
+      circle at 78% 82%,
+      rgba(116, 221, 214, 0.1),
+      transparent 46%
     ),
     linear-gradient(180deg, var(--measure-bg-1), var(--measure-bg-2));
   overflow-x: hidden;
@@ -57,9 +54,15 @@
   animation: measurePortalRing 780ms cubic-bezier(0.2, 0.75, 0.2, 1) forwards;
 }
 
-.measure-portalArrival p {
+.measure-portalArrivalCaption {
   position: absolute;
   bottom: clamp(1.2rem, 4vh, 2.2rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.measure-portalArrival p {
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.18em;
@@ -80,46 +83,35 @@
 .measure-bg-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(24px);
-  opacity: 0.6;
+  filter: blur(36px);
+  opacity: 0.55;
   pointer-events: none;
 }
 
 .measure-bg-orb.orb-a {
-  width: 20rem;
-  height: 20rem;
-  left: -4rem;
-  top: 5rem;
+  width: min(26rem, 44vw);
+  height: min(26rem, 44vw);
+  left: 6%;
+  top: 10%;
   background: radial-gradient(
     circle,
-    rgba(185, 140, 255, 0.35),
+    rgba(195, 153, 255, 0.32),
     transparent 70%
   );
   animation: measureFloatA 18s ease-in-out infinite;
 }
 
 .measure-bg-orb.orb-b {
-  width: 24rem;
-  height: 24rem;
-  right: -5rem;
-  bottom: -2rem;
+  width: min(30rem, 48vw);
+  height: min(30rem, 48vw);
+  right: 6%;
+  bottom: 8%;
   background: radial-gradient(
     circle,
-    rgba(159, 211, 255, 0.28),
+    rgba(116, 221, 214, 0.26),
     transparent 70%
   );
   animation: measureFloatB 22s ease-in-out infinite;
-}
-
-.measure-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-  background-size: 36px 36px;
-  mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
-  pointer-events: none;
 }
 
 .measure-shell {
@@ -148,30 +140,29 @@
   min-height: 42px;
   padding: 0.65rem 1rem;
   border-radius: 999px;
-  border: 1px solid var(--measure-line);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--measure-ink);
+  border: none;
+  background: none;
+  color: var(--measure-ink-soft);
   text-decoration: none;
   font-family: "Panchang-Light", sans-serif;
   font-size: 0.85rem;
   transition:
-    background-color 180ms ease,
-    border-color 180ms ease,
-    transform 180ms ease;
+    color 180ms ease,
+    transform 180ms ease,
+    text-shadow 180ms ease;
 }
 
 .measure-backButton:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--measure-ink);
   transform: translateY(-1px);
+  text-shadow: 0 0 16px rgba(255, 255, 255, 0.25);
 }
 
 .measure-progressWrap {
-  padding: 0.7rem 0.9rem;
-  border-radius: 14px;
-  border: 1px solid var(--measure-line);
-  background: rgba(11, 15, 27, 0.55);
-  backdrop-filter: blur(10px);
+  padding: 0.7rem 0;
+  border-radius: 0;
+  border: none;
+  background: none;
 }
 
 .measure-progressMeta {
@@ -206,17 +197,11 @@
 }
 
 .measure-panel {
-  border: 1px solid var(--measure-line);
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    var(--measure-card);
-  backdrop-filter: blur(14px);
-  border-radius: 24px;
+  border: none;
+  background: none;
   min-height: calc(100svh - 7rem);
   min-height: calc(100dvh - 7rem);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 18px 80px rgba(0, 0, 0, 0.35);
+  box-shadow: none;
   display: flex;
   align-items: center;
 }
@@ -260,15 +245,14 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  padding: 0.4rem 0;
+  border: none;
+  background: none;
 }
 
 .measure-audioToggle {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: none;
   background: rgba(255, 255, 255, 0.04);
   color: var(--measure-ink);
   border-radius: 999px;
@@ -276,18 +260,19 @@
   cursor: pointer;
   font-family: "Panchang-Light", sans-serif;
   font-size: 0.78rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
   transition:
     background-color 180ms ease,
-    border-color 180ms ease;
+    box-shadow 180ms ease;
 }
 
 .measure-audioToggle:hover {
   background: rgba(255, 255, 255, 0.07);
-  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
 .measure-audioToggle.is-muted {
-  border-color: rgba(255, 123, 123, 0.35);
+  box-shadow: 0 0 0 1px rgba(255, 123, 123, 0.38);
   color: rgba(255, 210, 210, 0.95);
 }
 
@@ -324,8 +309,8 @@
 
 .measure-optionCard {
   position: relative;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
+  border: none;
+  background: rgba(255, 255, 255, 0.02);
   color: inherit;
   border-radius: 16px;
   padding: 0.95rem 0.9rem;
@@ -337,30 +322,31 @@
   gap: 0.55rem;
   text-align: left;
   cursor: pointer;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.22);
   transition:
     transform 180ms ease,
-    border-color 180ms ease,
     background-color 180ms ease,
     box-shadow 180ms ease;
 }
 
 .measure-optionCard:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-3px);
   background: rgba(255, 255, 255, 0.045);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
 }
 
 .measure-optionCard.is-selected {
-  border-color: rgba(159, 211, 255, 0.55);
-  background: rgba(159, 211, 255, 0.08);
-  box-shadow: 0 0 0 1px rgba(159, 211, 255, 0.2) inset;
+  background: rgba(159, 211, 255, 0.09);
+  box-shadow:
+    0 0 0 1px rgba(159, 211, 255, 0.4),
+    0 0 24px rgba(159, 211, 255, 0.22),
+    0 14px 34px rgba(0, 0, 0, 0.28);
 }
 
 .measure-optionCard.is-previewing {
-  border-color: rgba(185, 140, 255, 0.55);
   box-shadow:
-    0 0 0 1px rgba(185, 140, 255, 0.18) inset,
-    0 0 18px rgba(185, 140, 255, 0.12);
+    0 0 0 1px rgba(185, 140, 255, 0.4),
+    0 0 22px rgba(185, 140, 255, 0.22);
   animation: measurePreviewPulse 850ms ease-in-out infinite;
 }
 
@@ -372,27 +358,19 @@
 .measure-optionVisual {
   width: 100%;
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.03),
-      rgba(255, 255, 255, 0.015)
-    ),
-    rgba(9, 13, 23, 0.45);
+  border: none;
+  background: rgba(255, 255, 255, 0.02);
   padding: 0.45rem 0.5rem;
   display: grid;
   gap: 0.45rem;
   transition:
     transform 180ms ease,
-    border-color 180ms ease,
     box-shadow 180ms ease;
 }
 
 .measure-optionCard.is-selected .measure-optionVisual {
   transform: scale(1.02);
-  border-color: rgba(159, 211, 255, 0.22);
-  box-shadow: 0 0 0 1px rgba(159, 211, 255, 0.08) inset;
+  box-shadow: 0 0 16px rgba(159, 211, 255, 0.16);
 }
 
 .measure-optionBadge {
@@ -512,7 +490,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -639,7 +616,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -723,7 +699,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -842,7 +817,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -944,7 +918,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -1022,7 +995,6 @@
   position: relative;
   height: 30px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.03);
   overflow: hidden;
 }
@@ -1451,30 +1423,75 @@
   letter-spacing: 0.02em;
 }
 
-.measure-stepDots {
-  display: flex;
-  justify-content: center;
-  gap: 0.5rem;
-  margin-top: 1rem;
+.measure-journeyPath {
+  position: relative;
+  height: 30px;
+  margin: 1.3rem 0.4rem 0;
 }
 
-.measure-stepDot {
-  width: 8px;
-  height: 8px;
+.measure-journeyTrack {
+  position: absolute;
+  top: 50%;
+  left: 13px;
+  right: 13px;
+  height: 3px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateY(-50%);
+  overflow: hidden;
+}
+
+.measure-journeyFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(
+    90deg,
+    var(--measure-accent-2),
+    var(--measure-accent)
+  );
+  box-shadow: 0 0 14px color-mix(in srgb, var(--measure-accent) 45%, transparent);
+  transition: width 420ms ease;
+}
+
+.measure-journeyNode {
+  position: absolute;
+  top: 50%;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(11, 15, 27, 0.85);
+  color: var(--measure-ink-soft);
+  font-size: 0.68rem;
+  line-height: 1;
+  transform: translate(-50%, -50%);
   transition:
-    transform 180ms ease,
-    background-color 180ms ease;
+    transform 220ms ease,
+    border-color 220ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease,
+    color 220ms ease;
 }
 
-.measure-stepDot.is-current {
-  transform: scale(1.4);
-  background: rgba(255, 255, 255, 0.8);
+.measure-journeyNode.is-done {
+  border-color: rgba(159, 211, 255, 0.5);
+  background: rgba(159, 211, 255, 0.16);
+  color: rgba(159, 211, 255, 0.95);
 }
 
-.measure-stepDot.is-done {
-  background: rgba(159, 211, 255, 0.95);
+.measure-journeyNode.is-current {
+  transform: translate(-50%, -50%) scale(1.3);
+  border-color: var(--measure-accent);
+  background: color-mix(
+    in srgb,
+    var(--measure-accent) 30%,
+    rgba(11, 15, 27, 0.9)
+  );
+  color: var(--measure-ink);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--measure-accent) 55%, transparent);
 }
 
 .measure-actionRow {
@@ -1486,7 +1503,7 @@
 
 .measure-btn {
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: none;
   background: rgba(255, 255, 255, 0.04);
   color: var(--measure-ink);
   border-radius: 999px;
@@ -1495,17 +1512,18 @@
   cursor: pointer;
   font-family: "Panchang-Light", sans-serif;
   font-size: 0.86rem;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
   transition:
     transform 180ms ease,
     background-color 180ms ease,
-    border-color 180ms ease,
+    box-shadow 180ms ease,
     opacity 180ms ease;
 }
 
 .measure-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  border-color: rgba(255, 255, 255, 0.22);
   background: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
 }
 
 .measure-btn:disabled {
@@ -1514,68 +1532,36 @@
 }
 
 .measure-btn-primary {
-  border-color: rgba(159, 211, 255, 0.45);
   background: linear-gradient(
     120deg,
     rgba(185, 140, 255, 0.16),
     rgba(159, 211, 255, 0.16)
   );
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-}
-
-.measure-chipRow {
-  margin-top: 1.1rem;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.measure-chip {
-  appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.03);
-  color: var(--measure-ink-soft);
-  border-radius: 999px;
-  padding: 0.45rem 0.75rem;
-  cursor: pointer;
-  font-size: 0.8rem;
-  transition:
-    background-color 180ms ease,
-    border-color 180ms ease;
-}
-
-.measure-chip:hover {
-  border-color: rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.measure-cardStack {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.75rem;
+  box-shadow: 0 0 0 1px rgba(159, 211, 255, 0.4);
 }
 
 .measure-insightCard {
-  border-radius: 14px;
-  padding: 0.9rem 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
+  margin-top: 1rem;
+  padding: 0;
+  border: none;
+  background: none;
   color: var(--measure-ink-soft);
   line-height: 1.5;
 }
 
-.measure-guidanceGrid {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: 1.1fr 0.9fr;
-  gap: 0.85rem;
+.measure-insightCard p {
+  margin: 0;
+}
+
+.measure-insightCard p + p {
+  margin-top: 0.65rem;
 }
 
 .measure-guidancePanel {
-  border-radius: 16px;
-  padding: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
+  margin-top: 1rem;
+  padding: 0;
+  border: none;
+  background: none;
 }
 
 .measure-guidancePanel h3 {
@@ -1583,16 +1569,6 @@
   font-size: 0.95rem;
   font-family: "Panchang-Light", sans-serif;
   color: var(--measure-ink);
-}
-
-.measure-guidancePanel h3 + p {
-  margin-top: 0;
-}
-
-.measure-guidancePanel p {
-  margin: 0 0 0.9rem;
-  color: var(--measure-ink-soft);
-  line-height: 1.55;
 }
 
 .measure-list {
@@ -1607,50 +1583,180 @@
 }
 
 .measure-affirmation {
+  margin: 1rem 0 0;
   color: var(--measure-ink);
-}
-
-.measure-completionSummary {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.7rem;
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.02);
-  padding: 1rem;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.95rem;
 }
 
 .measure-levelCard {
-  margin-top: 1rem;
-  border-radius: 18px;
-  padding: 1rem;
-  border: 1px solid rgba(159, 211, 255, 0.18);
-  background:
-    radial-gradient(
-      circle at 15% 20%,
-      rgba(159, 211, 255, 0.08),
-      transparent 55%
-    ),
-    radial-gradient(
-      circle at 85% 25%,
-      rgba(185, 140, 255, 0.08),
-      transparent 55%
-    ),
-    rgba(255, 255, 255, 0.025);
+  margin-top: 1.1rem;
+  padding: 0;
+  border: none;
+  background: none;
 }
 
-.measure-levelTop {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
+.measure-thermo {
+  display: grid;
+  gap: 0.65rem;
 }
 
-.measure-levelScore {
+.measure-thermoTrack {
+  position: relative;
+  height: 14px;
+  margin: 0 0.4rem;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 123, 123, 0.9) 0%,
+    rgba(255, 177, 140, 0.9) 13%,
+    rgba(255, 232, 112, 0.9) 27%,
+    rgba(200, 255, 165, 0.9) 35%,
+    rgba(159, 255, 208, 0.9) 47%,
+    rgba(159, 211, 255, 0.9) 60%,
+    rgba(185, 140, 255, 0.9) 80%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+.measure-thermoTick {
+  position: absolute;
+  top: -4px;
+  width: 2px;
+  height: 22px;
+  background: rgba(8, 11, 18, 0.45);
+  transform: translateX(-1px);
+}
+
+.measure-thermoTick.is-current {
+  background: var(--measure-ink);
+  box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+.measure-thermoMarker {
+  position: absolute;
+  top: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
+  transition: left 1100ms cubic-bezier(0.16, 0.84, 0.24, 1);
+}
+
+.measure-thermoMarkerGlow {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgb(var(--thermo-axis-rgb));
+  box-shadow:
+    0 0 0 3px rgba(8, 11, 18, 0.85),
+    0 0 18px rgba(var(--thermo-axis-rgb), 0.85);
+  animation: measureThermoPulse 1.8s ease-in-out infinite;
+}
+
+.measure-thermoReading {
+  margin: 0;
   font-family: "Panchang-Medium", sans-serif;
+  font-size: 1.1rem;
   color: var(--measure-ink);
-  font-size: 0.92rem;
+}
+
+.measure-thermoReading span {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.85rem;
+  color: var(--measure-ink-soft);
+  margin-left: 0.3rem;
+}
+
+.measure-thermo.is-compact {
+  gap: 0.4rem;
+}
+
+.measure-thermo.is-compact .measure-thermoTrack {
+  height: 9px;
+  margin: 0 0.3rem;
+}
+
+.measure-thermo.is-compact .measure-thermoTick {
+  top: -2px;
+  height: 13px;
+}
+
+.measure-thermo.is-compact .measure-thermoMarker {
+  width: 14px;
+  height: 14px;
+}
+
+.measure-thermo.is-compact .measure-thermoReading {
+  font-size: 0.86rem;
+}
+
+.measure-thermo.is-compact .measure-thermoReading span {
+  font-size: 0.72rem;
+}
+
+.measure-linesSection {
+  margin-top: 1.8rem;
+  padding-top: 1.4rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.measure-linesKicker {
+  margin: 0 0 0.5rem;
+  color: color-mix(in srgb, var(--measure-accent) 65%, var(--measure-ink) 35%);
+  font-size: 0.84rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.measure-linesIntro {
+  margin-top: 0;
+  max-width: 56ch;
+}
+
+.measure-linesFocusNote {
+  margin-top: 0.6rem;
+}
+
+.measure-linesLayout {
+  margin-top: 1.2rem;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) 1fr;
+  gap: 1.4rem;
+  align-items: center;
+}
+
+.measure-linesList {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.measure-lineRow {
+  display: grid;
+  grid-template-columns: 4rem 1fr auto;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.measure-lineLabel {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  color: var(--measure-ink);
+}
+
+.measure-lineLink {
+  color: var(--measure-ink-soft);
+  font-size: 0.74rem;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 180ms ease;
+}
+
+.measure-lineLink:hover {
+  color: var(--measure-ink);
+  text-decoration: underline;
 }
 
 .measure-levelName {
@@ -1665,25 +1771,26 @@
   gap: 0.35rem;
   padding: 0.9rem;
   border-radius: 14px;
-  border: 1px solid rgba(185, 140, 255, 0.4);
-  background:
-    radial-gradient(
-      circle at 12% 18%,
-      rgba(159, 211, 255, 0.16),
-      transparent 58%
-    ),
-    rgba(255, 255, 255, 0.03);
+  border: none;
+  background: none;
+  box-shadow: none;
   text-decoration: none;
   transition:
     transform 180ms ease,
-    border-color 180ms ease,
+    background-color 180ms ease,
     box-shadow 180ms ease;
 }
 
 .measure-levelPrimaryLink:hover {
   transform: translateY(-1px);
-  border-color: rgba(185, 140, 255, 0.62);
-  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
+  background: rgba(255, 255, 255, 0.02);
+  box-shadow:
+    0 0 0 1px rgba(185, 140, 255, 0.4),
+    0 14px 30px rgba(0, 0, 0, 0.26);
+}
+
+.measure-levelPrimaryLink:focus-visible {
+  background: rgba(255, 255, 255, 0.02);
 }
 
 .measure-levelTapHint {
@@ -1693,26 +1800,7 @@
   letter-spacing: 0.08em;
 }
 
-.measure-levelCopy {
-  margin: 0.55rem 0 0;
-  color: var(--measure-ink-soft);
-  line-height: 1.5;
-}
-
-.measure-completionSummary > div {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.measure-summaryLabel {
-  color: var(--measure-ink-soft);
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
 .measure-optionCard:focus-visible,
-.measure-chip:focus-visible,
 .measure-btn:focus-visible,
 .measure-backButton:focus-visible,
 .measure-levelPrimaryLink:focus-visible,
@@ -1778,17 +1866,27 @@
   }
 }
 
+@keyframes measureThermoPulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
+}
+
 @keyframes measurePreviewPulse {
   0%,
   100% {
     box-shadow:
-      0 0 0 1px rgba(185, 140, 255, 0.18) inset,
-      0 0 12px rgba(185, 140, 255, 0.1);
+      0 0 0 1px rgba(185, 140, 255, 0.3),
+      0 0 14px rgba(185, 140, 255, 0.16);
   }
   50% {
     box-shadow:
-      0 0 0 1px rgba(185, 140, 255, 0.25) inset,
-      0 0 26px rgba(185, 140, 255, 0.22);
+      0 0 0 1px rgba(185, 140, 255, 0.5),
+      0 0 28px rgba(185, 140, 255, 0.3);
   }
 }
 
@@ -1855,10 +1953,6 @@
   .measure-options-color {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
-
-  .measure-guidanceGrid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 640px) {
@@ -1873,11 +1967,6 @@
   .measure-panel {
     min-height: calc(100svh - 6.8rem);
     min-height: calc(100dvh - 6.8rem);
-    border-radius: 18px;
-  }
-
-  .measure-completionSummary {
-    grid-template-columns: 1fr;
   }
 
   .measure-options,
@@ -1932,6 +2021,31 @@
   }
 }
 
+@media (max-width: 640px) {
+  .measure-thermoTrack {
+    margin: 0 0.2rem;
+  }
+
+  .measure-journeyNode {
+    width: 20px;
+    height: 20px;
+    font-size: 0.58rem;
+  }
+
+  .measure-journeyNode.is-current {
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  .measure-linesLayout {
+    grid-template-columns: 1fr;
+  }
+
+  .measure-lineRow {
+    grid-template-columns: 1fr;
+    gap: 0.35rem;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .measure-bg-orb,
   .measure-phaseBlock,
@@ -1941,7 +2055,11 @@
   .measure-backButton,
   .measure-shell,
   .measure-portalArrival,
-  .measure-portalArrivalRing {
+  .measure-portalArrivalRing,
+  .measure-thermoMarker,
+  .measure-journeyFill,
+  .measure-journeyNode,
+  .measure-thermoMarkerGlow {
     animation: none !important;
     transition: none !important;
   }

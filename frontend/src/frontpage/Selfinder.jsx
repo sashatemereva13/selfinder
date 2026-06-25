@@ -3,16 +3,12 @@ import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useThree } from "@react-three/fiber";
 import { useEffect } from "react";
-import Wizard from "./Wizard";
 
 import { useRef } from "react";
-import { Html } from "@react-three/drei";
 
-const Selfinder = () => {
+const Selfinder = ({ targetOpacity = 1, color = "#C3CCF5" }) => {
   const text = useRef();
-  const { viewport } = useThree();
-
-  const isMobile = viewport.width < 8;
+  const materialRef = useRef();
 
   useEffect(() => {
     if (text.current) {
@@ -21,9 +17,18 @@ const Selfinder = () => {
     }
   }, []);
 
+  useFrame((_, delta) => {
+    if (!materialRef.current) return;
+    materialRef.current.opacity = THREE.MathUtils.lerp(
+      materialRef.current.opacity,
+      targetOpacity,
+      1 - Math.exp(-delta * 7),
+    );
+  });
+
   return (
     <>
-      <group position={[0, 1.2, 0]}>
+      <group position={[0, 1.2, 2]}>
         <Text3D
           className="selfinderText"
           ref={text}
@@ -34,13 +39,16 @@ const Selfinder = () => {
         >
           selfinder
           <meshPhysicalMaterial
-            color="#DEBFFF"
+            ref={materialRef}
+            color={color}
             roughness={0.3}
             metalness={0.1}
             clearcoat={0.1}
             clearcoatRoughness={1}
-            iridescence={2}
-            iridescenceIOR={0.1}
+            iridescence={0.7}
+            iridescenceIOR={1.4}
+            transparent
+            opacity={1}
           />
         </Text3D>
       </group>

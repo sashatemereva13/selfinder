@@ -251,13 +251,6 @@ button.re-chip:hover {
   cursor: default;
 }
 
-.re-chip--shadow {
-  border-color: rgba(168, 122, 201, 0.5);
-  background: rgba(168, 122, 201, 0.1);
-  color: rgba(168, 122, 201, 0.9);
-  cursor: default;
-}
-
 /* ─── MaskBuilder ──────────────────────────────────────────── */
 .re-wordpool {
   display: flex;
@@ -345,326 +338,6 @@ button.re-chip:hover {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(241, 234, 253, 0.45);
-}
-
-/* ─── WantedList ───────────────────────────────────────────── */
-.re-progress-bar {
-  width: 100%;
-  height: 3px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.re-progress-fill {
-  height: 100%;
-  background: var(--philo-color);
-  border-radius: 999px;
-  transition: width 280ms ease;
-}
-
-.re-progress-label {
-  margin: 0.4rem 0 0;
-  font-size: 0.72rem;
-  color: rgba(241, 234, 253, 0.4);
-  letter-spacing: 0.04em;
-}
-
-.re-wanted-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
-
-.re-wanted-card {
-  padding: 0.9rem 1rem;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.02);
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-  transition: border-color 180ms ease;
-}
-
-.re-wanted-card--assigned {
-  border-color: rgba(var(--philo-rgb, 195 153 255), 0.2);
-}
-
-.re-wanted-quality {
-  font-family: "Panchang-Medium", sans-serif;
-  font-size: 0.92rem;
-  color: rgba(241, 234, 253, 0.9);
-}
-
-.re-wanted-buckets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.re-wanted-bucket-btn {
-  padding: 0.26rem 0.65rem;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: transparent;
-  color: rgba(241, 234, 253, 0.5);
-  font-family: "Panchang-Light", sans-serif;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
-}
-
-.re-wanted-bucket-btn:hover {
-  border-color: rgba(var(--philo-rgb, 195 153 255), 0.35);
-  color: rgba(241, 234, 253, 0.8);
-}
-
-.re-wanted-bucket-btn--active {
-  border-color: var(--philo-color);
-  background: rgba(var(--philo-rgb, 195 153 255), 0.12);
-  color: rgba(241, 234, 253, 0.92);
-}
-
-.re-wanted-reveal {
-  display: flex;
-  flex-direction: column;
-  gap: 1.4rem;
-}
-
-.re-wanted-crossref {
-  padding: 1.2rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid rgba(168, 122, 201, 0.2);
-  background: rgba(168, 122, 201, 0.04);
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.re-wanted-crossref-title {
-  margin: 0;
-  font-family: "Panchang-Medium", sans-serif;
-  font-size: 0.9rem;
-  color: rgba(241, 234, 253, 0.9);
-}
-
-.re-wanted-crossref-desc {
-  margin: 0;
-  font-size: 0.82rem;
-  color: rgba(241, 234, 253, 0.5);
-  line-height: 1.6;
-}
-
-.re-wanted-crossref-empty {
-  margin: 0;
-  font-size: 0.82rem;
-  color: rgba(241, 234, 253, 0.4);
-  font-style: italic;
-}
-
-/* ─── TimelineWriter ───────────────────────────────────────── */
-.re-timeline-prompts {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.re-timeline-prompt {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  padding: 1.2rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.015);
-  transition: border-color 200ms ease;
-}
-
-.re-timeline-prompt--filled {
-  border-color: rgba(var(--philo-rgb, 195 153 255), 0.2);
-}
-
-.re-timeline-prompt--optional {
-  border-style: dashed;
-  border-color: rgba(255, 255, 255, 0.06);
-}
-
-.re-timeline-label {
-  font-size: 0.88rem;
-  color: rgba(241, 234, 253, 0.75);
-  line-height: 1.65;
-  cursor: default;
-}
-
-.re-timeline-label--optional {
-  color: rgba(241, 234, 253, 0.55);
-}
-
-.re-timeline-optional-tag {
-  font-size: 0.72rem;
-  opacity: 0.65;
-  letter-spacing: 0.05em;
-}
-
-.re-timeline-textarea {
-  width: 100%;
-  box-sizing: border-box;
-  resize: vertical;
-  padding: 0.7rem 0.9rem;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: rgba(255, 255, 255, 0.025);
-  color: rgba(241, 234, 253, 0.88);
-  font-family: "Panchang-Light", sans-serif;
-  font-size: 0.88rem;
-  line-height: 1.6;
-  outline: none;
-  transition: border-color 180ms ease;
-  min-height: 88px;
-}
-
-.re-timeline-textarea::placeholder {
-  color: rgba(241, 234, 253, 0.25);
-}
-
-.re-timeline-textarea:focus {
-  border-color: rgba(var(--philo-rgb, 195 153 255), 0.35);
-}
-
-.re-timeline-hint {
-  margin: 0;
-  font-size: 0.72rem;
-  color: rgba(var(--philo-rgb, 195 153 255), 0.55);
-  letter-spacing: 0.03em;
-}
-
-/* ─── SpectrumPlacer ───────────────────────────────────────── */
-.re-spectrum-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1.6rem;
-}
-
-.re-spectrum-item {
-  position: relative;
-  padding: 1.2rem 1.4rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  background: rgba(255, 255, 255, 0.015);
-  transition: border-color 200ms ease;
-}
-
-.re-spectrum-item--extreme {
-  border-color: rgba(var(--philo-rgb, 195 153 255), 0.25);
-}
-
-.re-spectrum-extreme-tag {
-  display: inline-block;
-  margin-bottom: 0.6rem;
-  padding: 0.2rem 0.6rem;
-  border-radius: 999px;
-  font-size: 0.65rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  background: rgba(var(--philo-rgb, 195 153 255), 0.12);
-  color: var(--philo-color);
-}
-
-.re-spectrum-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.re-spectrum-labels {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.re-spectrum-left-label,
-.re-spectrum-right-label {
-  font-size: 0.78rem;
-  color: rgba(241, 234, 253, 0.4);
-  transition: color 160ms ease;
-  min-width: 60px;
-}
-
-.re-spectrum-right-label {
-  text-align: right;
-}
-
-.re-spectrum-label--active {
-  color: var(--philo-color);
-  font-family: "Panchang-Medium", sans-serif;
-}
-
-.re-spectrum-dimension {
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: rgba(241, 234, 253, 0.35);
-  flex: 1;
-  text-align: center;
-}
-
-.re-spectrum-slider {
-  width: 100%;
-  height: 4px;
-  -webkit-appearance: none;
-  appearance: none;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  outline: none;
-  cursor: pointer;
-}
-
-.re-spectrum-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--philo-color);
-  cursor: pointer;
-  border: 2px solid #08080c;
-  box-shadow: 0 0 8px rgba(var(--philo-rgb, 195 153 255), 0.4);
-  transition: box-shadow 160ms ease;
-}
-
-.re-spectrum-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--philo-color);
-  cursor: pointer;
-  border: 2px solid #08080c;
-  box-shadow: 0 0 8px rgba(var(--philo-rgb, 195 153 255), 0.4);
-}
-
-.re-spectrum-reading {
-  margin: 0;
-  font-size: 0.75rem;
-  color: rgba(241, 234, 253, 0.4);
-  text-align: center;
-  letter-spacing: 0.02em;
-}
-
-.re-spectrum-insight {
-  margin: 0;
-  padding: 0.85rem 1.1rem;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  color: rgba(241, 234, 253, 0.7);
-  line-height: 1.6;
-  background: rgba(var(--philo-rgb, 195 153 255), 0.06);
-  border: 1px solid rgba(var(--philo-rgb, 195 153 255), 0.14);
-}
-
-.re-spectrum-insight strong {
-  color: rgba(241, 234, 253, 0.92);
 }
 
 /* ─── EchoReflection ───────────────────────────────────────── */
@@ -1146,4 +819,95 @@ button.re-chip:hover {
   .re-progress-fill {
     transition: none;
   }
+}
+
+/* ─── DataConsentSheet ─────────────────────────────────────────────────────── */
+.dcs-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 8, 12, 0.65);
+  z-index: 800;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.dcs-sheet {
+  width: 100%;
+  max-width: 520px;
+  background: #13121f;
+  border: 1px solid rgba(195, 153, 255, 0.14);
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+  padding: 2rem 1.75rem 2.5rem;
+  box-shadow: 0 -12px 48px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.dcs-kicker {
+  margin: 0;
+}
+
+.dcs-title {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 1.05rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: rgba(241, 234, 253, 0.95);
+  line-height: 1.45;
+}
+
+.dcs-body {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.78rem;
+  color: rgba(241, 234, 253, 0.5);
+  line-height: 1.7;
+}
+
+.dcs-actions {
+  display: flex;
+  gap: 0.65rem;
+  align-items: center;
+  margin-top: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.dcs-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.62rem 1.2rem;
+  border-radius: 999px;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  text-decoration: none;
+  border: 1px solid transparent;
+  transition: opacity 160ms ease, border-color 160ms ease;
+}
+
+.dcs-btn--primary {
+  background: rgba(195, 153, 255, 1);
+  color: #08080c;
+  border-color: transparent;
+  font-family: "Panchang-Medium", sans-serif;
+}
+
+.dcs-btn--primary:hover {
+  opacity: 0.85;
+}
+
+.dcs-btn--ghost {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(241, 234, 253, 0.55);
+}
+
+.dcs-btn--ghost:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+  color: rgba(241, 234, 253, 0.85);
 }

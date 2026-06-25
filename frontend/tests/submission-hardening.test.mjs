@@ -10,7 +10,6 @@ const apiBaseUrlPath = resolve('src/api/baseUrl.js');
 const authContextPath = resolve('src/auth/AuthContext.jsx');
 const chatApiPath = resolve('src/guide/chatApi.js');
 const personalSpacePath = resolve('src/space/PersonalSpace.jsx');
-const philosopherBadgePath = resolve('src/designElements/PhilosopherBadge.jsx');
 const journeyLinesPath = resolve('src/content/journeyLines.js');
 
 const indexJsx = readFileSync(indexJsxPath, 'utf8');
@@ -20,7 +19,6 @@ const apiBaseUrl = readFileSync(apiBaseUrlPath, 'utf8');
 const authContext = readFileSync(authContextPath, 'utf8');
 const chatApi = readFileSync(chatApiPath, 'utf8');
 const personalSpace = readFileSync(personalSpacePath, 'utf8');
-const philosopherBadge = readFileSync(philosopherBadgePath, 'utf8');
 const journeyLines = readFileSync(journeyLinesPath, 'utf8');
 
 test('Tracker import is explicit to avoid case-insensitive resolver collisions', () => {
@@ -31,12 +29,12 @@ test('Tracker import is explicit to avoid case-insensitive resolver collisions',
   );
 });
 
-test('EntryGate keeps heart visual outside paragraph semantics', () => {
-  assert.match(entryGate, /<\/header>[\s\S]*?<div\s+className=\{`entryGateHeart/, 'Heart visual should render outside the text header block');
+test('EntryGate keeps the selection grid outside paragraph semantics', () => {
+  assert.match(entryGate, /<\/header>[\s\S]*?<div[\s\S]*className=\{`entryGatePhiloGrid/, 'Selection grid should render outside the text header block');
   assert.doesNotMatch(
     entryGate,
-    /<p\b[^>]*>[\s\S]*?<div\s+className=\{`entryGateHeart[\s\S]*?<\/p>/,
-    'Heart visual should not be nested inside a paragraph'
+    /<p\b[^>]*>[\s\S]*?<div[\s\S]*className=\{`entryGatePhiloGrid[\s\S]*?<\/p>/,
+    'Selection grid should not be nested inside a paragraph'
   );
 });
 
@@ -58,7 +56,7 @@ test('frontend API calls use the shared environment-aware base URL', () => {
   assert.match(apiBaseUrl, /VITE_API_BASE_URL/, 'API helper should support VITE_API_BASE_URL');
   assert.match(apiBaseUrl, /window\.location\.hostname/, 'API helper should derive the dev host from the current location');
 
-  for (const file of [authContext, chatApi, personalSpace, philosopherBadge, journeyLines]) {
+  for (const file of [authContext, chatApi, personalSpace, journeyLines]) {
     assert.doesNotMatch(file, /http:\/\/localhost:3001/, 'Feature files should not hardcode the backend URL');
   }
 });

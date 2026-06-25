@@ -1,4 +1,6 @@
-// The House — 5 Jungian rooms in narrative sequence (open navigation, implied order)
+// The House — narrative sequence (open navigation, implied order).
+// Persona now lives in the entry sequence (EntryGate), before the router even
+// mounts, so it is not one of these in-house steps anymore.
 export const HOUSE_ROOMS = [
   {
     key: "threshold",
@@ -9,42 +11,10 @@ export const HOUSE_ROOMS = [
     themes: ["arrival", "awakening", "crossing"],
   },
   {
-    key: "persona",
-    route: "/persona",
-    label: "The Persona",
-    stage: "Room I",
-    description: "The mask you wear. The roles you perform. Who do you become when others are watching?",
-    themes: ["mask", "role", "performance"],
-  },
-  {
-    key: "shadow",
-    route: "/shadow",
-    label: "The Shadow",
-    stage: "Room II",
-    description: "What you repress. What you deny. Hidden desires. The unloved parts.",
-    themes: ["repression", "denial", "hidden"],
-  },
-  {
-    key: "anima",
-    route: "/anima",
-    label: "The Anima / Animus",
-    stage: "Room III",
-    description: "The inner opposite. Projection. Attraction. What do you see in others that is actually in you?",
-    themes: ["projection", "mirror", "other"],
-  },
-  {
-    key: "innerchild",
-    route: "/innerchild",
-    label: "The Inner Child",
-    stage: "Room IV",
-    description: "Memory. Wound. Innocence. Creativity. What did you leave behind?",
-    themes: ["memory", "wound", "wonder"],
-  },
-  {
     key: "self",
     route: "/self",
     label: "The Self",
-    stage: "Room V",
+    stage: "Completion",
     description: "Integration. The whole. Conscious and unconscious in balance.",
     themes: ["integration", "wholeness", "arrival"],
   },
@@ -55,8 +25,8 @@ export const INSTRUMENTS = [
   {
     key: "measure",
     route: "/measure",
-    label: "Measure",
-    description: "Take a frequency reading at any point in the journey.",
+    label: "Feel",
+    description: "Feel into your frequency at any point in the journey.",
   },
   {
     key: "luna",
@@ -87,12 +57,8 @@ export function getStepByKey(key) {
 export function getStepByPath(pathname) {
   if (!pathname) return null;
   if (pathname === "/" || pathname.startsWith("/threshold")) return getStepByKey("threshold");
-  if (pathname.startsWith("/persona") || pathname.startsWith("/core")) return getStepByKey("persona");
-  if (pathname.startsWith("/shadow")) return getStepByKey("shadow");
-  if (pathname.startsWith("/anima")) return getStepByKey("anima");
-  if (pathname.startsWith("/innerchild")) return getStepByKey("innerchild");
   if (pathname.startsWith("/self") && !pathname.startsWith("/selfinder")) return getStepByKey("self");
-  if (pathname.startsWith("/measure")) return getStepByKey("measure");
+  if (pathname.startsWith("/measure") || pathname.startsWith("/depths/spheres")) return getStepByKey("measure");
   if (pathname.startsWith("/luna")) return getStepByKey("luna");
   if (pathname.startsWith("/tunein")) return getStepByKey("tunein");
   if (pathname.startsWith("/levels")) return getStepByKey("levels");

@@ -1,0 +1,26 @@
+.philoVoiceTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.philoVoiceTagAvatar {
+  display: inline-flex;
+  width: 1.15rem;
+  height: 1.15rem;
+  flex-shrink: 0;
+}
+
+.philoVoiceTagAvatar svg {
+  width: 100%;
+  height: 100%;
+}
+
+.philoVoiceTagName {
+  font-family: "Panchang-Medium", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--philo-color, rgba(241, 234, 253, 0.86));
+}

@@ -2,7 +2,7 @@ const ConversationMap = {
   start: {
     message: `
 as jung suggested, what remains unconscious tends to run the script.
-ready to measure your vibration?`,
+ready to go to the depths?`,
     options: [{ label: "jump", next: "goToMeasure" }],
   },
   prettyGood: {

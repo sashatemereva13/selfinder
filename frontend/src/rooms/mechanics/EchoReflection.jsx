@@ -1,28 +1,17 @@
-import { getJourneySummaryText } from "../../hooks/useRoomProgress";
+import { readMeasureResult } from "../../hooks/useRoomProgress";
 
-const ROOM_LABELS = {
-  persona:    "The Persona",
-  shadow:     "The Shadow",
-  anima:      "The Anima / Animus",
-  innerchild: "The Inner Child",
-};
-
-function readSummaryArtefacts() {
-  try {
-    const raw = localStorage.getItem("sfr_summary");
-    return raw ? JSON.parse(raw).artefacts || {} : {};
-  } catch {
-    return {};
-  }
+function formatLifeSpheresLine(measureResult) {
+  if (!measureResult?.lines) return null;
+  return measureResult.lines
+    .map((line) => `${line.label}: ${line.vibrationLevel.name}`)
+    .join(" · ");
 }
 
 export default function EchoReflection({ onComplete }) {
-  const artefacts = readSummaryArtefacts();
-  const completedRooms = Object.entries(artefacts).filter(
-    ([key]) => key !== "self"
-  );
+  const measureResult = readMeasureResult();
+  const lifeSpheresLine = formatLifeSpheresLine(measureResult);
 
-  if (completedRooms.length < 2) {
+  if (!measureResult) {
     return (
       <div className="re-mechanic re-mechanic--echo re-mechanic--locked">
         <div className="re-echo-locked">
@@ -33,12 +22,9 @@ export default function EchoReflection({ onComplete }) {
               <circle cx="20" cy="26" r="2" fill="currentColor" />
             </svg>
           </div>
-          <h3 className="re-echo-locked-title">This room opens after you've worked in at least two others.</h3>
+          <h3 className="re-echo-locked-title">This room opens once you've worked through the Depths.</h3>
           <p className="re-echo-locked-desc">
-            Return here after visiting the Persona, Shadow, Anima, or Inner Child rooms. The Self integrates what came before.
-          </p>
-          <p className="re-echo-locked-progress">
-            {completedRooms.length} of 4 rooms completed
+            Return here after feeling into your Life Spheres in Measure. The Self integrates what came before.
           </p>
         </div>
       </div>
@@ -46,7 +32,11 @@ export default function EchoReflection({ onComplete }) {
   }
 
   function handleComplete() {
-    onComplete({ artefacts });
+    const priorArtefacts = lifeSpheresLine
+      ? [{ room: "Life Spheres", text: lifeSpheresLine }]
+      : [];
+    const roomsVisited = lifeSpheresLine ? ["Life Spheres"] : [];
+    onComplete({ priorArtefacts, roomsVisited });
   }
 
   return (
@@ -54,22 +44,22 @@ export default function EchoReflection({ onComplete }) {
       <div className="re-mechanic-header">
         <h3 className="re-mechanic-title">What you carry</h3>
         <p className="re-mechanic-desc">
-          These are the statements you named in each room. Read them. Let them be together.
+          This is what you named in the Depths. Read it. Let it settle.
         </p>
       </div>
 
       <div className="re-echo-artefacts">
-        {completedRooms.map(([key, data]) => (
-          <div key={key} className="re-echo-artefact">
-            <span className="re-echo-room-label">{ROOM_LABELS[key] ?? key}</span>
-            <blockquote className="re-echo-statement">"{data.unlock}"</blockquote>
+        {lifeSpheresLine && (
+          <div className="re-echo-artefact">
+            <span className="re-echo-room-label">Life Spheres</span>
+            <blockquote className="re-echo-statement">{lifeSpheresLine}</blockquote>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="re-echo-pause">
         <p className="re-echo-pause-text">
-          Stay with these for a moment before entering the conversation.
+          Stay with this for a moment before entering the conversation.
         </p>
       </div>
 

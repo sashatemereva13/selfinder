@@ -414,3 +414,336 @@
   display: flex;
   justify-content: flex-start;
 }
+
+/* ─── LocalDataRecord ───────────────────────────────────────────────────────── */
+.ldr-root {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.ldr-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ldr-room-card {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.018);
+  overflow: hidden;
+}
+
+.ldr-room-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ldr-room-label {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.55);
+}
+
+.ldr-no-visits {
+  margin: 0;
+  padding: 0.55rem 0.85rem;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.25);
+}
+
+.ldr-clear-room-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.66rem;
+  letter-spacing: 0.05em;
+  color: rgba(255, 100, 110, 0.45);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-color: rgba(255, 100, 110, 0.2);
+  transition: color 160ms ease;
+}
+
+.ldr-clear-room-btn:hover {
+  color: rgba(255, 100, 110, 0.8);
+}
+
+.ldr-visits {
+  display: flex;
+  flex-direction: column;
+}
+
+.ldr-visit {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ldr-visit:last-child {
+  border-bottom: none;
+}
+
+.ldr-visit-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ldr-visit-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.ldr-visit-date {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: rgba(241, 234, 253, 0.38);
+}
+
+.ldr-visit-status {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+}
+
+.ldr-visit-status--done {
+  background: rgba(116, 221, 214, 0.1);
+  color: rgba(116, 221, 214, 0.65);
+  border: 1px solid rgba(116, 221, 214, 0.2);
+}
+
+.ldr-visit-status--open {
+  background: rgba(195, 153, 255, 0.08);
+  color: rgba(195, 153, 255, 0.5);
+  border: 1px solid rgba(195, 153, 255, 0.15);
+}
+
+.ldr-visit-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.ldr-icon-btn {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: transparent;
+  color: rgba(241, 234, 253, 0.42);
+  font-size: 0.82rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.ldr-icon-btn:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(241, 234, 253, 0.8);
+}
+
+.ldr-icon-btn--danger:hover {
+  border-color: rgba(255, 80, 90, 0.35);
+  color: rgba(255, 120, 130, 0.85);
+  background: rgba(255, 80, 90, 0.06);
+}
+
+.ldr-unlock {
+  margin: 0.1rem 0 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.8rem;
+  font-style: italic;
+  color: rgba(195, 153, 255, 0.7);
+  border-left: 2px solid rgba(195, 153, 255, 0.2);
+  padding-left: 0.65rem;
+  line-height: 1.55;
+}
+
+.ldr-expanded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-top: 0.65rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+
+.ldr-expanded-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ldr-expanded-label {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.62rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.3);
+}
+
+.ldr-mechanic-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.ldr-mechanic-row {
+  vertical-align: top;
+}
+
+.ldr-mechanic-label {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  color: rgba(241, 234, 253, 0.38);
+  padding: 0.2rem 0.75rem 0.2rem 0;
+  white-space: nowrap;
+  width: 40%;
+}
+
+.ldr-mechanic-value {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.72);
+  padding: 0.2rem 0;
+  line-height: 1.5;
+}
+
+.ldr-chip-inline {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.7);
+}
+
+.ldr-empty-value {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  color: rgba(241, 234, 253, 0.25);
+}
+
+.ldr-transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 14rem;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.ldr-transcript-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.ldr-transcript-role {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(241, 234, 253, 0.28);
+}
+
+.ldr-transcript-msg--assistant .ldr-transcript-role {
+  color: rgba(195, 153, 255, 0.35);
+}
+
+.ldr-transcript-content {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.73rem;
+  color: rgba(241, 234, 253, 0.62);
+  line-height: 1.55;
+}
+
+.ldr-confirm-delete {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.68rem;
+  color: rgba(241, 234, 253, 0.5);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.ldr-confirm-delete--block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.74rem;
+}
+
+.ldr-confirm-yes {
+  background: none;
+  border: 1px solid rgba(255, 80, 90, 0.35);
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  color: rgba(255, 120, 130, 0.85);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.66rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.ldr-confirm-yes:hover {
+  border-color: rgba(255, 80, 90, 0.6);
+  color: rgba(255, 140, 150, 1);
+}
+
+.ldr-confirm-no {
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  padding: 0.2rem 0.55rem;
+  color: rgba(241, 234, 253, 0.4);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.66rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.ldr-confirm-no:hover {
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(241, 234, 253, 0.75);
+}
+
+.ldr-muted {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(241, 234, 253, 0.28);
+  line-height: 1.55;
+}
+
+.ldr-clear-all-row {
+  margin-top: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

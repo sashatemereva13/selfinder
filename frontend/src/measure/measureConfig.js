@@ -434,6 +434,142 @@ export const STEP_CONFIG = [
       },
     ],
   },
+  {
+    key: "breath",
+    title: "How is your breath moving?",
+    helper: "Breath often shifts before anything else does.",
+    options: [
+      {
+        value: "held",
+        label: "Shallow / held",
+        vibe: "guarded",
+        vibration: 100,
+        scores: { calm: 0, clarity: 0, intensity: 2, grounding: 0 },
+        meaning:
+          "Held breath often means your system is bracing for something before it's even arrived.",
+      },
+      {
+        value: "even",
+        label: "Easy / even",
+        vibe: "steady",
+        vibration: 280,
+        scores: { calm: 2, clarity: 1, intensity: 0, grounding: 2 },
+        meaning:
+          "An even breath usually means there's enough safety here to settle into the present.",
+      },
+      {
+        value: "open",
+        label: "Deep / open",
+        vibe: "spacious",
+        vibration: 420,
+        scores: { calm: 2, clarity: 2, intensity: 0, grounding: 1 },
+        meaning:
+          "A deep, open breath often comes with room — for thought, for feeling, for whatever's next.",
+      },
+    ],
+  },
+  {
+    key: "timeframe",
+    title: "Where does your mind keep returning to?",
+    helper: "Notice the default, not the ideal.",
+    options: [
+      {
+        value: "past",
+        label: "Replaying the past",
+        vibe: "looping",
+        vibration: 90,
+        scores: { calm: 0, clarity: 0, intensity: 1, grounding: 0 },
+        meaning:
+          "Replaying often means there's something still asking to be understood, not just remembered.",
+      },
+      {
+        value: "present",
+        label: "Right here",
+        vibe: "present",
+        vibration: 380,
+        scores: { calm: 2, clarity: 2, intensity: 0, grounding: 1 },
+        meaning:
+          "Staying with what's actually in front of you is rare — and it's doing real work.",
+      },
+      {
+        value: "future",
+        label: "Planning ahead",
+        vibe: "anticipating",
+        vibration: 230,
+        scores: { calm: 0, clarity: 2, intensity: 1, grounding: 0 },
+        meaning:
+          "Looking ahead can be useful focus, or it can be a way of leaving now early — notice which.",
+      },
+    ],
+  },
+  {
+    key: "receiving",
+    title: "How easy is it to receive support right now?",
+    helper: "Receiving is its own skill, separate from giving.",
+    options: [
+      {
+        value: "hard",
+        label: "Hard to let in",
+        vibe: "self-reliant",
+        vibration: 110,
+        scores: { calm: 0, clarity: 0, intensity: 1, grounding: 1 },
+        meaning:
+          "Keeping support at a distance can be protective — it's worth noticing what it's protecting.",
+      },
+      {
+        value: "selective",
+        label: "Sometimes, selectively",
+        vibe: "cautious",
+        vibration: 260,
+        scores: { calm: 1, clarity: 1, intensity: 0, grounding: 1 },
+        meaning:
+          "Letting some support in is a workable middle ground while trust rebuilds.",
+      },
+      {
+        value: "open",
+        label: "Easy to receive",
+        vibe: "open",
+        vibration: 450,
+        scores: { calm: 2, clarity: 1, intensity: 0, grounding: 0 },
+        meaning:
+          "Being able to receive freely is often a sign of real safety, not just good luck.",
+      },
+    ],
+  },
+  {
+    key: "trust",
+    title: "How do you relate to what you can't control?",
+    helper: "This points to your relationship with uncertainty itself.",
+    options: [
+      {
+        value: "resist",
+        label: "Resist it",
+        vibe: "white-knuckled",
+        vibration: 130,
+        scores: { calm: 0, clarity: 0, intensity: 2, grounding: 0 },
+        meaning:
+          "Resisting uncertainty is exhausting work — and a very human response to it.",
+      },
+      {
+        value: "tolerate",
+        label: "Tolerate it",
+        vibe: "coping",
+        vibration: 270,
+        scores: { calm: 1, clarity: 1, intensity: 0, grounding: 1 },
+        meaning:
+          "Tolerating the unknown without needing to solve it yet is real capacity.",
+      },
+      {
+        value: "trust",
+        label: "Trust the process",
+        vibe: "surrendered",
+        vibration: 460,
+        scores: { calm: 2, clarity: 1, intensity: 0, grounding: 0 },
+        meaning:
+          "Trusting what you can't see yet is less passive than it looks — it's its own kind of strength.",
+      },
+    ],
+  },
 ];
 
 export const INITIAL_CHOICES = Object.fromEntries(
@@ -486,6 +622,8 @@ export const VIBRATION_LEVELS = [
 ];
 
 export const STEP_VISUALS = {
+  color: { label: "Color", icon: "●" },
+  texture: { label: "Texture", icon: "~" },
   sound: { label: "Sound", icon: ")))" },
   pace: { label: "Pace", icon: ">>" },
   focus: { label: "Focus", icon: "[]" },
@@ -496,6 +634,10 @@ export const STEP_VISUALS = {
   response: { label: "Response", icon: "!?" },
   meaning: { label: "Meaning", icon: "++" },
   horizon: { label: "Horizon", icon: "->" },
+  breath: { label: "Breath", icon: "~~" },
+  timeframe: { label: "Timeframe", icon: "<->" },
+  receiving: { label: "Receiving", icon: "[)" },
+  trust: { label: "Trust", icon: "?!" },
 };
 
 export const STEP_WEIGHTS = {
@@ -511,6 +653,10 @@ export const STEP_WEIGHTS = {
   response: 0.95,
   meaning: 1,
   horizon: 0.95,
+  breath: 1.05,
+  timeframe: 1,
+  receiving: 0.95,
+  trust: 1,
 };
 
 export const SIGNAL_AXES = [
@@ -519,6 +665,48 @@ export const SIGNAL_AXES = [
   { key: "grounding", label: "Grounding", short: "G" },
   { key: "intensity", label: "Intensity", short: "I" },
 ];
+
+// Life moves through many parts at once, not as a single number — these
+// group the existing 12 steps into independent lines so a person can read
+// as high on one and low on another without that being a contradiction.
+// color/sound/texture stay outside the lines as a fast "overall field" read.
+export const LINES = [
+  {
+    key: "body",
+    label: "4",
+    helper: "How your physical state is moving",
+    steps: ["pace", "body", "breath"],
+  },
+  {
+    key: "mind",
+    label: "5",
+    helper: "How attention and inner narrative are moving",
+    steps: ["focus", "thoughts", "response", "timeframe"],
+  },
+  {
+    key: "heart",
+    label: "6",
+    helper: "How connection and drive are moving",
+    steps: ["connection", "motivation", "receiving"],
+  },
+  {
+    key: "spirit",
+    label: "7",
+    helper: "How meaning and direction are moving",
+    steps: ["meaning", "horizon", "trust"],
+  },
+];
+
+// "r, g, b" strings so they can feed rgb(var(--x)) / rgba(var(--x), alpha) in CSS,
+// matching the --philo-rgb convention used elsewhere in the app.
+export const AXIS_COLORS = {
+  calm: "159, 255, 208",
+  clarity: "159, 211, 255",
+  grounding: "255, 232, 112",
+  intensity: "255, 123, 123",
+};
+
+export const THERMOMETER_MAX = 750;
 
 export const MEANING_VISUALS = {
   survival: {

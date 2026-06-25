@@ -98,8 +98,8 @@ export default function MenuTab() {
         <div id="sf-navPanel" className="sf-navPanel">
           <JourneyNav
             variant="overlay"
-            title="The House of the Psyche"
-            subtitle="Move through the rooms at your own pace."
+            title="Selfinder"
+            subtitle="Move through the journey at your own pace."
           />
         </div>
       )}

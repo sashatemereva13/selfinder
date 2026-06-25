@@ -31,6 +31,7 @@ function cleanBadgeComment(text) {
 }
 
 const JOURNEY_LINE_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
+const JOURNEY_LINE_CACHE_VERSION = 2;
 const journeyLineCache = new Map();
 
 function readCachedJourneyLine(cacheKey) {
@@ -44,10 +45,40 @@ function readCachedJourneyLine(cacheKey) {
 }
 
 function cleanJourneyLine(text) {
-  return (text ?? "")
+  const metaPrefixes = [
+    /^(?:here(?:'s| is)\s+)?(?:a\s+)?rewritten version(?:\s+of\s+the\s+line)?(?:\s+in\s+the\s+voice\s+of\s+[a-z .'-]+)?[:,-]?\s*/i,
+    /^(?:here(?:'s| is)\s+)?(?:the\s+)?rewritten line(?:\s+in\s+the\s+voice\s+of\s+[a-z .'-]+)?[:,-]?\s*/i,
+    /^(?:here(?:'s| is)\s+)?(?:the\s+)?line(?:\s+rewritten)?(?:\s+in\s+the\s+voice\s+of\s+[a-z .'-]+)?[:,-]?\s*/i,
+    /^(?:socrates|marcus aurelius|kierkegaard|camus|aristotle)\s*(?:would say|might say)[:,-]?\s*/i,
+  ];
+
+  let cleaned = (text ?? "")
     .replace(/^["'“”‘’]+|["'“”‘’]+$/g, "")
     .replace(/[ \t]+\n/g, "\n")
     .trim();
+
+  const lines = cleaned
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (lines.length > 1 && metaPrefixes.some((pattern) => pattern.test(lines[0]))) {
+    cleaned = lines.slice(1).join("\n").trim();
+  }
+
+  let changed = true;
+  while (changed) {
+    changed = false;
+    for (const pattern of metaPrefixes) {
+      const next = cleaned.replace(pattern, "").trim();
+      if (next !== cleaned) {
+        cleaned = next;
+        changed = true;
+      }
+    }
+  }
+
+  return cleaned;
 }
 
 export async function postChat(req, res) {
@@ -172,7 +203,12 @@ export async function postJourneyLine(req, res) {
     typeof sceneId === "string" && sceneId.trim() ? sceneId.trim() : "scene";
   const lineCount = reference.split("\n").filter(Boolean).length;
 
-  const cacheKey = JSON.stringify({ philosopherId, sceneId: normalizedScene, reference });
+  const cacheKey = JSON.stringify({
+    version: JOURNEY_LINE_CACHE_VERSION,
+    philosopherId,
+    sceneId: normalizedScene,
+    reference,
+  });
 
   const cachedLine = readCachedJourneyLine(cacheKey);
   if (cachedLine) {
@@ -187,6 +223,10 @@ export async function postJourneyLine(req, res) {
       ? `Keep it to ${lineCount} short lines, separated by line breaks, matching the original's rhythm and pacing.`
       : "Keep it to one short line.",
     "Requirements:",
+    "- return only the final rewritten line(s)",
+    "- begin immediately with the spoken line itself",
+    '- do not preface with phrases like "Here\'s a rewritten version", "Here is the line", or the philosopher\'s name',
+    "- do not explain what you changed",
     "- speak directly to the traveller, in second person",
     "- no quotation marks, no emojis, no stage directions or asterisks",
     "- do not repeat the original line verbatim",
