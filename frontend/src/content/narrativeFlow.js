@@ -1,6 +1,10 @@
 // The House — narrative sequence (open navigation, implied order).
 // Persona now lives in the entry sequence (EntryGate), before the router even
 // mounts, so it is not one of these in-house steps anymore.
+// The room system ("The Self" and friends) was retired in favor of one
+// linear path — Threshold, then the Instruments below in sequence. Kept as
+// a one-item array (rather than removed) since JourneyNav and PersonalSpace
+// both still read HOUSE_ROOMS[0] for the Threshold entry point.
 export const HOUSE_ROOMS = [
   {
     key: "threshold",
@@ -9,14 +13,6 @@ export const HOUSE_ROOMS = [
     stage: "Arrival",
     description: "You arrive. Something cracks open. The message lands. You cross.",
     themes: ["arrival", "awakening", "crossing"],
-  },
-  {
-    key: "self",
-    route: "/self",
-    label: "The Self",
-    stage: "Completion",
-    description: "Integration. The whole. Conscious and unconscious in balance.",
-    themes: ["integration", "wholeness", "arrival"],
   },
 ];
 

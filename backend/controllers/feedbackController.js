@@ -24,3 +24,8 @@ export function postFeedback(req, res) {
   feedbackStore.push(feedback);
   res.json({ success: true, id: feedback.id });
 }
+
+// Admin-only: review feedback submitted across all users.
+export function getAllFeedback(req, res) {
+  res.json(feedbackStore);
+}

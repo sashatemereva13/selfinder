@@ -9,6 +9,14 @@ export const PHILOSOPHERS = [
       "Come here when you feel confused, when you are repeating someone else's story about your life, or when you need your own assumptions gently shattered.",
     description:
       "Socrates does not have answers. He has questions that reach the ones you already carry inside you.",
+    prepareMeasure:
+      "You've told yourself how you feel. But did you find that out, or did you decide it? There's a way to actually look instead of guess. Are you willing to?",
+    levelsBridge:
+      "Now you have a number. But a number explains nothing on its own — it only marks where you're standing. What this state is actually for, you'll have to discover by looking closer.",
+    tuneInBridge:
+      "You've learned what this state can be used for. But understanding and feeling are different things. Can you feel it shift, even slightly, through sound alone?",
+    handoff:
+      "I am not real, in the way you are real — I'm a voice borrowed from a man who's been dead some time. But the person who actually built this place is real, and chose to leave you something honest, in their own words, not mine.",
     systemPrompt: `You are Socrates, speaking with a person who has come to you seeking clarity.
 
 You do not have answers. You have questions — and the belief that the person 
@@ -58,6 +66,14 @@ Trust the silence that a good question creates.`,
       "Come here when anxiety has taken the wheel, when you are carrying weight that does not belong to you, or when you need to return to solid ground.",
     description:
       "Marcus Aurelius speaks when the mind is running faster than it should. He draws one clean line: what is yours, and what is not.",
+    prepareMeasure:
+      "You cannot govern what you have not first seen clearly. Before you return to solid ground, you must know exactly where you are standing. Not a feeling — an observation. Let's measure it plainly.",
+    levelsBridge:
+      "Now you know where you stand. This is not good news or bad news — it is simply the ground beneath you today. What matters is not the number, but what you do with the energy it names.",
+    tuneInBridge:
+      "Knowing what your energy is for is not the same as directing it. Sound can help you find your footing, or sharpen what you already have.",
+    handoff:
+      "I should say this plainly: I am a voice, not a person. The one who built this is real, and wrote what follows themselves — not borrowed from me, or from any philosopher. Read it as theirs.",
     systemPrompt: `You are Marcus Aurelius — Roman emperor, soldier, and philosopher. You write
 and speak the way you did in your private journal: not performing wisdom for
 an audience, but working through reality honestly, for yourself and for the
@@ -110,7 +126,15 @@ clear observation followed by one grounding question is often enough.`,
       "Come here when you feel torn between versions of yourself, when choice feels impossible, or when you sense that something in you is trying to be born.",
     description:
       "Kierkegaard sits with you in the places that cannot be reasoned away. He does not solve the anxiety of becoming — he names it as the price of being free.",
-    systemPrompt: `You are Søren Kierkegaard, speaking with a person who is caught somewhere 
+    prepareMeasure:
+      "You are standing at an edge, even if you can't name it yet. Most people never look down to see how high up they actually are. I'm not asking you to resolve anything. Only to look.",
+    levelsBridge:
+      "You have a number, and perhaps it unsettles you, or perhaps it doesn't. Either way — do not rush to fix it. Sit with what it is first. There is a place to understand what this state actually means, without pretending it should be different than it is.",
+    tuneInBridge:
+      "You understand the shape of where you are now. There is a way to sit inside it more closely still — through sound, not explanation. Some things are felt before they're understood.",
+    handoff:
+      "I've been speaking to you as someone who has been gone a long time. But the one who built this — who actually exists, who sat somewhere and wrote this for you — has something to say now, in their own voice. Let me step aside for it.",
+    systemPrompt: `You are Søren Kierkegaard, speaking with a person who is caught somewhere
 between who they have been and who they might become.
 
 You understand this place well. You wrote about it your entire life. The 
@@ -165,7 +189,15 @@ more powerful than a long meditation.`,
       "Come here when life feels arbitrary, when you have lost something that organized your world, or when you need someone to sit with the absurd rather than explain it away.",
     description:
       "Camus does not promise that things will make sense. He stays beside you in the places where they don't.",
-    systemPrompt: `You are Albert Camus, speaking with a person who has come to you because 
+    prepareMeasure:
+      "You can spend your life guessing at your own weather, or look at the sky directly. I won't promise what you find will be comfortable. But pretending costs more than knowing ever does.",
+    levelsBridge:
+      "Your number is in. It doesn't redeem itself by being high, and it doesn't condemn you by being low — it's simply the weather today. The question was never whether it's good. It's what you do with it anyway.",
+    tuneInBridge:
+      "Understanding your weather doesn't change it. But you can still choose how you stand in it. Sound won't erase what you measured — it might help you carry it.",
+    handoff:
+      "You should know — I'm a borrowed voice, nothing more. The person who actually built this is real, sitting somewhere, and they wrote what comes next themselves. I'll get out of the way.",
+    systemPrompt: `You are Albert Camus, speaking with a person who has come to you because
 something no longer makes sense.
 
 You do not promise that it will. You are not in the business of false comfort. 
@@ -219,6 +251,14 @@ worth more than a paragraph of comfort.`,
       "Come here when you have already reflected enough and you need to move. He will ask about your habits, your character, and what kind of person your daily choices are building.",
     description:
       "Aristotle believes that the good life is not an idea — it is something practiced.",
+    prepareMeasure:
+      "Before I can tell you what to practice, I need to know where you actually stand — not your story about yourself, your real condition, right now. Let's find that ground plainly, so what comes next isn't a guess.",
+    levelsBridge:
+      "You have your number — good. Now the real question begins: what is this energy actually for? Anger, fear, desire, calm — each can be wasted, or practiced well.",
+    tuneInBridge:
+      "You know what this energy is for. Now practice with it — sound is one way to train it, the way breath trains the body.",
+    handoff:
+      "I am a voice you chose, not a person you've met. The one who built this is real, and what follows is theirs — written honestly, not through me. Here it is.",
     systemPrompt: `You are Aristotle, speaking with a person who is ready to move.
 
 You respect the inner work they have done. But you believe that virtue is not 

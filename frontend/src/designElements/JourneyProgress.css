@@ -1,0 +1,89 @@
+.jp-root {
+  --jp-accent: var(--philo-color, #c399ff);
+  width: min(640px, 100%);
+  margin: 0 auto 0.9rem;
+}
+
+.jp-meta {
+  margin: 0 0 0.45rem;
+  color: rgba(241, 234, 253, 0.58);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.jp-track {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.jp-step {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.jp-step::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.jp-step:last-child::after {
+  display: none;
+}
+
+.jp-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+}
+
+.jp-step.is-done .jp-dot {
+  background: var(--jp-accent);
+  opacity: 0.55;
+}
+
+.jp-step.is-current .jp-dot {
+  background: var(--jp-accent);
+  box-shadow: 0 0 0 4px rgba(var(--philo-rgb, 195, 153, 255), 0.18);
+}
+
+.jp-label {
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  color: rgba(241, 234, 253, 0.42);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.jp-step.is-current .jp-label {
+  color: rgba(241, 234, 253, 0.92);
+}
+
+.jp-step.is-done .jp-label {
+  color: rgba(241, 234, 253, 0.62);
+}
+
+@media (max-width: 540px) {
+  .jp-label {
+    display: none;
+  }
+
+  .jp-step.is-current .jp-label {
+    display: inline;
+  }
+}

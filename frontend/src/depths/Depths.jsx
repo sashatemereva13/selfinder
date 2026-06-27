@@ -6,14 +6,11 @@ import {
   AXIS_COLORS,
   THERMOMETER_MAX,
 } from "../measure/measureConfig";
-import {
-  useJourneyLine,
-  DEPTHS_ARRIVAL_SCENE_ID,
-  DEPTHS_ARRIVAL_LINE,
-} from "../content/journeyLines";
+import { DEPTHS_ARRIVAL_LINE } from "../content/journeyLines";
 import { useChat } from "../guide/ChatContext";
 import DiamondChart from "./DiamondChart";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
+import JourneyProgress from "../designElements/JourneyProgress";
 import "./Depths.css";
 
 export default function Depths() {
@@ -23,10 +20,6 @@ export default function Depths() {
 
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
-  );
-  const arrivalLine = useJourneyLine(
-    DEPTHS_ARRIVAL_SCENE_ID,
-    DEPTHS_ARRIVAL_LINE,
   );
 
   useEffect(() => {
@@ -56,10 +49,12 @@ export default function Depths() {
           <div className="depthsPortalArrivalRing" />
           <div className="depthsPortalArrivalCaption">
             <PhilosopherVoiceTag philosopher={activePhilosopher} />
-            <p>{arrivalLine ?? DEPTHS_ARRIVAL_LINE}</p>
+            <p>{DEPTHS_ARRIVAL_LINE}</p>
           </div>
         </div>
       )}
+      <JourneyProgress currentKey="measure" />
+
       <header className="depthsHeader">
         <p className="depthsKicker">The Depths</p>
         <h1 className="depthsTitle">energy store</h1>

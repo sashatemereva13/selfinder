@@ -181,44 +181,6 @@ span {
   height: 100% !important;
 }
 
-.frontPageHeroOverlay {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: calc(env(safe-area-inset-bottom, 0px) + 1.4rem);
-  z-index: 1000;
-  padding: 0.6rem 1.1rem;
-  border-radius: 18px;
-  border: 1px solid rgba(197, 173, 228, 0.12);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0)),
-    rgba(7, 7, 11, 0.42);
-  backdrop-filter: blur(10px);
-  white-space: nowrap;
-  opacity: 1;
-  transition: opacity 640ms ease, transform 640ms ease;
-}
-
-.frontPageHeroOverlay.is-hidden {
-  opacity: 0;
-  transform: translateX(-50%) translateY(10px);
-  pointer-events: none;
-}
-
-.frontPageUnlockHint {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  color: rgba(233, 223, 248, 0.68);
-  font-size: 0.73rem;
-  letter-spacing: 0.04em;
-  text-align: center;
-}
-
-.frontPageUnlockHint.is-unlocked {
-  color: rgba(211, 247, 241, 0.88);
-}
-
 .frontPageJourneyStage {
   position: relative;
   z-index: 2;
@@ -649,70 +611,11 @@ button:hover {
   overflow: hidden;
 }
 
-.portalJumpOverlayScrim {
-  position: absolute;
-  inset: 0;
-  background: rgba(6, 4, 12, 0.55);
-  opacity: 0;
-}
-
-.portalJumpOverlayStreaks {
-  position: absolute;
-  inset: 0;
-}
-
-/* Each streak is a thick radial "noodle" anchored at the center, rotated to
-   its own spoke angle, that grows outward and stretches — the visual stand-in
-   for matter spaghettifying as it's pulled toward the singularity. */
-.portalJumpStreak {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 5px;
-  height: 0;
-  border-radius: 999px;
-  transform: translate(-50%, -100%) rotate(var(--streak-angle));
-  transform-origin: 50% 100%;
-  background: linear-gradient(
-    to top,
-    rgba(140, 95, 207, 0) 0%,
-    rgba(185, 140, 255, 0.95) 50%,
-    rgba(255, 255, 255, 1) 100%
-  );
-  box-shadow: 0 0 14px 2px rgba(185, 140, 255, 0.75);
-  opacity: 0;
-}
-
-.portalJumpOverlaySingularity {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(0.3);
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.95) 0%,
-    rgba(214, 182, 255, 0.7) 35%,
-    transparent 75%
-  );
-  opacity: 0;
-  filter: blur(1px);
-}
-
-.portalJumpOverlayFlash {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(
-    circle at 50% 50%,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(214, 182, 255, 0.75) 32%,
-    rgba(6, 4, 12, 0) 68%
-  );
-  opacity: 0;
-}
-
+/* The only remaining overlay stage: a plain fade to black to cover the cut
+   from the 3D Threshold scene to /depths. Everything that used to fake
+   motion here (scrim jitter, spaghettifying streaks, singularity pulse,
+   flash) was removed once the camera actually flies through the portal —
+   see flyThroughPortal in WizardMessage.jsx. */
 .portalJumpOverlayVoid {
   position: absolute;
   inset: 0;
@@ -720,155 +623,8 @@ button:hover {
   opacity: 0;
 }
 
-/* While the jump is winding up — before the streaks fire — give the screen
-   a sense of being tugged toward the singularity: the scrim darkens with a
-   small jitter and the center glow pulses twice, like energy gathering. */
-.portalJumpOverlay.is-charge .portalJumpOverlayScrim {
-  animation: portalScrimChargeFx 380ms ease-in forwards;
-}
-
-.portalJumpOverlay.is-charge .portalJumpOverlaySingularity {
-  animation: portalSingularityCharge 380ms ease-in-out forwards;
-}
-
-/* Hold the charge stage's settled end-state through stretch (rather than
-   letting the class swap restart these from zero) so the burst reads as a
-   continuation of the wind-up instead of snapping back to nothing. */
-.portalJumpOverlay.is-stretch .portalJumpOverlayScrim {
-  opacity: 0.55;
-}
-
-.portalJumpOverlay.is-stretch .portalJumpStreak {
-  animation: portalStreakGrow 640ms cubic-bezier(0.22, 0.7, 0.2, 1) forwards;
-  animation-delay: var(--streak-delay);
-}
-
-.portalJumpOverlay.is-stretch .portalJumpOverlaySingularity {
-  animation: portalSingularityPulse 640ms ease-in forwards;
-}
-
-/* Hold the streaks/glow at their settled end-state through the collapse
-   stage (rather than letting the class swap reset them) so the flash reads
-   as a continuation of the stretch instead of snapping back to nothing. */
-.portalJumpOverlay.is-collapse .portalJumpOverlayScrim {
-  opacity: 0.55;
-}
-
-.portalJumpOverlay.is-collapse .portalJumpStreak {
-  opacity: 0;
-  transition: opacity 160ms ease-out;
-}
-
-.portalJumpOverlay.is-collapse .portalJumpOverlaySingularity {
-  opacity: 0;
-  transition: opacity 120ms ease-out;
-}
-
-.portalJumpOverlay.is-collapse .portalJumpOverlayFlash {
-  animation: portalFlashFx 220ms ease-in forwards;
-}
-
-.portalJumpOverlay.is-blackout .portalJumpOverlayScrim {
-  opacity: 0.55;
-}
-
-.portalJumpOverlay.is-blackout .portalJumpOverlayFlash {
-  opacity: 0.85;
-}
-
 .portalJumpOverlay.is-blackout .portalJumpOverlayVoid {
   animation: portalVoidFx 280ms ease-in forwards;
-}
-
-@keyframes portalScrimChargeFx {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0);
-  }
-  15% {
-    opacity: 0.18;
-    transform: translate(-2px, 1px);
-  }
-  30% {
-    opacity: 0.3;
-    transform: translate(2px, -1px);
-  }
-  45% {
-    opacity: 0.4;
-    transform: translate(-1px, 2px);
-  }
-  60% {
-    opacity: 0.48;
-    transform: translate(1px, -2px);
-  }
-  100% {
-    opacity: 0.55;
-    transform: translate(0, 0);
-  }
-}
-
-@keyframes portalSingularityCharge {
-  0% {
-    transform: translate(-50%, -50%) scale(0.12);
-    opacity: 0;
-  }
-  28% {
-    transform: translate(-50%, -50%) scale(0.55);
-    opacity: 0.55;
-  }
-  52% {
-    transform: translate(-50%, -50%) scale(0.22);
-    opacity: 0.2;
-  }
-  78% {
-    transform: translate(-50%, -50%) scale(0.5);
-    opacity: 0.5;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(0.3);
-    opacity: 0.3;
-  }
-}
-
-@keyframes portalStreakGrow {
-  0% {
-    height: 0;
-    opacity: 0;
-  }
-  18% {
-    opacity: 1;
-  }
-  70% {
-    height: 72vmax;
-    opacity: 1;
-  }
-  100% {
-    height: 118vmax;
-    opacity: 0.6;
-  }
-}
-
-@keyframes portalSingularityPulse {
-  0% {
-    transform: translate(-50%, -50%) scale(0.3);
-    opacity: 0.3;
-  }
-  100% {
-    transform: translate(-50%, -50%) scale(1.6);
-    opacity: 0.9;
-  }
-}
-
-@keyframes portalFlashFx {
-  0% {
-    opacity: 0;
-  }
-  55% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0.85;
-  }
 }
 
 @keyframes portalVoidFx {
@@ -926,12 +682,6 @@ button:hover {
   .frontPageHero {
     min-height: 100svh;
     height: 100svh;
-  }
-
-  .frontPageHeroOverlay {
-    white-space: normal;
-    max-width: calc(100vw - 2.5rem);
-    text-align: center;
   }
 
   .frontPageJourneyStage {

@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import Message from "./Message";
 import MagicBall from "../designElements/MagicBall";
+import Starfield from "./Starfield";
 import WizardMessage from "./WizardMessage";
-import FeelingLuckyList from "../designElements/FeelingLuckyList.json";
+import { THRESHOLD_INTRO_LINE } from "../content/journeyLines";
 import { THRESHOLD_PORTAL_LAYOUT } from "./portalConfig";
 import { useChat } from "../guide/ChatContext";
 
@@ -291,7 +292,7 @@ const Experience = ({
   const debugPulseRef = useRef(0);
   const phaseStartedAtRef = useRef(performance.now());
   const { viewport } = useThree();
-  const { setThresholdEngaged } = useChat();
+  const { activePhilosopher, setThresholdEngaged, setJourneyUnlocked } = useChat();
   const [selectedMessage, setSelectedMessage] = useState(null);
   const [thresholdPhase, setThresholdPhase] = useState("idle");
 
@@ -302,10 +303,12 @@ const Experience = ({
     : THRESHOLD_PORTAL_LAYOUT.desktop;
 
   // Reset on each mount of the threshold scene, so GuideAnchor's merged
-  // "touch the sphere" line shows again on a fresh visit to "/".
+  // "touch the sphere" / "ready to enter" lines show again on a fresh visit
+  // to "/" instead of carrying a stale unlocked state from a previous visit.
   useEffect(() => {
     setThresholdEngaged(false);
-  }, [setThresholdEngaged]);
+    setJourneyUnlocked(false);
+  }, [setThresholdEngaged, setJourneyUnlocked]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -379,11 +382,14 @@ const Experience = ({
 
   const handleInitialActivate = useCallback(() => {
     if (thresholdPhase !== "idle") return;
-    const messageIndex = Math.floor(Math.random() * FeelingLuckyList.length);
-    setSelectedMessage(FeelingLuckyList[messageIndex]);
+    // The ball used to hand back a random personal insight from
+    // FeelingLuckyList — now it speaks in the chosen philosopher's voice,
+    // preparing the traveller for the vibration measure ahead. FeelingLuckyList
+    // moves to the very end of the journey instead (see TuneIn.jsx).
+    setSelectedMessage({ message: activePhilosopher?.prepareMeasure ?? THRESHOLD_INTRO_LINE });
     setThresholdPhase("message_open");
     setThresholdEngaged(true);
-  }, [thresholdPhase, setThresholdEngaged]);
+  }, [thresholdPhase, activePhilosopher, setThresholdEngaged]);
 
   const handleSelectedMessageChange = useCallback(
     (nextMessage) => {
@@ -478,6 +484,8 @@ const Experience = ({
   return (
     <>
       <CameraControls ref={controls} makeDefault enabled />
+
+      <Starfield quality={quality} />
 
       <MagicBall
         quality={quality}

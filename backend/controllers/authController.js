@@ -12,7 +12,7 @@ function signToken(user) {
 }
 
 export async function register(req, res) {
-  const { username, password, privacyPolicyAccepted } = req.body;
+  const { username, password, privacyPolicyAccepted, adminCode } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: "username and password are required" });
@@ -28,12 +28,13 @@ export async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const now = new Date().toISOString();
+  const isAdmin = Boolean(process.env.ADMIN_SIGNUP_CODE) && adminCode === process.env.ADMIN_SIGNUP_CODE;
 
   const user = {
     id: randomUUID(),
     username,
     passwordHash,
-    role: "user",
+    role: isAdmin ? "admin" : "user",
     createdAt: now,
     privacyPolicy: {
       accepted: true,

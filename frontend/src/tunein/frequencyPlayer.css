@@ -52,6 +52,50 @@
   font-size: 0.9rem;
 }
 
+.tuneInClosing {
+  width: min(1120px, 100%);
+  margin: 1.4rem auto 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.tuneInHandoff {
+  border-radius: 18px;
+  border: 1px solid var(--tune-line);
+  background: rgba(10, 10, 14, 0.54);
+  padding: 0.95rem;
+}
+
+.tuneInHandoff p {
+  margin: 0.6rem 0 0;
+  color: var(--tune-ink-soft);
+  line-height: 1.6;
+  font-size: 0.92rem;
+}
+
+/* The personal closing note — deliberately undressed, no avatar or voice
+   tag, so it reads as a different register from the philosopher's lines
+   above it. */
+.tuneInPersonalNote {
+  padding: 1.1rem 1rem;
+  border-radius: 18px;
+  border: 1px dashed var(--tune-line);
+  background: transparent;
+}
+
+.tuneInPersonalNote p {
+  margin: 0;
+  color: var(--tune-ink);
+  font-family: "Panchang-Light", sans-serif;
+  line-height: 1.65;
+  font-size: 0.95rem;
+}
+
+.tuneInReturnBtn {
+  align-self: flex-start;
+}
+
 .tuneInShell {
   width: min(1120px, 100%);
   margin: 0.8rem auto 0;

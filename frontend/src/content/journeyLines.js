@@ -11,6 +11,12 @@ const JOURNEY_LINE_DELAY_MS = 480;
 export const THRESHOLD_INTRO_SCENE_ID = "threshold-intro";
 export const THRESHOLD_INTRO_LINE = "Welcome traveller.\nTouch the sphere to cross the threshold.";
 
+// The threshold's post-unlock confirmation — also rendered by GuideAnchor,
+// right after the intro line, once the player has touched the sphere and the
+// journey stage opens up.
+export const THRESHOLD_UNLOCK_SCENE_ID = "threshold-unlock";
+export const THRESHOLD_UNLOCK_LINE = "You are ready to enter the house.";
+
 // Shared so the portal jump (which pre-warms this line while the player is
 // mid-flight) and the Measure arrival caption (which renders it) resolve to
 // the same cache entry — the line is already settled by the time it's shown.

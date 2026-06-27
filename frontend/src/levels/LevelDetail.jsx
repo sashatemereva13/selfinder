@@ -1,5 +1,8 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { getLevelBySlug } from "./levelsContent";
+import { useChat } from "../guide/ChatContext";
+import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
+import JourneyProgress from "../designElements/JourneyProgress";
 import "./levels.css";
 
 // Minimal inline-bold support so content can use **text** without a markdown
@@ -17,6 +20,7 @@ function renderInline(text) {
 export default function LevelDetail() {
   const { slug } = useParams();
   const level = getLevelBySlug(slug);
+  const { activePhilosopher } = useChat();
 
   if (!level) return <Navigate to="/levels" replace />;
 
@@ -28,6 +32,7 @@ export default function LevelDetail() {
         Back
       </Link>
       <div className={`aLevelContainer ${themeClass}`}>
+        <JourneyProgress currentKey="levels" />
         <h1>{level.title}</h1>
         {level.frame && <p className="aLevelFrame">{level.frame}</p>}
 
@@ -54,6 +59,16 @@ export default function LevelDetail() {
           : level.paragraphs?.map((paragraph, index) => (
               <p key={index}>{renderInline(paragraph)}</p>
             ))}
+
+        {activePhilosopher?.tuneInBridge && (
+          <div className="aLevelBridge">
+            <PhilosopherVoiceTag philosopher={activePhilosopher} />
+            <p>{activePhilosopher.tuneInBridge}</p>
+            <Link to="/tunein" className="aLevelTuneInBtn">
+              Tune in →
+            </Link>
+          </div>
+        )}
       </div>
     </div>
   );

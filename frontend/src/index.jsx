@@ -22,7 +22,6 @@ import { AuthProvider } from "./auth/AuthContext";
 
 const AuthPage = lazy(() => import("./auth/AuthPage"));
 const FrontPage = lazy(() => import("./frontpage/FrontPage"));
-const JungianRoom = lazy(() => import("./rooms/JungianRoom"));
 const Depths = lazy(() => import("./depths/Depths"));
 const PersonalSpace = lazy(() => import("./space/PersonalSpace"));
 const LevelsFullPage = lazy(() => import("./levels/LevelsFullPage"));
@@ -66,15 +65,6 @@ function AnimatedRoutes() {
               element={
                 <PageWrapper>
                   <Measure />
-                </PageWrapper>
-              }
-            />
-            {/* Self — the Completion stage, reached after measuring your vibration */}
-            <Route
-              path="/self"
-              element={
-                <PageWrapper>
-                  <JungianRoom key="self" roomKey="self" />
                 </PageWrapper>
               }
             />

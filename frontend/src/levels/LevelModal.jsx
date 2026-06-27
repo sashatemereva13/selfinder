@@ -2,10 +2,13 @@ import { useEffect, useId } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
+import { useChat } from "../guide/ChatContext";
+import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import "./levels.css";
 
 export default function LevelModal({ name, slug, onClose }) {
   const titleId = useId();
+  const { activePhilosopher } = useChat();
 
   useEffect(() => {
     const handleKeyDown = (event) => {
@@ -57,6 +60,13 @@ export default function LevelModal({ name, slug, onClose }) {
 
           <h2 id={titleId}>{name}</h2>
           <p className="levelModalSubtitle">Choose your next step.</p>
+
+          {activePhilosopher?.tuneInBridge && (
+            <div className="levelModalBridge">
+              <PhilosopherVoiceTag philosopher={activePhilosopher} />
+              <p>{activePhilosopher.tuneInBridge}</p>
+            </div>
+          )}
 
           <div className="modalButtons">
             <Link to={`/levels/${slug}`} className="modalBtn learn">

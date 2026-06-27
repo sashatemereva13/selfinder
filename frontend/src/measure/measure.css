@@ -1589,6 +1589,19 @@
   font-size: 0.95rem;
 }
 
+.measure-guideBridge {
+  margin: 1.1rem 0 0;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  background: var(--measure-card-bg, rgba(255, 255, 255, 0.04));
+  color: var(--measure-ink-soft);
+  line-height: 1.5;
+}
+
+.measure-guideBridge p {
+  margin: 0.5rem 0 0;
+}
+
 .measure-levelCard {
   margin-top: 1.1rem;
   padding: 0;

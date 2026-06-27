@@ -12,6 +12,11 @@ export function ChatProvider({ children }) {
   // outside the Canvas, with no view into the threshold's own phase state)
   // know to stop showing the "touch the sphere" line once they've done so.
   const [thresholdEngaged, setThresholdEngaged] = useState(false);
+  // Set once the threshold's journey stage unlocks — same cross-Canvas
+  // signal as thresholdEngaged, above, but for the "you're ready to enter
+  // the house" milestone. GuideAnchor renders that line itself (one speech
+  // channel instead of FrontPage's own separate overlay) once this flips.
+  const [journeyUnlocked, setJourneyUnlocked] = useState(false);
 
   const activePhilosopher = PHILOSOPHERS.find(p => p.id === philosopherId) ?? null;
   const messages = philosopherId ? (conversations[philosopherId] ?? []) : [];
@@ -63,6 +68,8 @@ export function ChatProvider({ children }) {
       clearConversation,
       thresholdEngaged,
       setThresholdEngaged,
+      journeyUnlocked,
+      setJourneyUnlocked,
     }}>
       {children}
     </ChatContext.Provider>

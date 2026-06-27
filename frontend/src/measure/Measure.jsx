@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./measure.css";
-import {
-  useJourneyLine,
-  MEASURE_ARRIVAL_SCENE_ID,
-  MEASURE_ARRIVAL_LINE,
-} from "../content/journeyLines";
+import { MEASURE_ARRIVAL_LINE } from "../content/journeyLines";
 import { useChat } from "../guide/ChatContext";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
+import JourneyProgress from "../designElements/JourneyProgress";
 import {
   MEASURE_RESULT_STORAGE_KEY,
   STEP_CONFIG,
@@ -39,7 +36,6 @@ const Measure = () => {
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
   );
-  const arrivalLine = useJourneyLine(MEASURE_ARRIVAL_SCENE_ID, MEASURE_ARRIVAL_LINE);
   const audioContextRef = useRef(null);
   const activePreviewNodesRef = useRef([]);
   const previewTimerRef = useRef(null);
@@ -335,7 +331,7 @@ const Measure = () => {
           <div className="measure-portalArrivalRing" />
           <div className="measure-portalArrivalCaption">
             <PhilosopherVoiceTag philosopher={activePhilosopher} />
-            <p>{arrivalLine ?? MEASURE_ARRIVAL_LINE}</p>
+            <p>{MEASURE_ARRIVAL_LINE}</p>
           </div>
         </div>
       )}
@@ -343,6 +339,7 @@ const Measure = () => {
       <div className="measure-bg-orb orb-b" aria-hidden="true" />
 
       <div className="measure-shell">
+        <JourneyProgress currentKey="measure" />
         <MeasureTopBar
           phaseProgress={phaseProgress}
           backTo={isDepthsFacet ? "/depths" : "/"}
@@ -394,6 +391,7 @@ const Measure = () => {
           {phase === "completion" && result && (
             <MeasureCompletionPhase
               result={result}
+              philosopher={activePhilosopher}
               showBack={showWizardNav}
               onBack={handleBack}
               onRestart={handleRestart}

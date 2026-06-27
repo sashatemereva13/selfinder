@@ -61,6 +61,7 @@ export default function MagicBall({
   const consumableRef = useRef();
   const coloredSphere = useRef();
   const pointsRef = useRef();
+  const orbitRingRef = useRef();
   const pointLightRef = useRef();
   const rootRef = useRef();
   const consumeStartedAt = useRef(null);
@@ -194,6 +195,17 @@ export default function MagicBall({
       pointsRef.current.rotation.x += delta * 0.03;
     }
 
+    // A deliberate orbit, distinct from the ambient Sparkles scattered
+    // around the room — a single ring at a fixed tilt, slowly turning,
+    // reads as something circling the ball on purpose rather than just
+    // twinkling near it. Shares the same hover-reactive color as the point
+    // light so the whole ball (core, halo, ring) brightens together.
+    if (orbitRingRef.current?.material) {
+      orbitRingRef.current.rotation.z += delta * (interactive ? 0.12 : 0.06);
+      orbitRingRef.current.material.opacity = (isLowQuality ? 0.3 : 0.48) * opacityFade;
+      orbitRingRef.current.material.color.set(lightColor);
+    }
+
     if (pointLightRef.current) {
       pointLightRef.current.intensity = 2 + consumeBoost * 3;
       pointLightRef.current.distance = 20 + consumeBoost * 4;
@@ -264,6 +276,17 @@ export default function MagicBall({
                     opacity={isLowQuality ? 0.48 : 0.92}
                   />
                 </points>
+
+                <mesh ref={orbitRingRef} rotation={[Math.PI / 2.3, 0.18, 0]}>
+                  <torusGeometry
+                    args={[2.3, 0.012, 12, isLowQuality ? 48 : 96]}
+                  />
+                  <meshBasicMaterial
+                    color={lightColor}
+                    transparent
+                    opacity={isLowQuality ? 0.3 : 0.48}
+                  />
+                </mesh>
 
                 <pointLight
                   ref={pointLightRef}

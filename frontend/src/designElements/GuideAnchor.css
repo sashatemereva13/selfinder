@@ -1,23 +1,37 @@
-/* ─── Anchor (fixed bottom-center) ────────────────────────────────────────────
-   A narrator strip at the bottom of the screen, like dialogue captions in a
-   story-driven game — not a support-chat bubble bolted to a corner. The
-   strip carries the philosopher's avatar, name, and remark (typed out live
-   on the threshold, where it doubles as the magic ball's own welcome line),
-   and grows upward into the full conversation panel. ─────────────────────── */
+/* ─── Anchor (fixed bottom-right) ─────────────────────────────────────────────
+   A narrator strip, like dialogue captions in a story-driven game — not a
+   plain support-chat bubble. The strip carries the philosopher's avatar and
+   remark (typed out live on the threshold, where it doubles as the magic
+   ball's own welcome line), and grows upward into the full conversation
+   panel.
+
+   Anchored to the bottom-right corner rather than bottom-center: the
+   threshold's "enter the depths" portal button is a 3D-anchored <Html> at
+   world x=0, which always projects to the screen's horizontal center
+   (frontpage/portalConfig.js) — so any bottom-center widget is guaranteed to
+   collide with it eventually regardless of how either's offsets get tuned.
+   The corner is also the conventional spot for a persistent assistant
+   widget, leaving center stage free for whatever the 3D scene is doing. ── */
 .ga-anchor {
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 15.25rem);
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 1.75rem);
+  right: 1.5rem;
   z-index: 1300;
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   gap: 0.5rem;
 }
 
 /* ─── Strip ──────────────────────────────────────────────────────────────── */
+/* Real <button>, not a div with role="button" — reset the UA button chrome
+   so it keeps the look below, while picking up native keyboard/AT semantics
+   for free (Enter/Space, no nested-control anti-pattern with the dismiss
+   badge in .ga-strip-wrap). */
 .ga-strip {
+  appearance: none;
+  -webkit-appearance: none;
+  margin: 0;
   position: relative;
   display: flex;
   align-items: center;
@@ -39,14 +53,49 @@
   color: var(--sf-ink-soft);
   cursor: pointer;
   font-family: var(--sf-font);
+  text-align: left;
   transition:
     border-color 180ms ease,
+    box-shadow 220ms ease,
+    background-color 220ms ease,
     max-width 220ms ease;
 }
 
+/* The "speaking" state — this is the moment the strip should read as the
+   obvious, alive focal point on screen, not a quiet status pill. */
 .ga-strip.has-remark {
   max-width: min(34rem, calc(100vw - 6rem));
   border-radius: 18px;
+  border-color: rgba(var(--philo-rgb, 195, 153, 255), 0.55);
+  background:
+    radial-gradient(
+      circle at 20% 15%,
+      rgba(var(--philo-rgb, 195, 153, 255), 0.26),
+      transparent 55%
+    ),
+    rgba(10, 10, 16, 0.94);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(var(--philo-rgb, 195, 153, 255), 0.14),
+    0 0 36px -2px rgba(var(--philo-rgb, 195, 153, 255), 0.5);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ga-strip.has-remark {
+    animation: ga-strip-pop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+}
+
+@keyframes ga-strip-pop {
+  0% {
+    transform: scale(0.95);
+  }
+  60% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .ga-strip:hover {
@@ -59,6 +108,7 @@
 }
 
 .ga-strip-avatar {
+  position: relative;
   width: 26px;
   height: 26px;
   flex: 0 0 auto;
@@ -68,6 +118,41 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* A pulsing ring around the avatar while a remark is showing — the "this
+   character is talking right now" cue, like a speech/voice indicator in a
+   game's dialogue UI. */
+.ga-strip.has-remark .ga-strip-avatar::before {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(var(--philo-rgb, 195, 153, 255), 0.6);
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ga-strip.has-remark .ga-strip-avatar::before {
+    animation: ga-speak-pulse 1.6s ease-out infinite;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ga-strip.has-remark .ga-strip-avatar::before {
+    opacity: 0.6;
+  }
+}
+
+@keyframes ga-speak-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.45);
+    opacity: 0;
+  }
 }
 
 .ga-strip-avatar svg {
@@ -82,14 +167,7 @@
   min-width: 0;
   flex: 1 1 auto;
   text-align: left;
-}
-
-.ga-strip-name {
-  color: var(--philo-color, rgba(241, 234, 253, 0.86));
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
+  justify-content: center;
 }
 
 .ga-strip-remark {
@@ -107,42 +185,87 @@
   background: none;
   box-shadow: none;
   backdrop-filter: none;
-  font-size: 0.78rem;
-  line-height: 1.45;
+  font-size: 0.92rem;
+  line-height: 1.5;
   letter-spacing: 0.01em;
-  color: rgba(241, 234, 253, 0.88);
+  color: rgba(255, 252, 247, 0.97);
   text-shadow: none;
 }
 
+/* Dismiss is a corner badge sibling of the toggle button (see
+   .ga-strip-wrap below) instead of a button nested inside it — nesting
+   interactive controls is an ARIA anti-pattern, and the previous 1.3rem
+   hit area was under the ~24-44px minimum touch-target guidance, with a
+   missed tap bubbling into the toggle and reopening what it was dismissing. */
 .ga-strip-dismiss {
-  flex: 0 0 auto;
+  position: absolute;
+  top: -0.55rem;
+  right: -0.55rem;
+  width: 1.75rem;
+  height: 1.75rem;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.3rem;
-  height: 1.3rem;
   border-radius: 50%;
-  border: none;
-  background: none;
-  color: rgba(241, 234, 253, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(10, 10, 14, 0.95);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+  color: rgba(241, 234, 253, 0.55);
   font-family: var(--sf-font);
   font-size: 0.95rem;
   line-height: 1;
   cursor: pointer;
+  z-index: 1;
   transition:
     color 160ms ease,
+    border-color 160ms ease,
     background-color 160ms ease;
 }
 
 .ga-strip-dismiss:hover {
-  color: rgba(241, 234, 253, 0.75);
-  background: rgba(255, 255, 255, 0.06);
+  color: rgba(241, 234, 253, 0.9);
+  border-color: rgba(255, 255, 255, 0.28);
 }
 
 .ga-strip-chevron {
   flex: 0 0 auto;
   color: rgba(241, 234, 253, 0.3);
   font-size: 0.6rem;
+}
+
+/* Column: nameplate tag, then the strip+dismiss row below it. A plain
+   column (not a flex item needing its own positioning) — .ga-strip-wrap
+   below is the actual relative anchor for the dismiss badge, so the tag
+   above it doesn't shift that badge's corner reference point. */
+.ga-strip-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+
+/* The speaker's name, outside the bubble — a persistent nameplate credit,
+   matching PhilosopherVoiceTag's avatar+name convention used elsewhere
+   (Depths, Measure) instead of being crammed inside the speech bubble.
+   Always visible (even idle, even on mobile) so it's never just an
+   unlabeled avatar. */
+.ga-strip-tag {
+  margin-left: 0.5rem;
+  color: var(--philo-color, rgba(241, 234, 253, 0.86));
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-shadow: 0 0 12px rgba(var(--philo-rgb, 195, 153, 255), 0.35);
+  white-space: nowrap;
+}
+
+/* Relative anchor for the .ga-strip-dismiss corner badge — sized to the
+   button's own content, same as .ga-strip was directly inside .ga-anchor
+   before this wrapper was introduced. */
+.ga-strip-wrap {
+  position: relative;
+  display: flex;
 }
 
 /* ─── Panel ───────────────────────────────────────────────────────────────── */
@@ -406,10 +529,10 @@
 
 @media (max-width: 500px) {
   .ga-anchor {
-    /* Mirrors the desktop lift (15.25rem) rather than reverting to the
-       very bottom edge — on FrontPage specifically, .frontPageJourneyPanel
-       also docks to the bottom on mobile (bottom: 1rem, near-full-width),
-       so sitting too low here would collide with it. */
+    right: 1rem;
+    /* On FrontPage specifically, .frontPageJourneyPanel also docks to the
+       bottom on mobile (bottom: 1rem, near-full-width) — lift clear of it
+       regardless of which corner either one is anchored to. */
     bottom: calc(env(safe-area-inset-bottom, 0px) + 5rem);
   }
 
@@ -423,9 +546,5 @@
 
   .ga-strip.has-remark {
     max-width: calc(100vw - 2.5rem);
-  }
-
-  .ga-strip:not(.has-remark) .ga-strip-name {
-    display: none;
   }
 }

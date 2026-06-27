@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AXIS_COLORS, THERMOMETER_MAX, VIBRATION_LEVELS } from "./measureConfig";
 import DiamondChart from "../depths/DiamondChart";
+import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 
 function VibrationThermometer({ score, level, axisKey, compact = false }) {
   const [filled, setFilled] = useState(false);
@@ -583,6 +584,7 @@ export function MeasureGuidancePhase({ result, onBack, onNext }) {
 
 export function MeasureCompletionPhase({
   result,
+  philosopher,
   showBack,
   onBack,
   onRestart,
@@ -592,6 +594,13 @@ export function MeasureCompletionPhase({
       <p className="measure-kicker">Complete · {result.band}</p>
       <h2 className="measure-title">Your reading is ready to use</h2>
       <p className="measure-copy">Return later and watch what shifts.</p>
+
+      {philosopher?.levelsBridge && (
+        <div className="measure-guideBridge">
+          <PhilosopherVoiceTag philosopher={philosopher} />
+          <p>{philosopher.levelsBridge}</p>
+        </div>
+      )}
 
       <div className="measure-levelCard">
         <VibrationThermometer

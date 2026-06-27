@@ -4,7 +4,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth/AuthContext";
 import { apiUrl } from "../api/baseUrl";
 import { useChat } from "../guide/ChatContext";
-import { HOUSE_ROOMS } from "../content/narrativeFlow";
 import { clearAllLocalData, LOCAL_CONSENT_KEY, ROOM_KEYS, readMeasureResult, readAllRooms } from "../hooks/useRoomProgress";
 import LocalDataRecord from "./LocalDataRecord";
 import "./PersonalSpace.css";
@@ -171,19 +170,6 @@ export default function PersonalSpace() {
                 <Link to="/" className="sf-btn">Choose at the Threshold</Link>
               </div>
             )}
-          </section>
-
-          {/* Journey card */}
-          <section className="ps-card ps-card--journey">
-            <p className="ps-cardLabel sf-kicker">The house</p>
-            <div className="ps-roomList">
-              {HOUSE_ROOMS.filter((r) => r.key !== "threshold").map((room) => (
-                <Link key={room.key} to={room.route} className="ps-roomRow">
-                  <span className="ps-roomStage">{room.stage}</span>
-                  <span className="ps-roomLabel">{room.label}</span>
-                </Link>
-              ))}
-            </div>
           </section>
 
           {/* Stats card */}

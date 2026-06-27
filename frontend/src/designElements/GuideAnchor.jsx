@@ -1,72 +1,11 @@
-import { useState, useEffect, useRef, useCallback, useId } from "react";
+import { useState, useEffect, useRef, useId } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useChat } from "../guide/ChatContext";
-import {
-  getBadgePageContext,
-  getPhilosopherComment,
-  resolveCommentPath,
-} from "../content/philosopherComments";
-import {
-  useJourneyLine,
-  THRESHOLD_INTRO_SCENE_ID,
-  THRESHOLD_INTRO_LINE,
-} from "../content/journeyLines";
-import { apiUrl } from "../api/baseUrl";
+import { THRESHOLD_INTRO_LINE, THRESHOLD_UNLOCK_LINE } from "../content/journeyLines";
 import { AVATARS } from "../content/philosopherAvatars";
 import { SmoothTypewriter } from "./SmoothTypewriter";
 import "./GuideAnchor.css";
-
-const COMMENT_DELAY_MS = 520;
-const COMMENT_API = apiUrl("/chat/badge-comment");
-const badgeCommentCache = new Map();
-let badgeCommentEndpointMissing = false;
-
-async function fetchBadgeComment({
-  philosopher,
-  pathname,
-  pageContext,
-  fallbackComment,
-  signal,
-}) {
-  const cacheKey = `${philosopher.id}:${resolveCommentPath(pathname)}`;
-  const cached = badgeCommentCache.get(cacheKey);
-  if (cached) return cached;
-
-  if (badgeCommentEndpointMissing) {
-    if (fallbackComment) return fallbackComment;
-    throw new Error("Badge comment endpoint unavailable");
-  }
-
-  const res = await fetch(COMMENT_API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      philosopherId: philosopher.id,
-      pathname: resolveCommentPath(pathname),
-      pageContext,
-      fallbackComment,
-    }),
-    signal,
-  });
-
-  if (!res.ok) {
-    if (res.status === 404) {
-      badgeCommentEndpointMissing = true;
-    }
-    throw new Error("Failed to generate badge comment");
-  }
-
-  const data = await res.json();
-  const comment = typeof data.comment === "string" ? data.comment.trim() : "";
-
-  if (!comment) {
-    throw new Error("No badge comment returned");
-  }
-
-  badgeCommentCache.set(cacheKey, comment);
-  return comment;
-}
 
 function OracleIcon() {
   return (
@@ -201,119 +140,61 @@ function MiniChatInterface({ onExpandFull, onChangePhilosopher }) {
 }
 
 export default function GuideAnchor() {
-  const { activePhilosopher, selectPhilosopher, thresholdEngaged } = useChat();
+  const { activePhilosopher, selectPhilosopher, thresholdEngaged, journeyUnlocked } = useChat();
   const location = useLocation();
   const navigate = useNavigate();
   const panelId = useId();
   const prefersReducedMotion = useReducedMotion();
 
   const [isOpen, setIsOpen] = useState(false);
-  const [comment, setComment] = useState(null);
-  const [commentVisible, setCommentVisible] = useState(false);
-  const showTimerRef = useRef(null);
-  const requestSeqRef = useRef(0);
+  const [unlockHintVisible, setUnlockHintVisible] = useState(false);
 
-  // On the threshold itself, the magic ball's own welcome line takes the
-  // place of the generic page remark — one combined speech-and-typewriter
-  // element instead of two separate ones.
+  // On the threshold itself, the magic ball's own welcome line — and, once
+  // the player has touched it and the journey unlocks, the "ready to enter"
+  // confirmation that used to be FrontPage's own separate overlay — take the
+  // place of any other remark. Both are plain hardcoded lines: no AI call,
+  // no per-page generation. Off the threshold, GuideAnchor is a quiet dock —
+  // avatar and name, no auto-remark — always one tap away from a real
+  // conversation with the chosen philosopher.
   const isThresholdRoute = location.pathname === "/" || location.pathname.startsWith("/threshold");
-  const introLine = useJourneyLine(THRESHOLD_INTRO_SCENE_ID, THRESHOLD_INTRO_LINE);
-
-  const clearTimers = useCallback(() => clearTimeout(showTimerRef.current), []);
-  useEffect(() => () => clearTimers(), [clearTimers]);
 
   // Collapse the panel whenever the route changes — reopening it is one tap away.
   useEffect(() => {
     setIsOpen(false);
   }, [location.pathname]);
 
-  // Ambient, page-aware remark — skipped while the panel itself is open, and
-  // skipped entirely on the threshold (which uses introLine instead, above).
+  // The unlock confirmation is a one-time milestone toast, not a persistent
+  // instruction — auto-hide it after a few seconds, same lifetime FrontPage
+  // used to give it before this was folded into GuideAnchor.
   useEffect(() => {
-    if (!activePhilosopher) return;
-    if (location.pathname === "/guide") return;
-    if (isThresholdRoute) return;
-    if (isOpen) return;
-
-    const fallbackComment = getPhilosopherComment(
-      activePhilosopher.id,
-      location.pathname,
-    );
-    const pageContext = getBadgePageContext(location.pathname);
-    const requestKey = ++requestSeqRef.current;
-    const controller = new AbortController();
-    let preferredComment =
-      badgeCommentCache.get(`${activePhilosopher.id}:${pageContext.pathname}`) ?? null;
-    let hasShown = false;
-
-    clearTimers();
-    setCommentVisible(false);
-
-    fetchBadgeComment({
-      philosopher: activePhilosopher,
-      pathname: location.pathname,
-      pageContext,
-      fallbackComment,
-      signal: controller.signal,
-    })
-      .then((generatedComment) => {
-        if (requestSeqRef.current !== requestKey) return;
-        preferredComment = generatedComment;
-        if (!hasShown && !fallbackComment) {
-          clearTimers();
-          setComment(generatedComment);
-          setCommentVisible(true);
-          hasShown = true;
-        }
-      })
-      .catch(() => {
-        // Fallback text remains the source of truth if generation fails.
-      });
-
-    showTimerRef.current = setTimeout(() => {
-      if (requestSeqRef.current !== requestKey) return;
-      const nextComment = preferredComment ?? fallbackComment;
-      if (!nextComment) return;
-      hasShown = true;
-      setComment(nextComment);
-      setCommentVisible(true);
-    }, COMMENT_DELAY_MS);
-
-    return () => {
-      controller.abort();
-      clearTimers();
-    };
-  }, [location.pathname, activePhilosopher, isOpen, isThresholdRoute, clearTimers]);
+    if (!journeyUnlocked) {
+      setUnlockHintVisible(false);
+      return;
+    }
+    setUnlockHintVisible(true);
+    const hideTimer = window.setTimeout(() => setUnlockHintVisible(false), 5200);
+    return () => window.clearTimeout(hideTimer);
+  }, [journeyUnlocked]);
 
   if (location.pathname === "/guide") return null;
   if (location.pathname === "/login") return null;
 
   const avatarFn = activePhilosopher ? AVATARS[activePhilosopher.id] : null;
-  const displayLine = isThresholdRoute ? introLine : comment;
+  // Before the sphere is touched: the intro line. After, once the journey
+  // unlocks: the "ready to enter" confirmation, for a few seconds. Off the
+  // threshold: nothing — just the quiet dock.
+  const thresholdLine = !thresholdEngaged
+    ? THRESHOLD_INTRO_LINE
+    : journeyUnlocked
+      ? THRESHOLD_UNLOCK_LINE
+      : null;
+  const displayLine = isThresholdRoute ? thresholdLine : null;
   const showRemark = isThresholdRoute
-    ? Boolean(introLine && !isOpen && !thresholdEngaged)
-    : Boolean(commentVisible && comment && !isOpen);
+    ? Boolean(!isOpen && (!thresholdEngaged || (journeyUnlocked && unlockHintVisible)))
+    : false;
 
   const handleToggle = () => {
-    setCommentVisible(false);
     setIsOpen((prev) => !prev);
-  };
-
-  const handleStripKeyDown = (e) => {
-    if (e.key === "Enter" || e.key === " ") {
-      e.preventDefault();
-      handleToggle();
-    }
-  };
-
-  // The threshold's welcome line is the actual play instruction (touch the
-  // sphere), not a one-off ambient remark, so it isn't dismissible — it
-  // stays until the player acts or the panel opens.
-  const canDismissRemark = showRemark && !isThresholdRoute;
-
-  const handleDismissRemark = (e) => {
-    e.stopPropagation();
-    setCommentVisible(false);
   };
 
   const handleExpandFull = () => {
@@ -363,59 +244,74 @@ export default function GuideAnchor() {
       </AnimatePresence>
 
       {/* A narrator strip at the bottom of the screen, like dialogue
-          captions — the philosopher's avatar, name, and remark (typed out
-          live) live in one anchored bar, which grows upward into the full
-          conversation. No corner chat-bubble icon. */}
-      <div
-        className={`ga-strip ${showRemark ? "has-remark" : ""}`}
-        role="button"
-        tabIndex={0}
-        aria-expanded={isOpen}
-        aria-controls={panelId}
-        aria-label={isOpen ? "Close guide panel" : "Open guide panel"}
-        onClick={handleToggle}
-        onKeyDown={handleStripKeyDown}
-      >
-        <span className="ga-strip-avatar" aria-hidden="true">
-          {avatarFn ? avatarFn(activePhilosopher.color) : <OracleIcon />}
+          captions — the philosopher's avatar and remark (typed out live)
+          live in one anchored bar, which grows upward into the full
+          conversation. The speaker's name sits above as its own nameplate
+          (matching PhilosopherVoiceTag's avatar+name convention used
+          elsewhere — Depths, Measure) instead of being crammed inside the
+          bubble, and stays visible even when idle, so it's never just an
+          unlabeled avatar.
+
+          The toggle is a real <button> (not a div with role="button") so the
+          dismiss control can be a sibling badge instead of a button nested
+          inside another interactive element — nesting controls is an ARIA
+          anti-pattern and confuses screen readers / voice control. */}
+      <div className="ga-strip-stack">
+        <span className="ga-strip-tag" aria-hidden="true">
+          {isOpen ? "close" : activePhilosopher ? activePhilosopher.name : "guide"}
         </span>
 
-        <span className="ga-strip-body">
-          <span className="ga-strip-name">
-            {isOpen ? "close" : activePhilosopher ? activePhilosopher.name : "guide"}
-          </span>
-          <AnimatePresence mode="wait">
-            {showRemark && (
-              <motion.div
-                key={displayLine}
-                className="ga-strip-remark"
-                initial={{ opacity: 0, y: -4 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.22 }}
-                role="status"
-                aria-live="polite"
-              >
-                <SmoothTypewriter>{displayLine}</SmoothTypewriter>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </span>
-
-        {canDismissRemark && (
+        <div className="ga-strip-wrap">
           <button
             type="button"
-            className="ga-strip-dismiss"
-            onClick={handleDismissRemark}
-            aria-label="Dismiss"
+            className={`ga-strip ${showRemark ? "has-remark" : ""}`}
+            aria-expanded={isOpen}
+            aria-controls={panelId}
+            aria-label={
+              isOpen
+                ? "Close guide panel"
+                : activePhilosopher
+                  ? `Open guide panel — ${activePhilosopher.name}`
+                  : "Open guide panel"
+            }
+            onClick={handleToggle}
           >
-            ×
-          </button>
-        )}
+            <span className="ga-strip-avatar" aria-hidden="true">
+              {avatarFn ? avatarFn(activePhilosopher.color) : <OracleIcon />}
+            </span>
 
-        <span className="ga-strip-chevron" aria-hidden="true">
-          {isOpen ? "▲" : "▾"}
-        </span>
+            <span className="ga-strip-body">
+              <AnimatePresence mode="wait">
+                {showRemark && (
+                  <motion.div
+                    key={displayLine}
+                    className="ga-strip-remark"
+                    initial={
+                      prefersReducedMotion
+                        ? { opacity: 0 }
+                        : { opacity: 0, y: -4, scale: 0.97 }
+                    }
+                    animate={
+                      prefersReducedMotion
+                        ? { opacity: 1 }
+                        : { opacity: 1, y: 0, scale: 1 }
+                    }
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <SmoothTypewriter>{displayLine}</SmoothTypewriter>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </span>
+
+            <span className="ga-strip-chevron" aria-hidden="true">
+              {isOpen ? "▲" : "▾"}
+            </span>
+          </button>
+        </div>
       </div>
     </aside>
   );

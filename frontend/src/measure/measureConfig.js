@@ -673,25 +673,25 @@ export const SIGNAL_AXES = [
 export const LINES = [
   {
     key: "body",
-    label: "4",
+    label: "body",
     helper: "How your physical state is moving",
     steps: ["pace", "body", "breath"],
   },
   {
     key: "mind",
-    label: "5",
+    label: "mind",
     helper: "How attention and inner narrative are moving",
     steps: ["focus", "thoughts", "response", "timeframe"],
   },
   {
     key: "heart",
-    label: "6",
+    label: "heart",
     helper: "How connection and drive are moving",
     steps: ["connection", "motivation", "receiving"],
   },
   {
     key: "spirit",
-    label: "7",
+    label: "spirit",
     helper: "How meaning and direction are moving",
     steps: ["meaning", "horizon", "trust"],
   },
