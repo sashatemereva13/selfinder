@@ -1,4 +1,7 @@
 export const MEASURE_RESULT_STORAGE_KEY = "selfinder.latestMeasureResult";
+// One reading of backlog, not a full history — lets Depths offer "see your
+// previous reading" without growing localStorage unbounded.
+export const MEASURE_PREVIOUS_RESULT_STORAGE_KEY = "selfinder.previousMeasureResult";
 
 export const STEP_CONFIG = [
   {

@@ -4,6 +4,7 @@ import { useState, useCallback } from "react";
 export const LOCAL_CONSENT_KEY = "sfr_local_consent";
 export const ROOM_KEYS = ["self"];
 const MEASURE_KEY = "selfinder.latestMeasureResult";
+const MEASURE_PREVIOUS_KEY = "selfinder.previousMeasureResult";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function makeVisitId() {
@@ -63,6 +64,15 @@ export function readMeasureResult() {
   }
 }
 
+export function readPreviousMeasureResult() {
+  try {
+    const raw = localStorage.getItem(MEASURE_PREVIOUS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function deleteVisitFromRoom(key, visitId) {
   const current = readRoom(key);
   if (!current) return;
@@ -107,6 +117,7 @@ export function clearAllLocalData() {
   localStorage.removeItem("sfr_summary");
   localStorage.removeItem(LOCAL_CONSENT_KEY);
   localStorage.removeItem(MEASURE_KEY);
+  localStorage.removeItem(MEASURE_PREVIOUS_KEY);
 }
 
 // ─── getJourneySummaryText (non-hook) ─────────────────────────────────────────

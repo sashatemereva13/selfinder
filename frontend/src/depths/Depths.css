@@ -1,4 +1,6 @@
 .depthsPage {
+  --depths-line: rgba(255, 255, 255, 0.1);
+  --depths-surface: rgba(10, 10, 14, 0.54);
   position: relative;
   min-height: 100svh;
   min-height: 100dvh;
@@ -8,7 +10,6 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2rem;
   color: #f1eafd;
   background:
     radial-gradient(circle at 20% 16%, rgba(168, 122, 201, 0.16), transparent 46%),
@@ -107,13 +108,36 @@
   }
 }
 
-.depthsHeader {
+.depthsMain {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+}
+
+.depthsHeaderCard,
+.depthsDiamondCard {
+  border-radius: 18px;
+  border: 1px solid var(--depths-line);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+    var(--depths-surface);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 18px 50px rgba(0, 0, 0, 0.24);
+}
+
+.depthsHeaderCard {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.7rem;
   width: min(40rem, calc(100vw - 2.4rem));
   text-align: center;
+  padding: 1.3rem 1.6rem;
 }
 
 .depthsKicker {
@@ -142,8 +166,81 @@
   color: rgba(241, 234, 253, 0.78);
 }
 
+.depthsDiamondCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  width: min(460px, calc(100vw - 2.4rem));
+  padding: 1.6rem 1.4rem 1.4rem;
+}
+
 .depthsDiamondWrap {
-  width: min(280px, 80vw);
+  width: min(380px, 86vw);
+}
+
+.depthsScoreLegend {
+  margin: 0;
+  max-width: 38ch;
+  text-align: center;
+  font-family: "Panchang-Light";
+  font-size: 0.78rem;
+  line-height: 1.55;
+  color: rgba(241, 234, 253, 0.55);
+}
+
+.depthsScoreLegend strong {
+  color: rgba(241, 234, 253, 0.8);
+  font-family: "Panchang-Medium";
+}
+
+.depthsOverallLink {
+  margin: 0;
+  font-family: "Panchang-Light";
+  font-size: 0.85rem;
+  color: rgba(241, 234, 253, 0.7);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(195, 153, 255, 0.3);
+  padding-bottom: 0.15rem;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+.depthsOverallLink strong {
+  color: rgba(241, 234, 253, 0.95);
+  font-family: "Panchang-Medium";
+}
+
+.depthsOverallLink:hover {
+  color: rgba(241, 234, 253, 0.95);
+  border-color: rgba(195, 153, 255, 0.7);
+}
+
+.depthsHistoryToggle {
+  display: inline-flex;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  padding: 0.25rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.depthsHistoryBtn {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+  color: rgba(241, 234, 253, 0.55);
+  cursor: pointer;
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+.depthsHistoryBtn.is-active {
+  background: rgba(195, 153, 255, 0.16);
+  color: rgba(241, 234, 253, 0.95);
 }
 
 .depthsMeasureCta {

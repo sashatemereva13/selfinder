@@ -1,6 +1,7 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { getLevelBySlug } from "./levelsContent";
 import { useChat } from "../guide/ChatContext";
+import { readMeasureResult } from "../hooks/useRoomProgress";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
 import "./levels.css";
@@ -21,50 +22,69 @@ export default function LevelDetail() {
   const { slug } = useParams();
   const level = getLevelBySlug(slug);
   const { activePhilosopher } = useChat();
+  const measureResult = readMeasureResult();
 
   if (!level) return <Navigate to="/levels" replace />;
 
-  const themeClass = `level-theme-${level.slug}`;
+  const isOverallReading = measureResult?.vibrationLevel?.slug === slug;
+  const matchingLines = (measureResult?.lines ?? []).filter(
+    (line) => line.vibrationLevel?.slug === slug,
+  );
+  const readingBadge = isOverallReading
+    ? "Your overall reading"
+    : matchingLines.length > 0
+      ? `Where your ${matchingLines.map((line) => line.label).join(" & ")} ${
+          matchingLines.length === 1 ? "sits" : "sit"
+        } right now`
+      : null;
 
   return (
-    <div>
-      <Link to="/levels" className={`backButton ${themeClass}`}>
-        Back
+    <div className="levelDetailPage">
+      <Link to="/levels" className="backButton">
+        ← Levels
       </Link>
-      <div className={`aLevelContainer ${themeClass}`}>
-        <JourneyProgress currentKey="levels" />
-        <h1>{level.title}</h1>
-        {level.frame && <p className="aLevelFrame">{level.frame}</p>}
+      <JourneyProgress currentKey="levels" />
+
+      <div className="levelDetailMain">
+        <header className="levelDetailHeaderCard">
+          {readingBadge && <p className="levelDetailReadingBadge">{readingBadge}</p>}
+          <h1>{level.title}</h1>
+          {level.frame && <p className="aLevelFrame">{level.frame}</p>}
+        </header>
 
         {level.signals && (
-          <dl className="aLevelSignals">
-            {level.signals.map((signal) => (
-              <div className="aLevelSignal" key={signal.label}>
-                <dt>{signal.label}</dt>
-                <dd>{renderInline(signal.value)}</dd>
-              </div>
-            ))}
-          </dl>
+          <div className="levelDetailCard">
+            <dl className="aLevelSignals">
+              {level.signals.map((signal) => (
+                <div className="aLevelSignal" key={signal.label}>
+                  <dt>{signal.label}</dt>
+                  <dd>{renderInline(signal.value)}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
         )}
 
-        {level.sections
-          ? level.sections.map((section) => (
-              <section className="aLevelSection" key={section.heading}>
-                <h3>{section.heading}</h3>
-                {section.paragraphs.map((paragraph, index) => (
-                  <p key={index}>{renderInline(paragraph)}</p>
-                ))}
-              </section>
-            ))
-          : level.paragraphs?.map((paragraph, index) => (
-              <p key={index}>{renderInline(paragraph)}</p>
-            ))}
+        <div className="levelDetailCard levelDetailContentCard">
+          {level.sections
+            ? level.sections.map((section) => (
+                <section className="aLevelSection" key={section.heading}>
+                  <h3>{section.heading}</h3>
+                  {section.paragraphs.map((paragraph, index) => (
+                    <p key={index}>{renderInline(paragraph)}</p>
+                  ))}
+                </section>
+              ))
+            : level.paragraphs?.map((paragraph, index) => (
+                <p key={index}>{renderInline(paragraph)}</p>
+              ))}
+        </div>
 
         {activePhilosopher?.tuneInBridge && (
-          <div className="aLevelBridge">
+          <div className="levelDetailCard levelDetailBridgeCard">
             <PhilosopherVoiceTag philosopher={activePhilosopher} />
             <p>{activePhilosopher.tuneInBridge}</p>
-            <Link to="/tunein" className="aLevelTuneInBtn">
+            <Link to="/tunein" className="sf-btn sf-btn-primary levelDetailTuneInBtn">
               Tune in →
             </Link>
           </div>

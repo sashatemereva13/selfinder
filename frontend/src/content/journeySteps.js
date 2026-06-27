@@ -3,10 +3,10 @@
 // browse-anywhere menu, not a sequence) — JourneyProgress needs a strict
 // 1-of-4 ordering, those don't.
 export const JOURNEY_STEPS = [
-  { key: "threshold", label: "Threshold" },
-  { key: "measure", label: "Measure" },
-  { key: "levels", label: "Levels" },
-  { key: "tunein", label: "Tune In" },
+  { key: "threshold", label: "Threshold", route: "/" },
+  { key: "measure", label: "Measure", route: "/depths" },
+  { key: "levels", label: "Levels", route: "/levels" },
+  { key: "tunein", label: "Tune In", route: "/tunein" },
 ];
 
 export function getJourneyStepIndex(key) {

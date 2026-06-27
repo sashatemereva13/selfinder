@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { AXIS_COLORS, THERMOMETER_MAX, VIBRATION_LEVELS } from "./measureConfig";
-import DiamondChart from "../depths/DiamondChart";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 
 function VibrationThermometer({ score, level, axisKey, compact = false }) {
@@ -44,15 +43,6 @@ function VibrationThermometer({ score, level, axisKey, compact = false }) {
       </p>
     </div>
   );
-}
-
-function linesToDiamondPoints(lines) {
-  return lines.map((line) => ({
-    key: line.key,
-    label: line.label,
-    pct: line.vibrationScore / THERMOMETER_MAX,
-    colorRgb: AXIS_COLORS[line.dominantAxis] ?? AXIS_COLORS.clarity,
-  }));
 }
 
 export function MeasureTopBar({ phaseProgress, backTo = "/", backLabel = "Back Home" }) {
@@ -496,86 +486,7 @@ export function MeasureSelectionPhase({
           onClick={onNext}
           disabled={!canContinueSelection}
         >
-          {stepIndex === totalSelectionSteps - 1 ? "Read My Pattern" : "Next"}
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export function MeasureInterpretationPhase({ result, onBack, onNext }) {
-  return (
-    <div className="measure-phaseBlock">
-      <p className="measure-kicker">
-        {result.band} • This reads like {result.vibrationLevel.name}
-      </p>
-      <h2 className="measure-title">{result.title}</h2>
-      <p className="measure-copy">{result.summary}</p>
-
-      <div className="measure-insightCard">
-        {result.interpretationLines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </div>
-
-      <div className="measure-actionRow">
-        <button type="button" className="measure-btn" onClick={onBack}>
-          Back
-        </button>
-        <button
-          type="button"
-          className="measure-btn measure-btn-primary"
-          onClick={onNext}
-        >
-          Get Guidance
-        </button>
-      </div>
-    </div>
-  );
-}
-
-export function MeasureGuidancePhase({ result, onBack, onNext }) {
-  const actions = [
-    ...result.guidance,
-    result.microPractice,
-    result.textureAction,
-  ];
-  const focusLine = result.focusLine;
-
-  return (
-    <div className="measure-phaseBlock">
-      <p className="measure-kicker">Guidance</p>
-      <h2 className="measure-title">Work with the signal, not against it</h2>
-
-      {focusLine && (
-        <p className="measure-copy measure-linesFocusNote">
-          Right now, <strong>{focusLine.label}</strong> seems to be asking for
-          the most attention — not because it's wrong, just because that's
-          where the signal is loudest.
-        </p>
-      )}
-
-      <div className="measure-guidancePanel">
-        <h3>What this might be asking for</h3>
-        <ul className="measure-list">
-          {actions.map((item) => (
-            <li key={item}>{item}</li>
-          ))}
-        </ul>
-      </div>
-
-      <p className="measure-affirmation">“{result.affirmation}”</p>
-
-      <div className="measure-actionRow">
-        <button type="button" className="measure-btn" onClick={onBack}>
-          Back
-        </button>
-        <button
-          type="button"
-          className="measure-btn measure-btn-primary"
-          onClick={onNext}
-        >
-          Finish
+          {stepIndex === totalSelectionSteps - 1 ? "See My Reading" : "Next"}
         </button>
       </div>
     </div>
@@ -592,8 +503,11 @@ export function MeasureCompletionPhase({
   return (
     <div className="measure-phaseBlock">
       <p className="measure-kicker">Complete · {result.band}</p>
-      <h2 className="measure-title">Your reading is ready to use</h2>
-      <p className="measure-copy">Return later and watch what shifts.</p>
+      <h2 className="measure-title">Next, read what these mean</h2>
+      <p className="measure-copy">
+        Tap your overall reading or any of the four below — each opens what
+        that state actually means and what it tends to be asking for.
+      </p>
 
       {philosopher?.levelsBridge && (
         <div className="measure-guideBridge">
@@ -602,7 +516,13 @@ export function MeasureCompletionPhase({
         </div>
       )}
 
+      <div className="measure-quickPractice">
+        <p className="measure-quickPracticeAction">{result.microPractice}</p>
+        <p className="measure-affirmation">“{result.affirmation}”</p>
+      </div>
+
       <div className="measure-levelCard">
+        <p className="measure-levelCardKicker">Your overall reading</p>
         <VibrationThermometer
           score={result.vibrationScore}
           level={result.vibrationLevel}
@@ -615,7 +535,7 @@ export function MeasureCompletionPhase({
           <span className="measure-levelName">
             {result.vibrationLevel.name}
           </span>
-          <span className="measure-levelTapHint">Tap to open this level</span>
+          <span className="measure-levelTapHint">Read about {result.vibrationLevel.name} →</span>
         </Link>
       </div>
 
@@ -624,28 +544,24 @@ export function MeasureCompletionPhase({
         <p className="measure-copy measure-linesIntro">
           Life moves through many parts at once — you can read high on one
           and low on another, and that's not a contradiction. It's just
-          where each side happens to be right now.
+          where each side happens to be right now. Read about all four.
         </p>
 
-        <div className="measure-linesLayout">
-          <DiamondChart points={linesToDiamondPoints(result.lines)} />
-
-          <div className="measure-linesList">
-            {result.lines.map((line) => (
-              <div className="measure-lineRow" key={line.key}>
-                <p className="measure-lineLabel">{line.label}</p>
-                <VibrationThermometer
-                  score={line.vibrationScore}
-                  level={line.vibrationLevel}
-                  axisKey={line.dominantAxis}
-                  compact
-                />
-                <Link to={line.vibrationLevel.route} className="measure-lineLink">
-                  {line.vibrationLevel.name}
-                </Link>
-              </div>
-            ))}
-          </div>
+        <div className="measure-linesList">
+          {result.lines.map((line) => (
+            <div className="measure-lineRow" key={line.key}>
+              <p className="measure-lineLabel">{line.label}</p>
+              <VibrationThermometer
+                score={line.vibrationScore}
+                level={line.vibrationLevel}
+                axisKey={line.dominantAxis}
+                compact
+              />
+              <Link to={line.vibrationLevel.route} className="measure-lineLink">
+                Read about {line.vibrationLevel.name} →
+              </Link>
+            </div>
+          ))}
         </div>
       </div>
 
@@ -655,12 +571,8 @@ export function MeasureCompletionPhase({
             Back
           </button>
         )}
-        <button
-          type="button"
-          className="measure-btn measure-btn-primary"
-          onClick={onRestart}
-        >
-          Restart
+        <button type="button" className="measure-btn" onClick={onRestart}>
+          Measure again
         </button>
       </div>
     </div>

@@ -70,11 +70,6 @@
   color: rgba(231, 244, 255, 0.8);
 }
 
-.measure-page.phase-guidance {
-  --measure-accent: #9fffd0;
-  --measure-accent-2: #8cb8ff;
-}
-
 .measure-page.phase-completion {
   --measure-accent: #ffe78d;
   --measure-accent-2: #9fffd0;
@@ -1540,53 +1535,26 @@
   box-shadow: 0 0 0 1px rgba(159, 211, 255, 0.4);
 }
 
-.measure-insightCard {
-  margin-top: 1rem;
-  padding: 0;
-  border: none;
-  background: none;
-  color: var(--measure-ink-soft);
+.measure-quickPractice {
+  margin-top: 1.1rem;
+  padding: 0.9rem 1rem;
+  border-radius: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.measure-quickPracticeAction {
+  margin: 0;
+  color: var(--measure-ink);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.92rem;
   line-height: 1.5;
 }
 
-.measure-insightCard p {
-  margin: 0;
-}
-
-.measure-insightCard p + p {
-  margin-top: 0.65rem;
-}
-
-.measure-guidancePanel {
-  margin-top: 1rem;
-  padding: 0;
-  border: none;
-  background: none;
-}
-
-.measure-guidancePanel h3 {
-  margin: 0 0 0.6rem;
-  font-size: 0.95rem;
-  font-family: "Panchang-Light", sans-serif;
-  color: var(--measure-ink);
-}
-
-.measure-list {
-  margin: 0;
-  padding-left: 1rem;
-  color: var(--measure-ink-soft);
-  line-height: 1.55;
-}
-
-.measure-list li + li {
-  margin-top: 0.55rem;
-}
-
 .measure-affirmation {
-  margin: 1rem 0 0;
-  color: var(--measure-ink);
+  margin: 0.7rem 0 0;
+  color: var(--measure-ink-soft);
   font-family: "Panchang-Light", sans-serif;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
 }
 
 .measure-guideBridge {
@@ -1607,6 +1575,14 @@
   padding: 0;
   border: none;
   background: none;
+}
+
+.measure-levelCardKicker {
+  margin: 0 0 0.6rem;
+  color: var(--measure-ink-soft);
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .measure-thermo {
@@ -1728,19 +1704,8 @@
   max-width: 56ch;
 }
 
-.measure-linesFocusNote {
-  margin-top: 0.6rem;
-}
-
-.measure-linesLayout {
-  margin-top: 1.2rem;
-  display: grid;
-  grid-template-columns: minmax(180px, 240px) 1fr;
-  gap: 1.4rem;
-  align-items: center;
-}
-
 .measure-linesList {
+  margin-top: 1.2rem;
   display: grid;
   gap: 0.9rem;
 }
@@ -1763,7 +1728,6 @@
   color: var(--measure-ink-soft);
   font-size: 0.74rem;
   text-decoration: none;
-  white-space: nowrap;
   transition: color 180ms ease;
 }
 
@@ -2047,10 +2011,6 @@
 
   .measure-journeyNode.is-current {
     transform: translate(-50%, -50%) scale(1.2);
-  }
-
-  .measure-linesLayout {
-    grid-template-columns: 1fr;
   }
 
   .measure-lineRow {

@@ -1,0 +1,83 @@
+.philoMessageOverlay {
+  /* No explicit position here — drei's <Html fullscreen> already wraps
+     this in a fixed, full-viewport container. Adding our own `position:
+     fixed` fights that wrapper's transform-based positioning context and
+     collapses this to a sliver instead of a real overlay. */
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100svh;
+  min-height: 100dvh;
+  background: rgba(8, 6, 13, 0.82);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 1.2rem;
+  animation: philoMessageFadeIn 0.5s ease;
+  pointer-events: auto;
+}
+
+.philoMessageCard {
+  position: relative;
+  width: min(30rem, calc(100vw - 1.5rem));
+  max-height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.1rem;
+  padding: 1.8rem 2rem;
+  border-radius: 1.25rem;
+  background: rgba(20, 17, 28, 0.7);
+  border: 1px solid rgba(var(--philo-rgb, 195, 153, 255), 0.32);
+  box-shadow:
+    0 0 0 1px rgba(var(--philo-rgb, 195, 153, 255), 0.08),
+    0 20px 60px rgba(0, 0, 0, 0.35);
+  animation: philoMessageReveal 0.6s ease forwards;
+}
+
+.philoMessageTag {
+  --philo-color: var(--philo-color, #c399ff);
+}
+
+.philoMessageText {
+  margin: 0;
+  text-align: center;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 1.02rem;
+  line-height: 1.65;
+  color: rgba(241, 234, 253, 0.92);
+}
+
+.philoMessageContinue {
+  margin-top: 0.2rem;
+  border-color: rgba(var(--philo-rgb, 195, 153, 255), 0.4);
+}
+
+@keyframes philoMessageFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes philoMessageReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .philoMessageOverlay,
+  .philoMessageCard {
+    animation: none;
+  }
+}

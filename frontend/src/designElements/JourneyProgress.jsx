@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useChat } from "../guide/ChatContext";
 import { JOURNEY_STEPS, getJourneyStepIndex } from "../content/journeySteps";
 import "./JourneyProgress.css";
@@ -24,18 +25,32 @@ export default function JourneyProgress({ currentKey }) {
         Step {currentIndex + 1} of {JOURNEY_STEPS.length} · {JOURNEY_STEPS[currentIndex].label}
       </p>
       <ol className="jp-track">
-        {JOURNEY_STEPS.map((step, index) => (
-          <li
-            key={step.key}
-            className={`jp-step ${index === currentIndex ? "is-current" : ""} ${
-              index < currentIndex ? "is-done" : ""
-            }`}
-            aria-current={index === currentIndex ? "step" : undefined}
-          >
-            <span className="jp-dot" aria-hidden="true" />
-            <span className="jp-label">{step.label}</span>
-          </li>
-        ))}
+        {JOURNEY_STEPS.map((step, index) => {
+          const isDone = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const content = (
+            <>
+              <span className="jp-dot" aria-hidden="true" />
+              <span className="jp-label">{step.label}</span>
+            </>
+          );
+
+          return (
+            <li
+              key={step.key}
+              className={`jp-step ${isCurrent ? "is-current" : ""} ${isDone ? "is-done" : ""}`}
+              aria-current={isCurrent ? "step" : undefined}
+            >
+              {isDone ? (
+                <Link to={step.route} className="jp-stepLink" aria-label={`Back to ${step.label}`}>
+                  {content}
+                </Link>
+              ) : (
+                content
+              )}
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );

@@ -5,7 +5,16 @@ import { useAuth } from "../auth/AuthContext";
 import { useChat } from "../guide/ChatContext";
 
 const ICON_MENU = (
-  <svg width="16" height="11" viewBox="0 0 16 11" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+  <svg
+    width="16"
+    height="11"
+    viewBox="0 0 16 11"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
     <line x1="0" y1="1.5" x2="16" y2="1.5" />
     <line x1="0" y1="5.5" x2="16" y2="5.5" />
     <line x1="0" y1="9.5" x2="16" y2="9.5" />
@@ -13,7 +22,16 @@ const ICON_MENU = (
 );
 
 const ICON_CLOSE = (
-  <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">
+  <svg
+    width="13"
+    height="13"
+    viewBox="0 0 13 13"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.6"
+    strokeLinecap="round"
+    aria-hidden="true"
+  >
     <line x1="1" y1="1" x2="12" y2="12" />
     <line x1="12" y1="1" x2="1" y2="12" />
   </svg>
@@ -49,21 +67,6 @@ export default function MenuTab() {
   return (
     <div className="sf-nav" ref={containerRef}>
       <div className={`sf-navPill ${isOpen ? "is-open" : ""}`}>
-
-        {/* Left — nav toggle */}
-        <button
-          type="button"
-          className="sf-navToggle"
-          onClick={() => setIsOpen((o) => !o)}
-          aria-expanded={isOpen}
-          aria-controls="sf-navPanel"
-          aria-label={isOpen ? "Close navigation" : "Open navigation"}
-        >
-          {isOpen ? ICON_CLOSE : ICON_MENU}
-        </button>
-
-        <span className="sf-navSep" aria-hidden="true" />
-
         {/* Right — identity */}
         <button
           type="button"
@@ -93,16 +96,6 @@ export default function MenuTab() {
           )}
         </button>
       </div>
-
-      {isOpen && (
-        <div id="sf-navPanel" className="sf-navPanel">
-          <JourneyNav
-            variant="overlay"
-            title="Selfinder"
-            subtitle="Move through the journey at your own pace."
-          />
-        </div>
-      )}
     </div>
   );
 }

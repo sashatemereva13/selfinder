@@ -94,40 +94,6 @@ export function buildInterpretation(choices) {
 
   const { scores, dominantAxis, band, rawVibrationScore, vibrationScore, vibrationLevel } =
     computeResultForOptions(selectedOptions);
-  const title = `${selected.color.label} • ${selected.sound.label} • ${selected.texture.label}`;
-
-  const axisSummary = {
-    calm: "Your signal is a recovery cycle, not a problem to fix. Nothing here needs forcing — just less to push against.",
-    clarity:
-      "Your signal is already organizing itself toward perspective. There's nothing wrong with where you are — this clarity is doing its own sorting.",
-    grounding:
-      "Your system is asking for structure and body-level steadiness before anything else moves. That's not a delay — it's the order this naturally happens in.",
-    intensity:
-      "There is real charge in your field right now. It isn't a flaw to suppress — it's energy that hasn't found its direction yet.",
-  };
-
-  const guidanceByAxis = {
-    calm: [
-      "Notice what's actually asking for your attention right now — everything else is allowed to wait.",
-      "A slower rhythm than you think you need is allowed here, not a sign of falling behind.",
-      "If a big decision is pulling at you, it can rest until the recovery has had its turn.",
-    ],
-    clarity: [
-      "Notice what's signal and what's noise — that noticing is most of the work already done.",
-      "If it helps, let one action go first and leave the rest for later.",
-      "Short, unhurried intervals tend to suit this clarity better than one long push.",
-    ],
-    grounding: [
-      "Your body is part of the signal too — water, a walk, or food can be the whole next step.",
-      "If it helps, tidy one small thing — not for productivity, just for visual steadiness.",
-      "Let the next step be small and concrete rather than ambitious.",
-    ],
-    intensity: [
-      "This charge isn't a problem to manage — it's energy looking for a direction. Notice where it wants to go.",
-      "Moving your body before responding to anything tends to give it somewhere to land.",
-      "If it helps, give it one place to go rather than several.",
-    ],
-  };
 
   const microPractice = {
     "soft-tone": "Try 4 slow breaths with a longer exhale than inhale.",
@@ -135,15 +101,6 @@ export function buildInterpretation(choices) {
     "bright-chime":
       "Open posture, lift your gaze, and take one deliberate inhale.",
   }[selected.sound.value];
-
-  const textureAction = {
-    liquid:
-      "Choose a flexible next step: draft, sketch, or brainstorm before finalizing.",
-    sparkling:
-      "Change the environment slightly: light, music, or location to refresh energy.",
-    grounded:
-      "Use a simple checklist and complete one practical task end-to-end.",
-  }[selected.texture.value];
 
   const colorAffirmation = {
     violet: "I can slow down enough to hear what is true.",
@@ -161,36 +118,19 @@ export function buildInterpretation(choices) {
       label: line.label,
       helper: line.helper,
       ...lineResult,
-      summary: axisSummary[lineResult.dominantAxis],
-      guidance: guidanceByAxis[lineResult.dominantAxis],
     };
   });
 
-  const focusLine = lines.reduce(
-    (lowest, line) => (line.vibrationScore < lowest.vibrationScore ? line : lowest),
-    lines[0],
-  );
-
   return {
     band,
-    title,
     selected,
     scores,
     rawVibrationScore,
     vibrationScore,
     vibrationLevel,
-    summary: axisSummary[dominantAxis],
-    interpretationLines: [
-      selected.color.meaning,
-      selected.sound.meaning,
-      selected.texture.meaning,
-    ],
     dominantAxis,
-    guidance: guidanceByAxis[dominantAxis],
     microPractice,
-    textureAction,
     affirmation: colorAffirmation,
     lines,
-    focusLine,
   };
 }

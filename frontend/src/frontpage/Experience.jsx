@@ -2,7 +2,7 @@ import { CameraControls, Html } from "@react-three/drei";
 import { useThree, useFrame } from "@react-three/fiber";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import Message from "./Message";
+import PhilosopherMessage from "./PhilosopherMessage";
 import MagicBall from "../designElements/MagicBall";
 import Starfield from "./Starfield";
 import WizardMessage from "./WizardMessage";
@@ -501,9 +501,10 @@ const Experience = ({
           portal={htmlPortal}
           style={{ pointerEvents: "auto", zIndex: 1000 }}
         >
-          <Message
+          <PhilosopherMessage
             selectedMessage={selectedMessage}
             setSelectedMessage={handleSelectedMessageChange}
+            philosopher={activePhilosopher}
           />
         </Html>
       )}

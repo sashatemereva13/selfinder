@@ -7,6 +7,7 @@ import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
 import {
   MEASURE_RESULT_STORAGE_KEY,
+  MEASURE_PREVIOUS_RESULT_STORAGE_KEY,
   STEP_CONFIG,
   INITIAL_CHOICES,
   STEP_VISUALS,
@@ -19,8 +20,6 @@ import {
   MeasureTopBar,
   MeasureEntryPhase,
   MeasureSelectionPhase,
-  MeasureInterpretationPhase,
-  MeasureGuidancePhase,
   MeasureCompletionPhase,
 } from "./MeasurePhaseViews";
 
@@ -38,6 +37,7 @@ const Measure = () => {
   );
   const audioContextRef = useRef(null);
   const activePreviewNodesRef = useRef([]);
+  const hasArchivedPreviousRef = useRef(false);
   const previewTimerRef = useRef(null);
 
   const currentStep = STEP_CONFIG[stepIndex];
@@ -49,9 +49,7 @@ const Measure = () => {
   const completedSelections = STEP_CONFIG.filter((step) => Boolean(choices[step.key])).length;
   const phaseProgress = {
     entry: 0.05,
-    selection: (completedSelections + 1) / (totalSelectionSteps + 3),
-    interpretation: 0.8,
-    guidance: 0.92,
+    selection: (completedSelections + 1) / (totalSelectionSteps + 1),
     completion: 1,
   }[phase];
 
@@ -219,7 +217,19 @@ const Measure = () => {
 
   useEffect(() => {
     if (typeof window === "undefined" || !result) return;
-    if (!["interpretation", "guidance", "completion"].includes(phase)) return;
+    if (phase !== "completion") return;
+
+    if (!hasArchivedPreviousRef.current) {
+      hasArchivedPreviousRef.current = true;
+      try {
+        const existingLatest = window.localStorage.getItem(MEASURE_RESULT_STORAGE_KEY);
+        if (existingLatest) {
+          window.localStorage.setItem(MEASURE_PREVIOUS_RESULT_STORAGE_KEY, existingLatest);
+        }
+      } catch {
+        // Ignore storage failures — the new reading still saves below.
+      }
+    }
 
     const payload = {
       version: 2,
@@ -229,9 +239,7 @@ const Measure = () => {
       band: result.band,
       dominantAxis: result.dominantAxis,
       vibrationLevel: result.vibrationLevel,
-      patternTitle: result.title,
       lines: result.lines,
-      focusLine: result.focusLine,
       selected: {
         color: result.selected?.color?.label,
         sound: result.selected?.sound?.label,
@@ -271,19 +279,8 @@ const Measure = () => {
       if (stepIndex < totalSelectionSteps - 1) {
         setStepIndex((prev) => prev + 1);
       } else {
-        setPhase("interpretation");
+        setPhase("completion");
       }
-
-      return;
-    }
-
-    if (phase === "interpretation") {
-      setPhase("guidance");
-      return;
-    }
-
-    if (phase === "guidance") {
-      setPhase("completion");
     }
   };
 
@@ -298,19 +295,9 @@ const Measure = () => {
       return;
     }
 
-    if (phase === "interpretation") {
+    if (phase === "completion") {
       setPhase("selection");
       setStepIndex(totalSelectionSteps - 1);
-      return;
-    }
-
-    if (phase === "guidance") {
-      setPhase("interpretation");
-      return;
-    }
-
-    if (phase === "completion") {
-      setPhase("guidance");
     }
   };
 
@@ -374,18 +361,6 @@ const Measure = () => {
               onBack={handleBack}
               onNext={handleNext}
             />
-          )}
-
-          {phase === "interpretation" && result && (
-            <MeasureInterpretationPhase
-              result={result}
-              onBack={handleBack}
-              onNext={handleNext}
-            />
-          )}
-
-          {phase === "guidance" && result && (
-            <MeasureGuidancePhase result={result} onBack={handleBack} onNext={handleNext} />
           )}
 
           {phase === "completion" && result && (
