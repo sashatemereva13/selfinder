@@ -20,10 +20,25 @@
   gap: 2.5rem;
 }
 
+.ps-headerRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
 .ps-header {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
+}
+
+.ps-thresholdLink {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.74rem;
 }
 
 .ps-kicker {
@@ -125,12 +140,6 @@
 
 .ps-changeBtn:hover {
   color: rgba(195, 153, 255, 0.9);
-}
-
-.ps-noPhilosopher {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
 }
 
 .ps-noPhilosopherText {

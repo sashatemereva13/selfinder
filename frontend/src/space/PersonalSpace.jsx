@@ -140,13 +140,18 @@ export default function PersonalSpace() {
       transition={{ duration: 0.5, ease: "easeOut" }}
     >
       <div className="ps-inner">
-        <header className="ps-header">
-          <p className="sf-kicker ps-kicker">Your space</p>
-          <h1 className="ps-title">{user.username}</h1>
-          <p className="ps-subtitle">
-            Your inner work lives here — your companion, your path, your conversations.
-          </p>
-        </header>
+        <div className="ps-headerRow">
+          <header className="ps-header">
+            <p className="sf-kicker ps-kicker">Your space</p>
+            <h1 className="ps-title">{user.username}</h1>
+            <p className="ps-subtitle">
+              Your inner work lives here — your companion, your path, your conversations.
+            </p>
+          </header>
+          <Link to="/" className="sf-btn ps-thresholdLink">
+            Back to the Threshold
+          </Link>
+        </div>
 
         <div className="ps-grid">
           {/* Companion card */}
@@ -165,10 +170,7 @@ export default function PersonalSpace() {
                 </button>
               </div>
             ) : (
-              <div className="ps-noPhilosopher">
-                <p className="ps-noPhilosopherText">No companion chosen yet.</p>
-                <Link to="/" className="sf-btn">Choose at the Threshold</Link>
-              </div>
+              <p className="ps-noPhilosopherText">No companion chosen yet.</p>
             )}
           </section>
 
