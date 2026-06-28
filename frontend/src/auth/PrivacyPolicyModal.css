@@ -1,0 +1,110 @@
+.privacyModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 1.2rem;
+  background: radial-gradient(
+    circle at center,
+    rgba(10, 12, 20, 0.65),
+    rgba(0, 0, 0, 0.85)
+  );
+  backdrop-filter: blur(12px);
+}
+
+.privacyModal {
+  position: relative;
+  width: min(34rem, 100%);
+  max-height: min(80vh, 80svh);
+  overflow-y: auto;
+  padding: 2.2rem 2rem 1.8rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(195, 153, 255, 0.1), transparent 52%),
+    radial-gradient(circle at 88% 85%, rgba(116, 221, 214, 0.08), transparent 48%),
+    rgba(10, 9, 18, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 56px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(187, 143, 255, 0.08);
+  color: #f1eafd;
+}
+
+.privacyModalClose {
+  position: absolute;
+  top: 0.9rem;
+  right: 0.9rem;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
+  color: rgba(241, 234, 253, 0.88);
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.privacyModalTitle {
+  margin: 0.2rem 0 0;
+  font-family: var(--sf-font-strong);
+  font-size: 1.3rem;
+  font-weight: 400;
+  color: rgba(241, 234, 253, 0.96);
+}
+
+.privacyModalMeta {
+  margin: 0.5rem 0 1.4rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(195, 153, 255, 0.14);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(224, 206, 247, 0.7);
+  font-family: var(--sf-font);
+  font-size: 0.72rem;
+  line-height: 1.55;
+}
+
+.privacyModalMeta a,
+.privacyModalBody a {
+  color: rgba(195, 153, 255, 0.92);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(195, 153, 255, 0.3);
+}
+
+.privacyModalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+.privacyModalBody h3 {
+  margin: 0 0 0.4rem;
+  font-family: var(--sf-font-strong);
+  font-size: 0.74rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(195, 153, 255, 0.84);
+}
+
+.privacyModalBody p {
+  margin: 0;
+  font-family: var(--sf-font);
+  font-size: 0.84rem;
+  line-height: 1.65;
+  color: rgba(224, 206, 247, 0.78);
+}
+
+.privacyModalDone {
+  margin-top: 1.6rem;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .privacyModal {
+    padding: 1.8rem 1.3rem 1.5rem;
+  }
+}

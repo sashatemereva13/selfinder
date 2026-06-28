@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "./AuthContext";
+import PrivacyPolicyModal from "./PrivacyPolicyModal";
 import "./AuthPage.css";
 
 export default function AuthPage() {
@@ -11,6 +12,7 @@ export default function AuthPage() {
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const { login, register } = useAuth();
   const navigate = useNavigate();
@@ -123,8 +125,17 @@ export default function AuthPage() {
                 />
                 <span className="authCheckboxText">
                   I have read and accept the{" "}
-                  <span className="authPrivacyLink">privacy policy</span>.
-                  Selfinder may store my account data (username and password
+                  <button
+                    type="button"
+                    className="authPrivacyLink"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowPrivacyModal(true);
+                    }}
+                  >
+                    privacy policy
+                  </button>
+                  . Selfinder may store my account data (username and password
                   hash) to provide sign-in. Saving conversation history
                   requires separate consent after registration.
                 </span>
@@ -168,6 +179,10 @@ export default function AuthPage() {
           </div>
         </motion.div>
       </AnimatePresence>
+
+      {showPrivacyModal && (
+        <PrivacyPolicyModal onClose={() => setShowPrivacyModal(false)} />
+      )}
     </div>
   );
 }

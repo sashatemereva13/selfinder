@@ -262,10 +262,26 @@
 }
 
 .authPrivacyLink {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
   color: rgba(195, 153, 255, 0.84);
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-color: rgba(195, 153, 255, 0.3);
+}
+
+.authPrivacyLink:hover {
+  color: rgba(195, 153, 255, 1);
+}
+
+.authPrivacyLink:focus-visible {
+  outline: 2px solid rgba(159, 211, 255, 0.95);
+  outline-offset: 2px;
 }
 
 .authFooter {
