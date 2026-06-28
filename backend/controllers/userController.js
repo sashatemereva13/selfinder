@@ -1,7 +1,11 @@
-import { conversations, feedbackStore, measureResults, users, CONSENT_VERSION } from "../stores.js";
+import User from "../models/User.js";
+import Conversation from "../models/Conversation.js";
+import MeasureResult from "../models/MeasureResult.js";
+import Feedback from "../models/Feedback.js";
+import { CONSENT_VERSION } from "../stores.js";
 
-export function getMe(req, res) {
-  const user = users.find((u) => u.id === req.user.id);
+export async function getMe(req, res) {
+  const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
   res.json({
@@ -21,13 +25,15 @@ export function getMe(req, res) {
 }
 
 // Right of access + portability — Art. 15 + 20
-export function exportMyData(req, res) {
-  const user = users.find((u) => u.id === req.user.id);
+export async function exportMyData(req, res) {
+  const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  const userConversations = [...conversations.values()].filter((c) => c.userId === req.user.id);
-  const userMeasures = measureResults.filter((r) => r.userId === req.user.id);
-  const userFeedback = feedbackStore.filter((f) => f.userId === req.user.id);
+  const [userConversations, userMeasures, userFeedback] = await Promise.all([
+    Conversation.find({ userId: req.user.id }),
+    MeasureResult.find({ userId: req.user.id }),
+    Feedback.find({ userId: req.user.id }),
+  ]);
 
   res.json({
     exportedAt: new Date().toISOString(),
@@ -46,27 +52,22 @@ export function exportMyData(req, res) {
 }
 
 // Right to erasure — Art. 17
-export function deleteMe(req, res) {
-  const idx = users.findIndex((u) => u.id === req.user.id);
-  if (idx === -1) return res.status(404).json({ error: "User not found" });
+export async function deleteMe(req, res) {
+  const user = await User.findOneAndDelete({ id: req.user.id });
+  if (!user) return res.status(404).json({ error: "User not found" });
 
-  for (const [id, conv] of conversations) {
-    if (conv.userId === req.user.id) conversations.delete(id);
-  }
-  for (let i = measureResults.length - 1; i >= 0; i--) {
-    if (measureResults[i].userId === req.user.id) measureResults.splice(i, 1);
-  }
-  for (let i = feedbackStore.length - 1; i >= 0; i--) {
-    if (feedbackStore[i].userId === req.user.id) feedbackStore.splice(i, 1);
-  }
+  await Promise.all([
+    Conversation.deleteMany({ userId: req.user.id }),
+    MeasureResult.deleteMany({ userId: req.user.id }),
+    Feedback.deleteMany({ userId: req.user.id }),
+  ]);
 
-  users.splice(idx, 1);
   res.json({ success: true });
 }
 
 // Grant special-category consent — Art. 9(2)(a)
-export function grantConsent(req, res) {
-  const user = users.find((u) => u.id === req.user.id);
+export async function grantConsent(req, res) {
+  const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
   const now = new Date().toISOString();
@@ -74,6 +75,7 @@ export function grantConsent(req, res) {
   user.consent.psychologicalData.version = CONSENT_VERSION;
   user.consent.psychologicalData.timestamp = now;
   user.consent.psychologicalData.log.push({ action: "grant", timestamp: now, version: CONSENT_VERSION });
+  await user.save();
 
   res.json({
     success: true,
@@ -82,18 +84,17 @@ export function grantConsent(req, res) {
 }
 
 // Withdraw consent — Art. 7(3); also deletes stored conversations
-export function withdrawConsent(req, res) {
-  const user = users.find((u) => u.id === req.user.id);
+export async function withdrawConsent(req, res) {
+  const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  for (const [id, conv] of conversations) {
-    if (conv.userId === req.user.id) conversations.delete(id);
-  }
+  await Conversation.deleteMany({ userId: req.user.id });
 
   const now = new Date().toISOString();
   user.consent.psychologicalData.given = false;
   user.consent.psychologicalData.timestamp = now;
   user.consent.psychologicalData.log.push({ action: "withdraw", timestamp: now });
+  await user.save();
 
   res.json({ success: true });
 }

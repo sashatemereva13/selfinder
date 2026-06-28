@@ -1,7 +1,6 @@
-import { randomUUID } from "crypto";
-import { feedbackStore } from "../stores.js";
+import Feedback from "../models/Feedback.js";
 
-export function postFeedback(req, res) {
+export async function postFeedback(req, res) {
   const { conversationId, philosopherId, rating, note } = req.body;
 
   if (!philosopherId || rating === undefined) {
@@ -12,20 +11,19 @@ export function postFeedback(req, res) {
     return res.status(400).json({ error: "rating must be a number between 1 and 5" });
   }
 
-  const feedback = {
-    id: randomUUID(),
+  const feedback = await Feedback.create({
+    userId: req.user?.id ?? null,
     conversationId: conversationId ?? null,
     philosopherId,
     rating,
     note: note ?? null,
     submittedAt: new Date().toISOString(),
-  };
+  });
 
-  feedbackStore.push(feedback);
   res.json({ success: true, id: feedback.id });
 }
 
 // Admin-only: review feedback submitted across all users.
-export function getAllFeedback(req, res) {
-  res.json(feedbackStore);
+export async function getAllFeedback(req, res) {
+  res.json(await Feedback.find());
 }

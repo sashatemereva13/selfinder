@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 
+import { connectDB } from "./db.js";
 import healthRouter       from "./routes/health.js";
 import philosophersRouter from "./routes/philosophers.js";
 import chatRouter         from "./routes/chat.js";
@@ -44,4 +45,11 @@ app.use("/api/measure",       measureRouter);
 app.use("/api/conversation",  conversationRouter);
 app.use("/api/feedback",      feedbackRouter);
 
-app.listen(port, () => console.log(`Backend running on :${port}`));
+connectDB()
+  .then(() => {
+    app.listen(port, () => console.log(`Backend running on :${port}`));
+  })
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1);
+  });

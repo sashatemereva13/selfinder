@@ -1,7 +1,7 @@
-import { users } from "../stores.js";
+import User from "../models/User.js";
 
-export function requireConsent(req, res, next) {
-  const user = users.find((u) => u.id === req.user.id);
+export async function requireConsent(req, res, next) {
+  const user = await User.findOne({ id: req.user.id });
   if (!user?.consent?.psychologicalData?.given) {
     return res.status(403).json({
       error: "Consent for storing psychological data is required.",
