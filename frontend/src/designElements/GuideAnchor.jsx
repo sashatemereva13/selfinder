@@ -178,6 +178,7 @@ export default function GuideAnchor() {
 
   if (location.pathname === "/guide") return null;
   if (location.pathname === "/login") return null;
+  if (location.pathname.startsWith("/measure") || location.pathname.startsWith("/depths/spheres")) return null;
 
   const avatarFn = activePhilosopher ? AVATARS[activePhilosopher.id] : null;
   // Before the sphere is touched: the intro line. After, once the journey
