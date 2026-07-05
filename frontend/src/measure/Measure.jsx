@@ -3,232 +3,67 @@ import { useLocation } from "react-router-dom";
 import "./measure.css";
 import { MEASURE_ARRIVAL_LINE } from "../content/journeyLines";
 import { useChat } from "../guide/ChatContext";
+import { sendMessage } from "../guide/chatApi";
+import { apiUrl } from "../api/baseUrl";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
 import {
   MEASURE_RESULT_STORAGE_KEY,
   MEASURE_PREVIOUS_RESULT_STORAGE_KEY,
-  STEP_CONFIG,
-  INITIAL_CHOICES,
-  STEP_VISUALS,
-  SIGNAL_AXES,
-  MEANING_VISUALS,
-  HORIZON_VISUALS,
 } from "./measureConfig";
-import { buildInterpretation, getOptionSignalBars } from "./measureLogic";
 import {
   MeasureTopBar,
   MeasureEntryPhase,
-  MeasureSelectionPhase,
+  MeasureInterviewPhase,
+  MeasureScoringPhase,
   MeasureCompletionPhase,
 } from "./MeasurePhaseViews";
+
+const TOTAL_SPHERES = 4;
 
 const Measure = () => {
   const location = useLocation();
   const { activePhilosopher } = useChat();
+
   const [phase, setPhase] = useState("entry");
-  const [stepIndex, setStepIndex] = useState(0);
-  const [choices, setChoices] = useState(INITIAL_CHOICES);
-  const [activePreview, setActivePreview] = useState(null);
-  const [isPreviewMuted, setIsPreviewMuted] = useState(false);
-  const [previewVolume, setPreviewVolume] = useState(0.55);
+  const [sphereIndex, setSphereIndex] = useState(0);
+  const [interviewMessages, setInterviewMessages] = useState([]);
+  const [currentInput, setCurrentInput] = useState("");
+  const [isAcknowledging, setIsAcknowledging] = useState(false);
+  const [result, setResult] = useState(null);
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
   );
-  const audioContextRef = useRef(null);
-  const activePreviewNodesRef = useRef([]);
+
   const hasArchivedPreviousRef = useRef(false);
-  const previewTimerRef = useRef(null);
-
-  const currentStep = STEP_CONFIG[stepIndex];
-  const result = buildInterpretation(choices);
-  const selectedOptionForCurrentStep =
-    currentStep?.options.find((option) => option.value === choices[currentStep.key]) || null;
-
-  const totalSelectionSteps = STEP_CONFIG.length;
-  const completedSelections = STEP_CONFIG.filter((step) => Boolean(choices[step.key])).length;
-  const phaseProgress = {
-    entry: 0.05,
-    selection: (completedSelections + 1) / (totalSelectionSteps + 1),
-    completion: 1,
-  }[phase];
-
-  const canContinueSelection = Boolean(currentStep && choices[currentStep.key]);
-
   const isDepthsFacet = location.pathname.startsWith("/depths");
 
-  const clearPreviewTimer = () => {
-    if (previewTimerRef.current) {
-      window.clearTimeout(previewTimerRef.current);
-      previewTimerRef.current = null;
-    }
-  };
-
-  const stopSoundPreview = () => {
-    activePreviewNodesRef.current.forEach((node) => {
-      try {
-        node.stop?.();
-      } catch {
-        // Node may already be stopped.
-      }
-      try {
-        node.disconnect?.();
-      } catch {
-        // Ignore disconnect errors during cleanup.
-      }
-    });
-
-    activePreviewNodesRef.current = [];
-    clearPreviewTimer();
-    setActivePreview(null);
-  };
-
-  const getAudioContext = async () => {
-    if (typeof window === "undefined") return null;
-
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return null;
-
-    if (!audioContextRef.current) {
-      audioContextRef.current = new AudioCtx();
-    }
-
-    if (audioContextRef.current.state === "suspended") {
-      await audioContextRef.current.resume();
-    }
-
-    return audioContextRef.current;
-  };
-
-  const playSoundPreview = async (soundValue) => {
-    if (isPreviewMuted || previewVolume <= 0) {
-      stopSoundPreview();
-      return;
-    }
-
-    const audioContext = await getAudioContext();
-    if (!audioContext) return;
-
-    stopSoundPreview();
-
-    const registerNode = (node) => {
-      activePreviewNodesRef.current.push(node);
-      return node;
-    };
-
-    const now = audioContext.currentTime + 0.01;
-    const masterGain = registerNode(audioContext.createGain());
-    masterGain.connect(audioContext.destination);
-    masterGain.gain.setValueAtTime(0.0001, now);
-
-    let duration = 0.9;
-    const level = Math.max(0.05, Math.min(previewVolume, 1));
-
-    if (soundValue === "soft-tone") {
-      duration = 1.15;
-      const toneA = registerNode(audioContext.createOscillator());
-      const toneB = registerNode(audioContext.createOscillator());
-      toneA.type = "sine";
-      toneB.type = "triangle";
-      toneA.frequency.setValueAtTime(392, now);
-      toneB.frequency.setValueAtTime(523.25, now + 0.05);
-      toneA.connect(masterGain);
-      toneB.connect(masterGain);
-      masterGain.gain.linearRampToValueAtTime(0.06 * level, now + 0.08);
-      masterGain.gain.exponentialRampToValueAtTime(0.02 * level, now + 0.5);
-      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      toneA.start(now);
-      toneB.start(now + 0.05);
-      toneA.stop(now + duration);
-      toneB.stop(now + duration - 0.02);
-    }
-
-    if (soundValue === "deep-bass") {
-      duration = 1.0;
-      const bass = registerNode(audioContext.createOscillator());
-      bass.type = "sine";
-      bass.frequency.setValueAtTime(82.41, now);
-      bass.frequency.exponentialRampToValueAtTime(73.42, now + 0.28);
-      bass.frequency.exponentialRampToValueAtTime(65.41, now + duration);
-      bass.connect(masterGain);
-      masterGain.gain.linearRampToValueAtTime(0.12 * level, now + 0.06);
-      masterGain.gain.exponentialRampToValueAtTime(0.03 * level, now + 0.42);
-      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      bass.start(now);
-      bass.stop(now + duration);
-    }
-
-    if (soundValue === "bright-chime") {
-      duration = 0.85;
-      const chimeA = registerNode(audioContext.createOscillator());
-      const chimeB = registerNode(audioContext.createOscillator());
-      chimeA.type = "triangle";
-      chimeB.type = "sine";
-      chimeA.frequency.setValueAtTime(880, now);
-      chimeB.frequency.setValueAtTime(1318.51, now + 0.08);
-      chimeA.connect(masterGain);
-      chimeB.connect(masterGain);
-      masterGain.gain.linearRampToValueAtTime(0.07 * level, now + 0.02);
-      masterGain.gain.exponentialRampToValueAtTime(0.015 * level, now + 0.25);
-      masterGain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
-      chimeA.start(now);
-      chimeA.stop(now + 0.42);
-      chimeB.start(now + 0.08);
-      chimeB.stop(now + duration);
-    }
-
-    setActivePreview(soundValue);
-    previewTimerRef.current = window.setTimeout(() => {
-      setActivePreview((current) => (current === soundValue ? null : current));
-      previewTimerRef.current = null;
-    }, Math.ceil(duration * 1000));
-  };
+  const phaseProgress =
+    phase === "entry"
+      ? 0.05
+      : phase === "interview"
+        ? 0.1 + (interviewMessages.length / TOTAL_SPHERES) * 0.75
+        : phase === "scoring"
+          ? 0.88
+          : 1;
 
   useEffect(() => {
     if (!showPortalArrival) return undefined;
-
-    const timer = window.setTimeout(() => {
-      setShowPortalArrival(false);
-    }, 1250);
-
+    const timer = window.setTimeout(() => setShowPortalArrival(false), 1250);
     return () => window.clearTimeout(timer);
   }, [showPortalArrival]);
 
   useEffect(() => {
-    if (phase !== "selection" || currentStep?.key !== "sound") {
-      stopSoundPreview();
-    }
-  }, [phase, currentStep?.key]);
-
-  useEffect(() => {
-    if (isPreviewMuted) {
-      stopSoundPreview();
-    }
-  }, [isPreviewMuted]);
-
-  useEffect(() => {
-    return () => {
-      stopSoundPreview();
-      if (audioContextRef.current && audioContextRef.current.state !== "closed") {
-        audioContextRef.current.close().catch(() => {});
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined" || !result) return;
-    if (phase !== "completion") return;
+    if (!result || phase !== "completion") return;
 
     if (!hasArchivedPreviousRef.current) {
       hasArchivedPreviousRef.current = true;
       try {
-        const existingLatest = window.localStorage.getItem(MEASURE_RESULT_STORAGE_KEY);
-        if (existingLatest) {
-          window.localStorage.setItem(MEASURE_PREVIOUS_RESULT_STORAGE_KEY, existingLatest);
+        const prev = window.localStorage.getItem(MEASURE_RESULT_STORAGE_KEY);
+        if (prev) {
+          window.localStorage.setItem(MEASURE_PREVIOUS_RESULT_STORAGE_KEY, prev);
         }
-      } catch {
-        // Ignore storage failures — the new reading still saves below.
-      }
+      } catch {}
     }
 
     const payload = {
@@ -240,74 +75,95 @@ const Measure = () => {
       dominantAxis: result.dominantAxis,
       vibrationLevel: result.vibrationLevel,
       lines: result.lines,
-      selected: {
-        color: result.selected?.color?.label,
-        sound: result.selected?.sound?.label,
-        texture: result.selected?.texture?.label,
-      },
     };
 
     try {
       window.localStorage.setItem(MEASURE_RESULT_STORAGE_KEY, JSON.stringify(payload));
-    } catch {
-      // Ignore storage failures and keep the flow usable.
-    }
+    } catch {}
   }, [result, phase]);
 
-  const handleSelect = (stepKey, value) => {
-    setChoices((prev) => ({ ...prev, [stepKey]: value }));
-
-    if (stepKey === "sound") {
-      void playSoundPreview(value);
-    }
+  const resetState = () => {
+    setSphereIndex(0);
+    setInterviewMessages([]);
+    setCurrentInput("");
+    setIsAcknowledging(false);
+    setResult(null);
+    hasArchivedPreviousRef.current = false;
   };
 
   const handleBegin = () => {
-    setPhase("selection");
-    setStepIndex(0);
-  };
-
-  const handleNext = () => {
-    if (phase === "entry") {
-      handleBegin();
-      return;
-    }
-
-    if (phase === "selection") {
-      if (!canContinueSelection) return;
-
-      if (stepIndex < totalSelectionSteps - 1) {
-        setStepIndex((prev) => prev + 1);
-      } else {
-        setPhase("completion");
-      }
-    }
-  };
-
-  const handleBack = () => {
-    if (phase === "selection") {
-      if (stepIndex > 0) {
-        setStepIndex((prev) => prev - 1);
-      } else {
-        setPhase("entry");
-      }
-
-      return;
-    }
-
-    if (phase === "completion") {
-      setPhase("selection");
-      setStepIndex(totalSelectionSteps - 1);
-    }
+    resetState();
+    setPhase("interview");
   };
 
   const handleRestart = () => {
-    setChoices(INITIAL_CHOICES);
+    resetState();
     setPhase("entry");
-    setStepIndex(0);
   };
 
-  const showWizardNav = phase !== "entry";
+  const handleSend = async () => {
+    const answer = currentInput.trim();
+    if (!answer || isAcknowledging || !activePhilosopher) return;
+
+    const currentQ = activePhilosopher.measureQuestions?.[sphereIndex];
+    if (!currentQ) return;
+
+    setCurrentInput("");
+    setIsAcknowledging(true);
+
+    let acknowledgment = "";
+    try {
+      acknowledgment = await sendMessage(
+        [{ role: "user", content: answer }],
+        activePhilosopher,
+        `IMPORTANT: The person has just answered a self-reflection question about their ${currentQ.sphere} during a vibration check-in. Respond with ONE short sentence (10–20 words) acknowledging what they shared — completely in your voice. Do not ask another question yet.`,
+      );
+    } catch {}
+
+    const updated = [
+      ...interviewMessages,
+      {
+        sphere: currentQ.sphere,
+        question: currentQ.question,
+        answer,
+        acknowledgment,
+      },
+    ];
+
+    setInterviewMessages(updated);
+    setIsAcknowledging(false);
+
+    if (sphereIndex < TOTAL_SPHERES - 1) {
+      setSphereIndex((prev) => prev + 1);
+      return;
+    }
+
+    setPhase("scoring");
+
+    try {
+      const res = await fetch(apiUrl("/measure/interview"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qaPairs: updated.map(({ sphere, question, answer: a }) => ({
+            sphere,
+            question,
+            answer: a,
+          })),
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setResult(data);
+      setPhase("completion");
+    } catch (err) {
+      console.error("Measure interview scoring failed:", err);
+      setPhase("interview");
+      setSphereIndex(TOTAL_SPHERES - 1);
+      setInterviewMessages(updated);
+    }
+  };
 
   return (
     <div
@@ -336,30 +192,23 @@ const Measure = () => {
         <section className="measure-panel" aria-live="polite">
           {phase === "entry" && <MeasureEntryPhase onBegin={handleBegin} />}
 
-          {phase === "selection" && currentStep && (
-            <MeasureSelectionPhase
-              stepIndex={stepIndex}
-              totalSelectionSteps={totalSelectionSteps}
-              currentStep={currentStep}
-              choices={choices}
-              activePreview={activePreview}
-              isPreviewMuted={isPreviewMuted}
-              onTogglePreviewMute={() => setIsPreviewMuted((prev) => !prev)}
-              previewVolume={previewVolume}
-              onPreviewVolumeChange={(event) =>
-                setPreviewVolume(Number(event.target.value) / 100)
-              }
-              onSelect={handleSelect}
-              selectedOptionForCurrentStep={selectedOptionForCurrentStep}
-              stepConfig={STEP_CONFIG}
-              getOptionSignalBars={getOptionSignalBars}
-              stepVisuals={STEP_VISUALS}
-              signalAxes={SIGNAL_AXES}
-              meaningVisuals={MEANING_VISUALS}
-              horizonVisuals={HORIZON_VISUALS}
-              canContinueSelection={canContinueSelection}
-              onBack={handleBack}
-              onNext={handleNext}
+          {phase === "interview" && (
+            <MeasureInterviewPhase
+              sphereIndex={sphereIndex}
+              interviewMessages={interviewMessages}
+              currentInput={currentInput}
+              onInputChange={setCurrentInput}
+              onSend={handleSend}
+              isAcknowledging={isAcknowledging}
+              philosopher={activePhilosopher}
+              onRestart={handleRestart}
+            />
+          )}
+
+          {phase === "scoring" && (
+            <MeasureScoringPhase
+              philosopher={activePhilosopher}
+              interviewMessages={interviewMessages}
             />
           )}
 
@@ -367,8 +216,6 @@ const Measure = () => {
             <MeasureCompletionPhase
               result={result}
               philosopher={activePhilosopher}
-              showBack={showWizardNav}
-              onBack={handleBack}
               onRestart={handleRestart}
             />
           )}

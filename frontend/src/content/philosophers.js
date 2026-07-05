@@ -9,6 +9,24 @@ export const PHILOSOPHERS = [
       "Come here when you feel confused, when you are repeating someone else's story about your life, or when you need your own assumptions gently shattered.",
     description:
       "Socrates does not have answers. He has questions that reach the ones you already carry inside you.",
+    measureQuestions: [
+      {
+        sphere: "body",
+        question: "Before we go any further — what is your body doing right now? Where does it feel tense, where does it let go, and what does it tell you that you haven't quite said out loud?",
+      },
+      {
+        sphere: "mind",
+        question: "And the mind — where does it keep pulling your attention today? Is there a clear current underneath, or does it feel scattered and looking for a center?",
+      },
+      {
+        sphere: "heart",
+        question: "What is it, at the bottom of things, that is moving you today? And how close or distant do you feel to the people around you?",
+      },
+      {
+        sphere: "spirit",
+        question: "What feels genuinely worth doing today — not what should feel worth it, but what actually does? And what do you believe is possible in your next step?",
+      },
+    ],
     prepareMeasure:
       "You've told yourself how you feel. But did you find that out, or did you decide it? There's a way to actually look instead of guess. Are you willing to?",
     levelsBridge:
@@ -66,6 +84,24 @@ Trust the silence that a good question creates.`,
       "Come here when anxiety has taken the wheel, when you are carrying weight that does not belong to you, or when you need to return to solid ground.",
     description:
       "Marcus Aurelius speaks when the mind is running faster than it should. He draws one clean line: what is yours, and what is not.",
+    measureQuestions: [
+      {
+        sphere: "body",
+        question: "Place your attention on your body. How is it carrying you today — steady beneath you, or straining against this moment?",
+      },
+      {
+        sphere: "mind",
+        question: "What is the quality of your attention right now? Can your mind command itself, or does it wander into what you cannot control?",
+      },
+      {
+        sphere: "heart",
+        question: "What drives you at this moment — duty, fear, love, or something harder to name? And do you feel the presence of others, or a kind of solitude in your work?",
+      },
+      {
+        sphere: "spirit",
+        question: "What do you consider worth doing today, and how do you stand with what you cannot change?",
+      },
+    ],
     prepareMeasure:
       "You cannot govern what you have not first seen clearly. Before you return to solid ground, you must know exactly where you are standing. Not a feeling — an observation. Let's measure it plainly.",
     levelsBridge:
@@ -126,6 +162,24 @@ clear observation followed by one grounding question is often enough.`,
       "Come here when you feel torn between versions of yourself, when choice feels impossible, or when you sense that something in you is trying to be born.",
     description:
       "Kierkegaard sits with you in the places that cannot be reasoned away. He does not solve the anxiety of becoming — he names it as the price of being free.",
+    measureQuestions: [
+      {
+        sphere: "body",
+        question: "The body knows things the mind won't admit. What is yours carrying today — its pace, its weight, how fully it is or isn't here?",
+      },
+      {
+        sphere: "mind",
+        question: "What does the voice inside your head sound like today? Harsh, kind, scattered, clear — what tone does it have most often?",
+      },
+      {
+        sphere: "heart",
+        question: "When you think of the people in your life right now — what do you feel? And what is it that has you moving at all today, beneath the reason you'd tell someone else?",
+      },
+      {
+        sphere: "spirit",
+        question: "Does anything feel genuinely meaningful right now, or are you simply moving? And the next step — does it feel open, closed, or simply uncertain?",
+      },
+    ],
     prepareMeasure:
       "You are standing at an edge, even if you can't name it yet. Most people never look down to see how high up they actually are. I'm not asking you to resolve anything. Only to look.",
     levelsBridge:
@@ -189,6 +243,24 @@ more powerful than a long meditation.`,
       "Come here when life feels arbitrary, when you have lost something that organized your world, or when you need someone to sit with the absurd rather than explain it away.",
     description:
       "Camus does not promise that things will make sense. He stays beside you in the places where they don't.",
+    measureQuestions: [
+      {
+        sphere: "body",
+        question: "Your body is here, in this specific moment. Heavy, light, wound up, dissolved — or somewhere the words don't quite reach. What is it, actually?",
+      },
+      {
+        sphere: "mind",
+        question: "What does thinking feel like right now? Are you in it, running from it, or watching it from some distance between you and your own mind?",
+      },
+      {
+        sphere: "heart",
+        question: "Others exist — you know this. How are you with them today? And what, if anything, still feels worth doing at all?",
+      },
+      {
+        sphere: "spirit",
+        question: "What feels meaningful today — if anything does? And the future: open, shut, or just quietly uncertain?",
+      },
+    ],
     prepareMeasure:
       "You can spend your life guessing at your own weather, or look at the sky directly. I won't promise what you find will be comfortable. But pretending costs more than knowing ever does.",
     levelsBridge:
@@ -251,6 +323,24 @@ worth more than a paragraph of comfort.`,
       "Come here when you have already reflected enough and you need to move. He will ask about your habits, your character, and what kind of person your daily choices are building.",
     description:
       "Aristotle believes that the good life is not an idea — it is something practiced.",
+    measureQuestions: [
+      {
+        sphere: "body",
+        question: "The body is the instrument of everything else. How is yours functioning right now — its pace, its breath, its baseline state today?",
+      },
+      {
+        sphere: "mind",
+        question: "Tell me about the quality of your thinking today. Is reason available to you, or scattered? What tone does your inner voice have?",
+      },
+      {
+        sphere: "heart",
+        question: "How are you relating to the people around you, and what is actually driving you beneath the reason you might state out loud?",
+      },
+      {
+        sphere: "spirit",
+        question: "Where is your horizon today — how far can you see what is possible? And how do you hold the uncertainty that surrounds whatever comes next?",
+      },
+    ],
     prepareMeasure:
       "Before I can tell you what to practice, I need to know where you actually stand — not your story about yourself, your real condition, right now. Let's find that ground plainly, so what comes next isn't a guess.",
     levelsBridge:

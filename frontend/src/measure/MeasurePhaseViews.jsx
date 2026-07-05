@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { AXIS_COLORS, THERMOMETER_MAX, VIBRATION_LEVELS } from "./measureConfig";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
@@ -73,11 +73,12 @@ export function MeasureEntryPhase({ onBegin }) {
     <div className="measure-phaseBlock">
       <p className="measure-kicker">Frequency Check-In</p>
       <h1 className="measure-title">
-        Take a quick reading of your current frequency
+        A conversation to read where you are right now
       </h1>
       <p className="measure-copy">
-        This is a reflection tool, not a diagnosis. Follow instinct first, then
-        use the reading to choose one grounded action you can actually do now.
+        Your philosopher will ask you about four sides of your life — body, mind,
+        heart, and spirit. Share what is actually true, not what you think it
+        should be. The reading emerges from what you say.
       </p>
       <div className="measure-actionRow">
         <button
@@ -85,9 +86,168 @@ export function MeasureEntryPhase({ onBegin }) {
           className="measure-btn measure-btn-primary"
           onClick={onBegin}
         >
-          Begin
+          Begin the conversation
         </button>
       </div>
+    </div>
+  );
+}
+
+export function MeasureInterviewPhase({
+  sphereIndex,
+  interviewMessages,
+  currentInput,
+  onInputChange,
+  onSend,
+  isAcknowledging,
+  philosopher,
+  onRestart,
+}) {
+  const scrollRef = useRef(null);
+  const inputRef = useRef(null);
+  const totalSpheres = 4;
+  const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
+  const sphereLabels = { body: "Body", mind: "Mind", heart: "Heart", spirit: "Spirit" };
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [interviewMessages, isAcknowledging, sphereIndex]);
+
+  useEffect(() => {
+    if (!isAcknowledging && sphereIndex < totalSpheres) {
+      const t = setTimeout(() => inputRef.current?.focus(), 80);
+      return () => clearTimeout(t);
+    }
+  }, [isAcknowledging, sphereIndex]);
+
+  const handleKey = (e) => {
+    if (e.key === "Enter" && !e.shiftKey && currentInput.trim() && !isAcknowledging) {
+      e.preventDefault();
+      onSend();
+    }
+  };
+
+  return (
+    <div className="measure-interviewWrap">
+      <div className="measure-sphereProgress" aria-label="Sphere progress">
+        {["body", "mind", "heart", "spirit"].map((sphere, i) => (
+          <span
+            key={sphere}
+            className={`measure-sphereDot${i < interviewMessages.length ? " is-done" : ""}${i === sphereIndex ? " is-current" : ""}`}
+            aria-label={`${sphereLabels[sphere]}${i < interviewMessages.length ? " (answered)" : i === sphereIndex ? " (current)" : ""}`}
+          >
+            <span className="measure-sphereDotLabel">{sphereLabels[sphere]}</span>
+          </span>
+        ))}
+      </div>
+
+      <div className="measure-interviewScroll" ref={scrollRef}>
+        {interviewMessages.map((msg) => (
+          <div key={msg.sphere} className="measure-exchange">
+            <div className="measure-bubbleRow measure-bubbleRow-philosopher">
+              <div
+                className="measure-bubble measure-bubble-philosopher"
+                style={{ "--philo-color": philosopher?.color }}
+              >
+                <PhilosopherVoiceTag philosopher={philosopher} />
+                <p>{msg.question}</p>
+              </div>
+            </div>
+            <div className="measure-bubbleRow measure-bubbleRow-user">
+              <div className="measure-bubble measure-bubble-user">
+                <p>{msg.answer}</p>
+              </div>
+            </div>
+            {msg.acknowledgment && (
+              <div className="measure-bubbleRow measure-bubbleRow-philosopher">
+                <div
+                  className="measure-bubble measure-bubble-philosopher"
+                  style={{ "--philo-color": philosopher?.color }}
+                >
+                  <PhilosopherVoiceTag philosopher={philosopher} />
+                  <p>{msg.acknowledgment}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+
+        {sphereIndex < totalSpheres && currentQuestion && (
+          <div className="measure-bubbleRow measure-bubbleRow-philosopher">
+            <div
+              className="measure-bubble measure-bubble-philosopher"
+              style={{ "--philo-color": philosopher?.color }}
+            >
+              <PhilosopherVoiceTag philosopher={philosopher} />
+              <p>{currentQuestion.question}</p>
+            </div>
+          </div>
+        )}
+
+        {isAcknowledging && (
+          <div className="measure-bubbleRow measure-bubbleRow-philosopher">
+            <div
+              className="measure-bubble measure-bubble-philosopher measure-bubble-typing"
+              style={{ "--philo-color": philosopher?.color }}
+            >
+              <span className="measure-typingDot" />
+              <span className="measure-typingDot" />
+              <span className="measure-typingDot" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {sphereIndex < totalSpheres && (
+        <div className="measure-interviewInputRow">
+          <textarea
+            ref={inputRef}
+            className="measure-interviewInput"
+            value={currentInput}
+            onChange={(e) => onInputChange(e.target.value)}
+            onKeyDown={handleKey}
+            placeholder="Share what comes up…"
+            rows={2}
+            disabled={isAcknowledging}
+            aria-label="Your answer"
+          />
+          <button
+            type="button"
+            className="measure-interviewSend"
+            onClick={onSend}
+            disabled={!currentInput.trim() || isAcknowledging}
+            aria-label="Send"
+          >
+            ↑
+          </button>
+        </div>
+      )}
+
+      <div className="measure-interviewFooter">
+        <button type="button" className="measure-btn" onClick={onRestart}>
+          Start over
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function MeasureScoringPhase({ philosopher, interviewMessages }) {
+  return (
+    <div className="measure-phaseBlock measure-scoringPhase">
+      <PhilosopherVoiceTag philosopher={philosopher} />
+      <p className="measure-scoringText">Reading your field…</p>
+      <div className="measure-scoringOrbs" aria-hidden="true">
+        <span className="measure-scoringOrb" />
+        <span className="measure-scoringOrb" />
+        <span className="measure-scoringOrb" />
+        <span className="measure-scoringOrb" />
+      </div>
+      <p className="measure-scoringHint">
+        {interviewMessages.length} spheres read
+      </p>
     </div>
   );
 }
@@ -493,13 +653,7 @@ export function MeasureSelectionPhase({
   );
 }
 
-export function MeasureCompletionPhase({
-  result,
-  philosopher,
-  showBack,
-  onBack,
-  onRestart,
-}) {
+export function MeasureCompletionPhase({ result, philosopher, onRestart }) {
   return (
     <div className="measure-phaseBlock">
       <p className="measure-kicker">Complete · {result.band}</p>
@@ -516,10 +670,16 @@ export function MeasureCompletionPhase({
         </div>
       )}
 
-      <div className="measure-quickPractice">
-        <p className="measure-quickPracticeAction">{result.microPractice}</p>
-        <p className="measure-affirmation">“{result.affirmation}”</p>
-      </div>
+      {(result.microPractice || result.affirmation) && (
+        <div className="measure-quickPractice">
+          {result.microPractice && (
+            <p className="measure-quickPracticeAction">{result.microPractice}</p>
+          )}
+          {result.affirmation && (
+            <p className="measure-affirmation">"{result.affirmation}"</p>
+          )}
+        </div>
+      )}
 
       <div className="measure-levelCard">
         <p className="measure-levelCardKicker">Your overall reading</p>
@@ -566,11 +726,6 @@ export function MeasureCompletionPhase({
       </div>
 
       <div className="measure-actionRow">
-        {showBack && (
-          <button type="button" className="measure-btn" onClick={onBack}>
-            Back
-          </button>
-        )}
         <button type="button" className="measure-btn" onClick={onRestart}>
           Measure again
         </button>

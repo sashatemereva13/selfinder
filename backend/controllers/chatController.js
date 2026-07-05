@@ -2,6 +2,11 @@ import Groq from "groq-sdk";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import { BADGE_COMMENT_PROMPTS } from "../data/badgeCommentPrompts.js";
 import { JOURNEY_LINE_PROMPTS } from "../data/journeyLinePrompts.js";
+import {
+  getNearestVibrationLevel,
+  getFrequencyBand,
+  calibrateVibrationScore,
+} from "../data/vibrationLevels.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -253,5 +258,138 @@ export async function postJourneyLine(req, res) {
   } catch (err) {
     console.error("Journey line generation failed:", err);
     res.json({ line: reference, cached: false, fallback: true });
+  }
+}
+
+const SPHERE_HELPERS = {
+  body: "How your physical state is moving",
+  mind: "How attention and inner narrative are moving",
+  heart: "How connection and drive are moving",
+  spirit: "How meaning and direction are moving",
+};
+
+const MICRO_PRACTICES = {
+  calm: "Take three slow breaths with a longer exhale than inhale.",
+  clarity: "Write one clear intention for the next hour — one is enough.",
+  grounding: "Place both feet flat on the floor and press down for 20 seconds.",
+  intensity: "Pause. Notice the activation in your body without acting on it yet.",
+};
+
+const AFFIRMATIONS = {
+  calm: "I can move at the pace that is real, not the pace I think I should have.",
+  clarity: "Clear is enough.",
+  grounding: "I am already standing on something solid.",
+  intensity: "Strong energy can be directed. I get to choose where it goes.",
+};
+
+function clampInt(v, min, max) {
+  return Math.max(min, Math.min(max, Math.round(Number(v) || 0)));
+}
+
+function clampScores(raw) {
+  return {
+    calm: clampInt(raw.calm, 0, 12),
+    clarity: clampInt(raw.clarity, 0, 12),
+    intensity: clampInt(raw.intensity, 0, 12),
+    grounding: clampInt(raw.grounding, 0, 12),
+  };
+}
+
+function dominantAxisOf(scores) {
+  return Object.entries(scores).sort((a, b) => b[1] - a[1])[0][0];
+}
+
+function buildInterviewInterpretation(rawScores) {
+  const overallScores = clampScores(rawScores.overall ?? {});
+  const rawVibration = clampInt(rawScores.overall?.vibration ?? 250, 20, 700);
+  const vibrationScore = calibrateVibrationScore(rawVibration, overallScores);
+  const vibrationLevel = getNearestVibrationLevel(vibrationScore);
+  const dominantAxis = dominantAxisOf(overallScores);
+  const band = getFrequencyBand(overallScores);
+
+  const sphereKeys = ["body", "mind", "heart", "spirit"];
+  const lines = sphereKeys.map((key) => {
+    const raw = rawScores[key] ?? {};
+    const scores = clampScores(raw);
+    const lineRawVib = clampInt(raw.vibration ?? rawVibration, 20, 700);
+    const lineVibScore = calibrateVibrationScore(lineRawVib, scores);
+    return {
+      key,
+      label: key,
+      helper: SPHERE_HELPERS[key],
+      scores,
+      dominantAxis: dominantAxisOf(scores),
+      band: getFrequencyBand(scores),
+      rawVibrationScore: lineRawVib,
+      vibrationScore: lineVibScore,
+      vibrationLevel: getNearestVibrationLevel(lineVibScore),
+    };
+  });
+
+  return {
+    scores: overallScores,
+    rawVibrationScore: rawVibration,
+    vibrationScore,
+    vibrationLevel,
+    dominantAxis,
+    band,
+    microPractice: MICRO_PRACTICES[dominantAxis] ?? MICRO_PRACTICES.clarity,
+    affirmation: AFFIRMATIONS[dominantAxis] ?? AFFIRMATIONS.clarity,
+    lines,
+  };
+}
+
+export async function postMeasureInterview(req, res) {
+  const { qaPairs } = req.body;
+
+  if (!Array.isArray(qaPairs) || qaPairs.length < 4) {
+    return res.status(400).json({ error: "qaPairs must contain 4 sphere answers" });
+  }
+
+  const transcript = qaPairs
+    .map((p) => `[${String(p.sphere).toUpperCase()}]\nQuestion: ${p.question}\nAnswer: ${p.answer}`)
+    .join("\n\n");
+
+  const scoringPrompt = `You are analyzing self-reflection answers to score a person's current inner state.
+
+Score all five readings (overall + 4 spheres) using integer values:
+- calm: 0–12 (peace, rest, low urgency)
+- clarity: 0–12 (focus, clear thinking, decisiveness)
+- intensity: 0–12 (activation, urgency, force, heat)
+- grounding: 0–12 (rootedness, physical presence, stability)
+- vibration: 20–700 (Hawkins emotional frequency: shame=20, grief=75, fear=100, desire=125, anger=150, pride=175, courage=200, neutrality=250, willingness=310, acceptance=350, reason=400, love=500, peace=600, enlightenment=700)
+
+Conversation:
+${transcript}
+
+Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
+{"overall":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"body":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"mind":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"heart":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"spirit":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0}}`;
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: models[0],
+      max_tokens: 400,
+      temperature: 0.1,
+      messages: [
+        { role: "system", content: "You are a precise scoring system. Return only valid JSON, nothing else." },
+        { role: "user", content: scoringPrompt },
+      ],
+    });
+
+    let rawScores;
+    try {
+      const text = response.choices[0].message.content.trim();
+      const jsonStart = text.indexOf("{");
+      const jsonEnd = text.lastIndexOf("}");
+      rawScores = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    } catch {
+      console.error("Failed to parse scoring JSON:", response.choices[0].message.content);
+      return res.status(500).json({ error: "Failed to parse scoring response" });
+    }
+
+    res.json(buildInterviewInterpretation(rawScores));
+  } catch (err) {
+    console.error("Interview scoring failed:", err);
+    res.status(500).json({ error: "Scoring failed" });
   }
 }

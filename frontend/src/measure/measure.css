@@ -2019,6 +2019,298 @@
   }
 }
 
+/* ───────────────────────────────────────────────────────────
+   Interview phase
+   ─────────────────────────────────────────────────────────── */
+
+.measure-interviewWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  height: 100%;
+  min-height: clamp(500px, 80vh, 820px);
+}
+
+/* sphere dots ------------------------------------------------ */
+.measure-sphereProgress {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0 0 1rem;
+  flex-shrink: 0;
+}
+
+.measure-sphereDot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  position: relative;
+}
+
+.measure-sphereDot::before {
+  content: "";
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(243, 246, 255, 0.25);
+  background: transparent;
+  transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+
+.measure-sphereDot.is-done::before {
+  background: rgba(159, 211, 255, 0.9);
+  border-color: rgba(159, 211, 255, 0.9);
+  box-shadow: 0 0 6px rgba(159, 211, 255, 0.5);
+}
+
+.measure-sphereDot.is-current::before {
+  border-color: rgba(185, 140, 255, 0.9);
+  box-shadow: 0 0 8px rgba(185, 140, 255, 0.5);
+  animation: sphereDotPulse 1.6s ease-in-out infinite;
+}
+
+.measure-sphereDotLabel {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(243, 246, 255, 0.38);
+  transition: color 0.3s;
+}
+
+.measure-sphereDot.is-done .measure-sphereDotLabel {
+  color: rgba(159, 211, 255, 0.7);
+}
+
+.measure-sphereDot.is-current .measure-sphereDotLabel {
+  color: rgba(185, 140, 255, 0.9);
+}
+
+@keyframes sphereDotPulse {
+  0%, 100% { box-shadow: 0 0 8px rgba(185, 140, 255, 0.5); }
+  50%       { box-shadow: 0 0 16px rgba(185, 140, 255, 0.85); }
+}
+
+/* conversation scroll --------------------------------------- */
+.measure-interviewScroll {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 0.4rem 0 1rem;
+  scroll-behavior: smooth;
+}
+
+.measure-interviewScroll::-webkit-scrollbar {
+  width: 3px;
+}
+.measure-interviewScroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.measure-interviewScroll::-webkit-scrollbar-thumb {
+  background: rgba(243, 246, 255, 0.12);
+  border-radius: 2px;
+}
+
+.measure-exchange {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.measure-bubbleRow {
+  display: flex;
+}
+
+.measure-bubbleRow-philosopher {
+  justify-content: flex-start;
+}
+
+.measure-bubbleRow-user {
+  justify-content: flex-end;
+}
+
+.measure-bubble {
+  max-width: 88%;
+  padding: 0.75rem 1rem;
+  border-radius: 14px;
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.measure-bubble p {
+  margin: 0;
+}
+
+.measure-bubble-philosopher {
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(var(--philo-color, 159, 211, 255), 0.18);
+  border-radius: 4px 14px 14px 14px;
+  color: rgba(243, 246, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.measure-bubble-philosopher .philoVoiceTag {
+  opacity: 0.7;
+}
+
+.measure-bubble-user {
+  background: rgba(185, 140, 255, 0.14);
+  border: 1px solid rgba(185, 140, 255, 0.2);
+  border-radius: 14px 14px 4px 14px;
+  color: rgba(243, 246, 255, 0.88);
+}
+
+/* typing indicator ------------------------------------------ */
+.measure-bubble-typing {
+  padding: 0.85rem 1.1rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 5px;
+  min-width: 52px;
+}
+
+.measure-typingDot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(243, 246, 255, 0.45);
+  animation: typingBounce 1.2s ease-in-out infinite;
+}
+
+.measure-typingDot:nth-child(2) { animation-delay: 0.18s; }
+.measure-typingDot:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes typingBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.45; }
+  40%           { transform: translateY(-5px); opacity: 1; }
+}
+
+/* input row ------------------------------------------------- */
+.measure-interviewInputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  padding: 0.75rem 0 0;
+  border-top: 1px solid rgba(243, 246, 255, 0.07);
+  flex-shrink: 0;
+}
+
+.measure-interviewInput {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(243, 246, 255, 0.14);
+  border-radius: 12px;
+  color: var(--measure-ink);
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  padding: 0.65rem 0.9rem;
+  resize: none;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.measure-interviewInput:focus {
+  border-color: rgba(185, 140, 255, 0.4);
+}
+
+.measure-interviewInput::placeholder {
+  color: rgba(243, 246, 255, 0.3);
+}
+
+.measure-interviewInput:disabled {
+  opacity: 0.5;
+}
+
+.measure-interviewSend {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(185, 140, 255, 0.85);
+  color: #06060d;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.measure-interviewSend:hover:not(:disabled) {
+  background: rgba(185, 140, 255, 1);
+}
+
+.measure-interviewSend:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.measure-interviewFooter {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0.6rem 0 0;
+  flex-shrink: 0;
+}
+
+/* scoring phase --------------------------------------------- */
+.measure-scoringPhase {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2rem;
+  min-height: 280px;
+  text-align: center;
+}
+
+.measure-scoringText {
+  margin: 0;
+  font-size: 1.1rem;
+  color: rgba(243, 246, 255, 0.75);
+  letter-spacing: 0.04em;
+}
+
+.measure-scoringOrbs {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.measure-scoringOrb {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(185, 140, 255, 0.7);
+  animation: scoringOrbPulse 1.4s ease-in-out infinite;
+}
+
+.measure-scoringOrb:nth-child(2) { animation-delay: 0.2s; background: rgba(159, 211, 255, 0.7); }
+.measure-scoringOrb:nth-child(3) { animation-delay: 0.4s; background: rgba(185, 140, 255, 0.7); }
+.measure-scoringOrb:nth-child(4) { animation-delay: 0.6s; background: rgba(159, 211, 255, 0.7); }
+
+@keyframes scoringOrbPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50%       { transform: scale(1.4); opacity: 1; }
+}
+
+.measure-scoringHint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: rgba(243, 246, 255, 0.3);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .measure-bg-orb,
   .measure-phaseBlock,
@@ -2032,7 +2324,10 @@
   .measure-thermoMarker,
   .measure-journeyFill,
   .measure-journeyNode,
-  .measure-thermoMarkerGlow {
+  .measure-thermoMarkerGlow,
+  .measure-typingDot,
+  .measure-scoringOrb,
+  .measure-sphereDot::before {
     animation: none !important;
     transition: none !important;
   }
