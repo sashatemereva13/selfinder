@@ -5,10 +5,12 @@ import * as THREE from "three";
 
 // The camera flight covers what used to be three separate CSS-keyed stages
 // (charge/stretch/collapse) — they're combined into one duration now since
-// nothing renders differently between them anymore. Blackout is the one
-// remaining CSS stage: a plain fade to cover the cut to /depths.
-const PORTAL_FLIGHT_MS = 1240;
-const PORTAL_BLACKOUT_HOLD_MS = 280;
+// nothing renders differently between them anymore. Blackout overlaps with
+// the end of the flight so darkness builds while the camera is still moving,
+// hiding the hard stop that cubic ease-in produces at t=1.
+const PORTAL_FLIGHT_MS = 1400;
+const FADE_OVERLAP_MS = 420; // blackout starts this many ms before flight ends
+const PORTAL_BLACKOUT_HOLD_MS = 160; // hold at full black before navigating
 
 function getPortalCenter(portalPosition) {
   return new THREE.Vector3(...portalPosition);
@@ -113,16 +115,17 @@ export default function WizardMessage({
       import("../depths/Depths").catch(() => {});
 
       try {
-        // The camera flight is the whole effect now — fire it and just wait
-        // out its duration, no CSS stages to step through alongside it.
         stopFlight = flyThroughPortal(center, PORTAL_FLIGHT_MS);
         setPortalFxStage("flying");
-        await delay(PORTAL_FLIGHT_MS);
-        if (cancelled) return;
 
-        // One plain fade to cover the cut from the 3D scene to /depths.
+        // Start the blackout fade while the camera is still flying so
+        // darkness builds during the rush — covers the hard stop at t=1.
+        await delay(PORTAL_FLIGHT_MS - FADE_OVERLAP_MS);
+        if (cancelled) return;
         setPortalFxStage("blackout");
-        await delay(PORTAL_BLACKOUT_HOLD_MS);
+
+        // Wait out the remaining flight + hold at full black before cutting.
+        await delay(FADE_OVERLAP_MS + PORTAL_BLACKOUT_HOLD_MS);
         if (cancelled) return;
 
         navigate("/depths", { state: { fromPortalJump: true } });

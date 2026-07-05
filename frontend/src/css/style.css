@@ -629,7 +629,7 @@ button:hover {
 }
 
 .portalJumpOverlay.is-blackout .portalJumpOverlayVoid {
-  animation: portalVoidFx 280ms ease-in forwards;
+  animation: portalVoidFx 420ms ease-in forwards;
 }
 
 @keyframes portalVoidFx {
