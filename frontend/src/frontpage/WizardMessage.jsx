@@ -44,7 +44,11 @@ export default function WizardMessage({
 
     const startPos = cam.position.clone();
     const dir = new THREE.Vector3().subVectors(center, startPos).normalize();
-    const flyDistance = 26; // well past the portal, not just to it
+    // Stop just before the center so the camera never crosses it — once it
+    // does, setLookAt(pos, center) reverses the camera's facing direction
+    // which reads as the animation snapping backwards. The blackout covers
+    // the cut so we don't need to physically fly through.
+    const flyDistance = startPos.distanceTo(center) * 0.88;
     const baseFov = cam.fov ?? 55;
     const maxFov = 122;
     const originalSmooth = controls.current.smoothTime;
