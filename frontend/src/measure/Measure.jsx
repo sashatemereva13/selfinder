@@ -40,6 +40,11 @@ const Measure = () => {
   );
 
   const hasArchivedPreviousRef = useRef(false);
+  // Synchronous guard against double-submission — `isAcknowledging` alone has a
+  // gap between calling setState and the re-render that disables the button,
+  // during which a rapid double-click/double-tap can fire handleSend twice
+  // concurrently, producing a duplicate qaPair for the same sphere.
+  const isSendingRef = useRef(false);
   const isDepthsFacet = location.pathname.startsWith("/depths");
 
   const phaseProgress =
@@ -108,78 +113,83 @@ const Measure = () => {
 
   const handleSend = async () => {
     const answer = currentInput.trim();
-    if (!answer || isAcknowledging || !activePhilosopher) return;
+    if (!answer || isAcknowledging || !activePhilosopher || isSendingRef.current) return;
 
     const currentQ = activePhilosopher.measureQuestions?.[sphereIndex];
     if (!currentQ) return;
 
-    setCurrentInput("");
-    setIsAcknowledging(true);
-
-    let advance = true;
-    let reply = "";
+    isSendingRef.current = true;
     try {
-      const exchange = await sendMeasureExchange(
-        activePhilosopher,
-        currentQ.sphere,
-        currentQ.question,
-        answer,
-      );
-      advance = exchange?.advance !== false;
-      reply = exchange?.reply ?? "";
-    } catch {
-      // Fail open — treat as answered so the interview never gets stuck.
-    }
+      setCurrentInput("");
+      setIsAcknowledging(true);
 
-    setIsAcknowledging(false);
+      let advance = true;
+      let reply = "";
+      try {
+        const exchange = await sendMeasureExchange(
+          activePhilosopher,
+          currentQ.sphere,
+          currentQ.question,
+          answer,
+        );
+        advance = exchange?.advance !== false;
+        reply = exchange?.reply ?? "";
+      } catch {
+        // Fail open — treat as answered so the interview never gets stuck.
+      }
 
-    if (!advance) {
-      setAsides((prev) => [...prev, { answer, reply }]);
-      return;
-    }
+      setIsAcknowledging(false);
 
-    const updated = [
-      ...interviewMessages,
-      {
-        sphere: currentQ.sphere,
-        question: currentQ.question,
-        answer,
-        acknowledgment: reply,
-      },
-    ];
+      if (!advance) {
+        setAsides((prev) => [...prev, { answer, reply }]);
+        return;
+      }
 
-    setInterviewMessages(updated);
-    setAsides([]);
+      const updated = [
+        ...interviewMessages,
+        {
+          sphere: currentQ.sphere,
+          question: currentQ.question,
+          answer,
+          acknowledgment: reply,
+        },
+      ];
 
-    if (sphereIndex < TOTAL_SPHERES - 1) {
-      setSphereIndex((prev) => prev + 1);
-      return;
-    }
-
-    setPhase("scoring");
-
-    try {
-      const res = await fetch(apiUrl("/measure/interview"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          qaPairs: updated.map(({ sphere, question, answer: a }) => ({
-            sphere,
-            question,
-            answer: a,
-          })),
-        }),
-      });
-
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      setResult(data);
-      setPhase("completion");
-    } catch (err) {
-      console.error("Measure interview scoring failed:", err);
-      setPhase("interview");
-      setSphereIndex(TOTAL_SPHERES - 1);
       setInterviewMessages(updated);
+      setAsides([]);
+
+      if (sphereIndex < TOTAL_SPHERES - 1) {
+        setSphereIndex((prev) => prev + 1);
+        return;
+      }
+
+      setPhase("scoring");
+
+      try {
+        const res = await fetch(apiUrl("/measure/interview"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            qaPairs: updated.map(({ sphere, question, answer: a }) => ({
+              sphere,
+              question,
+              answer: a,
+            })),
+          }),
+        });
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        setResult(data);
+        setPhase("completion");
+      } catch (err) {
+        console.error("Measure interview scoring failed:", err);
+        setPhase("interview");
+        setSphereIndex(TOTAL_SPHERES - 1);
+        setInterviewMessages(updated);
+      }
+    } finally {
+      isSendingRef.current = false;
     }
   };
 

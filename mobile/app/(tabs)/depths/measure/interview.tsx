@@ -42,6 +42,10 @@ export default function InterviewScreen() {
   const [isScoring, setIsScoring] = useState(false);
   const [scoringError, setScoringError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  // Synchronous guard against double-submission — `isAcknowledging` alone has a
+  // gap between calling setState and the re-render that disables the button,
+  // during which a rapid double-tap can fire handleSend twice concurrently.
+  const isSendingRef = useRef(false);
 
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
   const currentSphere = currentQuestion?.sphere;
@@ -54,53 +58,58 @@ export default function InterviewScreen() {
 
   const handleSend = async () => {
     const answer = input.trim();
-    if (!answer || isAcknowledging || !philosopher || !currentQuestion) return;
+    if (!answer || isAcknowledging || !philosopher || !currentQuestion || isSendingRef.current) return;
+    isSendingRef.current = true;
 
-    setInput('');
-    setIsAcknowledging(true);
-
-    let advance = true;
-    let reply = '';
     try {
-      const exchange = await sendMeasureExchange(
-        philosopher,
-        currentQuestion.sphere,
-        currentQuestion.question,
-        answer
-      );
-      advance = exchange.advance !== false;
-      reply = exchange.reply ?? '';
-    } catch {
-      // Fail open — treat as answered so the interview never gets stuck.
-    }
+      setInput('');
+      setIsAcknowledging(true);
 
-    setIsAcknowledging(false);
+      let advance = true;
+      let reply = '';
+      try {
+        const exchange = await sendMeasureExchange(
+          philosopher,
+          currentQuestion.sphere,
+          currentQuestion.question,
+          answer
+        );
+        advance = exchange.advance !== false;
+        reply = exchange.reply ?? '';
+      } catch {
+        // Fail open — treat as answered so the interview never gets stuck.
+      }
 
-    if (!advance) {
-      setAsides((prev) => [...prev, { answer, reply }]);
-      return;
-    }
+      setIsAcknowledging(false);
 
-    addQAPair({ sphere: currentQuestion.sphere, question: currentQuestion.question, answer });
-    setAcknowledgments((prev) => [...prev, reply]);
-    setAsides([]);
+      if (!advance) {
+        setAsides((prev) => [...prev, { answer, reply }]);
+        return;
+      }
 
-    if (sphereIndex < TOTAL_SPHERES - 1) {
-      advanceSphere();
-      return;
-    }
+      addQAPair({ sphere: currentQuestion.sphere, question: currentQuestion.question, answer });
+      setAcknowledgments((prev) => [...prev, reply]);
+      setAsides([]);
 
-    setIsScoring(true);
-    setScoringError(null);
-    try {
-      const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
-      const result = await submitInterview(allPairs);
-      await saveResult({ ...result, savedAt: new Date().toISOString() });
-      router.replace('/(tabs)/depths/measure/reveal');
-    } catch (err) {
-      console.error('Measure interview scoring request failed:', err);
-      setIsScoring(false);
-      setScoringError('Something went wrong reading your field. Try sending your last answer again.');
+      if (sphereIndex < TOTAL_SPHERES - 1) {
+        advanceSphere();
+        return;
+      }
+
+      setIsScoring(true);
+      setScoringError(null);
+      try {
+        const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
+        const result = await submitInterview(allPairs);
+        await saveResult({ ...result, savedAt: new Date().toISOString() });
+        router.replace('/(tabs)/depths/measure/reveal');
+      } catch (err) {
+        console.error('Measure interview scoring request failed:', err);
+        setIsScoring(false);
+        setScoringError('Something went wrong reading your field. Try sending your last answer again.');
+      }
+    } finally {
+      isSendingRef.current = false;
     }
   };
 
