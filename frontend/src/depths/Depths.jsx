@@ -25,6 +25,8 @@ function formatSavedDate(isoString) {
   }
 }
 
+const POSITION_ORDER = ["top", "right", "bottom", "left"];
+
 export default function Depths() {
   const location = useLocation();
   const { activePhilosopher } = useChat();
@@ -34,8 +36,6 @@ export default function Depths() {
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
   );
-  // Lets a person glance back at where they were without losing today's
-  // reading — only ever one reading back, not a full history.
   const [showingPrevious, setShowingPrevious] = useState(false);
 
   useEffect(() => {
@@ -46,7 +46,7 @@ export default function Depths() {
 
   const activeResult = showingPrevious && previousResult ? previousResult : measureResult;
 
-  const diamondPoints = MEASURE_LINES.map((line) => {
+  const diamondPoints = MEASURE_LINES.map((line, index) => {
     const resultLine = activeResult?.lines?.find((l) => l.key === line.key);
     return {
       key: line.key,
@@ -57,13 +57,12 @@ export default function Depths() {
       colorRgb: resultLine
         ? (AXIS_COLORS[resultLine.dominantAxis] ?? AXIS_COLORS.clarity)
         : "120,120,140",
+      position: POSITION_ORDER[index],
     };
   });
 
   return (
-    <div
-      className={`depthsPage ${showPortalArrival ? "is-portal-arrival" : ""}`}
-    >
+    <div className={`depthsPage ${showPortalArrival ? "is-portal-arrival" : ""}`}>
       {showPortalArrival && (
         <div className="depthsPortalArrival" aria-hidden="true">
           <div className="depthsPortalArrivalRing" />
@@ -76,54 +75,60 @@ export default function Depths() {
       <JourneyProgress currentKey="measure" />
 
       <div className="depthsMain">
-        <header className="depthsHeaderCard">
+        <div className="depthsOverallBlock">
           <p className="depthsKicker">The Depths</p>
-          <h1 className="depthsTitle">energy store</h1>
-          <p className="depthsIntro">
-see what your current energy charge consists
-            of and what it's useful for
-          </p>
-        </header>
-
-        <div className="depthsDiamondCard">
-          <div className="depthsDiamondWrap">
-            <DiamondChart points={diamondPoints} showLevels={Boolean(activeResult)} />
-          </div>
-
-          {activeResult && (
-            <p className="depthsScoreLegend">
-              Each side names where that part of you sits right now — from
-              heavier states like <strong>Shame</strong> toward expansive ones
-              like <strong>Enlightenment</strong>. There's no score to hit;
-              naming it is the point. Tap any side to read what it means.
-            </p>
-          )}
-
-          {activeResult?.vibrationLevel && (
-            <Link to={activeResult.vibrationLevel.route} className="depthsOverallLink">
-              Overall, this reads as <strong>{activeResult.vibrationLevel.name}</strong> →
-            </Link>
-          )}
-
-          {previousResult && (
-            <div className="depthsHistoryToggle" role="group" aria-label="Switch reading">
-              <button
-                type="button"
-                className={`depthsHistoryBtn ${!showingPrevious ? "is-active" : ""}`}
-                onClick={() => setShowingPrevious(false)}
-              >
-                Current
-              </button>
-              <button
-                type="button"
-                className={`depthsHistoryBtn ${showingPrevious ? "is-active" : ""}`}
-                onClick={() => setShowingPrevious(true)}
-              >
-                Previous{previousResult.savedAt ? ` · ${formatSavedDate(previousResult.savedAt)}` : ""}
-              </button>
-            </div>
+          {activeResult?.vibrationLevel ? (
+            <>
+              <h1 className="depthsOverallLevel">{activeResult.vibrationLevel.name}</h1>
+              <Link to={activeResult.vibrationLevel.route} className="depthsReadLink">
+                Read what this means →
+              </Link>
+            </>
+          ) : (
+            <h1 className="depthsOverallLevel is-empty">No reading yet</h1>
           )}
         </div>
+
+        <div className="depthsDiamondGrid">
+          {diamondPoints.map((pt) => (
+            <div key={pt.key} className={`depthsAxisLabel depthsAxisLabel-${pt.position}`}>
+              <p className="depthsAxisName">{pt.label}</p>
+              {activeResult && pt.levelName && pt.route ? (
+                <Link
+                  to={pt.route}
+                  className="depthsAxisLevel"
+                  style={{ "--axis-rgb": pt.colorRgb }}
+                >
+                  {pt.levelName}
+                </Link>
+              ) : (
+                <span className="depthsAxisLevel is-empty">—</span>
+              )}
+            </div>
+          ))}
+          <div className="depthsDiamondWrap">
+            <DiamondChart points={diamondPoints} />
+          </div>
+        </div>
+
+        {previousResult && (
+          <div className="depthsHistoryToggle" role="group" aria-label="Switch reading">
+            <button
+              type="button"
+              className={`depthsHistoryBtn ${!showingPrevious ? "is-active" : ""}`}
+              onClick={() => setShowingPrevious(false)}
+            >
+              Current
+            </button>
+            <button
+              type="button"
+              className={`depthsHistoryBtn ${showingPrevious ? "is-active" : ""}`}
+              onClick={() => setShowingPrevious(true)}
+            >
+              Previous{previousResult.savedAt ? ` · ${formatSavedDate(previousResult.savedAt)}` : ""}
+            </button>
+          </div>
+        )}
 
         <Link to="/depths/spheres" className="depthsMeasureCta sf-btn sf-btn-primary">
           {measureResult ? "Measure again" : "Feel into your vibration"} →
