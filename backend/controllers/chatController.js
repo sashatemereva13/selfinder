@@ -283,7 +283,7 @@ Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape
 
 If they engaged with the question, set "advance" to true. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
 
-If they did not really engage — asked something back, deflected, seemed confused — set "advance" to false. "reply" speaks honestly to what they actually said, in your voice, as yourself, then naturally opens the door back to the original question without repeating it word for word. Keep it under 40 words.`;
+If they did not really engage — asked something back, deflected, seemed confused — set "advance" to false. If they asked you a genuine question (like why you're asking this, or what this is for), you must actually answer it — give a real, substantive reason in your own voice, with actual reasoning, not just an acknowledgment that they asked something. Only once you've genuinely answered, naturally return to the original question without repeating it word for word. Keep it under 60 words.`;
 
   try {
     const response = await groq.chat.completions.create({
