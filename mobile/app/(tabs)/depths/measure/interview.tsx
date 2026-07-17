@@ -98,6 +98,7 @@ export default function InterviewScreen() {
       await saveResult({ ...result, savedAt: new Date().toISOString() });
       router.replace('/(tabs)/depths/measure/reveal');
     } catch (err) {
+      console.error('Measure interview scoring request failed:', err);
       setIsScoring(false);
       setScoringError('Something went wrong reading your field. Try sending your last answer again.');
     }
