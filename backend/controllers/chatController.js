@@ -261,6 +261,63 @@ export async function postJourneyLine(req, res) {
   }
 }
 
+export async function postMeasureExchange(req, res) {
+  const { systemPrompt, sphere, question, answer } = req.body;
+
+  if (!systemPrompt || !sphere || !question || typeof answer !== "string") {
+    return res
+      .status(400)
+      .json({ error: "systemPrompt, sphere, question, and answer are required" });
+  }
+
+  const exchangePrompt = `You just asked the person, during a structured self-reflection check-in about their ${sphere}:
+"${question}"
+
+They replied:
+"${answer}"
+
+Decide: did they actually engage with the question — even briefly, vaguely, or emotionally, describing something true about their current state? Or did they ask you something back, push back, express confusion about the process, or say something that isn't really an answer?
+
+Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape:
+{"advance": true, "reply": "..."}
+
+If they engaged with the question, set "advance" to true. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
+
+If they did not really engage — asked something back, deflected, seemed confused — set "advance" to false. "reply" speaks honestly to what they actually said, in your voice, as yourself, then naturally opens the door back to the original question without repeating it word for word. Keep it under 40 words.`;
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: models[1],
+      max_tokens: 200,
+      temperature: 0.5,
+      messages: [
+        { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
+        { role: "user", content: exchangePrompt },
+      ],
+    });
+
+    const text = response.choices[0].message.content.trim();
+    let parsed = null;
+    try {
+      const jsonStart = text.indexOf("{");
+      const jsonEnd = text.lastIndexOf("}");
+      parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    } catch {
+      parsed = null;
+    }
+
+    if (!parsed || typeof parsed.reply !== "string" || !parsed.reply.trim()) {
+      // Fail open: treat as answered so the interview never gets stuck on a bad response.
+      return res.json({ advance: true, reply: "" });
+    }
+
+    res.json({ advance: parsed.advance !== false, reply: parsed.reply.trim() });
+  } catch (err) {
+    console.error("Measure exchange failed:", err);
+    res.json({ advance: true, reply: "" });
+  }
+}
+
 const SPHERE_HELPERS = {
   body: "How your physical state is moving",
   mind: "How attention and inner narrative are moving",
@@ -339,6 +396,26 @@ function buildInterviewInterpretation(rawScores) {
   };
 }
 
+async function requestRawInterviewScores(scoringPrompt) {
+  const response = await groq.chat.completions.create({
+    model: models[0],
+    max_tokens: 400,
+    temperature: 0.1,
+    messages: [
+      { role: "system", content: "You are a precise scoring system. Return only valid JSON, nothing else." },
+      { role: "user", content: scoringPrompt },
+    ],
+  });
+
+  const text = response.choices[0].message.content.trim();
+  const jsonStart = text.indexOf("{");
+  const jsonEnd = text.lastIndexOf("}");
+  if (jsonStart === -1 || jsonEnd === -1) {
+    throw new Error(`No JSON object found in scoring response: ${text}`);
+  }
+  return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+}
+
 export async function postMeasureInterview(req, res) {
   const { qaPairs } = req.body;
 
@@ -365,31 +442,19 @@ ${transcript}
 Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
 {"overall":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"body":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"mind":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"heart":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"spirit":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0}}`;
 
-  try {
-    const response = await groq.chat.completions.create({
-      model: models[0],
-      max_tokens: 400,
-      temperature: 0.1,
-      messages: [
-        { role: "system", content: "You are a precise scoring system. Return only valid JSON, nothing else." },
-        { role: "user", content: scoringPrompt },
-      ],
-    });
-
-    let rawScores;
+  const MAX_ATTEMPTS = 2;
+  let rawScores;
+  for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
     try {
-      const text = response.choices[0].message.content.trim();
-      const jsonStart = text.indexOf("{");
-      const jsonEnd = text.lastIndexOf("}");
-      rawScores = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
-    } catch {
-      console.error("Failed to parse scoring JSON:", response.choices[0].message.content);
-      return res.status(500).json({ error: "Failed to parse scoring response" });
+      rawScores = await requestRawInterviewScores(scoringPrompt);
+      break;
+    } catch (err) {
+      console.error(`Interview scoring attempt ${attempt} failed:`, err.message);
+      if (attempt === MAX_ATTEMPTS) {
+        return res.status(500).json({ error: "Scoring failed" });
+      }
     }
-
-    res.json(buildInterviewInterpretation(rawScores));
-  } catch (err) {
-    console.error("Interview scoring failed:", err);
-    res.status(500).json({ error: "Scoring failed" });
   }
+
+  res.json(buildInterviewInterpretation(rawScores));
 }

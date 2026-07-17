@@ -96,6 +96,7 @@ export function MeasureEntryPhase({ onBegin }) {
 export function MeasureInterviewPhase({
   sphereIndex,
   interviewMessages,
+  asides = [],
   currentInput,
   onInputChange,
   onSend,
@@ -115,7 +116,7 @@ export function MeasureInterviewPhase({
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [interviewMessages, isAcknowledging, sphereIndex]);
+  }, [interviewMessages, asides, isAcknowledging, sphereIndex]);
 
   useEffect(() => {
     if (!isAcknowledging && sphereIndex < totalSpheres) {
@@ -187,6 +188,27 @@ export function MeasureInterviewPhase({
             </div>
           </div>
         )}
+
+        {asides.map((aside, i) => (
+          <div key={i} className="measure-exchange">
+            <div className="measure-bubbleRow measure-bubbleRow-user">
+              <div className="measure-bubble measure-bubble-user">
+                <p>{aside.answer}</p>
+              </div>
+            </div>
+            {aside.reply && (
+              <div className="measure-bubbleRow measure-bubbleRow-philosopher">
+                <div
+                  className="measure-bubble measure-bubble-philosopher"
+                  style={{ "--philo-color": philosopher?.color }}
+                >
+                  <PhilosopherVoiceTag philosopher={philosopher} />
+                  <p>{aside.reply}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
 
         {isAcknowledging && (
           <div className="measure-bubbleRow measure-bubbleRow-philosopher">

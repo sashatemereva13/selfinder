@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import "./measure.css";
 import { MEASURE_ARRIVAL_LINE } from "../content/journeyLines";
 import { useChat } from "../guide/ChatContext";
-import { sendMessage } from "../guide/chatApi";
+import { sendMeasureExchange } from "../guide/chatApi";
 import { apiUrl } from "../api/baseUrl";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
@@ -28,6 +28,10 @@ const Measure = () => {
   const [phase, setPhase] = useState("entry");
   const [sphereIndex, setSphereIndex] = useState(0);
   const [interviewMessages, setInterviewMessages] = useState([]);
+  // Exchanges on the *current* sphere that didn't advance it — the person asked
+  // something back or deflected rather than answering. Cleared whenever the
+  // sphere actually advances or the interview resets.
+  const [asides, setAsides] = useState([]);
   const [currentInput, setCurrentInput] = useState("");
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [result, setResult] = useState(null);
@@ -85,6 +89,7 @@ const Measure = () => {
   const resetState = () => {
     setSphereIndex(0);
     setInterviewMessages([]);
+    setAsides([]);
     setCurrentInput("");
     setIsAcknowledging(false);
     setResult(null);
@@ -111,14 +116,27 @@ const Measure = () => {
     setCurrentInput("");
     setIsAcknowledging(true);
 
-    let acknowledgment = "";
+    let advance = true;
+    let reply = "";
     try {
-      acknowledgment = await sendMessage(
-        [{ role: "user", content: answer }],
+      const exchange = await sendMeasureExchange(
         activePhilosopher,
-        `IMPORTANT: The person has just answered a self-reflection question about their ${currentQ.sphere} during a vibration check-in. Respond with ONE short sentence (10–20 words) acknowledging what they shared — completely in your voice. Do not ask another question yet.`,
+        currentQ.sphere,
+        currentQ.question,
+        answer,
       );
-    } catch {}
+      advance = exchange?.advance !== false;
+      reply = exchange?.reply ?? "";
+    } catch {
+      // Fail open — treat as answered so the interview never gets stuck.
+    }
+
+    setIsAcknowledging(false);
+
+    if (!advance) {
+      setAsides((prev) => [...prev, { answer, reply }]);
+      return;
+    }
 
     const updated = [
       ...interviewMessages,
@@ -126,12 +144,12 @@ const Measure = () => {
         sphere: currentQ.sphere,
         question: currentQ.question,
         answer,
-        acknowledgment,
+        acknowledgment: reply,
       },
     ];
 
     setInterviewMessages(updated);
-    setIsAcknowledging(false);
+    setAsides([]);
 
     if (sphereIndex < TOTAL_SPHERES - 1) {
       setSphereIndex((prev) => prev + 1);
@@ -196,6 +214,7 @@ const Measure = () => {
             <MeasureInterviewPhase
               sphereIndex={sphereIndex}
               interviewMessages={interviewMessages}
+              asides={asides}
               currentInput={currentInput}
               onInputChange={setCurrentInput}
               onSend={handleSend}
