@@ -1,0 +1,322 @@
+import { useEffect, useRef, useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  Pressable,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { colors } from '../../../../src/theme/colors';
+import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
+import { spacing, radius } from '../../../../src/theme/spacing';
+import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
+import { useMeasureStore } from '../../../../src/store/measureStore';
+import { sendMeasureExchange } from '../../../../src/api/chat';
+import { submitInterview } from '../../../../src/api/measure';
+import { SPHERE_SUGGESTIONS } from '../../../../src/content/measureConfig';
+import { Sphere } from '../../../../src/types';
+import { TypingDots } from '../../../../src/components/TypingDots';
+
+const SPHERE_LABELS: Record<Sphere, string> = {
+  body: 'Body', mind: 'Mind', heart: 'Heart', spirit: 'Spirit',
+};
+const TOTAL_SPHERES = 4;
+
+export default function InterviewScreen() {
+  const router = useRouter();
+  const philosopher = usePhilosopherStore((s) => s.philosopher);
+  const { sphereIndex, qaPairs, addQAPair, advanceSphere, saveResult, resetInterview } =
+    useMeasureStore();
+
+  const [input, setInput] = useState('');
+  const [acknowledgments, setAcknowledgments] = useState<string[]>([]);
+  // Exchanges on the *current* sphere that didn't advance it — the person asked
+  // something back or deflected rather than answering. Cleared whenever the
+  // sphere actually advances or the interview resets.
+  const [asides, setAsides] = useState<{ answer: string; reply: string }[]>([]);
+  const [isAcknowledging, setIsAcknowledging] = useState(false);
+  const [isScoring, setIsScoring] = useState(false);
+  const [scoringError, setScoringError] = useState<string | null>(null);
+  const scrollRef = useRef<ScrollView>(null);
+
+  const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
+  const currentSphere = currentQuestion?.sphere;
+  const suggestions = currentSphere ? SPHERE_SUGGESTIONS[currentSphere] : [];
+  const accentColor = philosopher?.color ?? colors.brand.purple;
+
+  useEffect(() => {
+    scrollRef.current?.scrollToEnd({ animated: true });
+  }, [qaPairs.length, asides.length, isAcknowledging, isScoring]);
+
+  const handleSend = async () => {
+    const answer = input.trim();
+    if (!answer || isAcknowledging || !philosopher || !currentQuestion) return;
+
+    setInput('');
+    setIsAcknowledging(true);
+
+    let advance = true;
+    let reply = '';
+    try {
+      const exchange = await sendMeasureExchange(
+        philosopher,
+        currentQuestion.sphere,
+        currentQuestion.question,
+        answer
+      );
+      advance = exchange.advance !== false;
+      reply = exchange.reply ?? '';
+    } catch {
+      // Fail open — treat as answered so the interview never gets stuck.
+    }
+
+    setIsAcknowledging(false);
+
+    if (!advance) {
+      setAsides((prev) => [...prev, { answer, reply }]);
+      return;
+    }
+
+    addQAPair({ sphere: currentQuestion.sphere, question: currentQuestion.question, answer });
+    setAcknowledgments((prev) => [...prev, reply]);
+    setAsides([]);
+
+    if (sphereIndex < TOTAL_SPHERES - 1) {
+      advanceSphere();
+      return;
+    }
+
+    setIsScoring(true);
+    setScoringError(null);
+    try {
+      const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
+      const result = await submitInterview(allPairs);
+      await saveResult({ ...result, savedAt: new Date().toISOString() });
+      router.replace('/(tabs)/depths/measure/reveal');
+    } catch (err) {
+      setIsScoring(false);
+      setScoringError('Something went wrong reading your field. Try sending your last answer again.');
+    }
+  };
+
+  const handleRestart = () => {
+    resetInterview();
+    setAcknowledgments([]);
+    setAsides([]);
+    router.replace('/(tabs)/depths/measure');
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={styles.root}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={80}
+    >
+      <View style={styles.sphereProgress}>
+        {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => (
+          <View
+            key={sphere}
+            style={[
+              styles.sphereDot,
+              i < qaPairs.length && { backgroundColor: accentColor, borderColor: accentColor },
+              i === sphereIndex && { borderColor: accentColor },
+            ]}
+          >
+            <Text style={styles.sphereDotLabel}>{SPHERE_LABELS[sphere]}</Text>
+          </View>
+        ))}
+      </View>
+
+      <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        {qaPairs.map((pair, i) => (
+          <View key={pair.sphere} style={styles.exchange}>
+            <Bubble color={accentColor}>{pair.question}</Bubble>
+            <Bubble isUser>{pair.answer}</Bubble>
+            {acknowledgments[i] ? (
+              <Bubble color={accentColor}>{acknowledgments[i]}</Bubble>
+            ) : null}
+          </View>
+        ))}
+
+        {!isScoring && currentQuestion && (
+          <Bubble color={accentColor}>{currentQuestion.question}</Bubble>
+        )}
+
+        {asides.map((aside, i) => (
+          <View key={i} style={styles.exchange}>
+            <Bubble isUser>{aside.answer}</Bubble>
+            {aside.reply ? <Bubble color={accentColor}>{aside.reply}</Bubble> : null}
+          </View>
+        ))}
+
+        {isAcknowledging && (
+          <View style={[styles.bubble, styles.bubblePhilosopher, styles.typingBubble, { borderColor: accentColor }]}>
+            <TypingDots />
+          </View>
+        )}
+
+        {isScoring && (
+          <View style={styles.scoringBlock}>
+            <Text style={[styles.scoringText, { color: accentColor }]}>Reading your field…</Text>
+          </View>
+        )}
+
+        {scoringError && <Text style={styles.errorText}>{scoringError}</Text>}
+      </ScrollView>
+
+      {!isScoring && currentQuestion && (
+        <View style={styles.compose}>
+          {suggestions.length > 0 && !isAcknowledging && (
+            <View style={styles.suggestions}>
+              {suggestions.map((s) => {
+                const isSelected = input === s;
+                return (
+                  <Pressable
+                    key={s}
+                    style={[styles.suggestionChip, isSelected && { borderColor: accentColor }]}
+                    onPress={() => setInput(s)}
+                  >
+                    <Text style={[styles.suggestionText, isSelected && { color: accentColor }]}>{s}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={input}
+              onChangeText={setInput}
+              placeholder="Or write your own…"
+              placeholderTextColor={colors.text.muted}
+              multiline
+              editable={!isAcknowledging}
+            />
+            <Pressable
+              style={[styles.sendButton, { backgroundColor: accentColor, opacity: input.trim() && !isAcknowledging ? 1 : 0.4 }]}
+              onPress={handleSend}
+              disabled={!input.trim() || isAcknowledging}
+            >
+              <Text style={styles.sendButtonText}>↑</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
+      <Pressable style={styles.restartButton} onPress={handleRestart}>
+        <Text style={styles.restartText}>Start over</Text>
+      </Pressable>
+    </KeyboardAvoidingView>
+  );
+}
+
+function Bubble({ children, color, isUser }: { children: string; color?: string; isUser?: boolean }) {
+  return (
+    <View
+      style={[
+        styles.bubble,
+        isUser ? styles.bubbleUser : styles.bubblePhilosopher,
+        !isUser && color ? { borderColor: color } : null,
+      ]}
+    >
+      <Text style={styles.bubbleText}>{children}</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: colors.bg.base, paddingTop: spacing[12] },
+  sphereProgress: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: spacing[3],
+    paddingBottom: spacing[3],
+  },
+  sphereDot: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[1],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+  },
+  sphereDotLabel: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+  },
+  scroll: { flex: 1 },
+  scrollContent: { paddingHorizontal: spacing[5], paddingBottom: spacing[4], gap: spacing[3] },
+  exchange: { gap: spacing[2], marginBottom: spacing[2] },
+  bubble: {
+    maxWidth: '85%',
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    marginBottom: spacing[2],
+  },
+  bubblePhilosopher: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.bg.elevated,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+  },
+  bubbleUser: {
+    alignSelf: 'flex-end',
+    backgroundColor: colors.bg.surface,
+  },
+  bubbleText: {
+    color: colors.text.primary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * lineHeights.normal,
+  },
+  typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
+  scoringBlock: { alignItems: 'center', paddingVertical: spacing[8] },
+  scoringText: { fontFamily: fonts.medium, fontSize: fontSizes.md },
+  errorText: {
+    color: colors.brand.purple,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+    paddingVertical: spacing[3],
+  },
+  compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
+  suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[3] },
+  suggestionChip: {
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    borderRadius: radius.full,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+  },
+  suggestionText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
+  input: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.elevated,
+    color: colors.text.primary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.base,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+  },
+  sendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sendButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.lg },
+  restartButton: { alignItems: 'center', paddingVertical: spacing[4] },
+  restartText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+});

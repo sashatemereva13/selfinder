@@ -27,6 +27,22 @@ backend/.env.*
 
 
 # --------------------
+# Mobile (Expo / React Native)
+# --------------------
+mobile/node_modules/
+mobile/.env
+mobile/.env.*
+mobile/.expo/
+mobile/dist/
+mobile/web-build/
+mobile/expo-env.d.ts
+mobile/.kotlin/
+mobile/.metro-health-check*
+mobile/*.tsbuildinfo
+mobile/ios/
+mobile/android/
+
+# --------------------
 # IDE
 # --------------------
 .vscode/
