@@ -83,12 +83,15 @@ export async function grantConsent(req, res) {
   });
 }
 
-// Withdraw consent — Art. 7(3); also deletes stored conversations
+// Withdraw consent — Art. 7(3); also deletes stored conversations and measure results
 export async function withdrawConsent(req, res) {
   const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  await Conversation.deleteMany({ userId: req.user.id });
+  await Promise.all([
+    Conversation.deleteMany({ userId: req.user.id }),
+    MeasureResult.deleteMany({ userId: req.user.id }),
+  ]);
 
   const now = new Date().toISOString();
   user.consent.psychologicalData.given = false;

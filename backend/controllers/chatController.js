@@ -2,6 +2,9 @@ import Groq from "groq-sdk";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import { BADGE_COMMENT_PROMPTS } from "../data/badgeCommentPrompts.js";
 import { JOURNEY_LINE_PROMPTS } from "../data/journeyLinePrompts.js";
+import User from "../models/User.js";
+import MeasureResult from "../models/MeasureResult.js";
+import { recommendPhilosopher } from "./measureController.js";
 import {
   getNearestVibrationLevel,
   getFrequencyBand,
@@ -419,6 +422,35 @@ async function requestRawInterviewScores(scoringPrompt) {
   return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
 }
 
+// Best-effort — a save failure should never break the reading itself. Requires
+// both an authenticated user and explicit special-category consent (Art. 9),
+// same gate the conversation-storage flow already uses.
+async function saveMeasureResultIfConsented(userPayload, interpretation) {
+  if (!userPayload?.id) return;
+
+  try {
+    const user = await User.findOne({ id: userPayload.id });
+    if (!user?.consent?.psychologicalData?.given) return;
+
+    await MeasureResult.create({
+      userId: userPayload.id,
+      vibrationScore: interpretation.vibrationScore,
+      rawVibrationScore: interpretation.rawVibrationScore,
+      vibrationLevel: interpretation.vibrationLevel,
+      band: interpretation.band,
+      dominantAxis: interpretation.dominantAxis,
+      scores: interpretation.scores,
+      lines: interpretation.lines,
+      microPractice: interpretation.microPractice ?? null,
+      affirmation: interpretation.affirmation ?? null,
+      recommendedPhilosopher: recommendPhilosopher(interpretation.vibrationScore),
+      savedAt: new Date().toISOString(),
+    });
+  } catch (err) {
+    console.error("Failed to save measure result:", err.message);
+  }
+}
+
 export async function postMeasureInterview(req, res) {
   const { qaPairs } = req.body;
 
@@ -459,5 +491,7 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
     }
   }
 
-  res.json(buildInterviewInterpretation(rawScores));
+  const interpretation = buildInterviewInterpretation(rawScores);
+  await saveMeasureResultIfConsented(req.user, interpretation);
+  res.json(interpretation);
 }
