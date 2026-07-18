@@ -5,6 +5,7 @@ import { MEASURE_ARRIVAL_LINE } from "../content/journeyLines";
 import { useChat } from "../guide/ChatContext";
 import { sendMeasureExchange } from "../guide/chatApi";
 import { apiUrl } from "../api/baseUrl";
+import { useAuth } from "../auth/AuthContext";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
 import {
@@ -24,6 +25,7 @@ const TOTAL_SPHERES = 4;
 const Measure = () => {
   const location = useLocation();
   const { activePhilosopher } = useChat();
+  const { token } = useAuth();
 
   const [phase, setPhase] = useState("entry");
   const [sphereIndex, setSphereIndex] = useState(0);
@@ -123,7 +125,10 @@ const Measure = () => {
     try {
       const res = await fetch(apiUrl("/measure/interview"), {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           qaPairs: messages.map(({ sphere, question, answer }) => ({
             sphere,

@@ -31,6 +31,36 @@ function useUserProfile(token) {
   return { profile, loading, refresh };
 }
 
+function useMeasureHistory(token, enabled) {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = useCallback(async () => {
+    if (!token || !enabled) { setLoading(false); return; }
+    setLoading(true);
+    try {
+      const res = await fetch(apiUrl("/measure/history"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) setHistory(await res.json());
+    } finally {
+      setLoading(false);
+    }
+  }, [token, enabled]);
+
+  useEffect(() => { refresh(); }, [refresh]);
+
+  return { history, loading, refresh };
+}
+
+function formatReadingDate(iso) {
+  try {
+    return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
 export default function PersonalSpace() {
   const { user, token, logout } = useAuth();
   const { activePhilosopher, conversations, selectPhilosopher } = useChat();
@@ -57,6 +87,8 @@ export default function PersonalSpace() {
 
   const consentGiven = profile?.consent?.psychologicalData?.given ?? false;
   const consentTimestamp = profile?.consent?.psychologicalData?.timestamp;
+
+  const { history, loading: historyLoading } = useMeasureHistory(token, consentGiven);
 
   function handleLogout() {
     logout();
@@ -189,11 +221,40 @@ export default function PersonalSpace() {
                 <span className="ps-statName">companions spoken to</span>
               </div>
             </div>
-            <p className="ps-statsNote">
-              Persistent history arrives with the next update.
-            </p>
           </section>
         </div>
+
+        {/* Readings card */}
+        <section className="ps-card ps-card--journey">
+          <p className="ps-cardLabel sf-kicker">Your readings</p>
+
+          {!consentGiven ? (
+            <p className="ps-noPhilosopherText">
+              Grant consent below to start saving your Measure readings to your account.
+            </p>
+          ) : historyLoading ? (
+            <p className="ps-noPhilosopherText">Loading…</p>
+          ) : history.length === 0 ? (
+            <p className="ps-noPhilosopherText">
+              No readings saved yet — take a Measure check-in to start your history.
+            </p>
+          ) : (
+            <div className="ps-roomList">
+              {history.map((reading) => (
+                <Link
+                  key={reading.id}
+                  to={reading.vibrationLevel?.route ?? "/levels"}
+                  className="ps-roomRow"
+                >
+                  <span className="ps-roomStage">{formatReadingDate(reading.savedAt)}</span>
+                  <span className="ps-roomLabel">
+                    {reading.vibrationLevel?.name} · {reading.vibrationScore}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
 
         {/* GDPR section */}
         <section className="ps-gdpr">
