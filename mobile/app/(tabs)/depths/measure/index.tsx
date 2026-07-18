@@ -5,6 +5,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
+import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -21,10 +22,12 @@ export default function TodayScreen() {
 
   return (
     <View style={styles.root}>
-      <View style={styles.content}>
+      <AmbientGlow />
+
+      <View style={styles.body}>
         <Text style={styles.kicker}>Frequency Check-In</Text>
         <Text style={styles.title}>
-          A conversation to read where you are right now
+          A conversation to read{'\n'}where you are right now
         </Text>
         <Text style={styles.copy}>
           {philosopher?.name ?? 'Your philosopher'} will ask you about four sides of your
@@ -37,7 +40,9 @@ export default function TodayScreen() {
             Last reading: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
           </Text>
         )}
+      </View>
 
+      <View style={styles.footer}>
         <Pressable
           style={[styles.button, { backgroundColor: accentColor }]}
           onPress={handleBegin}
@@ -53,11 +58,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
+  },
+  body: {
+    flex: 1,
     justifyContent: 'center',
     paddingHorizontal: spacing[6],
-  },
-  content: {
     gap: spacing[4],
+  },
+  footer: {
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[10],
   },
   kicker: {
     color: colors.text.muted,
@@ -69,8 +79,8 @@ const styles = StyleSheet.create({
   title: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.xxl,
-    lineHeight: fontSizes.xxl * lineHeights.tight,
+    fontSize: fontSizes.md,
+    lineHeight: fontSizes.md * lineHeights.tight,
   },
   copy: {
     color: colors.text.secondary,
@@ -84,7 +94,6 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
   },
   button: {
-    marginTop: spacing[4],
     paddingVertical: spacing[4],
     borderRadius: radius.full,
     alignItems: 'center',
