@@ -12,19 +12,19 @@ export const PHILOSOPHERS: Philosopher[] = [
     measureQuestions: [
       {
         sphere: 'body',
-        question: "Before we go any further — what is your body doing right now? Where does it feel tense, where does it let go, and what does it tell you that you haven't quite said out loud?",
+        question: "What is your body telling you right now that you haven't quite said out loud?",
       },
       {
         sphere: 'mind',
-        question: "And the mind — where does it keep pulling your attention today? Is there a clear current underneath, or does it feel scattered and looking for a center?",
+        question: "Where does your attention keep pulling today — is there a clear thread, or does it feel scattered?",
       },
       {
         sphere: 'heart',
-        question: "What is it, at the bottom of things, that is moving you today? And how close or distant do you feel to the people around you?",
+        question: "What is it, underneath everything, that is moving you today?",
       },
       {
         sphere: 'spirit',
-        question: "What feels genuinely worth doing today — not what should feel worth it, but what actually does? And what do you believe is possible in your next step?",
+        question: "What feels genuinely worth doing today — not what should, but what actually does?",
       },
     ],
     systemPrompt: `You are Socrates, speaking with a person who has come to you seeking clarity.
@@ -53,19 +53,19 @@ Trust the silence that a good question creates.`,
     measureQuestions: [
       {
         sphere: 'body',
-        question: "Place your attention on your body. How is it carrying you today — steady beneath you, or straining against this moment?",
+        question: "How is your body carrying you today — steady beneath you, or straining against the moment?",
       },
       {
         sphere: 'mind',
-        question: "What is the quality of your attention right now? Can your mind command itself, or does it wander into what you cannot control?",
+        question: "Can your mind command itself today, or does it wander into what you cannot control?",
       },
       {
         sphere: 'heart',
-        question: "What drives you at this moment — duty, fear, love, or something harder to name? And do you feel the presence of others, or a kind of solitude in your work?",
+        question: "What drives you at this moment — duty, fear, love, or something harder to name?",
       },
       {
         sphere: 'spirit',
-        question: "What do you consider worth doing today, and how do you stand with what you cannot change?",
+        question: "What do you consider worth doing today, regardless of what you cannot change?",
       },
     ],
     systemPrompt: `You are Marcus Aurelius — Roman emperor, soldier, and philosopher. You write
@@ -92,19 +92,19 @@ clear observation followed by one grounding question is often enough.`,
     measureQuestions: [
       {
         sphere: 'body',
-        question: "The body knows things the mind won't admit. What is yours carrying today — its pace, its weight, how fully it is or isn't here?",
+        question: "What is your body carrying today — its weight, its pace, how present it actually is?",
       },
       {
         sphere: 'mind',
-        question: "What does the voice inside your head sound like today? Harsh, kind, scattered, clear — what tone does it have most often?",
+        question: "What does the voice inside your head sound like today?",
       },
       {
         sphere: 'heart',
-        question: "When you think of the people in your life right now — what do you feel? And what is it that has you moving at all today, beneath the reason you'd tell someone else?",
+        question: "What is it that has you moving at all today, beneath the reason you'd tell someone else?",
       },
       {
         sphere: 'spirit',
-        question: "Does anything feel genuinely meaningful right now, or are you simply moving? And the next step — does it feel open, closed, or simply uncertain?",
+        question: "Does anything feel genuinely meaningful right now, or are you simply moving?",
       },
     ],
     systemPrompt: `You are Søren Kierkegaard, speaking with a person who is caught somewhere
@@ -131,19 +131,19 @@ more powerful than a long meditation.`,
     measureQuestions: [
       {
         sphere: 'body',
-        question: "Your body is here, in this specific moment. Heavy, light, wound up, dissolved — or somewhere the words don't quite reach. What is it, actually?",
+        question: "Where is your body right now — heavy, light, wound up, or somewhere the words don't quite reach?",
       },
       {
         sphere: 'mind',
-        question: "What does thinking feel like right now? Are you in it, running from it, or watching it from some distance between you and your own mind?",
+        question: "Are you in your thinking right now, running from it, or watching it from some distance?",
       },
       {
         sphere: 'heart',
-        question: "Others exist — you know this. How are you with them today? And what, if anything, still feels worth doing at all?",
+        question: "Others exist — you know this. How are you with them today?",
       },
       {
         sphere: 'spirit',
-        question: "What feels meaningful today — if anything does? And the future: open, shut, or just quietly uncertain?",
+        question: "What feels meaningful today — if anything does?",
       },
     ],
     systemPrompt: `You are Albert Camus, speaking with a person who has come to you because
@@ -171,19 +171,19 @@ worth more than a paragraph of comfort.`,
     measureQuestions: [
       {
         sphere: 'body',
-        question: "The body is the instrument of everything else. How is yours functioning right now — its pace, its breath, its baseline state today?",
+        question: "The body is the instrument of everything else. How is yours functioning right now?",
       },
       {
         sphere: 'mind',
-        question: "Tell me about the quality of your thinking today. Is reason available to you, or scattered? What tone does your inner voice have?",
+        question: "Is reason available to you today, or does it feel scattered?",
       },
       {
         sphere: 'heart',
-        question: "How are you relating to the people around you, and what is actually driving you beneath the reason you might state out loud?",
+        question: "What is actually driving you today, beneath the reason you might state out loud?",
       },
       {
         sphere: 'spirit',
-        question: "Where is your horizon today — how far can you see what is possible? And how do you hold the uncertainty that surrounds whatever comes next?",
+        question: "How far can you see what's possible from where you stand today?",
       },
     ],
     systemPrompt: `You are Aristotle, speaking with a person who is ready to move.

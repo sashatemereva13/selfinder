@@ -579,29 +579,6 @@ export const INITIAL_CHOICES = Object.fromEntries(
   STEP_CONFIG.map((step) => [step.key, null]),
 );
 
-export const SPHERE_SUGGESTIONS = {
-  body: [
-    "Tight and tense — like I'm bracing for something",
-    "Okay, nothing remarkable",
-    "Open and at ease",
-  ],
-  mind: [
-    "Scattered, jumping between things",
-    "Functional — getting by",
-    "Clear and focused",
-  ],
-  heart: [
-    "Pulling back, mostly running on obligation",
-    "Selective — some connection, some distance",
-    "Connected, driven by something real",
-  ],
-  spirit: [
-    "Just getting through today — nothing feels meaningful yet",
-    "Working toward something, horizon is a bit unclear",
-    "Clear on what matters, next step feels open",
-  ],
-};
-
 export const VIBRATION_LEVELS = [
   { name: "Shame", slug: "shame", score: 20, route: "/levels/shame" },
   { name: "Guilt", slug: "guilt", score: 30, route: "/levels/guilt" },

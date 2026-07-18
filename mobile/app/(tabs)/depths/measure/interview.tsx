@@ -10,6 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
@@ -17,9 +18,10 @@ import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
-import { SPHERE_SUGGESTIONS } from '../../../../src/content/measureConfig';
 import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
+import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
 
 const SPHERE_LABELS: Record<Sphere, string> = {
   body: 'Body', mind: 'Mind', heart: 'Heart', spirit: 'Spirit',
@@ -28,6 +30,7 @@ const TOTAL_SPHERES = 4;
 
 export default function InterviewScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const { sphereIndex, qaPairs, addQAPair, advanceSphere, saveResult, resetInterview } =
     useMeasureStore();
@@ -48,8 +51,6 @@ export default function InterviewScreen() {
   const isSendingRef = useRef(false);
 
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
-  const currentSphere = currentQuestion?.sphere;
-  const suggestions = currentSphere ? SPHERE_SUGGESTIONS[currentSphere] : [];
   const accentColor = philosopher?.color ?? colors.brand.purple;
 
   useEffect(() => {
@@ -134,10 +135,12 @@ export default function InterviewScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.root}
+      style={[styles.root, { paddingTop: insets.top + spacing[4] }]}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       keyboardVerticalOffset={80}
     >
+      <AmbientGlow />
+
       <View style={styles.sphereProgress}>
         {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => (
           <View
@@ -183,7 +186,10 @@ export default function InterviewScreen() {
 
         {isScoring && (
           <View style={styles.scoringBlock}>
-            <Text style={[styles.scoringText, { color: accentColor }]}>Reading your field…</Text>
+            <Text style={[styles.scoringText, { color: accentColor }]}>
+              {philosopher?.name ?? 'Your philosopher'} is reading your field…
+            </Text>
+            <ScoringOrbs />
           </View>
         )}
 
@@ -202,28 +208,12 @@ export default function InterviewScreen() {
 
       {!isScoring && !scoringError && currentQuestion && (
         <View style={styles.compose}>
-          {suggestions.length > 0 && !isAcknowledging && (
-            <View style={styles.suggestions}>
-              {suggestions.map((s) => {
-                const isSelected = input === s;
-                return (
-                  <Pressable
-                    key={s}
-                    style={[styles.suggestionChip, isSelected && { borderColor: accentColor }]}
-                    onPress={() => setInput(s)}
-                  >
-                    <Text style={[styles.suggestionText, isSelected && { color: accentColor }]}>{s}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          )}
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
               value={input}
               onChangeText={setInput}
-              placeholder="Or write your own…"
+              placeholder="Type your answer, or ask why…"
               placeholderTextColor={colors.text.muted}
               multiline
               editable={!isAcknowledging}
@@ -261,7 +251,7 @@ function Bubble({ children, color, isUser }: { children: string; color?: string;
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg.base, paddingTop: spacing[12] },
+  root: { flex: 1, backgroundColor: colors.bg.base },
   sphereProgress: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -281,7 +271,13 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
   },
   scroll: { flex: 1 },
-  scrollContent: { paddingHorizontal: spacing[5], paddingBottom: spacing[4], gap: spacing[3] },
+  scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'flex-end',
+    paddingHorizontal: spacing[5],
+    paddingBottom: spacing[4],
+    gap: spacing[3],
+  },
   exchange: { gap: spacing[2], marginBottom: spacing[2] },
   bubble: {
     maxWidth: '85%',
@@ -307,7 +303,7 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.base * lineHeights.normal,
   },
   typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
-  scoringBlock: { alignItems: 'center', paddingVertical: spacing[8] },
+  scoringBlock: { alignItems: 'center', gap: spacing[4], paddingVertical: spacing[8] },
   scoringText: { fontFamily: fonts.medium, fontSize: fontSizes.md },
   errorText: {
     color: colors.brand.purple,
@@ -324,15 +320,6 @@ const styles = StyleSheet.create({
   },
   retryButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
-  suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[3] },
-  suggestionChip: {
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    borderRadius: radius.full,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-  },
-  suggestionText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
   input: {
     flex: 1,

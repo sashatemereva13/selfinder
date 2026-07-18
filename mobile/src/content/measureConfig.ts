@@ -42,26 +42,3 @@ export const VIBRATION_LEVELS: VibrationLevel[] = [
 
 // Position in the diamond grid: body=top, mind=right, heart=bottom, spirit=left
 export const POSITION_ORDER = ['top', 'right', 'bottom', 'left'] as const;
-
-export const SPHERE_SUGGESTIONS: Record<Sphere, [string, string, string]> = {
-  body: [
-    'Tight and tense — like I\'m bracing for something',
-    'Okay, nothing remarkable',
-    'Open and at ease',
-  ],
-  mind: [
-    'Scattered, jumping between things',
-    'Functional — getting by',
-    'Clear and focused',
-  ],
-  heart: [
-    'Pulling back, mostly running on obligation',
-    'Selective — some connection, some distance',
-    'Connected, driven by something real',
-  ],
-  spirit: [
-    'Just getting through today — nothing feels meaningful yet',
-    'Working toward something, horizon is a bit unclear',
-    'Clear on what matters, next step feels open',
-  ],
-};

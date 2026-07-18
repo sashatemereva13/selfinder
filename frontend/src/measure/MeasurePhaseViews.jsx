@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { AXIS_COLORS, THERMOMETER_MAX, VIBRATION_LEVELS, SPHERE_SUGGESTIONS } from "./measureConfig";
+import { AXIS_COLORS, THERMOMETER_MAX, VIBRATION_LEVELS } from "./measureConfig";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 
 function VibrationThermometer({ score, level, axisKey, compact = false }) {
@@ -109,8 +109,6 @@ export function MeasureInterviewPhase({
   const totalSpheres = 4;
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
   const sphereLabels = { body: "Body", mind: "Mind", heart: "Heart", spirit: "Spirit" };
-  const currentSphere = currentQuestion?.sphere;
-  const suggestions = currentSphere ? (SPHERE_SUGGESTIONS[currentSphere] ?? []) : [];
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -226,23 +224,6 @@ export function MeasureInterviewPhase({
 
       {sphereIndex < totalSpheres && (
         <div className="measure-interviewCompose">
-          {suggestions.length > 0 && !isAcknowledging && (
-            <div className="measure-suggestions" role="group" aria-label="Quick answers">
-              {suggestions.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  className={`measure-suggestion${currentInput === s ? " is-selected" : ""}`}
-                  onClick={() => {
-                    onInputChange(s);
-                    inputRef.current?.focus();
-                  }}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          )}
           <div className="measure-interviewInputRow">
             <textarea
               ref={inputRef}
@@ -250,7 +231,7 @@ export function MeasureInterviewPhase({
               value={currentInput}
               onChange={(e) => onInputChange(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Or write your own…"
+              placeholder="Type your answer, or ask why…"
               rows={2}
               disabled={isAcknowledging}
               aria-label="Your answer"

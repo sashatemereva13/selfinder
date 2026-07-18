@@ -2201,38 +2201,6 @@
   flex-shrink: 0;
 }
 
-.measure-suggestions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.measure-suggestion {
-  padding: 0.38rem 0.75rem;
-  border-radius: 20px;
-  border: 1px solid rgba(243, 246, 255, 0.15);
-  background: rgba(255, 255, 255, 0.04);
-  color: rgba(243, 246, 255, 0.72);
-  font-family: inherit;
-  font-size: 0.78rem;
-  line-height: 1.4;
-  cursor: pointer;
-  text-align: left;
-  transition: border-color 0.18s, background 0.18s, color 0.18s;
-}
-
-.measure-suggestion:hover {
-  border-color: rgba(185, 140, 255, 0.45);
-  background: rgba(185, 140, 255, 0.1);
-  color: rgba(243, 246, 255, 0.92);
-}
-
-.measure-suggestion.is-selected {
-  border-color: rgba(185, 140, 255, 0.7);
-  background: rgba(185, 140, 255, 0.18);
-  color: rgba(243, 246, 255, 1);
-}
-
 /* input row ------------------------------------------------- */
 .measure-interviewInputRow {
   display: flex;
