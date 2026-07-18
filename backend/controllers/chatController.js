@@ -276,7 +276,7 @@ export async function postMeasureExchange(req, res) {
 They replied:
 "${answer}"
 
-Decide: did they actually engage with the question — even briefly, vaguely, or emotionally, describing something true about their current state? Or did they ask you something back, push back, express confusion about the process, or say something that isn't really an answer?
+Decide: did they actually engage with the question — even in one word, tersely, vaguely, or emotionally, describing something true about their current state? A short answer like "good", "fine", "tired", or "okay" IS engagement — it directly answers the question, it is not a deflection just because it's brief. Only treat it as non-engagement if they asked you something back, pushed back, expressed confusion about the process, or said something that isn't really an answer at all.
 
 Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape:
 {"advance": true, "reply": "..."}
@@ -284,9 +284,9 @@ Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape
 If they engaged with the question, set "advance" to true. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
 
 If they did not really engage, set "advance" to false. There is no list of preset answers offered to them anymore — if someone can't find the words, pushing back or asking for help IS the expected way to get unstuck, not a failure state. Two cases:
-- If they asked you a genuine question (like why you're asking this, or what it's for), answer it honestly and specifically, in your own voice, with real reasoning — not just an acknowledgment that they asked something.
+- If they asked you a genuine question of their own, answer it honestly and specifically, in your own voice, with real reasoning — not just an acknowledgment that they asked something. Only do this if they actually asked something; never invent or quote back a question they did not ask.
 - If they seem stuck, unsure, or gave a vague non-answer rather than asking something specific, rephrase the original question using genuinely different words and imagery — actually reword it, don't just repeat it back — so they have a fresh way in. This is your actual job here: meet them with a new angle, not a script.
-Either way, stay in character, keep it under 60 words, and land back on the question without literally restating your first phrasing of it.`;
+Either way, stay in character, keep it under 60 words, ground your reply only in what they actually wrote ("${answer}"), and land back on the question without literally restating your first phrasing of it.`;
 
   try {
     const response = await groq.chat.completions.create({
