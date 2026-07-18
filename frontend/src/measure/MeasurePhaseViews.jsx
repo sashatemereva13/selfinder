@@ -277,17 +277,28 @@ export function MeasureInterviewPhase({
   );
 }
 
-export function MeasureScoringPhase({ philosopher, interviewMessages }) {
+export function MeasureScoringPhase({ philosopher, interviewMessages, scoringError, onRetry }) {
   return (
     <div className="measure-phaseBlock measure-scoringPhase">
       <PhilosopherVoiceTag philosopher={philosopher} />
-      <p className="measure-scoringText">Reading your field…</p>
-      <div className="measure-scoringOrbs" aria-hidden="true">
-        <span className="measure-scoringOrb" />
-        <span className="measure-scoringOrb" />
-        <span className="measure-scoringOrb" />
-        <span className="measure-scoringOrb" />
-      </div>
+      {scoringError ? (
+        <>
+          <p className="measure-scoringText">{scoringError}</p>
+          <button type="button" className="measure-btn measure-btn-primary" onClick={onRetry}>
+            Try again
+          </button>
+        </>
+      ) : (
+        <>
+          <p className="measure-scoringText">Reading your field…</p>
+          <div className="measure-scoringOrbs" aria-hidden="true">
+            <span className="measure-scoringOrb" />
+            <span className="measure-scoringOrb" />
+            <span className="measure-scoringOrb" />
+            <span className="measure-scoringOrb" />
+          </div>
+        </>
+      )}
       <p className="measure-scoringHint">
         {interviewMessages.length} spheres read
       </p>

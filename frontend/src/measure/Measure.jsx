@@ -34,6 +34,7 @@ const Measure = () => {
   const [asides, setAsides] = useState([]);
   const [currentInput, setCurrentInput] = useState("");
   const [isAcknowledging, setIsAcknowledging] = useState(false);
+  const [scoringError, setScoringError] = useState(null);
   const [result, setResult] = useState(null);
   const [showPortalArrival, setShowPortalArrival] = useState(
     Boolean(location.state?.fromPortalJump),
@@ -97,6 +98,7 @@ const Measure = () => {
     setAsides([]);
     setCurrentInput("");
     setIsAcknowledging(false);
+    setScoringError(null);
     setResult(null);
     hasArchivedPreviousRef.current = false;
   };
@@ -109,6 +111,40 @@ const Measure = () => {
   const handleRestart = () => {
     resetState();
     setPhase("entry");
+  };
+
+  // Shared by the initial submission and a retry — a retry must reuse the
+  // messages already recorded, never re-add the final answer (that already
+  // happened before the first submit attempt, regardless of whether it
+  // succeeded), or the last sphere ends up duplicated.
+  const submitForScoring = async (messages) => {
+    setPhase("scoring");
+    setScoringError(null);
+    try {
+      const res = await fetch(apiUrl("/measure/interview"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          qaPairs: messages.map(({ sphere, question, answer }) => ({
+            sphere,
+            question,
+            answer,
+          })),
+        }),
+      });
+
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setResult(data);
+      setPhase("completion");
+    } catch (err) {
+      console.error("Measure interview scoring failed:", err);
+      setScoringError("Something went wrong reading your field.");
+    }
+  };
+
+  const handleRetryScoring = () => {
+    submitForScoring(interviewMessages);
   };
 
   const handleSend = async () => {
@@ -163,31 +199,7 @@ const Measure = () => {
         return;
       }
 
-      setPhase("scoring");
-
-      try {
-        const res = await fetch(apiUrl("/measure/interview"), {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            qaPairs: updated.map(({ sphere, question, answer: a }) => ({
-              sphere,
-              question,
-              answer: a,
-            })),
-          }),
-        });
-
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        setResult(data);
-        setPhase("completion");
-      } catch (err) {
-        console.error("Measure interview scoring failed:", err);
-        setPhase("interview");
-        setSphereIndex(TOTAL_SPHERES - 1);
-        setInterviewMessages(updated);
-      }
+      await submitForScoring(updated);
     } finally {
       isSendingRef.current = false;
     }
@@ -238,6 +250,8 @@ const Measure = () => {
             <MeasureScoringPhase
               philosopher={activePhilosopher}
               interviewMessages={interviewMessages}
+              scoringError={scoringError}
+              onRetry={handleRetryScoring}
             />
           )}
 

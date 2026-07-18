@@ -18,7 +18,7 @@ import { useMeasureStore } from '../../../../src/store/measureStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
 import { SPHERE_SUGGESTIONS } from '../../../../src/content/measureConfig';
-import { Sphere } from '../../../../src/types';
+import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
 
 const SPHERE_LABELS: Record<Sphere, string> = {
@@ -55,6 +55,28 @@ export default function InterviewScreen() {
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
   }, [qaPairs.length, asides.length, isAcknowledging, isScoring]);
+
+  // Shared by the initial submission and a retry — a retry must reuse the
+  // pairs already recorded, never re-add the final answer (that already
+  // happened before the first submit attempt, regardless of whether it
+  // succeeded), or the last sphere ends up duplicated.
+  const submitForScoring = async (pairs: QAPair[]) => {
+    setIsScoring(true);
+    setScoringError(null);
+    try {
+      const result = await submitInterview(pairs);
+      await saveResult({ ...result, savedAt: new Date().toISOString() });
+      router.replace('/(tabs)/depths/measure/reveal');
+    } catch (err) {
+      console.error('Measure interview scoring request failed:', err);
+      setIsScoring(false);
+      setScoringError('Something went wrong reading your field.');
+    }
+  };
+
+  const handleRetryScoring = () => {
+    submitForScoring(qaPairs);
+  };
 
   const handleSend = async () => {
     const answer = input.trim();
@@ -96,18 +118,8 @@ export default function InterviewScreen() {
         return;
       }
 
-      setIsScoring(true);
-      setScoringError(null);
-      try {
-        const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
-        const result = await submitInterview(allPairs);
-        await saveResult({ ...result, savedAt: new Date().toISOString() });
-        router.replace('/(tabs)/depths/measure/reveal');
-      } catch (err) {
-        console.error('Measure interview scoring request failed:', err);
-        setIsScoring(false);
-        setScoringError('Something went wrong reading your field. Try sending your last answer again.');
-      }
+      const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
+      await submitForScoring(allPairs);
     } finally {
       isSendingRef.current = false;
     }
@@ -152,7 +164,7 @@ export default function InterviewScreen() {
           </View>
         ))}
 
-        {!isScoring && currentQuestion && (
+        {!isScoring && !scoringError && currentQuestion && (
           <Bubble color={accentColor}>{currentQuestion.question}</Bubble>
         )}
 
@@ -175,10 +187,20 @@ export default function InterviewScreen() {
           </View>
         )}
 
-        {scoringError && <Text style={styles.errorText}>{scoringError}</Text>}
+        {scoringError && (
+          <View style={styles.scoringErrorBlock}>
+            <Text style={styles.errorText}>{scoringError}</Text>
+            <Pressable
+              style={[styles.retryButton, { backgroundColor: accentColor }]}
+              onPress={handleRetryScoring}
+            >
+              <Text style={styles.retryButtonText}>Try again</Text>
+            </Pressable>
+          </View>
+        )}
       </ScrollView>
 
-      {!isScoring && currentQuestion && (
+      {!isScoring && !scoringError && currentQuestion && (
         <View style={styles.compose}>
           {suggestions.length > 0 && !isAcknowledging && (
             <View style={styles.suggestions}>
@@ -294,6 +316,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: spacing[3],
   },
+  scoringErrorBlock: { alignItems: 'center', gap: spacing[2], paddingVertical: spacing[4] },
+  retryButton: {
+    paddingHorizontal: spacing[6],
+    paddingVertical: spacing[3],
+    borderRadius: radius.full,
+  },
+  retryButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   suggestions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], marginBottom: spacing[3] },
   suggestionChip: {
