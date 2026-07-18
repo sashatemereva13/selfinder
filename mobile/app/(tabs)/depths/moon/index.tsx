@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
@@ -20,6 +21,7 @@ import {
 
 export default function MoonScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const currentResult = useMeasureStore((s) => s.currentResult);
 
   const moon = useMemo(() => {
@@ -40,7 +42,10 @@ export default function MoonScreen() {
   const flowSuggestions = getFlowSuggestions(moon.stage, band);
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+    >
       <Text style={styles.kicker}>Moon</Text>
       <Text style={styles.title}>Everything has a cycle</Text>
 
@@ -118,7 +123,7 @@ export default function MoonScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingTop: spacing[12], paddingBottom: spacing[12], gap: spacing[4] },
+  content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[4] },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
@@ -8,6 +9,7 @@ import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
+  const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
 
@@ -17,7 +19,10 @@ export default function YouScreen() {
   };
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+    >
       <Text style={styles.kicker}>Your guide</Text>
 
       {!changing && philosopher && (
@@ -46,7 +51,7 @@ export default function YouScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingTop: spacing[12], paddingBottom: spacing[12] },
+  content: { padding: spacing[6], paddingBottom: spacing[12] },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

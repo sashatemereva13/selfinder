@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../src/theme/typography';
 import { spacing, radius } from '../../src/theme/spacing';
@@ -11,6 +12,7 @@ import { AmbientGlow } from '../../src/components/AmbientGlow';
 export default function OnboardingScreen() {
   const [step, setStep] = useState<'intro' | 'choose'>('intro');
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const select = usePhilosopherStore((s) => s.select);
 
   const handleSelect = async (id: string) => {
@@ -42,7 +44,7 @@ export default function OnboardingScreen() {
   }
 
   return (
-    <View style={styles.chooseRoot}>
+    <View style={[styles.chooseRoot, { paddingTop: insets.top + spacing[4] }]}>
       <Text style={styles.chooseTitle}>Choose who walks beside you</Text>
       <View style={styles.chooseBody}>
         <PhilosopherPicker onSelect={handleSelect} />
@@ -104,7 +106,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg.base,
     paddingHorizontal: spacing[6],
-    paddingTop: spacing[12],
   },
   chooseTitle: {
     color: colors.text.primary,

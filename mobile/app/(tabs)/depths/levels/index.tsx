@@ -1,5 +1,6 @@
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
@@ -9,9 +10,13 @@ const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 
 export default function LevelsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+    >
       <Text style={styles.kicker}>Levels</Text>
       <Text style={styles.title}>The map of consciousness</Text>
       <Text style={styles.copy}>

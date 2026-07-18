@@ -1,5 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
@@ -15,12 +16,13 @@ const TOOLS: { key: string; label: string; description: string; route: Href }[] 
 
 export default function DepthsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const accentColor = philosopher?.color ?? colors.brand.purple;
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <Text style={styles.kicker}>Depths</Text>
       <Text style={styles.title}>Know what you feel. Understand why. Decide what comes next.</Text>
 
@@ -51,7 +53,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.bg.base,
     paddingHorizontal: spacing[6],
-    paddingTop: spacing[12],
   },
   kicker: {
     color: colors.text.muted,
