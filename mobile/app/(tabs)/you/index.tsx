@@ -6,6 +6,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/them
 import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
+import { AccountSection } from '../../../src/components/AccountSection';
 
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
@@ -45,13 +46,15 @@ export default function YouScreen() {
           </Pressable>
         </View>
       )}
+
+      <AccountSection />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingBottom: spacing[12] },
+  content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

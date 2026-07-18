@@ -16,6 +16,7 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
+import { useAuthStore } from '../../../../src/store/authStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
 import { QAPair, Sphere } from '../../../../src/types';
@@ -32,6 +33,7 @@ export default function InterviewScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
+  const authToken = useAuthStore((s) => s.session?.token);
   const { sphereIndex, qaPairs, addQAPair, advanceSphere, saveResult, resetInterview } =
     useMeasureStore();
 
@@ -65,7 +67,7 @@ export default function InterviewScreen() {
     setIsScoring(true);
     setScoringError(null);
     try {
-      const result = await submitInterview(pairs);
+      const result = await submitInterview(pairs, authToken);
       await saveResult({ ...result, savedAt: new Date().toISOString() });
       router.replace('/(tabs)/depths/measure/reveal');
     } catch (err) {

@@ -7,6 +7,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useMeasureStore } from '../src/store/measureStore';
+import { useAuthStore } from '../src/store/authStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -18,15 +19,17 @@ export default function RootLayout() {
 
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
   const { hydrated: measureHydrated, hydrate: hydrateMeasure } = useMeasureStore();
+  const { hydrated: authHydrated, hydrate: hydrateAuth } = useAuthStore();
   const router   = useRouter();
   const segments = useSegments();
 
   useEffect(() => {
     hydratePhilo();
     hydrateMeasure();
+    hydrateAuth();
   }, []);
 
-  const ready = fontsLoaded && philoHydrated && measureHydrated;
+  const ready = fontsLoaded && philoHydrated && measureHydrated && authHydrated;
 
   useEffect(() => {
     if (!ready) return;
