@@ -1,16 +1,19 @@
 import { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { AXIS_COLORS, THERMOMETER_MAX } from '../../../../src/content/measureConfig';
-import { MeasureLine, MeasureResult } from '../../../../src/types';
+import { MeasureLine } from '../../../../src/types';
+import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 export default function RevealScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const { currentResult, resetInterview } = useMeasureStore();
 
@@ -30,13 +33,27 @@ export default function RevealScreen() {
   };
 
   return (
-    <ScrollView style={styles.root} contentContainerStyle={styles.content}>
-      <Text style={styles.kicker}>Complete · {currentResult.band}</Text>
-      <Text style={styles.title}>Next, read what these mean</Text>
-      <Text style={styles.copy}>
-        Tap your overall reading or any of the four below — each opens what that state
-        actually means and what it tends to be asking for.
-      </Text>
+    <ScrollView
+      style={styles.root}
+      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[6] }]}
+    >
+      <AmbientGlow />
+
+      <Text style={styles.kicker}>Complete</Text>
+
+      <Pressable onPress={() => goToLevel(currentResult.vibrationLevel.slug)}>
+        <Text style={styles.overallName}>{currentResult.vibrationLevel.name}</Text>
+      </Pressable>
+      <Thermometer
+        score={currentResult.vibrationScore}
+        levelName={currentResult.vibrationLevel.name}
+        axisKey={currentResult.dominantAxis}
+      />
+      <Pressable onPress={() => goToLevel(currentResult.vibrationLevel.slug)}>
+        <Text style={styles.overallTapHint}>
+          Read about {currentResult.vibrationLevel.name} →
+        </Text>
+      </Pressable>
 
       {(currentResult.microPractice || currentResult.affirmation) && (
         <View style={styles.practiceBlock}>
@@ -49,27 +66,11 @@ export default function RevealScreen() {
         </View>
       )}
 
-      <View style={styles.levelCard}>
-        <Text style={styles.levelCardKicker}>Your overall reading</Text>
-        <Thermometer
-          score={currentResult.vibrationScore}
-          levelName={currentResult.vibrationLevel.name}
-          axisKey={currentResult.dominantAxis}
-        />
-        <Pressable onPress={() => goToLevel(currentResult.vibrationLevel.slug)}>
-          <Text style={styles.levelName}>{currentResult.vibrationLevel.name}</Text>
-          <Text style={styles.levelTapHint}>
-            Read about {currentResult.vibrationLevel.name} →
-          </Text>
-        </Pressable>
-      </View>
-
       <View style={styles.linesSection}>
         <Text style={styles.linesKicker}>Your four sides</Text>
         <Text style={[styles.copy, styles.linesIntro]}>
-          Life moves through many parts at once — you can read high on one and low on
-          another, and that's not a contradiction. It's just where each side happens to
-          be right now.
+          You can read high on one side and low on another — that's not a contradiction,
+          just where each part happens to be right now.
         </Text>
 
         {currentResult.lines.map((line: MeasureLine) => (
@@ -134,11 +135,18 @@ const styles = StyleSheet.create({
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  title: {
+  overallName: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.xl,
-    lineHeight: fontSizes.xl * lineHeights.tight,
+    fontSize: fontSizes.hero,
+    lineHeight: fontSizes.hero * lineHeights.tight,
+    marginTop: spacing[2],
+  },
+  overallTapHint: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    marginTop: spacing[2],
   },
   copy: {
     color: colors.text.secondary,
@@ -148,6 +156,7 @@ const styles = StyleSheet.create({
   },
   practiceBlock: {
     gap: spacing[2],
+    marginTop: spacing[4],
     padding: spacing[4],
     borderRadius: radius.md,
     backgroundColor: colors.bg.elevated,
@@ -156,18 +165,7 @@ const styles = StyleSheet.create({
   },
   practiceAction: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },
   affirmation: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm, fontStyle: 'italic' },
-  levelCard: {
-    gap: spacing[3],
-    padding: spacing[5],
-    borderRadius: radius.lg,
-    backgroundColor: colors.bg.elevated,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  levelCardKicker: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, textTransform: 'uppercase', letterSpacing: letterSpacings.wide },
-  levelName: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.lg },
-  levelTapHint: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  linesSection: { gap: spacing[4] },
+  linesSection: { gap: spacing[4], marginTop: spacing[3] },
   linesKicker: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.md },
   linesIntro: { marginBottom: spacing[1] },
   lineRow: {
