@@ -29,8 +29,9 @@ const TuneIn = () => {
         <p className="sf-kicker">Regulation Layer</p>
         <h1>Tune your field with frequency</h1>
         <p>
-          Choose a frequency, then press play. Keep your breath steady and stay with one tone for 1-3
-          minutes before switching.
+          Each state plays two tones a few Hz apart, one per ear — your brain reads the gap between
+          them as a single slow pulse. Put on headphones, pick a state, and give it a few minutes
+          before judging it.
         </p>
       </section>
 

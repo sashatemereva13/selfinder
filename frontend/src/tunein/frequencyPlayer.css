@@ -139,6 +139,13 @@
   font-size: 0.84rem;
 }
 
+.tuneInHeadphonesNote {
+  margin: 0.55rem 0 0;
+  color: rgba(255, 224, 130, 0.85);
+  line-height: 1.5;
+  font-size: 0.78rem;
+}
+
 .tuneInControlRow {
   margin-top: 0.8rem;
   display: flex;

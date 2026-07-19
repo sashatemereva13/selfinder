@@ -3,27 +3,56 @@ import FrequencyOrb from "./FrequencyOrb";
 import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";
 import "./frequencyPlayer.css";
 
-const frequencies = [
-  { name: "Stability", hz: 396, color: "#a7b9ff", intent: "Release tension and settle." },
-  { name: "Creativity", hz: 417, color: "#ffc7fa", intent: "Loosen stuck patterns." },
-  { name: "Confidence", hz: 528, color: "#aef8e3", intent: "Rebuild trust in your center." },
-  { name: "Love", hz: 639, color: "#e9a8ff", intent: "Open relational warmth." },
-  { name: "Clarity", hz: 741, color: "#c6ffdd", intent: "Clear mental noise." },
-  { name: "Intuition", hz: 852, color: "#fffacd", intent: "Deepen inner listening." },
-  { name: "Unity", hz: 963, color: "#ffd4e2", intent: "Expand into coherence." },
+// Binaural beats: two pure tones a few Hz apart, one per ear, read by the
+// brainstem as a single "beat" at the difference frequency. Requires stereo
+// headphones — through speakers the tones just mix acoustically and the
+// beat never forms. carrierHz is the pitch in the left ear; the right ear
+// gets carrierHz + beatHz. Carrier pitch itself barely matters scientifically
+// (mainly comfort/audibility) — the beat frequency is what's meant to matter,
+// so these three map onto the standard calming EEG bands: alpha (8-13Hz),
+// theta (4-8Hz), delta (0.5-4Hz).
+const states = [
+  {
+    name: "Calm",
+    band: "Alpha",
+    beatHz: 10,
+    carrierHz: 200,
+    color: "#9fffd0",
+    intent: "Relaxed, alert stillness — good for settling before or after something stressful.",
+  },
+  {
+    name: "Deep Rest",
+    band: "Theta",
+    beatHz: 6,
+    carrierHz: 200,
+    color: "#c39fff",
+    intent: "Meditation-depth stillness. Best with eyes closed, not mid-task.",
+  },
+  {
+    name: "Sleep",
+    band: "Delta",
+    beatHz: 2,
+    carrierHz: 150,
+    color: "#7ea6ff",
+    intent: "The slowest band, associated with deep sleep. Lie down and let it run.",
+  },
 ];
 
 function FrequencyPlayer() {
   const quality = useAdaptiveQuality();
-  const [active, setActive] = useState(frequencies[0]);
+  const [active, setActive] = useState(states[0]);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.18);
 
   const audioContextRef = useRef(null);
-  const oscillatorRef = useRef(null);
+  const oscLRef = useRef(null);
+  const oscRRef = useRef(null);
   const gainRef = useRef(null);
 
-  const activeLabel = useMemo(() => `${active.name} (${active.hz}Hz)`, [active]);
+  const activeLabel = useMemo(
+    () => `${active.name} — ${active.band} (${active.beatHz}Hz beat)`,
+    [active]
+  );
 
   const getAudioContext = async () => {
     const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -42,7 +71,8 @@ function FrequencyPlayer() {
 
   const stopTone = () => {
     const ctx = audioContextRef.current;
-    const osc = oscillatorRef.current;
+    const oscL = oscLRef.current;
+    const oscR = oscRRef.current;
     const gain = gainRef.current;
 
     if (ctx && gain) {
@@ -52,7 +82,8 @@ function FrequencyPlayer() {
       gain.gain.linearRampToValueAtTime(0.0001, now + 0.08);
     }
 
-    if (osc) {
+    [oscL, oscR].forEach((osc) => {
+      if (!osc) return;
       const stopAt = (ctx?.currentTime || 0) + 0.1;
       try {
         osc.stop(stopAt);
@@ -64,7 +95,7 @@ function FrequencyPlayer() {
       } catch {
         // Ignore disconnect errors during cleanup.
       }
-    }
+    });
 
     if (gain) {
       window.setTimeout(() => {
@@ -76,7 +107,8 @@ function FrequencyPlayer() {
       }, 120);
     }
 
-    oscillatorRef.current = null;
+    oscLRef.current = null;
+    oscRRef.current = null;
     gainRef.current = null;
     setIsPlaying(false);
   };
@@ -87,20 +119,29 @@ function FrequencyPlayer() {
 
     stopTone();
 
-    const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-
-    osc.type = "sine";
-    osc.frequency.setValueAtTime(active.hz, ctx.currentTime);
-
     gain.gain.setValueAtTime(0.0001, ctx.currentTime);
     gain.gain.linearRampToValueAtTime(Math.max(0.001, volume), ctx.currentTime + 0.12);
-
-    osc.connect(gain);
     gain.connect(ctx.destination);
-    osc.start();
 
-    oscillatorRef.current = osc;
+    const oscL = ctx.createOscillator();
+    const panL = ctx.createStereoPanner();
+    panL.pan.setValueAtTime(-1, ctx.currentTime);
+    oscL.type = "sine";
+    oscL.frequency.setValueAtTime(active.carrierHz, ctx.currentTime);
+    oscL.connect(panL).connect(gain);
+    oscL.start();
+
+    const oscR = ctx.createOscillator();
+    const panR = ctx.createStereoPanner();
+    panR.pan.setValueAtTime(1, ctx.currentTime);
+    oscR.type = "sine";
+    oscR.frequency.setValueAtTime(active.carrierHz + active.beatHz, ctx.currentTime);
+    oscR.connect(panR).connect(gain);
+    oscR.start();
+
+    oscLRef.current = oscL;
+    oscRRef.current = oscR;
     gainRef.current = gain;
     setIsPlaying(true);
   };
@@ -114,14 +155,13 @@ function FrequencyPlayer() {
     await startTone();
   };
 
-  const handleSelect = async (frequency) => {
-    setActive(frequency);
+  const handleSelect = async (state) => {
+    setActive(state);
 
-    if (isPlaying && oscillatorRef.current && audioContextRef.current) {
-      oscillatorRef.current.frequency.linearRampToValueAtTime(
-        frequency.hz,
-        audioContextRef.current.currentTime + 0.14,
-      );
+    if (isPlaying && oscLRef.current && oscRRef.current && audioContextRef.current) {
+      const rampTo = audioContextRef.current.currentTime + 0.14;
+      oscLRef.current.frequency.linearRampToValueAtTime(state.carrierHz, rampTo);
+      oscRRef.current.frequency.linearRampToValueAtTime(state.carrierHz + state.beatHz, rampTo);
     }
   };
 
@@ -145,12 +185,13 @@ function FrequencyPlayer() {
   }, []);
 
   return (
-    <section className="tuneInShell" aria-label="Frequency player">
+    <section className="tuneInShell" aria-label="Binaural beat player">
       <aside className="tuneInLeftPanel">
         <div className="tuneInControlsCard">
           <p className="sf-kicker">Now Selected</p>
           <h2>{activeLabel}</h2>
           <p className="tuneInIntent">{active.intent}</p>
+          <p className="tuneInHeadphonesNote">🎧 Needs stereo headphones — through speakers the beat won't form.</p>
 
           <div className="tuneInControlRow">
             <button
@@ -181,19 +222,19 @@ function FrequencyPlayer() {
           </label>
         </div>
 
-        <div className="freqList" role="listbox" aria-label="Frequencies">
-          {frequencies.map((f) => (
+        <div className="freqList" role="listbox" aria-label="States">
+          {states.map((s) => (
             <button
-              key={f.hz}
-              className={`freqItem ${active.hz === f.hz ? "active" : ""}`}
+              key={s.name}
+              className={`freqItem ${active.name === s.name ? "active" : ""}`}
               onClick={() => {
-                void handleSelect(f);
+                void handleSelect(s);
               }}
-              aria-pressed={active.hz === f.hz}
-              aria-label={`${f.name} ${f.hz} hertz`}
+              aria-pressed={active.name === s.name}
+              aria-label={`${s.name}, ${s.band}, ${s.beatHz} hertz beat`}
             >
-              <span className="freqName">{f.name}</span>
-              <span className="freqHz">{f.hz}Hz</span>
+              <span className="freqName">{s.name}</span>
+              <span className="freqHz">{s.band} · {s.beatHz}Hz</span>
             </button>
           ))}
         </div>
