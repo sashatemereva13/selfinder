@@ -18,6 +18,28 @@ export const AXIS_COLORS: Record<string, string> = {
   intensity: '255,123,123',
 };
 
+// Visual-only (no backend equivalent) — one point per level, low to high, used
+// to color the Levels map from a muted red at the bottom to violet at the top.
+export const LEVEL_COLORS: Record<string, string> = {
+  shame:             '130,58,58',
+  guilt:              '158,66,66',
+  apathy:             '186,90,74',
+  grief:              '214,110,74',
+  fear:               '232,132,80',
+  desire:             '240,152,90',
+  anger:              '246,175,100',
+  pride:              '235,196,110',
+  courage:            '214,214,120',
+  neutrality:         '176,214,140',
+  willingness:        '140,214,170',
+  acceptance:         '116,221,190',
+  reason:             '108,214,214',
+  love:               '120,190,230',
+  unconditionallove:  '140,170,240',
+  peace:              '160,155,250',
+  enlightenment:      '185,140,255',
+};
+
 // Mirrors backend/data/vibrationLevels.js — used to resolve a level's slug for
 // in-app navigation (`route` there is a web path, not usable directly here).
 export const VIBRATION_LEVELS: VibrationLevel[] = [
