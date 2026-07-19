@@ -1,7 +1,7 @@
 import request from './client';
 import { Philosopher, Sphere } from '../types';
 
-interface ChatCompletionMessage {
+export interface ChatCompletionMessage {
   role: 'user' | 'assistant';
   content: string;
 }
