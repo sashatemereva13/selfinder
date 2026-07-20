@@ -3,6 +3,7 @@ import Conversation from "../models/Conversation.js";
 import MeasureResult from "../models/MeasureResult.js";
 import Feedback from "../models/Feedback.js";
 import { CONSENT_VERSION } from "../stores.js";
+import { EMAIL_RE } from "../validators.js";
 
 export async function getMe(req, res) {
   const user = await User.findOne({ id: req.user.id });
@@ -13,6 +14,7 @@ export async function getMe(req, res) {
     username: user.username,
     role: user.role,
     createdAt: user.createdAt,
+    email: user.email,
     privacyPolicy: user.privacyPolicy,
     consent: {
       psychologicalData: {
@@ -22,6 +24,30 @@ export async function getMe(req, res) {
       },
     },
   });
+}
+
+// Lets an existing account add/update the email on file — required for the
+// forgot-password flow to work, since accounts don't collect one at signup.
+export async function updateEmail(req, res) {
+  const { email } = req.body;
+  if (!email || !EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: "A valid email is required" });
+  }
+
+  const user = await User.findOne({ id: req.user.id });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  user.email = email.toLowerCase().trim();
+  try {
+    await user.save();
+  } catch (err) {
+    if (err.code === 11000) {
+      return res.status(409).json({ error: "Email already in use" });
+    }
+    throw err;
+  }
+
+  res.json({ success: true, email: user.email });
 }
 
 // Right of access + portability — Art. 15 + 20
@@ -42,6 +68,7 @@ export async function exportMyData(req, res) {
       username: user.username,
       role: user.role,
       createdAt: user.createdAt,
+      email: user.email,
     },
     privacyPolicy: user.privacyPolicy,
     consent: user.consent,

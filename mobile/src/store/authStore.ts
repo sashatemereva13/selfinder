@@ -9,7 +9,7 @@ interface AuthStore {
   session: AuthSession | null;
   hydrated: boolean;
   hydrate: () => Promise<void>;
-  register: (username: string, password: string, privacyPolicyAccepted: boolean) => Promise<void>;
+  register: (username: string, password: string, privacyPolicyAccepted: boolean, email?: string) => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
@@ -42,8 +42,8 @@ export const useAuthStore = create<AuthStore>((set) => ({
     set({ session, hydrated: true });
   },
 
-  register: async (username, password, privacyPolicyAccepted) => {
-    const session = await authApi.register(username, password, privacyPolicyAccepted);
+  register: async (username, password, privacyPolicyAccepted, email) => {
+    const session = await authApi.register(username, password, privacyPolicyAccepted, email);
     await persist(session);
     set({ session });
   },

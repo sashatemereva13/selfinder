@@ -62,7 +62,7 @@ function formatReadingDate(iso) {
 }
 
 export default function PersonalSpace() {
-  const { user, token, logout } = useAuth();
+  const { user, token, logout, changePassword } = useAuth();
   const { activePhilosopher, conversations, selectPhilosopher } = useChat();
   const navigate = useNavigate();
 
@@ -70,9 +70,22 @@ export default function PersonalSpace() {
 
   const [consentLoading, setConsentLoading] = useState(false);
   const [consentMsg, setConsentMsg] = useState("");
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
   const [deleteStep, setDeleteStep] = useState(0); // 0=idle 1=confirm 2=typing
   const [deleteConfirm, setDeleteConfirm] = useState("");
   const [deleteError, setDeleteError] = useState("");
+
+  const [emailInput, setEmailInput] = useState("");
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState("");
+  const [emailError, setEmailError] = useState("");
+
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState("");
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (!user) navigate("/login", { replace: true });
@@ -89,6 +102,10 @@ export default function PersonalSpace() {
   const consentTimestamp = profile?.consent?.psychologicalData?.timestamp;
 
   const { history, loading: historyLoading } = useMeasureHistory(token, consentGiven);
+
+  useEffect(() => {
+    if (profile?.email) setEmailInput(profile.email);
+  }, [profile?.email]);
 
   function handleLogout() {
     logout();
@@ -115,35 +132,83 @@ export default function PersonalSpace() {
     }
   }
 
+  async function handleUpdateEmail(e) {
+    e.preventDefault();
+    setEmailBusy(true);
+    setEmailMsg("");
+    setEmailError("");
+    try {
+      const res = await fetch(`${API}/me/email`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ email: emailInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to update email");
+      await refreshProfile();
+      setEmailMsg("Email saved. Password resets can now be sent to it.");
+    } catch (err) {
+      setEmailError(err.message);
+    } finally {
+      setEmailBusy(false);
+    }
+  }
+
+  async function handleChangePassword(e) {
+    e.preventDefault();
+    setPasswordBusy(true);
+    setPasswordMsg("");
+    setPasswordError("");
+    try {
+      await changePassword(currentPassword, newPassword);
+      setPasswordMsg("Password changed.");
+      setCurrentPassword("");
+      setNewPassword("");
+    } catch (err) {
+      setPasswordError(err.message);
+    } finally {
+      setPasswordBusy(false);
+    }
+  }
+
   async function handleExport() {
-    // Server-side data
-    const res = await fetch(`${API}/me/data`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    const serverData = res.ok ? await res.json() : null;
+    setExporting(true);
+    setExportError("");
+    try {
+      // Server-side data
+      const res = await fetch(`${API}/me/data`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Export request failed");
+      const serverData = await res.json();
 
-    // Browser-side data
-    const consentRaw = localStorage.getItem(LOCAL_CONSENT_KEY);
-    const fullExport = {
-      exportedAt: new Date().toISOString(),
-      serverData,
-      browserData: {
-        localDataFirstSaved: consentRaw ? JSON.parse(consentRaw).timestamp : null,
-        rooms: readAllRooms(),
-        summary: (() => {
-          try { return JSON.parse(localStorage.getItem("sfr_summary") ?? "null"); } catch { return null; }
-        })(),
-        measureResult: readMeasureResult(),
-      },
-    };
+      // Browser-side data
+      const consentRaw = localStorage.getItem(LOCAL_CONSENT_KEY);
+      const fullExport = {
+        exportedAt: new Date().toISOString(),
+        serverData,
+        browserData: {
+          localDataFirstSaved: consentRaw ? JSON.parse(consentRaw).timestamp : null,
+          rooms: readAllRooms(),
+          summary: (() => {
+            try { return JSON.parse(localStorage.getItem("sfr_summary") ?? "null"); } catch { return null; }
+          })(),
+          measureResult: readMeasureResult(),
+        },
+      };
 
-    const blob = new Blob([JSON.stringify(fullExport, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `selfinder-data-${user.username}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+      const blob = new Blob([JSON.stringify(fullExport, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `selfinder-data-${user.username}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError("Export failed. Please try again.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   async function handleDelete() {
@@ -256,6 +321,77 @@ export default function PersonalSpace() {
           )}
         </section>
 
+        {/* Account security */}
+        <section className="ps-gdpr">
+          <p className="sf-kicker ps-gdprKicker">Account security</p>
+
+          <div className="ps-gdprCard">
+            <div className="ps-gdprCardHead">
+              <div>
+                <p className="ps-gdprCardTitle">Email</p>
+                <p className="ps-gdprCardDesc">
+                  {profile?.email
+                    ? "Used for password resets."
+                    : "Add an email so you can reset your password if you ever forget it. Optional, but recommended."}
+                </p>
+              </div>
+            </div>
+            <form className="ps-inlineForm" onSubmit={handleUpdateEmail}>
+              <input
+                className="ps-inlineInput"
+                type="email"
+                placeholder="you@example.com"
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                disabled={emailBusy}
+              />
+              <button type="submit" className="ps-gdprBtn" disabled={emailBusy || !emailInput.trim()}>
+                {emailBusy ? "…" : profile?.email ? "Update" : "Save"}
+              </button>
+            </form>
+            {emailMsg && <p className="ps-gdprMsg">{emailMsg}</p>}
+            {emailError && <p className="ps-gdprMsg ps-gdprMsg--error">{emailError}</p>}
+          </div>
+
+          <div className="ps-gdprCard">
+            <div className="ps-gdprCardHead">
+              <div>
+                <p className="ps-gdprCardTitle">Change password</p>
+                <p className="ps-gdprCardDesc">Update your password. You'll need your current one.</p>
+              </div>
+            </div>
+            <form className="ps-inlineForm ps-inlineForm--stacked" onSubmit={handleChangePassword}>
+              <input
+                className="ps-inlineInput"
+                type="password"
+                placeholder="Current password"
+                autoComplete="current-password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                disabled={passwordBusy}
+              />
+              <input
+                className="ps-inlineInput"
+                type="password"
+                placeholder="New password"
+                autoComplete="new-password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={passwordBusy}
+              />
+              <button
+                type="submit"
+                className="ps-gdprBtn"
+                disabled={passwordBusy || !currentPassword || !newPassword}
+              >
+                {passwordBusy ? "…" : "Change password"}
+              </button>
+            </form>
+            {passwordMsg && <p className="ps-gdprMsg">{passwordMsg}</p>}
+            {passwordError && <p className="ps-gdprMsg ps-gdprMsg--error">{passwordError}</p>}
+          </div>
+        </section>
+
         {/* GDPR section */}
         <section className="ps-gdpr">
           <p className="sf-kicker ps-gdprKicker">Your data & privacy</p>
@@ -305,10 +441,11 @@ export default function PersonalSpace() {
                   (GDPR Art. 15 &amp; 20).
                 </p>
               </div>
-              <button type="button" className="ps-gdprBtn" onClick={handleExport}>
-                Export
+              <button type="button" className="ps-gdprBtn" onClick={handleExport} disabled={exporting}>
+                {exporting ? "…" : "Export"}
               </button>
             </div>
+            {exportError && <p className="ps-gdprMsg ps-gdprMsg--error">{exportError}</p>}
           </div>
 
           {/* Account deletion */}

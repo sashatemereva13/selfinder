@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ActivityIndicator, Share, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
-import { getMe, grantConsent, withdrawConsent, getMeasureHistory } from '../api/user';
+import { getMe, grantConsent, withdrawConsent, getMeasureHistory, exportMyData, deleteAccount, updateEmail } from '../api/user';
+import { changePassword as changePasswordApi, requestPasswordReset, resetPassword } from '../api/auth';
 import { AuthSession, UserProfile, SavedMeasureResult } from '../types';
 
 function formatDate(iso: string) {
@@ -32,14 +33,18 @@ function AuthForm({
   onRegister,
 }: {
   onLogin: (username: string, password: string) => Promise<void>;
-  onRegister: (username: string, password: string, privacyPolicyAccepted: boolean) => Promise<void>;
+  onRegister: (username: string, password: string, privacyPolicyAccepted: boolean, email?: string) => Promise<void>;
 }) {
-  const [mode, setMode] = useState<'login' | 'register'>('login');
+  const [mode, setMode] = useState<'login' | 'register' | 'forgot-request' | 'forgot-reset'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('');
   const [accepted, setAccepted] = useState(false);
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     if (!username.trim() || !password) return;
@@ -55,7 +60,7 @@ function AuthForm({
       if (mode === 'login') {
         await onLogin(username.trim(), password);
       } else {
-        await onRegister(username.trim(), password, accepted);
+        await onRegister(username.trim(), password, accepted, email.trim());
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong.');
@@ -63,6 +68,115 @@ function AuthForm({
       setLoading(false);
     }
   };
+
+  const handleForgotRequest = async () => {
+    if (!username.trim()) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await requestPasswordReset(username.trim());
+      setNotice('If that account has an email on file, a reset code was sent to it.');
+      setMode('forgot-reset');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForgotReset = async () => {
+    if (!code.trim() || !newPassword) return;
+    setLoading(true);
+    setError(null);
+    try {
+      await resetPassword(username.trim(), code.trim(), newPassword);
+      setNotice('Password reset. Sign in with your new password.');
+      setMode('login');
+      setPassword('');
+      setCode('');
+      setNewPassword('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const goToForgot = () => { setMode('forgot-request'); setError(null); setNotice(null); };
+  const backToLogin = () => { setMode('login'); setError(null); setNotice(null); setCode(''); setNewPassword(''); };
+
+  if (mode === 'forgot-request' || mode === 'forgot-reset') {
+    return (
+      <View style={styles.card}>
+        <Text style={styles.cardKicker}>Account</Text>
+        <Text style={styles.cardCopy}>
+          {mode === 'forgot-request'
+            ? "We'll email a code to the address on file, if you've added one."
+            : 'Check your inbox for the 6-digit code.'}
+        </Text>
+
+        {notice && <Text style={styles.noticeText}>{notice}</Text>}
+
+        {mode === 'forgot-request' ? (
+          <TextInput
+            style={styles.input}
+            value={username}
+            onChangeText={setUsername}
+            placeholder="Username"
+            placeholderTextColor={colors.text.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+        ) : (
+          <>
+            <TextInput
+              style={styles.input}
+              value={code}
+              onChangeText={setCode}
+              placeholder="Reset code"
+              placeholderTextColor={colors.text.muted}
+              keyboardType="number-pad"
+            />
+            <TextInput
+              style={styles.input}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              placeholder="New password"
+              placeholderTextColor={colors.text.muted}
+              secureTextEntry
+            />
+          </>
+        )}
+
+        {error && <Text style={styles.errorText}>{error}</Text>}
+
+        <Pressable
+          style={[
+            styles.submitButton,
+            {
+              opacity:
+                loading ||
+                (mode === 'forgot-request' ? !username.trim() : !code.trim() || !newPassword)
+                  ? 0.5
+                  : 1,
+            },
+          ]}
+          onPress={mode === 'forgot-request' ? handleForgotRequest : handleForgotReset}
+          disabled={loading || (mode === 'forgot-request' ? !username.trim() : !code.trim() || !newPassword)}
+        >
+          {loading ? (
+            <ActivityIndicator color={colors.bg.base} />
+          ) : (
+            <Text style={styles.submitButtonText}>{mode === 'forgot-request' ? 'Send code' : 'Reset password'}</Text>
+          )}
+        </Pressable>
+
+        <Pressable onPress={backToLogin}>
+          <Text style={styles.forgotLink}>Back to sign in</Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -99,6 +213,22 @@ function AuthForm({
       />
 
       {mode === 'register' && (
+        <>
+          <TextInput
+            style={styles.input}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email (optional)"
+            placeholderTextColor={colors.text.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+          />
+          <Text style={styles.cardCopy}>Used only so you can reset your password if you forget it.</Text>
+        </>
+      )}
+
+      {mode === 'register' && (
         <Pressable style={styles.consentRow} onPress={() => setAccepted((a) => !a)}>
           <View style={[styles.checkbox, accepted && { backgroundColor: colors.brand.purple, borderColor: colors.brand.purple }]} />
           <Text style={styles.consentRowText}>I accept the privacy policy</Text>
@@ -118,6 +248,12 @@ function AuthForm({
           <Text style={styles.submitButtonText}>{mode === 'login' ? 'Log in' : 'Create account'}</Text>
         )}
       </Pressable>
+
+      {mode === 'login' && (
+        <Pressable onPress={goToForgot}>
+          <Text style={styles.forgotLink}>Forgot password?</Text>
+        </Pressable>
+      )}
     </View>
   );
 }
@@ -134,13 +270,33 @@ function LoggedInAccount({
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [consentBusy, setConsentBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [deleteStep, setDeleteStep] = useState<0 | 1>(0);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const [emailInput, setEmailInput] = useState('');
+  const [emailBusy, setEmailBusy] = useState(false);
+  const [emailMsg, setEmailMsg] = useState<string | null>(null);
+  const [emailError, setEmailError] = useState<string | null>(null);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordBusy, setPasswordBusy] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
   const consentGiven = profile?.consent?.psychologicalData?.given ?? false;
+  const consentTimestamp = profile?.consent?.psychologicalData?.timestamp;
 
   const refreshProfile = async () => {
     setLoadingProfile(true);
     try {
-      setProfile(await getMe(session.token));
+      const p = await getMe(session.token);
+      setProfile(p);
+      if (p.email) setEmailInput(p.email);
     } catch {
       // best-effort
     } finally {
@@ -174,6 +330,69 @@ function LoggedInAccount({
     }
   };
 
+  const handleUpdateEmail = async () => {
+    setEmailBusy(true);
+    setEmailMsg(null);
+    setEmailError(null);
+    try {
+      await updateEmail(session.token, emailInput.trim());
+      await refreshProfile();
+      setEmailMsg('Email saved. Password resets can now be sent to it.');
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : 'Failed to update email.');
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    setPasswordBusy(true);
+    setPasswordMsg(null);
+    setPasswordError(null);
+    try {
+      await changePasswordApi(session.token, currentPassword, newPassword);
+      setPasswordMsg('Password changed.');
+      setCurrentPassword('');
+      setNewPassword('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Failed to change password.');
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const data = await exportMyData(session.token);
+      await Share.share({
+        title: `selfinder-data-${session.username}.json`,
+        message: JSON.stringify(data, null, 2),
+      });
+    } catch {
+      setExportError('Export failed. Please try again.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (deleteConfirmText !== session.username) {
+      setDeleteError('Username does not match.');
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteAccount(session.token);
+      await onLogout();
+    } catch {
+      setDeleteError('Deletion failed. Please try again.');
+      setDeleting(false);
+    }
+  };
+
   return (
     <View style={styles.card}>
       <Text style={styles.cardKicker}>Account</Text>
@@ -191,6 +410,11 @@ function LoggedInAccount({
           </Text>
         </Pressable>
       </View>
+      {consentTimestamp && (
+        <Text style={styles.consentTimestamp}>
+          {consentGiven ? 'Granted' : 'Withdrawn'} {formatDate(consentTimestamp)}
+        </Text>
+      )}
 
       {consentGiven && (
         <View style={styles.historySection}>
@@ -213,6 +437,124 @@ function LoggedInAccount({
           )}
         </View>
       )}
+
+      <View style={styles.dataSection}>
+        <Text style={styles.dataKicker}>Account security</Text>
+
+        <View style={styles.dataRow}>
+          <Text style={styles.dataRowText}>
+            {profile?.email
+              ? 'Used for password resets.'
+              : "Add an email so you can reset your password if you ever forget it. Optional, but recommended."}
+          </Text>
+          <TextInput
+            style={styles.input}
+            value={emailInput}
+            onChangeText={setEmailInput}
+            placeholder="you@example.com"
+            placeholderTextColor={colors.text.muted}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="email-address"
+            editable={!emailBusy}
+          />
+          <Pressable style={styles.dataButton} onPress={handleUpdateEmail} disabled={emailBusy || !emailInput.trim()}>
+            <Text style={styles.dataButtonText}>{emailBusy ? '…' : profile?.email ? 'Update' : 'Save'}</Text>
+          </Pressable>
+        </View>
+        {emailMsg && <Text style={styles.noticeText}>{emailMsg}</Text>}
+        {emailError && <Text style={styles.errorText}>{emailError}</Text>}
+
+        <View style={styles.dataRow}>
+          <Text style={styles.dataRowText}>Update your password. You'll need your current one.</Text>
+          <TextInput
+            style={styles.input}
+            value={currentPassword}
+            onChangeText={setCurrentPassword}
+            placeholder="Current password"
+            placeholderTextColor={colors.text.muted}
+            secureTextEntry
+            editable={!passwordBusy}
+          />
+          <TextInput
+            style={styles.input}
+            value={newPassword}
+            onChangeText={setNewPassword}
+            placeholder="New password"
+            placeholderTextColor={colors.text.muted}
+            secureTextEntry
+            editable={!passwordBusy}
+          />
+          <Pressable
+            style={styles.dataButton}
+            onPress={handleChangePassword}
+            disabled={passwordBusy || !currentPassword || !newPassword}
+          >
+            <Text style={styles.dataButtonText}>{passwordBusy ? '…' : 'Change password'}</Text>
+          </Pressable>
+        </View>
+        {passwordMsg && <Text style={styles.noticeText}>{passwordMsg}</Text>}
+        {passwordError && <Text style={styles.errorText}>{passwordError}</Text>}
+      </View>
+
+      <View style={styles.dataSection}>
+        <Text style={styles.dataKicker}>Your data &amp; privacy</Text>
+
+        <View style={styles.dataRow}>
+          <Text style={styles.dataRowText}>
+            Export everything Selfinder holds about you as JSON — profile, consent records,
+            saved readings and conversations.
+          </Text>
+          <Pressable style={styles.dataButton} onPress={handleExport} disabled={exporting}>
+            <Text style={styles.dataButtonText}>{exporting ? '…' : 'Export'}</Text>
+          </Pressable>
+        </View>
+        {exportError && <Text style={styles.errorText}>{exportError}</Text>}
+
+        <View style={styles.dangerRow}>
+          <Text style={styles.dataRowText}>
+            Permanently delete your account and all associated data. This cannot be undone.
+          </Text>
+          {deleteStep === 0 && (
+            <Pressable style={styles.dangerButton} onPress={() => setDeleteStep(1)}>
+              <Text style={styles.dangerButtonText}>Delete</Text>
+            </Pressable>
+          )}
+        </View>
+
+        {deleteStep === 1 && (
+          <View style={styles.deleteConfirmBlock}>
+            <Text style={styles.dataRowText}>
+              Type your username <Text style={{ fontFamily: fonts.medium }}>{session.username}</Text> to confirm.
+            </Text>
+            <TextInput
+              style={styles.input}
+              value={deleteConfirmText}
+              onChangeText={(t) => { setDeleteConfirmText(t); setDeleteError(null); }}
+              placeholder={session.username}
+              placeholderTextColor={colors.text.muted}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {deleteError && <Text style={styles.errorText}>{deleteError}</Text>}
+            <View style={styles.deleteConfirmRow}>
+              <Pressable
+                style={styles.dangerButton}
+                onPress={handleDelete}
+                disabled={!deleteConfirmText || deleting}
+              >
+                <Text style={styles.dangerButtonText}>{deleting ? '…' : 'Confirm delete'}</Text>
+              </Pressable>
+              <Pressable
+                style={styles.dataButton}
+                onPress={() => { setDeleteStep(0); setDeleteConfirmText(''); setDeleteError(null); }}
+              >
+                <Text style={styles.dataButtonText}>Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+      </View>
 
       <Pressable style={styles.signOutButton} onPress={onLogout}>
         <Text style={styles.signOutText}>Sign out</Text>
@@ -266,6 +608,14 @@ const styles = StyleSheet.create({
   },
   consentRowText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   errorText: { color: colors.brand.purple, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  noticeText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  forgotLink: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+    marginTop: spacing[2],
+  },
   submitButton: {
     paddingVertical: spacing[4],
     borderRadius: radius.full,
@@ -312,6 +662,47 @@ const styles = StyleSheet.create({
   },
   historyDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   historyLabel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  consentTimestamp: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: -spacing[1] },
+  dataSection: {
+    gap: spacing[3],
+    paddingTop: spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: colors.bg.border,
+  },
+  dataKicker: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+  dataRow: { gap: spacing[2] },
+  dangerRow: { gap: spacing[2], paddingTop: spacing[1] },
+  dataRowText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  dataButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+  },
+  dataButtonText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  dangerButton: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: radius.full,
+    backgroundColor: `rgb(${colors.axis.heart})`,
+  },
+  dangerButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  deleteConfirmBlock: { gap: spacing[3] },
+  deleteConfirmRow: { flexDirection: 'row', gap: spacing[3] },
   signOutButton: { alignItems: 'center', paddingTop: spacing[3] },
   signOutText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
 });

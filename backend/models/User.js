@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
   passwordHash: { type: String, required: true },
   role: { type: String, default: "user" },
   createdAt: { type: String, required: true },
+  // Optional — existing accounts predate this field. Forgot-password only
+  // works once an email is on file. `sparse` lets many users share `null`
+  // without tripping the unique index.
+  email: { type: String, default: null, unique: true, sparse: true, lowercase: true, trim: true },
   privacyPolicy: {
     accepted: { type: Boolean, default: false },
     version: String,
@@ -28,6 +32,14 @@ const userSchema = new mongoose.Schema({
       timestamp: { type: String, default: null },
       log: { type: [consentLogEntrySchema], default: [] },
     },
+  },
+  // One-time code for the forgot-password flow. codeHash is bcrypt'd like
+  // the password itself; cleared on successful reset or left to expire.
+  passwordReset: {
+    codeHash: { type: String, default: null },
+    expiresAt: { type: String, default: null },
+    attempts: { type: Number, default: 0 },
+    requestedAt: { type: String, default: null },
   },
 });
 

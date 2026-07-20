@@ -87,6 +87,7 @@ export interface UserProfile {
   username: string;
   role: string;
   createdAt: string;
+  email: string | null;
   consent: { psychologicalData: ConsentState };
 }
 

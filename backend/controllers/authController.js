@@ -2,6 +2,12 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 import { CONSENT_VERSION } from "../stores.js";
+import { sendPasswordResetEmail } from "../email.js";
+import { EMAIL_RE } from "../validators.js";
+
+const RESET_CODE_TTL_MS = 15 * 60 * 1000;
+const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
+const RESET_MAX_ATTEMPTS = 5;
 
 function signToken(user) {
   return jwt.sign(
@@ -12,7 +18,7 @@ function signToken(user) {
 }
 
 export async function register(req, res) {
-  const { username, password, privacyPolicyAccepted, adminCode } = req.body;
+  const { username, password, privacyPolicyAccepted, adminCode, email } = req.body;
 
   if (!username || !password) {
     return res.status(400).json({ error: "username and password are required" });
@@ -20,6 +26,10 @@ export async function register(req, res) {
 
   if (!privacyPolicyAccepted) {
     return res.status(400).json({ error: "You must accept the privacy policy to create an account" });
+  }
+
+  if (email && !EMAIL_RE.test(email)) {
+    return res.status(400).json({ error: "That doesn't look like a valid email" });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -32,6 +42,7 @@ export async function register(req, res) {
       passwordHash,
       role: isAdmin ? "admin" : "user",
       createdAt: now,
+      email: email ? email.toLowerCase().trim() : null,
       privacyPolicy: {
         accepted: true,
         version: CONSENT_VERSION,
@@ -50,7 +61,10 @@ export async function register(req, res) {
     res.status(201).json({ token: signToken(user), username: user.username, role: user.role });
   } catch (err) {
     if (err.code === 11000) {
-      return res.status(409).json({ error: "Username already taken" });
+      const field = Object.keys(err.keyPattern ?? {})[0];
+      return res.status(409).json({
+        error: field === "email" ? "Email already in use" : "Username already taken",
+      });
     }
     throw err;
   }
@@ -74,4 +88,106 @@ export async function login(req, res) {
   }
 
   res.json({ token: signToken(user), username: user.username, role: user.role });
+}
+
+// Requires the current password — for a logged-in user updating their password.
+export async function changePassword(req, res) {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({ error: "currentPassword and newPassword are required" });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "New password must be at least 8 characters" });
+  }
+
+  const user = await User.findOne({ id: req.user.id });
+  if (!user) return res.status(404).json({ error: "User not found" });
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) {
+    return res.status(401).json({ error: "Current password is incorrect" });
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  await user.save();
+
+  res.json({ success: true });
+}
+
+function generateResetCode() {
+  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
+}
+
+// Always responds the same way regardless of whether the username/email
+// exists, to avoid leaking account existence. Silently no-ops if the
+// account has no email on file — there's nowhere to send the code.
+export async function requestPasswordReset(req, res) {
+  const { username } = req.body;
+  if (!username) {
+    return res.status(400).json({ error: "username is required" });
+  }
+
+  const genericResponse = { success: true };
+
+  const user = await User.findOne({ username });
+  if (!user?.email) {
+    return res.json(genericResponse);
+  }
+
+  const now = Date.now();
+  const requestedAt = user.passwordReset?.requestedAt ? new Date(user.passwordReset.requestedAt).getTime() : 0;
+  if (now - requestedAt < RESET_REQUEST_COOLDOWN_MS) {
+    return res.json(genericResponse);
+  }
+
+  const code = generateResetCode();
+  user.passwordReset = {
+    codeHash: await bcrypt.hash(code, 10),
+    expiresAt: new Date(now + RESET_CODE_TTL_MS).toISOString(),
+    attempts: 0,
+    requestedAt: new Date(now).toISOString(),
+  };
+  await user.save();
+
+  try {
+    await sendPasswordResetEmail(user.email, code);
+  } catch (err) {
+    console.error("Failed to send password reset email:", err.message);
+  }
+
+  res.json(genericResponse);
+}
+
+export async function resetPassword(req, res) {
+  const { username, code, newPassword } = req.body;
+  if (!username || !code || !newPassword) {
+    return res.status(400).json({ error: "username, code, and newPassword are required" });
+  }
+  if (newPassword.length < 8) {
+    return res.status(400).json({ error: "New password must be at least 8 characters" });
+  }
+
+  const user = await User.findOne({ username });
+  const reset = user?.passwordReset;
+
+  if (!user || !reset?.codeHash || !reset.expiresAt || new Date(reset.expiresAt).getTime() < Date.now()) {
+    return res.status(400).json({ error: "Invalid or expired code" });
+  }
+  if (reset.attempts >= RESET_MAX_ATTEMPTS) {
+    return res.status(400).json({ error: "Too many attempts — request a new code" });
+  }
+
+  const valid = await bcrypt.compare(code, reset.codeHash);
+  if (!valid) {
+    user.passwordReset.attempts += 1;
+    await user.save();
+    return res.status(400).json({ error: "Invalid or expired code" });
+  }
+
+  user.passwordHash = await bcrypt.hash(newPassword, 10);
+  user.passwordReset = { codeHash: null, expiresAt: null, attempts: 0, requestedAt: null };
+  await user.save();
+
+  res.json({ success: true });
 }

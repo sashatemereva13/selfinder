@@ -6,6 +6,7 @@ import {
   deleteMe,
   grantConsent,
   withdrawConsent,
+  updateEmail,
 } from "../controllers/userController.js";
 
 const router = Router();
@@ -16,5 +17,6 @@ router.get("/me/data", exportMyData);
 router.delete("/me", deleteMe);
 router.post("/me/consent", grantConsent);
 router.delete("/me/consent", withdrawConsent);
+router.post("/me/email", updateEmail);
 
 export default router;

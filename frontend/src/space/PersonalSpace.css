@@ -250,6 +250,40 @@
   background: rgba(20, 8, 8, 0.42);
 }
 
+.ps-inlineForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.ps-inlineForm--stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.ps-inlineInput {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.58rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+  color: rgba(241, 234, 253, 0.9);
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 160ms ease;
+}
+
+.ps-inlineInput:focus {
+  border-color: rgba(195, 153, 255, 0.42);
+}
+
+.ps-inlineInput:disabled {
+  opacity: 0.5;
+}
+
 .ps-gdprCardHead {
   display: flex;
   align-items: flex-start;
