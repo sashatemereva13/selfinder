@@ -19,6 +19,7 @@ import UserPathTracker from "./tracking/UserPathTracker.jsx";
 import { appendPathStep } from "./tracking/userPathTracker";
 import { ChatProvider } from "./guide/ChatContext";
 import { AuthProvider } from "./auth/AuthContext";
+import PrivacyPolicyPage from "./legal/PrivacyPolicyPage";
 
 const AuthPage = lazy(() => import("./auth/AuthPage"));
 const FrontPage = lazy(() => import("./frontpage/FrontPage"));
@@ -138,12 +139,21 @@ function AnimatedRoutes() {
 
 function App() {
   const [hasEntered, setHasEntered] = useState(false);
+  // Bypasses the entry gate entirely — App Store/Play Store review and
+  // anyone else need this to load directly, not after clicking through the
+  // philosopher-selection landing screen.
+  const isPrivacyRoute = window.location.pathname === "/privacy";
 
   useEffect(() => {
+    if (isPrivacyRoute) return;
     if (!hasEntered) {
       appendPathStep({ path: "/entry-gate", source: "gate", navType: null });
     }
-  }, [hasEntered]);
+  }, [hasEntered, isPrivacyRoute]);
+
+  if (isPrivacyRoute) {
+    return <PrivacyPolicyPage />;
+  }
 
   if (!hasEntered) {
     return (
