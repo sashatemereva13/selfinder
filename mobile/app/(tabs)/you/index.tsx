@@ -9,6 +9,7 @@ import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
+import { DailyReminderSection } from '../../../src/components/DailyReminderSection';
 
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
@@ -60,6 +61,8 @@ export default function YouScreen() {
           </Pressable>
         </View>
       )}
+
+      {!changing && <DailyReminderSection />}
 
       <AccountSection />
 

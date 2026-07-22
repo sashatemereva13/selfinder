@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useMeasureStore } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
+import { useReminderStore } from '../src/store/reminderStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -20,6 +21,7 @@ export default function RootLayout() {
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
   const { hydrated: measureHydrated, hydrate: hydrateMeasure } = useMeasureStore();
   const { hydrated: authHydrated, hydrate: hydrateAuth } = useAuthStore();
+  const { hydrated: reminderHydrated, hydrate: hydrateReminder } = useReminderStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -27,9 +29,10 @@ export default function RootLayout() {
     hydratePhilo();
     hydrateMeasure();
     hydrateAuth();
+    hydrateReminder();
   }, []);
 
-  const ready = fontsLoaded && philoHydrated && measureHydrated && authHydrated;
+  const ready = fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated;
 
   useEffect(() => {
     if (!ready) return;
