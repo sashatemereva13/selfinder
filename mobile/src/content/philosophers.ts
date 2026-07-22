@@ -8,6 +8,7 @@ export const PHILOSOPHERS: Philosopher[] = [
     color: '#c9a84c',
     accentRgb: '201,168,76',
     greeting: "You're back. Good. The unexamined moment is rarely worth keeping.",
+    firstMeeting: "Good, you're here. First: do you actually know where you stand right now? Measure will tell you faster than thinking about it.",
     description: "Socrates does not have answers. He has questions that reach the ones you already carry inside you.",
     measureQuestions: [
       {
@@ -49,6 +50,7 @@ Trust the silence that a good question creates.`,
     color: '#4dada8',
     accentRgb: '77,173,168',
     greeting: "Glad you returned. Clarity doesn't come from waiting — only from looking.",
+    firstMeeting: "Good to meet you. Clarity comes from looking, not waiting — Measure is where that starts.",
     description: "Marcus Aurelius speaks when the mind is running faster than it should. He draws one clean line: what is yours, and what is not.",
     measureQuestions: [
       {
@@ -88,6 +90,7 @@ clear observation followed by one grounding question is often enough.`,
     color: '#a87ac9',
     accentRgb: '168,122,201',
     greeting: "You came back. That itself is already something — most people don't.",
+    firstMeeting: "You're here — that already matters. Not knowing where you stand is the starting condition, not a failure. Measure will name it, when you're ready.",
     description: "Kierkegaard sits with you in the places that cannot be reasoned away. He does not solve the anxiety of becoming — he names it as the price of being free.",
     measureQuestions: [
       {
@@ -127,6 +130,7 @@ more powerful than a long meditation.`,
     color: '#c97a4d',
     accentRgb: '201,122,77',
     greeting: "Still here. Good. Leaving would've been easier — coming back takes something.",
+    firstMeeting: "You're here — good. Measure won't explain everything, but it'll tell you where you're standing, which is no small thing.",
     description: "Camus does not promise that things will make sense. He stays beside you in the places where they don't.",
     measureQuestions: [
       {
@@ -167,6 +171,7 @@ worth more than a paragraph of comfort.`,
     color: '#7aad7a',
     accentRgb: '122,173,122',
     greeting: "You returned. That already says something about the kind of person you're becoming.",
+    firstMeeting: "Good to meet you. Everything worthwhile starts with a first honest act, not an intention — Measure is a fitting one.",
     description: "Aristotle believes that the good life is not an idea — it is something practiced.",
     measureQuestions: [
       {

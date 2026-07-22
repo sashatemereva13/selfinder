@@ -13,6 +13,21 @@ import { SaveMessageAction } from '../../../src/components/SaveMessageAction';
 
 type Tool = { key: string; label: string; description: string; route: Href };
 
+// Makes clear whether a reading reflects right now or something from a
+// while back — the label otherwise looks identical whether it's five
+// minutes or three weeks old.
+function formatRelativeDay(isoString: string): string {
+  const date = new Date(isoString);
+  const now = new Date();
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const diffDays = Math.round((startOfDay(now) - startOfDay(date)) / 86_400_000);
+
+  if (diffDays <= 0) return 'today';
+  if (diffDays === 1) return 'yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
 // Grouped (rather than one flat stack) so the sequence reads as three moves —
 // find out, understand, shift — instead of six equally-weighted options.
 // Measure and Spill sit together deliberately: both surface where you are,
@@ -75,7 +90,7 @@ export default function DepthsScreen() {
         {currentResult && lastLevel ? (
           <>
             <Text style={styles.lastReadingLabel}>
-              Your last reading: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
+              Your last reading — {formatRelativeDay(currentResult.savedAt)}: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
             </Text>
             <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
 
@@ -110,7 +125,9 @@ export default function DepthsScreen() {
         ) : (
           <>
             <Text style={styles.lastReadingLabel}>Before your first reading</Text>
-            <Text style={styles.title}>Whatever you're feeling right now is information, not a problem to fix.</Text>
+            <Text style={styles.title}>
+              Whatever you're feeling right now is information, not a problem to fix. Measure is where you find out what it is.
+            </Text>
           </>
         )}
 

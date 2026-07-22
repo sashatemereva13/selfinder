@@ -21,6 +21,7 @@ interface MeasureStore {
   advanceSphere: () => void;
   goToPreviousSphere: () => void;
   resetInterview: () => void;
+  resetSavedResults: () => Promise<void>;
 }
 
 function readJSON<T>(raw: string | null): T | null {
@@ -79,4 +80,19 @@ export const useMeasureStore = create<MeasureStore>((set, get) => ({
     return { qaPairs: s.qaPairs.slice(0, -1), sphereIndex: s.sphereIndex - 1 };
   }),
   resetInterview: () => set({ messages: [], qaPairs: [], sphereIndex: 0 }),
+
+  // Dev/testing only — see the "Reset onboarding state" button in the You
+  // tab. Without this, Depths keeps showing the last real reading even
+  // after Guide's met-status and conversations are cleared.
+  resetSavedResults: async () => {
+    set({ currentResult: null, previousResult: null });
+    try {
+      await Promise.all([
+        SecureStore.deleteItemAsync(KEY_CURRENT),
+        SecureStore.deleteItemAsync(KEY_PREVIOUS),
+      ]);
+    } catch {
+      // SecureStore is unavailable — in-memory reset above already applied.
+    }
+  },
 }));

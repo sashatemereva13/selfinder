@@ -13,6 +13,7 @@ export interface Philosopher {
   color: string;
   accentRgb: string;
   greeting: string;
+  firstMeeting: string;
   measureQuestions: MeasureQuestion[];
   systemPrompt: string;
 }

@@ -5,14 +5,28 @@ import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
+import { useGuideChatStore } from '../../../src/store/guideChatStore';
+import { useMeasureStore } from '../../../src/store/measureStore';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
 
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
+  const resetMet = usePhilosopherStore((s) => s.resetMet);
+  const resetGuideChats = useGuideChatStore((s) => s.resetAll);
+  const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
+
+  const handleResetOnboarding = () => {
+    resetMet();
+    resetGuideChats();
+    resetSavedResults();
+    setResetDone(true);
+    setTimeout(() => setResetDone(false), 2000);
+  };
 
   const handleSelect = async (id: string) => {
     await select(id);
@@ -48,6 +62,17 @@ export default function YouScreen() {
       )}
 
       <AccountSection />
+
+      {__DEV__ && (
+        <Pressable
+          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
+          onPress={handleResetOnboarding}
+        >
+          <Text style={styles.devResetText}>
+            {resetDone ? 'Reset ✓' : 'Reset onboarding state (dev only)'}
+          </Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -88,4 +113,17 @@ const styles = StyleSheet.create({
   },
   cancelButton: { alignItems: 'center', paddingVertical: spacing[4] },
   cancelLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  devResetButton: {
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    borderStyle: 'dashed',
+  },
+  devResetButtonPressed: {
+    opacity: 0.5,
+    backgroundColor: colors.bg.elevated,
+  },
+  devResetText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
 });

@@ -10,6 +10,7 @@ interface GuideChatStore {
   isLoading: boolean;
   send: (philosopher: Philosopher, text: string) => Promise<void>;
   clearConversation: (philosopherId: string) => void;
+  resetAll: () => void;
 }
 
 export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
@@ -48,4 +49,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
       conversations: { ...state.conversations, [philosopherId]: [] },
     }));
   },
+
+  // Dev/testing only — see the "Reset onboarding state" button in the You tab.
+  resetAll: () => set({ conversations: {} }),
 }));
