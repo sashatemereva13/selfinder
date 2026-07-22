@@ -51,10 +51,11 @@ export default function PrivacyPolicyContent({ titleId }) {
           <p>
             On the web app, your vibration readings and where you are in
             the journey are kept only in your browser's local storage, on
-            your own device. On the mobile app, a reading is saved to your
-            account only if both are true: you're signed in, and you've
-            separately granted explicit consent for it — the same standard
-            that already applies to conversations.
+            your own device. On the mobile app, a reading — including the
+            actual answers you gave, not just the resulting score — is
+            saved to your account only if both are true: you're signed in,
+            and you've separately granted explicit consent for it — the
+            same standard that already applies to conversations.
           </p>
         </section>
 

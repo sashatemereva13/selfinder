@@ -70,6 +70,7 @@ export default function PersonalSpace() {
 
   const [consentLoading, setConsentLoading] = useState(false);
   const [consentMsg, setConsentMsg] = useState("");
+  const [expandedReadingId, setExpandedReadingId] = useState(null);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState("");
   const [deleteStep, setDeleteStep] = useState(0); // 0=idle 1=confirm 2=typing
@@ -305,18 +306,41 @@ export default function PersonalSpace() {
             </p>
           ) : (
             <div className="ps-roomList">
-              {history.map((reading) => (
-                <Link
-                  key={reading.id}
-                  to={reading.vibrationLevel?.route ?? "/levels"}
-                  className="ps-roomRow"
-                >
-                  <span className="ps-roomStage">{formatReadingDate(reading.savedAt)}</span>
-                  <span className="ps-roomLabel">
-                    {reading.vibrationLevel?.name} · {reading.vibrationScore}
-                  </span>
-                </Link>
-              ))}
+              {history.map((reading) => {
+                const hasTranscript = reading.qaPairs && reading.qaPairs.length > 0;
+                const isExpanded = expandedReadingId === reading.id;
+                return (
+                  <div key={reading.id} className="ps-roomItem">
+                    <button
+                      type="button"
+                      className="ps-roomRow"
+                      onClick={() => hasTranscript && setExpandedReadingId(isExpanded ? null : reading.id)}
+                    >
+                      <span className="ps-roomStage">{formatReadingDate(reading.savedAt)}</span>
+                      <span className="ps-roomLabel">
+                        {reading.vibrationLevel?.name} · {reading.vibrationScore}
+                      </span>
+                      {hasTranscript && (
+                        <span className="ps-roomChevron">{isExpanded ? "↑" : "↓"}</span>
+                      )}
+                    </button>
+
+                    {isExpanded && hasTranscript && (
+                      <div className="ps-roomDetail">
+                        {reading.qaPairs.map((pair, i) => (
+                          <div key={i} className="ps-roomQA">
+                            <p className="ps-roomQuestion">{pair.question}</p>
+                            <p className="ps-roomAnswer">{pair.answer}</p>
+                          </div>
+                        ))}
+                        <Link to={reading.vibrationLevel?.route ?? "/levels"} className="ps-roomLevelLink">
+                          Read about {reading.vibrationLevel?.name} →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           )}
         </section>

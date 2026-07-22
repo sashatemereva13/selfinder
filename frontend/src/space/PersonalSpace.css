@@ -159,11 +159,16 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  width: 100%;
   padding: 0.55rem 0.65rem;
   border-radius: 10px;
   border: 1px solid rgba(255, 255, 255, 0.04);
+  background: none;
   text-decoration: none;
   color: rgba(241, 234, 253, 0.72);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
   transition: border-color 160ms ease, background 160ms ease;
 }
 
@@ -171,6 +176,57 @@
   border-color: rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
   color: rgba(241, 234, 253, 0.92);
+}
+
+.ps-roomChevron {
+  margin-left: auto;
+  color: rgba(241, 234, 253, 0.36);
+  font-size: 0.8rem;
+}
+
+.ps-roomDetail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.9rem 0.95rem;
+  margin: 0.2rem 0 0.4rem;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.ps-roomQA {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.ps-roomQuestion {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-style: italic;
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: rgba(241, 234, 253, 0.42);
+}
+
+.ps-roomAnswer {
+  margin: 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  color: rgba(241, 234, 253, 0.78);
+}
+
+.ps-roomLevelLink {
+  align-self: flex-start;
+  font-family: "Panchang-Light", sans-serif;
+  font-size: 0.72rem;
+  color: rgba(195, 153, 255, 0.85);
+  text-decoration: none;
+}
+
+.ps-roomLevelLink:hover {
+  text-decoration: underline;
 }
 
 .ps-roomStage {
