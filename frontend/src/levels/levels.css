@@ -477,6 +477,32 @@
   color: rgba(195, 153, 255, 0.8);
 }
 
+.levelDeepDiveToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: "Panchang-Medium";
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(195, 153, 255, 0.8);
+}
+
+.levelDeepDiveToggle:hover {
+  color: rgba(195, 153, 255, 1);
+}
+
+.levelDeepDiveBody {
+  margin-top: 1.2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--level-line);
+}
+
 .levelDetailBridgeCard {
   display: flex;
   flex-direction: column;

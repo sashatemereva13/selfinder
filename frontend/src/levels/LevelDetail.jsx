@@ -1,4 +1,6 @@
+import { useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { getLevelBySlug } from "./levelsContent";
 import { useChat } from "../guide/ChatContext";
 import { readMeasureResult } from "../hooks/useRoomProgress";
@@ -23,6 +25,7 @@ export default function LevelDetail() {
   const level = getLevelBySlug(slug);
   const { activePhilosopher } = useChat();
   const measureResult = readMeasureResult();
+  const [deepDiveOpen, setDeepDiveOpen] = useState(false);
 
   if (!level) return <Navigate to="/levels" replace />;
 
@@ -79,6 +82,41 @@ export default function LevelDetail() {
                 <p key={index}>{renderInline(paragraph)}</p>
               ))}
         </div>
+
+        {level.deepDive && (
+          <div className="levelDetailCard levelDetailContentCard">
+            <button
+              type="button"
+              className="levelDeepDiveToggle"
+              onClick={() => setDeepDiveOpen((open) => !open)}
+              aria-expanded={deepDiveOpen}
+            >
+              {deepDiveOpen ? "Hide the deeper read ↑" : "Go deeper ↓"}
+            </button>
+            <AnimatePresence>
+              {deepDiveOpen && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.25 }}
+                  style={{ overflow: "hidden" }}
+                >
+                  <div className="levelDeepDiveBody">
+                    {level.deepDive.map((section) => (
+                      <section className="aLevelSection" key={section.heading}>
+                        <h3>{section.heading}</h3>
+                        {section.paragraphs.map((paragraph, index) => (
+                          <p key={index}>{renderInline(paragraph)}</p>
+                        ))}
+                      </section>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
         {activePhilosopher?.tuneInBridge && (
           <div className="levelDetailCard levelDetailBridgeCard">
