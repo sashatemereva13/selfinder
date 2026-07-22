@@ -13,6 +13,7 @@ const measureResultSchema = new mongoose.Schema({
   lines: { type: mongoose.Schema.Types.Mixed, default: null },
   microPractice: { type: String, default: null },
   affirmation: { type: String, default: null },
+  combinationMessage: { type: String, default: null },
   recommendedPhilosopher: String,
   savedAt: { type: String, required: true },
 });

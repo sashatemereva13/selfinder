@@ -6,10 +6,20 @@ import User from "../models/User.js";
 import MeasureResult from "../models/MeasureResult.js";
 import { recommendPhilosopher } from "./measureController.js";
 import {
+  VIBRATION_LEVELS,
   getNearestVibrationLevel,
   getFrequencyBand,
   calibrateVibrationScore,
 } from "../data/vibrationLevels.js";
+
+// Ordered high-to-low so the scale reads top-down the way a person would
+// picture it, with each level's qualitative frame as the actual criterion —
+// without this, the model has only a bare name=number lookup and tends to
+// mix up adjacent/similar-sounding levels (e.g. scoring fear as anger).
+const VIBRATION_SCALE_REFERENCE = [...VIBRATION_LEVELS]
+  .reverse()
+  .map((l) => `${l.score} ${l.name} — ${l.frame}`)
+  .join("\n");
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -265,7 +275,7 @@ export async function postJourneyLine(req, res) {
 }
 
 export async function postMeasureExchange(req, res) {
-  const { systemPrompt, sphere, question, answer } = req.body;
+  const { systemPrompt, sphere, question, answer, canGoBack } = req.body;
 
   if (!systemPrompt || !sphere || !question || typeof answer !== "string") {
     return res
@@ -273,20 +283,32 @@ export async function postMeasureExchange(req, res) {
       .json({ error: "systemPrompt, sphere, question, and answer are required" });
   }
 
+  const goBackPossible = canGoBack === true;
+
   const exchangePrompt = `You just asked the person, during a structured self-reflection check-in about their ${sphere}:
 "${question}"
 
 They replied:
 "${answer}"
 
-Decide: did they actually engage with the question — even in one word, tersely, vaguely, or emotionally, describing something true about their current state? A short answer like "good", "fine", "tired", or "okay" IS engagement — it directly answers the question, it is not a deflection just because it's brief. Only treat it as non-engagement if they asked you something back, pushed back, expressed confusion about the process, or said something that isn't really an answer at all.
+First, check: are they asking to go back and reconsider or change their answer to an earlier question, rather than answering this one (things like "wait, can I go back", "actually let me redo the last one", "I want to change what I said about my mind")? ${goBackPossible ? "Going back is possible right now — there is a previous answer to revisit." : "Going back is NOT possible right now — this is the very first question, there is nothing before it yet."}
 
 Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape:
-{"advance": true, "reply": "..."}
+{"advance": true, "goBack": false, "reply": "..."}
 
-If they engaged with the question, set "advance" to true. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
+If they're asking to go back${goBackPossible ? "" : " (even though there's nothing to go back to yet)"}:
+- Set "advance" to false.
+${
+  goBackPossible
+    ? `- Set "goBack" to true. "reply" is ONE short, warm sentence in your voice confirming you're taking them back to reconsider it — do not ask a new question.`
+    : `- Set "goBack" to false. "reply" is ONE short sentence, in your voice, gently noting this is the very first one so there's nothing yet to go back to, then invite them to answer what's in front of them.`
+}
 
-If they did not really engage, set "advance" to false. There is no list of preset answers offered to them anymore — if someone can't find the words, pushing back or asking for help IS the expected way to get unstuck, not a failure state. Two cases:
+Otherwise, decide: did they actually engage with the question — even in one word, tersely, vaguely, or emotionally, describing something true about their current state? A short answer like "good", "fine", "tired", or "okay" IS engagement — it directly answers the question, it is not a deflection just because it's brief. Only treat it as non-engagement if they asked you something back, pushed back, expressed confusion about the process, or said something that isn't really an answer at all.
+
+If they engaged with the question, set "advance" to true and "goBack" to false. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
+
+If they did not really engage (and are not asking to go back), set "advance" to false and "goBack" to false. There is no list of preset answers offered to them anymore — if someone can't find the words, pushing back or asking for help IS the expected way to get unstuck, not a failure state. Two cases:
 - If they asked you a genuine question of their own, answer it honestly and specifically, in your own voice, with real reasoning — not just an acknowledgment that they asked something. Only do this if they actually asked something; never invent or quote back a question they did not ask.
 - If they seem stuck, unsure, or gave a vague non-answer rather than asking something specific, rephrase the original question using genuinely different words and imagery — actually reword it, don't just repeat it back — so they have a fresh way in. This is your actual job here: meet them with a new angle, not a script.
 Either way, stay in character, keep it under 60 words, ground your reply only in what they actually wrote ("${answer}"), and land back on the question without literally restating your first phrasing of it.`;
@@ -314,13 +336,19 @@ Either way, stay in character, keep it under 60 words, ground your reply only in
 
     if (!parsed || typeof parsed.reply !== "string" || !parsed.reply.trim()) {
       // Fail open: treat as answered so the interview never gets stuck on a bad response.
-      return res.json({ advance: true, reply: "" });
+      return res.json({ advance: true, goBack: false, reply: "" });
     }
 
-    res.json({ advance: parsed.advance !== false, reply: parsed.reply.trim() });
+    res.json({
+      advance: parsed.advance !== false,
+      // Server-side guard: never honor goBack if the client says there's nothing to go back to,
+      // regardless of what the model returned.
+      goBack: goBackPossible && parsed.goBack === true,
+      reply: parsed.reply.trim(),
+    });
   } catch (err) {
     console.error("Measure exchange failed:", err);
-    res.json({ advance: true, reply: "" });
+    res.json({ advance: true, goBack: false, reply: "" });
   }
 }
 
@@ -443,6 +471,7 @@ async function saveMeasureResultIfConsented(userPayload, interpretation) {
       lines: interpretation.lines,
       microPractice: interpretation.microPractice ?? null,
       affirmation: interpretation.affirmation ?? null,
+      combinationMessage: interpretation.combinationMessage ?? null,
       recommendedPhilosopher: recommendPhilosopher(interpretation.vibrationScore),
       savedAt: new Date().toISOString(),
     });
@@ -451,8 +480,50 @@ async function saveMeasureResultIfConsented(userPayload, interpretation) {
   }
 }
 
+// Best-effort, in the philosopher's own voice — holds all four sphere
+// readings together rather than describing them separately, since that's
+// the actual point a single blended "overall" number can't make on its own.
+// Failure here should never break the reading itself, so callers just get
+// `null` back and fall back to showing the reading without it.
+async function requestCombinationMessage(systemPrompt, interpretation) {
+  if (!systemPrompt) return null;
+
+  const lineSummary = interpretation.lines
+    .map((line) => `${line.label}: ${line.vibrationLevel.name} (${line.vibrationScore})`)
+    .join("\n");
+
+  const prompt = `A person just completed a self-reflection check-in. Their four spheres read:
+${lineSummary}
+
+Write ONE short reflection, in your voice, that holds all four of these
+together — not a summary of each one separately, but something that notices
+how they relate: where there's a gap between them, what one might be waiting
+on another to catch up with, or what it means that they're this different
+(or this aligned) right now. Do not ask a question. Two to three sentences,
+no more. Stay fully in character. Return only the reflection itself, no
+preamble, no quotation marks.`;
+
+  try {
+    const response = await groq.chat.completions.create({
+      model: models[0],
+      max_tokens: 200,
+      temperature: 0.6,
+      messages: [
+        { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    const text = response.choices[0].message.content.trim();
+    return text || null;
+  } catch (err) {
+    console.error("Combination message generation failed:", err.message);
+    return null;
+  }
+}
+
 export async function postMeasureInterview(req, res) {
-  const { qaPairs } = req.body;
+  const { qaPairs, systemPrompt } = req.body;
 
   if (!Array.isArray(qaPairs) || qaPairs.length < 4) {
     return res.status(400).json({ error: "qaPairs must contain 4 sphere answers" });
@@ -469,7 +540,14 @@ Score all five readings (overall + 4 spheres) using integer values:
 - clarity: 0–12 (focus, clear thinking, decisiveness)
 - intensity: 0–12 (activation, urgency, force, heat)
 - grounding: 0–12 (rootedness, physical presence, stability)
-- vibration: 20–700 (Hawkins emotional frequency: shame=20, grief=75, fear=100, desire=125, anger=150, pride=175, courage=200, neutrality=250, willingness=310, acceptance=350, reason=400, love=500, peace=600, enlightenment=700)
+- vibration: 20–700 (Hawkins emotional frequency)
+
+The vibration scale, high to low, each with what actually distinguishes it —
+use these to tell adjacent levels apart (e.g. fear vs. anger vs. desire all
+sit close together but mean different things). Match the level whose
+description best fits the emotional quality of what they said, not just a
+surface keyword:
+${VIBRATION_SCALE_REFERENCE}
 
 Conversation:
 ${transcript}
@@ -492,6 +570,7 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
   }
 
   const interpretation = buildInterviewInterpretation(rawScores);
+  interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation);
   await saveMeasureResultIfConsented(req.user, interpretation);
   res.json(interpretation);
 }
