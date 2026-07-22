@@ -44,7 +44,15 @@
         }
       ],
       "expo-splash-screen",
-      "expo-audio"
+      "expo-audio",
+      "expo-sharing",
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Selfinder uses your photo library to save messages you choose to keep as images.",
+          "savePhotosPermission": "Selfinder saves messages here only when you tap Save."
+        }
+      ]
     ]
   }
 }

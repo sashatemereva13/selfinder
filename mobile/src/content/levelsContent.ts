@@ -20,9 +20,18 @@ export interface LevelContent {
   title: string;
   score: number;
   frame: string;
+  // Second-person rephrasing of `frame`, for surfaces that reference the
+  // reader's own current reading (e.g. the Depths home screen) — `frame`
+  // itself stays third-person/definitional, correct for the Level page
+  // where it's describing a concept rather than addressing the reader.
+  personalFrame?: string;
   signals?: LevelSignal[];
   paragraphs?: string[];
   sections?: LevelSection[];
+  // The original long-form essay content — kept, but demoted to a collapsed
+  // "Going deeper" block so the main read stays short: feel it, what it's
+  // for, what to do now, what happens if it stays stuck.
+  deepDive?: LevelSection[];
 }
 
 export const LEVELS: LevelContent[] = [
@@ -32,8 +41,47 @@ export const LEVELS: LevelContent[] = [
     title: "Enlightenment",
     score: 700,
     frame: `Not an achievement to chase — it is what's left when nothing is being defended.`,
-    paragraphs: [
-      `Illumination, self-realisation, and enlightenment denote the Divine states that have historically demonstrated the highest levels of consciousness. These conditions represent the transcendence of the limitations and constraints of the ego's linearity, and the emergence of the radiance of the infinite reality and source of existence.`,
+    personalFrame: `You're not chasing an achievement right now — this is just what's left when nothing needs defending.`,
+    signals: [
+      { label: "Feels like", value: "no gap between what's happening and the awareness of it — nothing left outside to resist." },
+      { label: "Personality", value: "undefended, rarely reactive, doesn't need to be seen a certain way." },
+      { label: "Used in society", value: "recognized more often in retrospect, or in teachers and mystics, than claimed by anyone in the moment." },
+      { label: "Prone to", value: "being mistaken for detachment by people expecting a reaction that isn't coming." },
+    ],
+    sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `No separation between what's happening and the awareness of it happening. There's no longer a "me" standing back from experience to approve of it or resist it — whatever's here is simply met, completely. It rarely announces itself as a feeling; it's usually recognized afterward, or by someone else, more than experienced as an event.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Eckhart Tolle's account of his own collapse at 29 is the most exact record we have of this: not a slow accumulation of enough goodness, but a night when the thought "I cannot live with myself any longer" made him realise there were two of him — the self doing the living, and the self that couldn't live with it. When that self stopped being defended, what remained wasn't emptiness. It was this.`,
+          `Nisargadatta Maharaj put the same thing more plainly: "You need not get at it, for you are it. It will get at you, if you give it a chance." Which means the actual work at this level isn't more effort. It's fewer walls.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `There's no technique that produces this on demand — that's part of what it is. The smaller, actual move: stop defending whatever you're currently defending, just for a minute, and notice what's still there once you do.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `The real risk at this level isn't avoiding it — it's performing it. Mistaking the idea of enlightenment for the thing itself builds a subtler, harder-to-spot ego around "being the one who's arrived," which is exactly the kind of defending this state is supposed to be free of.`,
+        ],
+      },
+    ],
+    deepDive: [
+      {
+        heading: "The traditional description",
+        paragraphs: [
+          `Illumination, self-realisation, and enlightenment denote the Divine states that have historically demonstrated the highest levels of consciousness. These conditions represent the transcendence of the limitations and constraints of the ego's linearity, and the emergence of the radiance of the infinite reality and source of existence.`,
+        ],
+      },
     ],
   },
   {
@@ -42,9 +90,43 @@ export const LEVELS: LevelContent[] = [
     title: "Peace, Bliss and Illumination",
     score: 600,
     frame: `Stillness here is not the absence of feeling — it is feeling with nothing left to resist.`,
+    personalFrame: `This stillness isn't the absence of feeling — it's you feeling everything with nothing left to resist.`,
+    signals: [
+      { label: "Feels like", value: "spacious and unhurried — nothing urgent left to resolve." },
+      { label: "Personality", value: "rarely reactive, comfortable with silence, hard to provoke." },
+      { label: "Used in society", value: "the quality people mean when they say someone is calming to be around." },
+      { label: "Prone to", value: "being confused with numbness by people who equate peace with not caring." },
+    ],
     sections: [
       {
         heading: "What this feels like",
+        paragraphs: [
+          `A kind of spaciousness where nothing needs fixing right now — not because every problem is solved, but because the need for it to be solved has quieted. Time stops pressing the way it usually does.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Thich Nhat Hanh spent a life insisting peace was never somewhere else: "Peace is present right here and now, in ourselves and in everything we do and see. We need only to be awake." Not a state you arrive at once every conflict is resolved — most conflicts never fully resolve.`,
+          `Eckhart Tolle names the actual mechanic: "Forgive yourself for not being at peace. The moment you completely accept your non-peace, your non-peace becomes transmuted into peace." The path here runs directly through the thing that looks like its opposite, not around it.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Stop trying to reach peace by solving whatever's bothering you first. Sit with the discomfort exactly as it is, without editing it, for a few minutes — per Tolle, that's the actual door in, not a reward for finding the door.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Peace performed for an audience isn't peace — it's a calm face over an unresolved feeling, which tends to leak out sideways later. The real version doesn't need anyone to notice it.`,
+        ],
+      },
+    ],
+    deepDive: [
+      {
+        heading: "The traditional description",
         paragraphs: [
           `This energy field is associated with the experience of God-consciousness. The distinction between the subject and object disappears, and there is no specific focal point of perception.`,
           `Action at the level of 600 and above is perceived as occurring in slow motion, suspended in time and space. All is alive, radiant, and continuously flowing—unfolding in an exquisitely coordinated evolutionary dance in which significance and source are overwhelming. This revelation takes place without thought or conception, so that there is an infinite silence in the mind, which has stopped conceptualising.`,
@@ -77,7 +159,41 @@ export const LEVELS: LevelContent[] = [
     title: "Unconditional Love, Joy, Ecstasy",
     score: 540,
     frame: `Not a feat of willpower — what's left once love no longer needs a condition to stand on.`,
+    personalFrame: `This isn't willpower — it's what's left now that your love doesn't need a condition to stand on.`,
+    signals: [
+      { label: "Feels like", value: "warmth that isn't waiting for anything back." },
+      { label: "Personality", value: "patient, steady, unusually hard to offend or discourage." },
+      { label: "Used in society", value: "what people mean by \"unconditional\" support — a parent, a mentor, a devoted caregiver." },
+      { label: "Prone to", value: "being taken advantage of by people who mistake it for having no boundaries at all." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A warmth that doesn't check whether it's being returned. It shows up as patience that doesn't run out, and a kind of attention that doesn't ask anything of the person receiving it.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Mother Teresa: "It is not the magnitude of our actions, but the amount of love that is put into them that matters." The difference between this and ordinary love isn't scale. It's that it stops being about the size of the gesture and starts being about the quality of attention behind it.`,
+          `The Dalai Lama draws the same line differently: he separates love that depends on what someone gives you back from a caring that holds regardless of the relationship. One needs the other person to keep being useful to you. The other doesn't.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Pick one relationship where you're keeping score, even quietly, and do one thing in it today without expecting it noticed or repaid. Not a grand gesture — the point is the absence of the tally, not the size of the act.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Unconditional doesn't mean unlimited — it's not the same as having no boundaries or absorbing harm indefinitely. Mother Teresa's love had structure and discipline behind it. Without that, what looks like unconditional love is often just self-erasure.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "The shape of this joy",
         paragraphs: [
@@ -111,7 +227,41 @@ export const LEVELS: LevelContent[] = [
     title: "Love",
     score: 500,
     frame: `Not earned and not owed — energy that has stopped needing somewhere to go.`,
+    personalFrame: `This isn't earned and it isn't owed — it's energy in you that's stopped needing somewhere to go.`,
+    signals: [
+      { label: "Feels like", value: "warm and expansive, less interested in being right than in staying connected." },
+      { label: "Personality", value: "forgiving, generous with benefit of the doubt, quicker to include than to defend." },
+      { label: "Used in society", value: "the quality behind long marriages, loyal friendships, work people stay devoted to." },
+      { label: "Prone to", value: "being confused with attachment or infatuation, which fade the moment the object changes." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Warm and expansive rather than urgent. Less interested in winning an exchange than in staying connected through it. It doesn't need the moment to go a particular way to keep functioning.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Ramana Maharshi: "Love of an object is of an inferior order and cannot endure." Any love aimed at something outside you — a person, an outcome, a version of yourself — fades the moment that object changes, because it was never really about the object.`,
+          `Nisargadatta Maharaj: "Wisdom is knowing I am nothing, Love is knowing I am everything, and between the two my life moves." Worth sitting with directly — not a formula, a description of where love actually comes from once it isn't chasing anything.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Notice the next time you catch yourself keeping love conditional — "I'll be warm once they apologize" — and try dropping the condition for five minutes, just to see what's actually underneath the withholding.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `What most people call love at the lower end of this range is really attachment — glamour, possession, the specialness of a particular person or outcome. It's intense, and it fades the moment the object does, because it was never really about them.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What this love is",
         paragraphs: [
@@ -154,7 +304,41 @@ export const LEVELS: LevelContent[] = [
     title: "Reason",
     score: 400,
     frame: `The mind organizing experience — useful information, until it mistakes the map for the territory.`,
+    personalFrame: `Your mind is organizing experience right now — useful, as long as it doesn't mistake the map for the territory.`,
+    signals: [
+      { label: "Feels like", value: "clear, ordered, confident you can explain why." },
+      { label: "Personality", value: "analytical, methodical, values evidence over intuition." },
+      { label: "Used in society", value: "the mode behind science, law, and engineering — anywhere a decision needs to be defensible." },
+      { label: "Prone to", value: "mistaking a good explanation for the whole truth, or using logic to avoid feeling something." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Clear and ordered — you can explain why, and the explanation holds up. Complexity feels manageable rather than overwhelming, because there's a method for sorting it.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Reason's real use isn't producing feelings, it's building ground you can trust — Carl Sagan's whole method rests on one line: extraordinary claims require extraordinary evidence. That single habit, applied honestly, sorts most of what's actually true in your life from what you've just been repeating.`,
+          `But even Einstein, whose career was reason's proof of concept, documented its edge plainly: "The mind can proceed only so far upon what it knows and can prove. There comes a point where the mind takes a leap... and comes out upon a higher plane of knowledge, but can never prove how it got there." Reason gets you to the edge. It doesn't cross it.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Take one belief you're currently certain about and ask what evidence would change your mind. If the honest answer is "nothing would," that's not reason anymore — it's just conviction wearing reason's clothes.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Reason is brilliant at handling data and terrible at knowing when it's the wrong tool — grief, love, and meaning don't resolve by being explained. Used as a way to avoid feeling something rather than to understand it, reason becomes a very sophisticated form of hiding.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What reason does well",
         paragraphs: [
@@ -196,7 +380,41 @@ export const LEVELS: LevelContent[] = [
     title: "Acceptance",
     score: 350,
     frame: `Not resignation — the moment perception stops arguing with what is already true.`,
+    personalFrame: `You're not giving up right now — you've just stopped arguing with what's already true.`,
+    signals: [
+      { label: "Feels like", value: "settled, without the undertow of arguing against what's already true." },
+      { label: "Personality", value: "even-keeled, hard to provoke into a fight about how things \"should\" be." },
+      { label: "Used in society", value: "the posture behind recovery programs, therapy, and most durable peace agreements." },
+      { label: "Prone to", value: "being confused with resignation by people who think accepting something means endorsing it." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Settled, without the background static of arguing that things should be different than they are. It doesn't mean liking the situation — it means the fight against its existing has stopped.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Marsha Linehan, who built Dialectical Behavior Therapy after surviving the psychiatric crisis she spent decades not disclosing publicly, reduced it to an equation: pain is pain, but suffering is pain plus non-acceptance. The suffering isn't the situation — it's the part of you still arguing the situation shouldn't be the situation.`,
+          `Epictetus said the same thing two thousand years earlier: some things are within your control, others aren't, and the entire difficulty of a life is mistaking which is which. Acceptance isn't giving up on the ones you can change. It's finally being accurate about which ones those are.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Name one thing right now you're still arguing with reality about. Try the sentence "this is happening" instead of "this shouldn't be happening," and notice if anything in your body loosens.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Acceptance gets mistaken for giving up. It's the opposite — Linehan's whole clinical point was that acceptance is what makes change possible, not what replaces it. You can't successfully change what you haven't first admitted is real.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "Taking back the source of your happiness",
         paragraphs: [
@@ -243,8 +461,42 @@ export const LEVELS: LevelContent[] = [
     name: "willingness",
     title: "Willingness",
     score: 310,
-    frame: `Information that the friction of resistance has finally been spent.`,
+    frame: `Confirmation that the friction of resistance has finally been spent.`,
+    personalFrame: `You've spent the friction of resistance — you're just willing now, before any proof it'll work.`,
+    signals: [
+      { label: "Feels like", value: "a quiet \"yes, okay, I'll try\" before any proof it'll work." },
+      { label: "Personality", value: "cooperative, quick to volunteer, unusually easy to work with." },
+      { label: "Used in society", value: "the first requirement in every recovery program and most successful teams." },
+      { label: "Prone to", value: "being skipped past — people wait for motivation or certainty instead of just starting." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A quiet "okay, I'll try" before there's any evidence it'll pay off. Not enthusiasm exactly — closer to having stopped needing a guarantee before you'll move.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `This one doesn't have a famous philosopher attached to it — it shows up instead in the plainest possible language, in the book Alcoholics Anonymous built its entire recovery model on: "Willingness, Honesty and Open-mindedness are the essentials of recovery," and, more bluntly, "Half measures availed us nothing."`,
+          `What that captures is specific: willingness isn't the moment you succeed at changing. It's the moment before that, when you agree to try something you can't yet prove will work. Nothing downstream happens without it.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Pick the smallest possible version of the thing you've been putting off, and do that version today — not because you're ready, but specifically because you're not, and willingness is what covers that gap.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `People wait to feel willing before acting, when it usually runs the other way — the willingness shows up once you've already started the half-measure. Waiting for the feeling first is usually just a slower way of not doing it.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What changes",
         paragraphs: [
@@ -279,9 +531,43 @@ export const LEVELS: LevelContent[] = [
     title: "Neutrality",
     score: 250,
     frame: `Not indifference — the calm of no longer needing things to go a particular way.`,
+    personalFrame: `You're not being indifferent right now — you've just stopped needing things to go a particular way.`,
+    signals: [
+      { label: "Feels like", value: "unbothered by which way things go, without having stopped caring." },
+      { label: "Personality", value: "easygoing, hard to draw into conflict, doesn't need to win the room." },
+      { label: "Used in society", value: "the calm coworker or friend nobody worries about setting off." },
+      { label: "Prone to", value: "being mistaken for apathy by people who can't tell not-needing-an-outcome from not-caring-at-all." },
+    ],
     sections: [
       {
-        heading: "What it feels like",
+        heading: "What this feels like",
+        paragraphs: [
+          `Unbothered by which way something goes, without having stopped caring how it goes. Losing isn't experienced as defeat — just as one of the outcomes that was always on the table.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `There isn't a single figure who owns this one the way Frankl owns courage or Linehan owns acceptance — worth noticing, since neutrality rarely gets named as a virtue on its own. The closest precise language for it is much older: the Bhagavad Gita's instruction to act without attachment to the result, "equanimity is called yoga."`,
+          `The distinction worth holding onto: neutrality isn't indifference. Indifference has stopped caring. Neutrality has just stopped needing things to land a particular way in order to be okay.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Before your next uncertain outcome — a message you're waiting on, a decision pending — name the actual fallback out loud: "if this doesn't happen, then I'll ___." Neutrality is easier to reach once you've located the floor.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Neutrality looks like apathy from the outside, and the two get confused constantly. The real test: apathy has stopped believing anything will help. Neutrality just isn't gripping the outcome — help is still welcome, it's just not required.`,
+        ],
+      },
+    ],
+    deepDive: [
+      {
+        heading: "What it feels like day to day",
         paragraphs: [
           `To be neutral means to be relatively unattached to outcomes. Not getting one's way is no longer experienced as defeating, frightening, or frustrating.`,
           `At the neutral level, a person can say: "Well, if I don't get this job, then I'll get another." This is the beginning of inner confidence.`,
@@ -305,7 +591,41 @@ export const LEVELS: LevelContent[] = [
     title: "Courage",
     score: 200,
     frame: `Not the absence of fear — the willingness to meet it standing up.`,
+    personalFrame: `You're not fearless right now — you're just meeting the fear standing up.`,
+    signals: [
+      { label: "Feels like", value: "afraid, and moving anyway." },
+      { label: "Personality", value: "willing to try things that might not work, values effort over guaranteed outcome." },
+      { label: "Used in society", value: "what gets someone through a diagnosis, a layoff, or a first attempt at something hard." },
+      { label: "Prone to", value: "being confused with fearlessness — actual courage requires the fear still be present." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Fear is still present — courage isn't its absence. What's different is the decision to act anyway, and the fact that acting despite it gets easier to do again next time.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Nelson Mandela, describing his own years of imprisonment and resistance rather than a general theory: "I learned that courage was not the absence of fear, but the triumph over it. The brave man is not he who does not feel afraid, but he who conquers that fear." He was, by his own account, afraid often. He acted anyway, repeatedly. That's the whole definition.`,
+          `Viktor Frankl, writing from inside Auschwitz, extended it further: courage isn't only bold action, it's the capacity to bear what can't be changed and still find it meant something. "There was no need to be ashamed of tears, for tears bore witness that a man had the greatest of courage — the courage to suffer."`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Name the smallest true fear behind whatever you're avoiding right now, out loud or on paper. Then do the smallest possible version of the thing anyway. The size of the action matters less than doing it while still afraid.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Waiting to feel fearless before acting means waiting forever — fearlessness isn't a prerequisite, it's what courage sometimes produces afterward, not before. Mandela was afraid the whole time. That's not a disqualifying detail, it's the definition.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "Crossing the threshold",
         paragraphs: [
@@ -360,7 +680,41 @@ export const LEVELS: LevelContent[] = [
     title: "Pride",
     score: 175,
     frame: `Not vanity — self-worth borrowing its shape from comparison before it has learned to stand on its own.`,
+    personalFrame: `This isn't vanity — it's your self-worth borrowing its shape from comparison, before it's learned to stand on its own.`,
+    signals: [
+      { label: "Feels like", value: "a lift in self-worth, tied to something you did or have." },
+      { label: "Personality", value: "image-conscious, motivated by recognition, sensitive to being overlooked." },
+      { label: "Used in society", value: "what drives achievement culture, status displays, and most competitive fields." },
+      { label: "Prone to", value: "curdling into defensiveness or arrogance when the achievement is challenged." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A lift in self-worth attached to something specific — an achievement, a possession, a status. It feels good, but noticeably better in contrast to what came before than as something solid on its own.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Psychologist Jessica Tracy's research (UBC Emotion & Self Lab) found something the word itself hides: there are two distinct forms of pride, not one. Authentic pride — earned, effort-based, tied to something you actually did — measurably boosts creativity and motivates people to keep showing up. Hubristic pride — grandiose, defensive, about dominance rather than achievement — does the opposite.`,
+          `Which means the question worth asking when pride shows up isn't whether to feel it. It's which of the two you're actually standing in.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Next time you feel proud of something, try locating whether it's about the effort you actually made, or about what it lets other people think of you. Neither answer is wrong — just worth knowing which one you're standing in.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Hubristic pride — the defensive, ego-driven kind — gets triggered the moment the achievement is questioned, because the whole thing was propping something up. Authentic pride doesn't flinch at a challenge the same way, because it was never that fragile to begin with.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "Where this self-esteem comes from",
         paragraphs: [
@@ -394,7 +748,41 @@ export const LEVELS: LevelContent[] = [
     title: "Anger",
     score: 150,
     frame: `Anger is not pathology; it is the signal that a boundary has been crossed.`,
+    personalFrame: `You're not broken right now — something crossed a boundary, and this is the signal telling you so.`,
+    signals: [
+      { label: "Feels like", value: "heat rising fast, a pull to push back or push through right now." },
+      { label: "Personality", value: "quick to react, protective of boundaries, impatient with unfairness." },
+      { label: "Used in society", value: "fuel for protest, self-defense, and change — or a tool of intimidation when it isn't examined." },
+      { label: "Prone to", value: "outbursts if it has no outlet; resentment or passive aggression if it's swallowed instead." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A rush of heat, a tightening in the chest or jaw, an urge to correct something immediately. It's sharp and situational, and it usually knows exactly what it's about. Left unexpressed for long enough, it can curdle into something quieter and more permanent — a running list of grievances, replayed on a loop, aimed at people who aren't even in the room anymore.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Muhammad Ali's boxing career began, by his own account, with a stolen bicycle: a twelve-year-old too angry to let it go, taken to a gym by a police officer who told him he'd better learn to fight before he tried to find whoever took it. The anger didn't disappear. It became a career.`,
+          `James Baldwin was more direct about it as a working writer: "To be a Negro in this country and to be relatively conscious is to be in a state of rage almost all the time" — and he used that rage as material, not something to manage around. Anger given a direction is just force with somewhere to go.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Give it somewhere physical to go before you try to decide what it means. A hard walk, a heavy bag, twenty minutes of real effort — anger moves fastest through the body, not through more thinking about who's right.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Anger that never gets expressed doesn't go away — it tends to leak out sideways, at whoever's nearest rather than whoever actually caused it, or turn inward as resentment that quietly outlasts the original reason. Years of that is its own kind of exhausting: a body kept in a low simmer that never gets to finish what it started.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What it can do",
         paragraphs: [
@@ -434,7 +822,41 @@ export const LEVELS: LevelContent[] = [
     title: "Desire",
     score: 125,
     frame: `Not greed — the mind reaching outward to fill a lack it hasn't yet located within.`,
+    personalFrame: `This isn't greed — it's you reaching outward for something, before you've located the actual lack within.`,
+    signals: [
+      { label: "Feels like", value: "pulled toward something, restless until you have it." },
+      { label: "Personality", value: "driven, ambitious, has trouble sitting still with unmet wants." },
+      { label: "Used in society", value: "the engine behind entrepreneurship, invention, and most consumer advertising." },
+      { label: "Prone to", value: "escalating into craving, where the wanting itself becomes the addiction rather than the thing wanted." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A pull toward something specific, with restlessness underneath until you have it. Sharper than a preference — this is wanting that organizes your attention around itself.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Nikola Tesla described his own desire almost as a physical force: "When natural inclination develops into a passionate desire, one advances towards his goal in seven-league boots." He also described what it cost him — desire strong enough to make him "forget food, sleep, friends, love, everything." Worth being honest about that too: desire is an engine, and an engine with no destination just burns fuel.`,
+          `The difference between Tesla's desire and addiction isn't the intensity. It's whether the wanting is pointed at something that's actually yours to build, or at something that was only ever going to numb the wanting itself for an hour.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Pick the desire that's loudest right now and ask what it's actually in service of — is this yours to build, or is it a stand-in for something you're avoiding feeling? Both are real desires. Only one tends to satisfy once you get it.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Desire becomes addiction exactly at the point where satisfying it stops being the goal and avoiding the discomfort of wanting becomes the goal instead. Tesla's desire built things. Desire that's only trying to numb itself just needs more of itself, endlessly.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What it moves us toward",
         paragraphs: [
@@ -469,7 +891,41 @@ export const LEVELS: LevelContent[] = [
     title: "Fear",
     score: 100,
     frame: `Fear is not weakness; it is intelligence about uncertainty.`,
+    personalFrame: `You're not weak right now — you're just picking up real intelligence about something uncertain.`,
+    signals: [
+      { label: "Feels like", value: "tight, alert, wanting to avoid or escape something specific." },
+      { label: "Personality", value: "cautious, scans for risk, prepares for the worst before it commits." },
+      { label: "Used in society", value: "what keeps people out of genuinely dangerous situations — and what's exploited by anyone selling safety." },
+      { label: "Prone to", value: "ballooning past the actual threat into generalized anxiety or avoidance." },
+    ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Tight and alert, focused on avoiding or escaping something specific. Useful fear points clearly at a real risk. The unhelpful kind shows up the same way, but about something that isn't actually happening.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Susan Jeffers built an entire practice around one reframe: "Some fear is instinctual and healthy and keeps us alert to trouble. The rest... is inappropriate and destructive." Her point wasn't to eliminate fear — her book is called "Feel the Fear and Do It Anyway" for a reason. It's to stop treating every instance of it as a stop sign.`,
+          `The actual skill is sorting: is this fear telling you something true about the situation, or is it just an old alarm going off out of habit? One is worth listening to. The other is worth noticing and moving through anyway.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Ask, specifically: is this fear about something happening right now, or about something that might happen? If it's the second one, name the actual next physical action you'd take anyway, and take it — per Jeffers, feel the fear and do it anyway.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Treating every instance of fear as a stop sign means avoiding things that were never actually dangerous, just unfamiliar. The skill isn't eliminating fear — it's telling the useful kind from the kind that's just an old alarm still going off.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "How it runs the show",
         paragraphs: [
@@ -502,11 +958,41 @@ export const LEVELS: LevelContent[] = [
     title: "Grief",
     score: 75,
     frame: `Not weakness — the honest cost of having valued something enough to feel its loss.`,
+    personalFrame: `This isn't weakness — it's the honest cost of having valued something enough to feel losing it.`,
     signals: [
-      { label: "Feels like", value: "sadness, loss, despondency." },
-      { label: "Manifests as", value: "mourning, bereavement, remorse about the past." },
+      { label: "Feels like", value: "heavy, tearful, pulled backward toward what's gone." },
+      { label: "Personality", value: "reflective, prone to withdrawing, more attuned to loss than to what's still present." },
+      { label: "Used in society", value: "rarely given enough time — most workplaces and even families expect it to resolve faster than it does." },
+      { label: "Prone to", value: "becoming chronic if there's nowhere safe to actually feel it, curdling into a permanent low mood." },
     ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Heavy, often tearful, pulled backward toward whatever's gone. It doesn't move in a straight line — it comes in waves that don't follow a schedule, no matter how much you'd like them to.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `C.S. Lewis, writing after his wife's death, discovered something he hadn't expected: "Grief turns out to be not a state but a process." It wasn't a wound to close as fast as possible — it kept moving, on its own schedule, whether he cooperated or not.`,
+          `His conclusion is the one worth keeping: "Bereavement is a universal and integral part of our experience of love." Grief isn't evidence something is wrong with you. It's the exact size of what you were willing to care about. Kübler-Ross's stages exist for the same reason — not a checklist to complete, but a way of naming what's actually happening so it doesn't feel like it's happening for no reason.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Let this round of it be exactly as long as it needs to be, without a deadline attached. If a specific memory is surfacing, let it finish playing rather than pushing it away — Lewis found the process moved faster once he stopped trying to shortcut it.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Treating grief as a malfunction to fix quickly usually just delays it — it tends to resurface later, often at a worse time, in a less recognizable shape. Grief isn't evidence something is wrong with you. It's the accurate size of what you were willing to care about.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "Why it lingers",
         paragraphs: [
@@ -548,11 +1034,41 @@ export const LEVELS: LevelContent[] = [
     title: "Apathy, Hatred",
     score: 50,
     frame: `Not laziness — exhaustion in a system that has stopped expecting help to arrive.`,
+    personalFrame: `You're not lazy right now — you're exhausted, and some part of you has stopped expecting help to arrive.`,
     signals: [
-      { label: "Characterised by", value: "neglect, indifference, poverty, despair, hopelessness." },
-      { label: "Feels like", value: "lack of energy to take advantage of what may be available; the future looks bleak; no resources." },
+      { label: "Feels like", value: "flat, distant, can't locate the energy to want anything." },
+      { label: "Personality", value: "withdrawn, low initiative, may look lazy from outside but experiences it as having nothing left." },
+      { label: "Used in society", value: "often mistaken for laziness or a character flaw rather than depletion." },
+      { label: "Prone to", value: "lasting far longer than it needs to if mistaken for a personality trait instead of a temporary state." },
     ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `Flat and distant — the energy to want anything specific just isn't available. Not sad exactly, more like the machinery that would produce caring has gone quiet.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Kathleen Norris revived an old monastic word for this exact state: acedia, "the inability to care, even to the extent that you can't care that you don't care anymore." Her precise distinction: despair believes relief is possible but out of reach. Acedia has stopped believing relief is even worth wanting.`,
+          `Eckhart Tolle's own account of the year before his awakening reads like a documented case of this — a "deep loathing of the world" so total it emptied out into something closer to nothing at all. What matters about his story isn't that it was pleasant. It's that it wasn't permanent, and naming it accurately was the first thing that moved.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Don't try to want something big yet — that's not available from here. Pick one small, physical, no-decision-required action (stand up, open a window, drink water) and just do that one thing, without expecting it to fix the flatness.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Apathy gets treated as laziness or a moral failing, which just adds shame on top of exhaustion. Norris's distinction is the useful one: this isn't refusing to care, it's a system that's stopped expecting help to arrive — and the way out starts with naming it accurately, not pushing harder.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "How it's met by the world",
         paragraphs: [
@@ -577,14 +1093,41 @@ export const LEVELS: LevelContent[] = [
     title: "Guilt and Vindictive Hate",
     score: 30,
     frame: `Not evidence of being bad — an old standard the mind hasn't yet forgiven itself for missing.`,
+    personalFrame: `This isn't evidence you're bad — it's an old standard you haven't forgiven yourself for missing yet.`,
     signals: [
-      { label: "Used as", value: "blame to manipulate and punish, for coercion and control." },
-      {
-        label: "Manifests as",
-        value: "remorse, penance, self-hatred, self-punishment, suicide, self-abnegation, self-propagating addiction, self-recrimination, masochism, victimhood, feeling undeserving of salvation.",
-      },
+      { label: "Feels like", value: "a specific, nameable weight about something you did." },
+      { label: "Personality", value: "conscientious, replays past actions, quick to apologize." },
+      { label: "Used in society", value: "used constructively as a moral compass — and abused as a tool for manipulation and control." },
+      { label: "Prone to", value: "curdling into shame if unresolved — \"I did something bad\" sliding into \"I am something bad.\"" },
     ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A specific, nameable weight about a particular thing you did — not a verdict on your whole character, just about that one action. It points somewhere exact, which is what makes it different from shame.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Tolstoy, at the height of his wealth and fame, was stopped cold by his own guilt — he catalogued it without softening: lying, cruelty, wasted years, harm done and excused. He hid a rope from himself for a while, afraid of what he might do with it. And then that same guilt became the engine of the entire second half of his life and work.`,
+          `The distinction that matters: guilt says "I did something that didn't match what I actually value" — information you can act on. It's different from shame, which says something is wrong with you as a person. Guilt, taken seriously instead of run from, is usually just the beginning of a correction.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Name the actual value the action didn't match, out loud or on paper — not "I'm bad" but "I value honesty and I wasn't honest there." Then do one concrete thing the guilt is actually asking for: an apology, a repair, a changed decision next time.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `Left unresolved, guilt tends to slide into shame — "I did something bad" becomes "I am bad," which is a much harder place to think clearly from. The fix isn't more guilt, it's the specific correction the guilt was pointing at.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What guilt actually is",
         paragraphs: [
@@ -637,6 +1180,7 @@ export const LEVELS: LevelContent[] = [
     title: "Shame: Despair",
     score: 20,
     frame: `Shame is not a failure; it is the soul's extreme sensitivity to dignity.`,
+    personalFrame: `You haven't failed right now — you're just feeling how sensitive you are to your own dignity.`,
     signals: [
       { label: "Feels like", value: "wanting to be invisible." },
       { label: "Personality", value: "shy, withdrawn, introverted, self-deprecating." },
@@ -645,6 +1189,33 @@ export const LEVELS: LevelContent[] = [
       { label: "Prone to", value: "bizarre crimes, paranoia, psychosis, hallucinations of an accusatory nature." },
     ],
     sections: [
+      {
+        heading: "What this feels like",
+        paragraphs: [
+          `A pull to disappear — to not be seen, to take up less space. Unlike guilt, it's not about a specific action; it's a feeling that something about you, generally, is wrong.`,
+        ],
+      },
+      {
+        heading: "What it's for",
+        paragraphs: [
+          `Brené Brown's research draws the line precisely: guilt is "I did something bad," shame is "I am bad" — and the second one is almost never true, even when it feels total. Her own finding, after years of interviewing people about it: "Shame cannot survive being spoken. It cannot survive being spoken and being met with empathy."`,
+          `Which is the opposite of the instinct shame produces — the pull to hide, to go quiet, to make sure no one sees. The way out isn't proving the shame wrong through more achievement. It's saying the actual thing out loud to one person who won't flinch.`,
+        ],
+      },
+      {
+        heading: "Try this now",
+        paragraphs: [
+          `Say the specific thing you're ashamed of out loud to one person you trust not to flinch — not the whole story, just the actual thing. Brown's research point is precise: shame loses most of its power the moment it's spoken and met with anything other than judgment.`,
+        ],
+      },
+      {
+        heading: "Where people get it wrong",
+        paragraphs: [
+          `The instinct shame produces — hide, go quiet, make sure no one sees — is exactly backwards. Proving the shame wrong through more achievement doesn't touch it, because achievement was never the actual question it was asking.`,
+        ],
+      },
+    ],
+    deepDive: [
       {
         heading: "What it can become",
         paragraphs: [

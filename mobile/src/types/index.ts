@@ -53,6 +53,9 @@ export interface MeasureResult {
   band: string;
   microPractice?: string;
   affirmation?: string;
+  /** Philosopher-voiced reflection tying all four sphere readings together —
+   * null if generation failed or no philosopher context was sent. */
+  combinationMessage?: string | null;
   lines: MeasureLine[];
   /** Added client-side on save — not part of the API response. */
   savedAt: string;
@@ -103,6 +106,7 @@ export interface SavedMeasureResult {
   lines: MeasureLine[] | null;
   microPractice: string | null;
   affirmation: string | null;
+  combinationMessage: string | null;
   recommendedPhilosopher: string | null;
   savedAt: string;
 }
