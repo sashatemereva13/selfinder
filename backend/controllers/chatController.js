@@ -444,7 +444,7 @@ async function requestRawInterviewScores(scoringPrompt) {
 // Best-effort — a save failure should never break the reading itself. Requires
 // both an authenticated user and explicit special-category consent (Art. 9),
 // same gate the conversation-storage flow already uses.
-async function saveMeasureResultIfConsented(userPayload, interpretation) {
+async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs) {
   if (!userPayload?.id) return;
 
   try {
@@ -464,6 +464,7 @@ async function saveMeasureResultIfConsented(userPayload, interpretation) {
       affirmation: interpretation.affirmation ?? null,
       combinationMessage: interpretation.combinationMessage ?? null,
       recommendedPhilosopher: recommendPhilosopher(interpretation.vibrationScore),
+      qaPairs: Array.isArray(qaPairs) ? qaPairs : [],
       savedAt: new Date().toISOString(),
     });
   } catch (err) {
@@ -568,6 +569,6 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
 
   const interpretation = buildInterviewInterpretation(rawScores);
   interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation);
-  await saveMeasureResultIfConsented(req.user, interpretation);
+  await saveMeasureResultIfConsented(req.user, interpretation, qaPairs);
   res.json(interpretation);
 }
