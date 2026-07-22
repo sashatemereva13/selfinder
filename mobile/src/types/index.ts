@@ -109,5 +109,6 @@ export interface SavedMeasureResult {
   affirmation: string | null;
   combinationMessage: string | null;
   recommendedPhilosopher: string | null;
+  qaPairs: QAPair[];
   savedAt: string;
 }

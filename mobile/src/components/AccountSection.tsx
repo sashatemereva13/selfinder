@@ -269,6 +269,7 @@ function LoggedInAccount({
   const [history, setHistory] = useState<SavedMeasureResult[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(null);
   const [consentBusy, setConsentBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -426,14 +427,39 @@ function LoggedInAccount({
               No readings saved yet — take a Measure check-in to start your history.
             </Text>
           ) : (
-            history.map((reading) => (
-              <View key={reading.id} style={styles.historyRow}>
-                <Text style={styles.historyDate}>{formatDate(reading.savedAt)}</Text>
-                <Text style={styles.historyLabel}>
-                  {reading.vibrationLevel.name} · {reading.vibrationScore}
-                </Text>
-              </View>
-            ))
+            history.map((reading) => {
+              const hasTranscript = reading.qaPairs && reading.qaPairs.length > 0;
+              const isExpanded = expandedReadingId === reading.id;
+              return (
+                <View key={reading.id}>
+                  <Pressable
+                    style={styles.historyRow}
+                    onPress={() => hasTranscript && setExpandedReadingId(isExpanded ? null : reading.id)}
+                  >
+                    <View>
+                      <Text style={styles.historyDate}>{formatDate(reading.savedAt)}</Text>
+                      <Text style={styles.historyLabel}>
+                        {reading.vibrationLevel.name} · {reading.vibrationScore}
+                      </Text>
+                    </View>
+                    {hasTranscript && (
+                      <Text style={styles.historyChevron}>{isExpanded ? '↑' : '↓'}</Text>
+                    )}
+                  </Pressable>
+
+                  {isExpanded && hasTranscript && (
+                    <View style={styles.historyDetail}>
+                      {reading.qaPairs.map((pair, i) => (
+                        <View key={i} style={styles.historyQA}>
+                          <Text style={styles.historyQuestion}>{pair.question}</Text>
+                          <Text style={styles.historyAnswer}>{pair.answer}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })
           )}
         </View>
       )}
@@ -662,6 +688,29 @@ const styles = StyleSheet.create({
   },
   historyDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   historyLabel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  historyChevron: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  historyDetail: {
+    gap: spacing[3],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+    marginBottom: spacing[2],
+    borderRadius: radius.md,
+    backgroundColor: colors.bg.base,
+  },
+  historyQA: { gap: spacing[1] },
+  historyQuestion: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+  },
+  historyAnswer: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
   consentTimestamp: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: -spacing[1] },
   dataSection: {
     gap: spacing[3],
