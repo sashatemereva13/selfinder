@@ -15,6 +15,7 @@ import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { TUNE_IN_STATES } from '../../../../src/content/tuneInStates';
+import { track } from '../../../../src/utils/analytics';
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
 
@@ -79,6 +80,7 @@ export default function TuneInScreen() {
     } else {
       players[selected].play();
       setIsPlaying(true);
+      track('tune_in_played', { state: activeState.name });
     }
   };
 

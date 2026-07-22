@@ -7,6 +7,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { track } from '../../../../src/utils/analytics';
 
 export default function SpillScreen() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export default function SpillScreen() {
 
   const handleBegin = () => {
     reset();
+    track('spill_started');
     router.push('/(tabs)/depths/spill/write');
   };
 

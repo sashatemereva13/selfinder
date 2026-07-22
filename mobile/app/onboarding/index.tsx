@@ -8,6 +8,7 @@ import { spacing, radius } from '../../src/theme/spacing';
 import { usePhilosopherStore } from '../../src/store/philosopherStore';
 import { PhilosopherPicker } from '../../src/components/PhilosopherPicker';
 import { AmbientGlow } from '../../src/components/AmbientGlow';
+import { track } from '../../src/utils/analytics';
 
 export default function OnboardingScreen() {
   const [step, setStep] = useState<'intro' | 'choose'>('intro');
@@ -17,6 +18,7 @@ export default function OnboardingScreen() {
 
   const handleSelect = async (id: string) => {
     await select(id);
+    track('onboarding_completed');
     router.replace('/(tabs)/depths');
   };
 

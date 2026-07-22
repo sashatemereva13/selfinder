@@ -20,6 +20,7 @@ import { useMeasureStore } from '../../../src/store/measureStore';
 import { getNudgeState, getNudgeCopy } from '../../../src/content/guideNudges';
 import { TypingDots } from '../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
+import { track } from '../../../src/utils/analytics';
 
 export default function GuideScreen() {
   const router = useRouter();
@@ -62,6 +63,7 @@ export default function GuideScreen() {
   useEffect(() => {
     if (!philosopher || metPhilosopherIds.includes(philosopher.id)) return;
     markMet(philosopher.id);
+    track('guide_first_meeting_shown');
   }, [philosopher?.id]);
 
   if (!philosopher) {

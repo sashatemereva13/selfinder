@@ -6,6 +6,7 @@ import { apiUrl } from "../api/baseUrl";
 import { useChat } from "../guide/ChatContext";
 import { clearAllLocalData, LOCAL_CONSENT_KEY, ROOM_KEYS, readMeasureResult, readAllRooms } from "../hooks/useRoomProgress";
 import LocalDataRecord from "./LocalDataRecord";
+import { track } from "../utils/analytics";
 import "./PersonalSpace.css";
 
 const API = apiUrl("/user");
@@ -314,7 +315,12 @@ export default function PersonalSpace() {
                     <button
                       type="button"
                       className="ps-roomRow"
-                      onClick={() => hasTranscript && setExpandedReadingId(isExpanded ? null : reading.id)}
+                      onClick={() => {
+                        if (!hasTranscript) return;
+                        const next = isExpanded ? null : reading.id;
+                        setExpandedReadingId(next);
+                        if (next) track("history_transcript_viewed");
+                      }}
                     >
                       <span className="ps-roomStage">{formatReadingDate(reading.savedAt)}</span>
                       <span className="ps-roomLabel">

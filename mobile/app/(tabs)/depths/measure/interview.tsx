@@ -23,6 +23,7 @@ import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
+import { track } from '../../../../src/utils/analytics';
 
 const SPHERE_LABELS: Record<Sphere, string> = {
   body: 'Body', mind: 'Mind', heart: 'Heart', spirit: 'Spirit',
@@ -73,6 +74,7 @@ export default function InterviewScreen() {
     try {
       const result = await submitInterview(pairs, philosopher?.systemPrompt ?? '', authToken);
       await saveResult({ ...result, savedAt: new Date().toISOString() });
+      track('measure_completed');
       router.replace('/(tabs)/depths/measure/reveal');
     } catch (err) {
       console.error('Measure interview scoring request failed:', err);

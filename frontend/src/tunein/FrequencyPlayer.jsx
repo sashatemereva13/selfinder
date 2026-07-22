@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import FrequencyOrb from "./FrequencyOrb";
 import { useAdaptiveQuality } from "../utils/useAdaptiveQuality";
+import { track } from "../utils/analytics";
 import "./frequencyPlayer.css";
 
 // Binaural beats: two pure tones a few Hz apart, one per ear, read by the
@@ -144,6 +145,7 @@ function FrequencyPlayer() {
     oscRRef.current = oscR;
     gainRef.current = gain;
     setIsPlaying(true);
+    track("tune_in_played", { state: active.name });
   };
 
   const handleTogglePlayback = async () => {

@@ -7,6 +7,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { track } from '../../../../src/utils/analytics';
 
 export default function TodayScreen() {
   const router = useRouter();
@@ -19,6 +20,7 @@ export default function TodayScreen() {
 
   const handleBegin = () => {
     resetInterview();
+    track('measure_started');
     router.push('/(tabs)/depths/measure/interview');
   };
 

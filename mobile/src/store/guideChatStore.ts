@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { sendMessage, ChatCompletionMessage } from '../api/chat';
 import { Philosopher } from '../types';
+import { track } from '../utils/analytics';
 
 // Mirrors web's ChatContext.jsx: in-memory only, no persistence — resets on
 // app restart. Keyed by philosopher id so switching your guide (via the You
@@ -28,6 +29,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
       conversations: { ...state.conversations, [philosopher.id]: withUserMessage },
       isLoading: true,
     }));
+    track('guide_message_sent');
 
     try {
       const reply = await sendMessage(withUserMessage, philosopher);

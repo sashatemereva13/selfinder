@@ -66,6 +66,15 @@ export default function PrivacyPolicyContent({ titleId }) {
             trackers. The only data leaving your device is what's
             described in this policy.
           </p>
+          <p>
+            We do keep a first-party log of which features get used — for
+            example, that a Measure reading was completed — kept only on
+            our own server, never sent to any third party, and never tied
+            to your account or identity. Each install gets an anonymous
+            identifier so we can tell a returning install from a new one;
+            we use this only to understand which parts of Selfinder are
+            actually useful, not to track individuals.
+          </p>
         </section>
 
         <section>

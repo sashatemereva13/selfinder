@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing } from '../../../../src/theme/spacing';
 import feelingLuckyList from '../../../../src/content/feelingLuckyList.json';
 import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
+import { track } from '../../../../src/utils/analytics';
 
 // Drawn once per visit, deliberately — no reroll button. The whole idea is
 // that whichever message shows up is the one meant to find you right now;
@@ -20,6 +21,10 @@ export default function FeelingLuckyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [message] = useState(pickMessage);
+
+  useEffect(() => {
+    track('feeling_lucky_viewed');
+  }, []);
 
   return (
     <ScrollView

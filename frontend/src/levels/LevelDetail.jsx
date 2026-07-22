@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { getLevelBySlug } from "./levelsContent";
@@ -6,6 +6,7 @@ import { useChat } from "../guide/ChatContext";
 import { readMeasureResult } from "../hooks/useRoomProgress";
 import PhilosopherVoiceTag from "../designElements/PhilosopherVoiceTag";
 import JourneyProgress from "../designElements/JourneyProgress";
+import { track } from "../utils/analytics";
 import "./levels.css";
 
 // Minimal inline-bold support so content can use **text** without a markdown
@@ -26,6 +27,10 @@ export default function LevelDetail() {
   const { activePhilosopher } = useChat();
   const measureResult = readMeasureResult();
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
+
+  useEffect(() => {
+    if (level) track("level_detail_viewed", { slug: level.slug });
+  }, [level?.slug]);
 
   if (!level) return <Navigate to="/levels" replace />;
 

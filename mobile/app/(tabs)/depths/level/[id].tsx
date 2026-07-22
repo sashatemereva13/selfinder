@@ -1,4 +1,4 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { View, Text, ScrollView, Pressable, LayoutAnimation, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +7,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { getLevelBySlug } from '../../../../src/content/levelsContent';
 import { LEVEL_COLORS } from '../../../../src/content/measureConfig';
+import { track } from '../../../../src/utils/analytics';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
@@ -28,6 +29,10 @@ export default function LevelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const level = id ? getLevelBySlug(id) : undefined;
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
+
+  useEffect(() => {
+    if (level) track('level_detail_viewed', { slug: level.slug });
+  }, [level?.slug]);
 
   const toggleDeepDive = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);

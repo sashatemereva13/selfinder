@@ -7,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { getMe, grantConsent, withdrawConsent, getMeasureHistory, exportMyData, deleteAccount, updateEmail } from '../api/user';
 import { changePassword as changePasswordApi, requestPasswordReset, resetPassword } from '../api/auth';
 import { AuthSession, UserProfile, SavedMeasureResult } from '../types';
+import { track } from '../utils/analytics';
 
 function formatDate(iso: string) {
   try {
@@ -434,7 +435,12 @@ function LoggedInAccount({
                 <View key={reading.id}>
                   <Pressable
                     style={styles.historyRow}
-                    onPress={() => hasTranscript && setExpandedReadingId(isExpanded ? null : reading.id)}
+                    onPress={() => {
+                      if (!hasTranscript) return;
+                      const next = isExpanded ? null : reading.id;
+                      setExpandedReadingId(next);
+                      if (next) track('history_transcript_viewed');
+                    }}
                   >
                     <View>
                       <Text style={styles.historyDate}>{formatDate(reading.savedAt)}</Text>

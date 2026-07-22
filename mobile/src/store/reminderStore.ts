@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Philosopher } from '../types';
 import { enableDailyReminder, disableDailyReminder } from '../utils/dailyReminder';
+import { track } from '../utils/analytics';
 
 const STORAGE_KEY = 'selfinder_daily_reminder';
 
@@ -64,6 +65,7 @@ export const useReminderStore = create<ReminderStore>((set) => ({
     } catch {
       // SecureStore is unavailable — the reminder is still scheduled on-device.
     }
+    track('daily_reminder_enabled', { hour, minute });
     return true;
   },
 

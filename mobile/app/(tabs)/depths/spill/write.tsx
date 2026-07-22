@@ -14,6 +14,7 @@ import { fonts, fontSizes } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
+import { track } from '../../../../src/utils/analytics';
 
 const DURATION_MS = 60_000;
 // Once time is up, don't cut a word off mid-typing — wait for the next
@@ -40,6 +41,7 @@ export default function SpillWriteScreen() {
     if (finishedRef.current) return;
     finishedRef.current = true;
     setSpillText(finalText.trim());
+    track('spill_completed');
     router.replace('/(tabs)/depths/spill/reveal');
   };
 

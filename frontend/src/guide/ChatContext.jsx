@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState } from 'react';
 import { PHILOSOPHERS } from '../content/philosophers';
 import { sendMessage } from './chatApi';
+import { track } from '../utils/analytics';
 
 const ChatContext = createContext(null);
 
@@ -22,7 +23,13 @@ export function ChatProvider({ children }) {
   const messages = philosopherId ? (conversations[philosopherId] ?? []) : [];
 
   const selectPhilosopher = useCallback((id) => {
-    setPhilosopherId(id);
+    // Functional form so this reads the latest previous id rather than a
+    // value captured when this callback was first created — useCallback's
+    // empty dep array means it's never recreated.
+    setPhilosopherId((prevId) => {
+      if (!prevId && id) track('onboarding_completed');
+      return id;
+    });
   }, []);
 
   const send = useCallback(async (text) => {
@@ -33,6 +40,7 @@ export function ChatProvider({ children }) {
 
     setConversations(prev => ({ ...prev, [philosopherId]: nextMessages }));
     setIsLoading(true);
+    track('guide_message_sent');
 
     try {
       const reply = await sendMessage(nextMessages, activePhilosopher);
