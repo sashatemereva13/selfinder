@@ -6,20 +6,11 @@ import User from "../models/User.js";
 import MeasureResult from "../models/MeasureResult.js";
 import { recommendPhilosopher } from "./measureController.js";
 import {
-  VIBRATION_LEVELS,
+  VIBRATION_SCALE_REFERENCE,
   getNearestVibrationLevel,
   getFrequencyBand,
   calibrateVibrationScore,
 } from "../data/vibrationLevels.js";
-
-// Ordered high-to-low so the scale reads top-down the way a person would
-// picture it, with each level's qualitative frame as the actual criterion —
-// without this, the model has only a bare name=number lookup and tends to
-// mix up adjacent/similar-sounding levels (e.g. scoring fear as anger).
-const VIBRATION_SCALE_REFERENCE = [...VIBRATION_LEVELS]
-  .reverse()
-  .map((l) => `${l.score} ${l.name} — ${l.frame}`)
-  .join("\n");
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -546,7 +537,13 @@ The vibration scale, high to low, each with what actually distinguishes it —
 use these to tell adjacent levels apart (e.g. fear vs. anger vs. desire all
 sit close together but mean different things). Match the level whose
 description best fits the emotional quality of what they said, not just a
-surface keyword:
+surface keyword — and don't let general urgency or intensity alone pull a
+reading upward toward Anger. Anger specifically requires a boundary having
+been crossed (violation, obstruction, injustice) — not just activation.
+Worry or urgency about something practical (money, time, a decision) that
+pushes someone to act is usually Fear (if it's about uncertainty) or Desire
+(if it's about a felt lack), not Anger, even though all three can look
+equally "activating" from the outside:
 ${VIBRATION_SCALE_REFERENCE}
 
 Conversation:

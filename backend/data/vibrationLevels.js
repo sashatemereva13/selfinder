@@ -23,6 +23,15 @@ export const VIBRATION_LEVELS = [
   { name: "Enlightenment", slug: "enlightenment", score: 700, route: "/levels/enlightenment", frame: "Not an achievement to chase — it is what's left when nothing is being defended." },
 ];
 
+// Single source of truth for "the 17 levels, briefly" — used both in the
+// interview scoring prompt and in UNIVERSAL_RULES, so every philosopher
+// conversation (not just the moment of scoring) is grounded in the app's own
+// original descriptions instead of generic knowledge of the Hawkins scale.
+export const VIBRATION_SCALE_REFERENCE = [...VIBRATION_LEVELS]
+  .reverse()
+  .map((l) => `${l.score} ${l.name} — ${l.frame}`)
+  .join("\n");
+
 export function getNearestVibrationLevel(score) {
   return VIBRATION_LEVELS.reduce((closest, level) => {
     if (!closest) return level;
