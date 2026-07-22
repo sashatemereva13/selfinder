@@ -46,6 +46,10 @@ export default function MoonScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
+      <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Text style={styles.backLink}>← Back</Text>
+      </Pressable>
+
       <Text style={styles.kicker}>Moon</Text>
       <Text style={styles.title}>Everything has a cycle</Text>
 
@@ -124,6 +128,8 @@ export default function MoonScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[4] },
+  backRow: {},
+  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

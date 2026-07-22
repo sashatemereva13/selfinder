@@ -5,21 +5,19 @@ import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
-import { useMeasureStore } from '../../../../src/store/measureStore';
+import { useSpillStore } from '../../../../src/store/spillStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
-export default function TodayScreen() {
+export default function SpillScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
-  const resetInterview = useMeasureStore((s) => s.resetInterview);
-  const currentResult = useMeasureStore((s) => s.currentResult);
-
+  const reset = useSpillStore((s) => s.reset);
   const accentColor = philosopher?.color ?? colors.brand.purple;
 
   const handleBegin = () => {
-    resetInterview();
-    router.push('/(tabs)/depths/measure/interview');
+    reset();
+    router.push('/(tabs)/depths/spill/write');
   };
 
   return (
@@ -34,29 +32,21 @@ export default function TodayScreen() {
       </Pressable>
 
       <View style={styles.body}>
-        <Text style={styles.kicker}>Frequency Check-In</Text>
-        <Text style={styles.title}>
-          A conversation to read{'\n'}where you are right now
+        <Text style={styles.kicker}>Spill</Text>
+        <Text style={styles.title}>Write without looking back</Text>
+        <Text style={styles.copy}>
+          For one minute, just keep writing. Whatever comes, in any order, without editing
+          it — you'll only ever see the word you're writing right now, nothing before it.
+          When the minute is up, you can read the whole thing back.
         </Text>
         <Text style={styles.copy}>
-          {philosopher?.name ?? 'Your philosopher'} will ask you about four sides of your
-          life — body, mind, heart, and spirit. Share what is actually true, not what you
-          think it should be. The reading emerges from what you say.
+          There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it.
         </Text>
-
-        {currentResult && (
-          <Text style={styles.lastReading}>
-            Last reading: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
-          </Text>
-        )}
       </View>
 
       <View style={styles.footer}>
-        <Pressable
-          style={[styles.button, { backgroundColor: accentColor }]}
-          onPress={handleBegin}
-        >
-          <Text style={styles.buttonText}>Begin the conversation</Text>
+        <Pressable style={[styles.button, { backgroundColor: accentColor }]} onPress={handleBegin}>
+          <Text style={styles.buttonText}>Begin</Text>
         </Pressable>
       </View>
     </View>
@@ -105,11 +95,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.normal,
-  },
-  lastReading: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
   },
   button: {
     paddingVertical: spacing[4],

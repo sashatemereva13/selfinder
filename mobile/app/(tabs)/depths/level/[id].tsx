@@ -1,5 +1,5 @@
-import { ReactNode } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { ReactNode, useState } from 'react';
+import { View, Text, ScrollView, Pressable, LayoutAnimation, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
@@ -27,6 +27,12 @@ export default function LevelScreen() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
   const level = id ? getLevelBySlug(id) : undefined;
+  const [deepDiveOpen, setDeepDiveOpen] = useState(false);
+
+  const toggleDeepDive = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setDeepDiveOpen((open) => !open);
+  };
 
   if (!level) {
     return (
@@ -81,6 +87,29 @@ export default function LevelScreen() {
           ))}
         </View>
       ))}
+
+      {level.deepDive && (
+        <View style={styles.deepDiveBlock}>
+          <Pressable onPress={toggleDeepDive}>
+            <Text style={[styles.deepDiveToggle, { color: accentColor }]}>
+              {deepDiveOpen ? 'Hide the deeper read ↑' : 'Go deeper ↓'}
+            </Text>
+          </Pressable>
+
+          {deepDiveOpen && (
+            <View style={styles.deepDiveBody}>
+              {level.deepDive.map((section) => (
+                <View key={section.heading} style={styles.sectionBlock}>
+                  <Text style={styles.sectionHeading}>{section.heading}</Text>
+                  {section.paragraphs.map((paragraph, i) => (
+                    <Text key={i} style={styles.paragraph}>{renderRich(paragraph)}</Text>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
     </ScrollView>
   );
 }
@@ -155,5 +184,18 @@ const styles = StyleSheet.create({
   bold: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
+  },
+  deepDiveBlock: { marginTop: spacing[2] },
+  deepDiveToggle: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    letterSpacing: letterSpacings.wide,
+    textTransform: 'uppercase',
+  },
+  deepDiveBody: {
+    marginTop: spacing[5],
+    paddingTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.bg.border,
   },
 });

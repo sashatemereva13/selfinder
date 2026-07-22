@@ -26,22 +26,28 @@ export async function sendMessage(
 
 export interface MeasureExchangeResponse {
   advance: boolean;
+  goBack: boolean;
   reply: string;
 }
 
 // Classify-and-branch turn used during the measure interview: tells the caller
-// whether the person actually engaged with the question (advance the sphere)
-// or asked/pushed back/deflected (stay on it, but still respond to what they said).
+// whether the person actually engaged with the question (advance the sphere),
+// asked to revisit a previous sphere (goBack), or asked/pushed back/deflected
+// (stay on it, but still respond to what they said). `canGoBack` tells the
+// backend whether there's actually a previous sphere to go back to, so it
+// never honors a goBack request on the very first question.
 export function sendMeasureExchange(
   philosopher: Philosopher,
   sphere: Sphere,
   question: string,
-  answer: string
+  answer: string,
+  canGoBack: boolean
 ): Promise<MeasureExchangeResponse> {
   return request<MeasureExchangeResponse>('/measure/exchange', {
     systemPrompt: philosopher.systemPrompt,
     sphere,
     question,
     answer,
+    canGoBack,
   });
 }

@@ -19,6 +19,10 @@ export default function LevelsScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
+      <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Text style={styles.backLink}>← Back</Text>
+      </Pressable>
+
       <Text style={styles.kicker}>Levels</Text>
       <Text style={styles.title}>The map of consciousness</Text>
       <Text style={styles.copy}>
@@ -54,6 +58,8 @@ export default function LevelsScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
+  backRow: { paddingBottom: spacing[4] },
+  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

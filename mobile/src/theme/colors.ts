@@ -15,8 +15,8 @@ export const colors = {
   text: {
     primary: 'rgba(249,244,255,0.97)',
     secondary: 'rgba(241,234,253,0.70)',
-    muted: 'rgba(241,234,253,0.38)',
-    faint: 'rgba(241,234,253,0.22)',
+    muted: 'rgba(241,234,253,0.52)',
+    faint: 'rgba(241,234,253,0.32)',
   },
   axis: {
     body:    '246,188,100',

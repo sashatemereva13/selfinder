@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
@@ -46,6 +47,7 @@ function Pulse({ color, active }: { color: string; active: boolean }) {
 }
 
 export default function TuneInScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -94,6 +96,10 @@ export default function TuneInScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
+      <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Text style={styles.backLink}>← Back</Text>
+      </Pressable>
+
       <Text style={styles.kicker}>Regulation Layer</Text>
       <Text style={styles.title}>Tune your field with frequency</Text>
       <Text style={styles.copy}>
@@ -156,6 +162,8 @@ export default function TuneInScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12], alignItems: 'center' },
+  backRow: { alignSelf: 'flex-start', paddingBottom: spacing[4] },
+  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,

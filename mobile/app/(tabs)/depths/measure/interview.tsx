@@ -34,7 +34,7 @@ export default function InterviewScreen() {
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const authToken = useAuthStore((s) => s.session?.token);
-  const { sphereIndex, qaPairs, addQAPair, advanceSphere, saveResult, resetInterview } =
+  const { sphereIndex, qaPairs, addQAPair, advanceSphere, goToPreviousSphere, saveResult, resetInterview } =
     useMeasureStore();
 
   const [input, setInput] = useState('');
@@ -43,6 +43,10 @@ export default function InterviewScreen() {
   // something back or deflected rather than answering. Cleared whenever the
   // sphere actually advances or the interview resets.
   const [asides, setAsides] = useState<{ answer: string; reply: string }[]>([]);
+  // A brief note shown after stepping back to a previous sphere (either via
+  // the philosopher recognizing the request, or the manual link) — cleared
+  // the moment they start typing their revised answer.
+  const [goBackNote, setGoBackNote] = useState<string | null>(null);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
   const [scoringError, setScoringError] = useState<string | null>(null);
@@ -67,7 +71,7 @@ export default function InterviewScreen() {
     setIsScoring(true);
     setScoringError(null);
     try {
-      const result = await submitInterview(pairs, authToken);
+      const result = await submitInterview(pairs, philosopher?.systemPrompt ?? '', authToken);
       await saveResult({ ...result, savedAt: new Date().toISOString() });
       router.replace('/(tabs)/depths/measure/reveal');
     } catch (err) {
@@ -89,23 +93,35 @@ export default function InterviewScreen() {
     try {
       setInput('');
       setIsAcknowledging(true);
+      setGoBackNote(null);
 
       let advance = true;
+      let goBack = false;
       let reply = '';
       try {
         const exchange = await sendMeasureExchange(
           philosopher,
           currentQuestion.sphere,
           currentQuestion.question,
-          answer
+          answer,
+          sphereIndex > 0
         );
         advance = exchange.advance !== false;
+        goBack = exchange.goBack === true;
         reply = exchange.reply ?? '';
       } catch {
         // Fail open — treat as answered so the interview never gets stuck.
       }
 
       setIsAcknowledging(false);
+
+      if (goBack) {
+        goToPreviousSphere();
+        setAcknowledgments((prev) => prev.slice(0, -1));
+        setAsides([]);
+        setGoBackNote(reply || null);
+        return;
+      }
 
       if (!advance) {
         setAsides((prev) => [...prev, { answer, reply }]);
@@ -132,7 +148,16 @@ export default function InterviewScreen() {
     resetInterview();
     setAcknowledgments([]);
     setAsides([]);
+    setGoBackNote(null);
     router.replace('/(tabs)/depths/measure');
+  };
+
+  const handleGoBackManually = () => {
+    if (sphereIndex === 0 || isAcknowledging) return;
+    goToPreviousSphere();
+    setAcknowledgments((prev) => prev.slice(0, -1));
+    setAsides([]);
+    setGoBackNote(null);
   };
 
   return (
@@ -157,6 +182,12 @@ export default function InterviewScreen() {
           </View>
         ))}
       </View>
+
+      {sphereIndex > 0 && !isScoring && !scoringError && (
+        <Pressable style={styles.previousSphereRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
+          <Text style={styles.previousSphereText}>← Previous sphere</Text>
+        </Pressable>
+      )}
 
       <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {qaPairs.map((pair, i) => (
@@ -210,11 +241,15 @@ export default function InterviewScreen() {
 
       {!isScoring && !scoringError && currentQuestion && (
         <View style={styles.compose}>
+          {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>
             <TextInput
               style={styles.input}
               value={input}
-              onChangeText={setInput}
+              onChangeText={(text) => {
+                setInput(text);
+                if (goBackNote) setGoBackNote(null);
+              }}
               placeholder="Type your answer, or ask why…"
               placeholderTextColor={colors.text.muted}
               multiline
@@ -271,6 +306,16 @@ const styles = StyleSheet.create({
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
+  },
+  previousSphereRow: { alignItems: 'center', paddingBottom: spacing[3] },
+  previousSphereText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
+  goBackNote: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+    marginBottom: spacing[2],
   },
   scroll: { flex: 1 },
   scrollContent: {

@@ -19,6 +19,7 @@ interface MeasureStore {
   addMessage: (msg: ChatMessage) => void;
   addQAPair:  (pair: QAPair) => void;
   advanceSphere: () => void;
+  goToPreviousSphere: () => void;
   resetInterview: () => void;
 }
 
@@ -70,5 +71,12 @@ export const useMeasureStore = create<MeasureStore>((set, get) => ({
   addMessage:   (msg)  => set((s) => ({ messages:  [...s.messages,  msg]  })),
   addQAPair:    (pair) => set((s) => ({ qaPairs:   [...s.qaPairs,   pair] })),
   advanceSphere:  () => set((s) => ({ sphereIndex: s.sphereIndex + 1 })),
+  // Drops the most recently answered sphere's pair and steps the index back,
+  // so `measureQuestions[sphereIndex]` naturally re-surfaces as the current
+  // question again — a no-op if there's nothing before the current sphere.
+  goToPreviousSphere: () => set((s) => {
+    if (s.sphereIndex === 0 || s.qaPairs.length === 0) return {};
+    return { qaPairs: s.qaPairs.slice(0, -1), sphereIndex: s.sphereIndex - 1 };
+  }),
   resetInterview: () => set({ messages: [], qaPairs: [], sphereIndex: 0 }),
 }));
