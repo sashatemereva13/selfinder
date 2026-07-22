@@ -693,6 +693,16 @@ export function MeasureCompletionPhase({ result, philosopher, onRestart }) {
     <div className="measure-phaseBlock">
       <p className="measure-kicker">Complete · {result.band}</p>
       <h2 className="measure-title">Next, read what these mean</h2>
+
+      {result.combinationMessage && (
+        <p
+          className="measure-combinationMessage"
+          style={{ color: `rgb(${AXIS_COLORS[result.dominantAxis] ?? AXIS_COLORS.clarity})` }}
+        >
+          {result.combinationMessage}
+        </p>
+      )}
+
       <p className="measure-copy">
         Tap your overall reading or any of the four below — each opens what
         that state actually means and what it tends to be asking for.

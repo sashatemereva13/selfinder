@@ -227,6 +227,14 @@
   text-shadow: 0 0 32px color-mix(in srgb, var(--measure-accent) 38%, transparent);
 }
 
+.measure-combinationMessage {
+  margin: 0.9rem 0 0;
+  font-family: "Panchang-Light", sans-serif;
+  font-style: italic;
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
 .measure-copy {
   margin: 0.9rem 0 0;
   color: var(--measure-ink-soft);

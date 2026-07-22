@@ -19,6 +19,7 @@ import {
   MeasureScoringPhase,
   MeasureCompletionPhase,
 } from "./MeasurePhaseViews";
+import { track } from "../utils/analytics";
 
 const TOTAL_SPHERES = 4;
 
@@ -107,6 +108,7 @@ const Measure = () => {
 
   const handleBegin = () => {
     resetState();
+    track("measure_started");
     setPhase("interview");
   };
 
@@ -135,12 +137,14 @@ const Measure = () => {
             question,
             answer,
           })),
+          systemPrompt: activePhilosopher?.systemPrompt ?? "",
         }),
       });
 
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       setResult(data);
+      track("measure_completed");
       setPhase("completion");
     } catch (err) {
       console.error("Measure interview scoring failed:", err);
