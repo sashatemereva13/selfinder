@@ -11,6 +11,7 @@ import conversationRouter from "./routes/conversation.js";
 import feedbackRouter     from "./routes/feedback.js";
 import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
+import eventsRouter       from "./routes/events.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
@@ -44,6 +45,7 @@ app.use("/api/chat",          chatRouter);
 app.use("/api/measure",       measureRouter);
 app.use("/api/conversation",  conversationRouter);
 app.use("/api/feedback",      feedbackRouter);
+app.use("/api/events",        eventsRouter);
 
 connectDB()
   .then(() => {
