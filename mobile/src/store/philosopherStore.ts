@@ -14,6 +14,7 @@ interface PhilosopherStore {
   hydrate: () => Promise<void>;
   markMet: (id: string) => Promise<void>;
   resetMet: () => Promise<void>;
+  resetSelection: () => Promise<void>;
 }
 
 function readMetIds(raw: string | null): string[] {
@@ -80,6 +81,18 @@ export const usePhilosopherStore = create<PhilosopherStore>((set, get) => ({
     set({ metPhilosopherIds: [] });
     try {
       await SecureStore.deleteItemAsync(MET_STORAGE_KEY);
+    } catch {
+      // SecureStore is unavailable — in-memory reset above already applied.
+    }
+  },
+
+  // Dev/testing only — clears the selection itself (not just met-status), so
+  // the root layout's redirect (app/_layout.tsx) sends you back to the real
+  // onboarding intro, as if the app had just been installed.
+  resetSelection: async () => {
+    set({ philosopher: null });
+    try {
+      await SecureStore.deleteItemAsync(STORAGE_KEY);
     } catch {
       // SecureStore is unavailable — in-memory reset above already applied.
     }

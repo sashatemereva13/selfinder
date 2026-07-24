@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../src/theme/colors';
@@ -14,10 +14,12 @@ import { DailyReminderSection } from '../../../src/components/DailyReminderSecti
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
   const [resetDone, setResetDone] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
   const resetMet = usePhilosopherStore((s) => s.resetMet);
+  const resetSelection = usePhilosopherStore((s) => s.resetSelection);
   const resetGuideChats = useGuideChatStore((s) => s.resetAll);
   const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
 
@@ -25,6 +27,7 @@ export default function YouScreen() {
     resetMet();
     resetGuideChats();
     resetSavedResults();
+    resetSelection();
     setResetDone(true);
     setTimeout(() => setResetDone(false), 2000);
   };
@@ -36,6 +39,7 @@ export default function YouScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
@@ -46,7 +50,12 @@ export default function YouScreen() {
           <Text style={[styles.currentName, { color: philosopher.color }]}>{philosopher.name}</Text>
           <Text style={styles.currentMode}>{philosopher.mode}</Text>
           <Text style={styles.currentDescription}>{philosopher.description}</Text>
-          <Pressable onPress={() => setChanging(true)}>
+          <Pressable
+            onPress={() => {
+              setChanging(true);
+              scrollRef.current?.scrollTo({ y: 0, animated: false });
+            }}
+          >
             <Text style={styles.changeLink}>Change who walks beside you →</Text>
           </Pressable>
         </View>

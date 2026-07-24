@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, Circle } from 'react-native-svg';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { PHILOSOPHERS, PHILOSOPHER_MAP } from '../content/philosophers';
 import { Philosopher } from '../types';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
+import { PhilosopherObject } from './PhilosopherObject';
 
 const ORB_SIZE = 96;
 const ROWS = [PHILOSOPHERS.slice(0, 2), PHILOSOPHERS.slice(2, 3), PHILOSOPHERS.slice(3, 5)];
@@ -35,21 +35,10 @@ function PhilosopherOrb({
     opacity: opacity.value,
   }));
 
-  const gradientId = `orbGlow-${philosopher.id}`;
-
   return (
     <Pressable onPress={onPress} hitSlop={8} style={styles.orbTouchTarget}>
       <Animated.View style={[styles.orbColumn, animatedStyle]}>
-        <Svg width={ORB_SIZE} height={ORB_SIZE}>
-          <Defs>
-            <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%">
-              <Stop offset="0" stopColor={philosopher.color} stopOpacity={0.95} />
-              <Stop offset="0.5" stopColor={philosopher.color} stopOpacity={0.5} />
-              <Stop offset="1" stopColor={philosopher.color} stopOpacity={0} />
-            </RadialGradient>
-          </Defs>
-          <Circle cx={ORB_SIZE / 2} cy={ORB_SIZE / 2} r={ORB_SIZE / 2} fill={`url(#${gradientId})`} />
-        </Svg>
+        <PhilosopherObject id={philosopher.id} rgb={philosopher.accentRgb} size={ORB_SIZE} />
         <Text style={[styles.orbName, state === 'focused' && { color: philosopher.color }]}>
           {philosopher.name}
         </Text>
@@ -86,19 +75,29 @@ export function PhilosopherPicker({
       </View>
 
       <View style={styles.modeReveal}>
-        {focused && <Text style={[styles.modeText, { color: focused.color }]}>{focused.mode}</Text>}
+        {focused ? (
+          <>
+            <Text style={[styles.modeText, { color: focused.color }]}>{focused.mode}</Text>
+            <Text style={styles.descriptionText}>{focused.description}</Text>
+          </>
+        ) : (
+          <Text style={styles.placeholderText}>Tap someone to begin</Text>
+        )}
       </View>
 
-      <Pressable
-        disabled={!focused}
-        style={[
-          styles.confirmButton,
-          { backgroundColor: focused?.color ?? colors.brand.purple, opacity: focused ? 1 : 0 },
-        ]}
-        onPress={() => focused && onSelect(focused.id)}
-      >
-        <Text style={styles.confirmText}>{focused ? `Walk with ${focused.name}` : ' '}</Text>
-      </Pressable>
+      <View style={styles.confirmWrap}>
+        <Pressable
+          disabled={!focused}
+          style={[
+            styles.confirmButton,
+            { backgroundColor: focused?.color ?? colors.brand.purple, opacity: focused ? 1 : 0 },
+          ]}
+          onPress={() => focused && onSelect(focused.id)}
+        >
+          <Text style={styles.confirmText}>{focused ? `Walk with ${focused.name}` : ' '}</Text>
+        </Pressable>
+        {focused && <Text style={styles.reassurance}>You can change this anytime</Text>}
+      </View>
     </View>
   );
 }
@@ -120,12 +119,28 @@ const styles = StyleSheet.create({
     minHeight: fontSizes.sm * lineHeights.normal,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing[6],
   },
   modeText: {
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
     letterSpacing: letterSpacings.wide,
   },
+  descriptionText: {
+    marginTop: spacing[2],
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
+  },
+  placeholderText: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    letterSpacing: letterSpacings.wide,
+  },
+  confirmWrap: { width: '100%', alignItems: 'center', gap: spacing[3] },
   confirmButton: {
     width: '100%',
     paddingVertical: spacing[4],
@@ -133,4 +148,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   confirmText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.base },
+  reassurance: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+  },
 });
