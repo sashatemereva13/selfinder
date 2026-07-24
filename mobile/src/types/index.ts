@@ -14,6 +14,10 @@ export interface Philosopher {
   accentRgb: string;
   greeting: string;
   firstMeeting: string;
+  // Shown once, in place of the routine greeting, the first time someone
+  // opens the app on a new visit after having measured exactly once —
+  // see Guide's screen for the gating logic.
+  secondVisitGreeting: string;
   measureQuestions: MeasureQuestion[];
   systemPrompt: string;
 }
@@ -60,6 +64,8 @@ export interface MeasureResult {
   lines: MeasureLine[];
   /** Added client-side on save — not part of the API response. */
   savedAt: string;
+  /** Added client-side on save — the actual conversation this reading came from. */
+  qaPairs?: QAPair[];
 }
 
 export interface ChatMessage {

@@ -32,11 +32,14 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
     track('guide_message_sent');
 
     try {
-      const reply = await sendMessage(withUserMessage, philosopher);
+      const { reply, suggestSpill } = await sendMessage(withUserMessage, philosopher);
       set((state) => ({
         conversations: {
           ...state.conversations,
-          [philosopher.id]: [...withUserMessage, { role: 'assistant', content: reply }],
+          [philosopher.id]: [
+            ...withUserMessage,
+            { role: 'assistant', content: reply, suggestSpill },
+          ],
         },
         isLoading: false,
       }));

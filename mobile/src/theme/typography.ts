@@ -21,6 +21,7 @@ export const fontSizes = {
 
 export const lineHeights = {
   tight:  1.15,
+  chat:   1.32,
   normal: 1.55,
   loose:  1.72,
 } as const;

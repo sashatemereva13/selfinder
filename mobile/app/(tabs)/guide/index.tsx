@@ -17,6 +17,7 @@ import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
+import { useEngagementStore } from '../../../src/store/engagementStore';
 import { getNudgeState, getNudgeCopy } from '../../../src/content/guideNudges';
 import { TypingDots } from '../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
@@ -34,6 +35,10 @@ export default function GuideScreen() {
   const clearConversation = useGuideChatStore((s) => s.clearConversation);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const previousResult = useMeasureStore((s) => s.previousResult);
+  const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
+  const hasShownSecondVisit = useEngagementStore((s) => s.hasShownSecondVisit);
+  const isNewVisitSinceLastOpen = useEngagementStore((s) => s.isNewVisitSinceLastOpen);
+  const markSecondVisitShown = useEngagementStore((s) => s.markSecondVisitShown);
 
   const [input, setInput] = useState('');
   const scrollRef = useRef<ScrollView>(null);
@@ -51,6 +56,25 @@ export default function GuideScreen() {
       metSnapshotRef.current = { id: philosopher.id, hasMet: actuallyMet };
     }
   }
+
+  // Computed once per mount, not re-derived — otherwise calling
+  // markSecondVisitShown() below would flip hasShownSecondVisit mid-session
+  // and swap the special line back out to the routine greeting the instant
+  // it appeared, the same flicker metSnapshotRef exists to avoid above.
+  const secondVisitSnapshotRef = useRef<boolean | null>(null);
+  if (secondVisitSnapshotRef.current === null) {
+    secondVisitSnapshotRef.current = Boolean(
+      metSnapshotRef.current?.hasMet &&
+        totalMeasureCount === 1 &&
+        !hasShownSecondVisit &&
+        isNewVisitSinceLastOpen
+    );
+  }
+  const showSecondVisit = secondVisitSnapshotRef.current;
+
+  useEffect(() => {
+    if (showSecondVisit) markSecondVisitShown();
+  }, [showSecondVisit]);
 
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
   const accentColor = philosopher?.color ?? colors.brand.purple;
@@ -112,14 +136,36 @@ export default function GuideScreen() {
         {messages.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={[styles.greeting, { borderColor: accentColor }]}>
-              {metSnapshotRef.current?.hasMet ? philosopher.greeting : philosopher.firstMeeting}
+              {showSecondVisit
+                ? philosopher.secondVisitGreeting
+                : metSnapshotRef.current?.hasMet
+                  ? philosopher.greeting
+                  : philosopher.firstMeeting}
             </Text>
+            {!currentResult && (
+              <Pressable
+                style={[styles.measureCta, { borderColor: accentColor }]}
+                onPress={() => router.push('/(tabs)/depths/measure')}
+              >
+                <Text style={[styles.measureCtaText, { color: accentColor }]}>Take Measure →</Text>
+              </Pressable>
+            )}
           </View>
         ) : (
           messages.map((message, i) => (
-            <Bubble key={i} isUser={message.role === 'user'} color={accentColor}>
-              {message.content}
-            </Bubble>
+            <View key={i}>
+              <Bubble isUser={message.role === 'user'} color={accentColor}>
+                {message.content}
+              </Bubble>
+              {message.suggestSpill && i === messages.length - 1 && !isLoading && (
+                <Pressable
+                  style={[styles.spillCta, { borderColor: accentColor }]}
+                  onPress={() => router.push('/(tabs)/depths/spill')}
+                >
+                  <Text style={[styles.spillCtaText, { color: accentColor }]}>Write it out instead →</Text>
+                </Pressable>
+              )}
+            </View>
           ))
         )}
 
@@ -225,11 +271,37 @@ const styles = StyleSheet.create({
     paddingLeft: spacing[4],
     borderLeftWidth: 2,
   },
+  measureCta: {
+    alignSelf: 'flex-start',
+    marginTop: spacing[5],
+    marginLeft: spacing[4],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  measureCtaText: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+  },
+  spillCta: {
+    alignSelf: 'flex-start',
+    marginTop: spacing[1],
+    marginBottom: spacing[2],
+    paddingVertical: spacing[2],
+    paddingHorizontal: spacing[4],
+    borderRadius: radius.full,
+    borderWidth: 1,
+  },
+  spillCtaText: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+  },
   bubble: {
     maxWidth: '85%',
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
+    paddingVertical: spacing[2],
     marginBottom: spacing[2],
   },
   bubblePhilosopher: {
@@ -245,8 +317,8 @@ const styles = StyleSheet.create({
   bubbleText: {
     color: colors.text.primary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.chat,
   },
   typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
   compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },

@@ -17,6 +17,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { useAuthStore } from '../../../../src/store/authStore';
+import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
 import { QAPair, Sphere } from '../../../../src/types';
@@ -37,6 +38,7 @@ export default function InterviewScreen() {
   const authToken = useAuthStore((s) => s.session?.token);
   const { sphereIndex, qaPairs, addQAPair, advanceSphere, goToPreviousSphere, saveResult, resetInterview } =
     useMeasureStore();
+  const recordMeasure = useEngagementStore((s) => s.recordMeasure);
 
   const [input, setInput] = useState('');
   const [acknowledgments, setAcknowledgments] = useState<string[]>([]);
@@ -73,7 +75,9 @@ export default function InterviewScreen() {
     setScoringError(null);
     try {
       const result = await submitInterview(pairs, philosopher?.systemPrompt ?? '', authToken);
-      await saveResult({ ...result, savedAt: new Date().toISOString() });
+      const savedAt = new Date().toISOString();
+      await saveResult({ ...result, qaPairs: pairs, savedAt });
+      await recordMeasure(result.vibrationScore, result.vibrationLevel.name, savedAt);
       track('measure_completed');
       router.replace('/(tabs)/depths/measure/reveal');
     } catch (err) {
@@ -332,7 +336,7 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
     borderRadius: radius.lg,
     paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
+    paddingVertical: spacing[2],
     marginBottom: spacing[2],
   },
   bubblePhilosopher: {
@@ -348,8 +352,8 @@ const styles = StyleSheet.create({
   bubbleText: {
     color: colors.text.primary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.chat,
   },
   typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
   scoringBlock: { alignItems: 'center', gap: spacing[4], paddingVertical: spacing[8] },

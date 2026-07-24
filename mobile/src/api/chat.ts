@@ -4,10 +4,15 @@ import { Philosopher, Sphere } from '../types';
 export interface ChatCompletionMessage {
   role: 'user' | 'assistant';
   content: string;
+  // Set on an assistant message when the backend noticed the person's last
+  // message read as needing to vent rather than converse — see Guide's
+  // screen for the "write it out instead" chip this drives.
+  suggestSpill?: boolean;
 }
 
 interface SendMessageResponse {
   reply: string;
+  suggestSpill?: boolean;
 }
 
 // Matches backend's postChat contract exactly: { messages, systemPrompt }.
@@ -15,13 +20,13 @@ export async function sendMessage(
   messages: ChatCompletionMessage[],
   philosopher: Philosopher,
   additionalContext = ''
-): Promise<string> {
+): Promise<{ reply: string; suggestSpill: boolean }> {
   const systemPrompt = additionalContext
     ? `${philosopher.systemPrompt}\n\n${additionalContext}`
     : philosopher.systemPrompt;
 
-  const { reply } = await request<SendMessageResponse>('/chat', { messages, systemPrompt });
-  return reply;
+  const { reply, suggestSpill } = await request<SendMessageResponse>('/chat', { messages, systemPrompt });
+  return { reply, suggestSpill: suggestSpill === true };
 }
 
 export interface MeasureExchangeResponse {
