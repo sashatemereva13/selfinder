@@ -90,6 +90,21 @@ function cleanJourneyLine(text) {
   return cleaned;
 }
 
+const SPILL_SIGNAL_INSTRUCTION = `
+Respond with ONLY valid JSON, no markdown, in exactly this shape:
+{"reply": "...", "suggestSpill": false}
+
+"reply" is your actual response, fully in character, following every rule above.
+
+Set "suggestSpill" to true only when the person's most recent message reads
+as someone who needs to get something out before they can engage in dialogue
+at all — a flood, not a thought. Long, unstructured, emotionally overwhelmed
+messages are the signal, not sadness or difficulty in general; someone
+reflecting, questioning, or in an ordinary back-and-forth is not this. This
+should be rare — most messages are not this. When true, weave a brief,
+natural invitation into "reply" to just write freely instead of talking,
+fully in your own voice — never a generic suggestion bolted on.`;
+
 export async function postChat(req, res) {
   const { messages, systemPrompt } = req.body;
 
@@ -104,12 +119,31 @@ export async function postChat(req, res) {
       model: models[1],
       max_tokens: 512,
       messages: [
-        { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
+        {
+          role: "system",
+          content: UNIVERSAL_RULES + "\n\n" + systemPrompt + "\n\n" + SPILL_SIGNAL_INSTRUCTION,
+        },
         ...messages,
       ],
     });
 
-    res.json({ reply: response.choices[0].message.content });
+    const text = response.choices[0].message.content.trim();
+    let parsed = null;
+    try {
+      const jsonStart = text.indexOf("{");
+      const jsonEnd = text.lastIndexOf("}");
+      parsed = JSON.parse(text.slice(jsonStart, jsonEnd + 1));
+    } catch {
+      parsed = null;
+    }
+
+    if (!parsed || typeof parsed.reply !== "string" || !parsed.reply.trim()) {
+      // Fail open: treat the raw output as the reply so a parsing hiccup
+      // never blocks the conversation.
+      return res.json({ reply: text, suggestSpill: false });
+    }
+
+    res.json({ reply: parsed.reply, suggestSpill: parsed.suggestSpill === true });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "AI request failed" });
@@ -297,7 +331,7 @@ ${
 
 Otherwise, decide: did they actually engage with the question — even in one word, tersely, vaguely, or emotionally, describing something true about their current state? A short answer like "good", "fine", "tired", or "okay" IS engagement — it directly answers the question, it is not a deflection just because it's brief. Only treat it as non-engagement if they asked you something back, pushed back, expressed confusion about the process, or said something that isn't really an answer at all.
 
-If they engaged with the question, set "advance" to true and "goBack" to false. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet.
+If they engaged with the question, set "advance" to true and "goBack" to false. "reply" is ONE short sentence (10-20 words) acknowledging specifically what they shared, completely in your voice. Do not ask another question yet. Do not restate their own words or phrasing back to them — that reads as hollow mirroring, not insight. Instead, name what's underneath in your own language: reframe, interpret, or reflect the shape of it the way you actually see it, the way a real reflective listener adds a genuinely new angle rather than echoing what was just said.
 
 If they did not really engage (and are not asking to go back), set "advance" to false and "goBack" to false. There is no list of preset answers offered to them anymore — if someone can't find the words, pushing back or asking for help IS the expected way to get unstuck, not a failure state. Two cases:
 - If they asked you a genuine question of their own, answer it honestly and specifically, in your own voice, with real reasoning — not just an acknowledgment that they asked something. Only do this if they actually asked something; never invent or quote back a question they did not ask.
@@ -491,14 +525,23 @@ Write ONE short reflection, in your voice, that holds all four of these
 together — not a summary of each one separately, but something that notices
 how they relate: where there's a gap between them, what one might be waiting
 on another to catch up with, or what it means that they're this different
-(or this aligned) right now. Do not ask a question. Two to three sentences,
-no more. Stay fully in character. Return only the reflection itself, no
-preamble, no quotation marks.`;
+(or this aligned) right now.
+
+This is shown right next to the four scores themselves, so it must not
+re-describe them. Never name a sphere (body/mind/heart/spirit) or a level
+name or number from the list above — the person can already see those. State
+the one real insight directly, in plain language, not as a walk-through of
+each part in turn. Do not hedge with "may be" or "perhaps" — say what you
+actually see.
+
+Strict limit: ONE sentence, at most 30 words. Do not ask a question. Stay
+fully in character. Return only the reflection itself, no preamble, no
+quotation marks.`;
 
   try {
     const response = await groq.chat.completions.create({
       model: models[0],
-      max_tokens: 200,
+      max_tokens: 90,
       temperature: 0.6,
       messages: [
         { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
