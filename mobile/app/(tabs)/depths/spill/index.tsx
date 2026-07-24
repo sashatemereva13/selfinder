@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,6 +7,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
+import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 
@@ -14,7 +16,12 @@ export default function SpillScreen() {
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const reset = useSpillStore((s) => s.reset);
+  const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const accentColor = philosopher?.color ?? colors.brand.purple;
+
+  useEffect(() => {
+    markDiscovered('spill');
+  }, []);
 
   const handleBegin = () => {
     reset();

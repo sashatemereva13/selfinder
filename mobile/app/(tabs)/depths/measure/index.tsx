@@ -17,6 +17,7 @@ export default function TodayScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
 
   const accentColor = philosopher?.color ?? colors.brand.purple;
+  const hasMeasuredBefore = Boolean(currentResult);
 
   const handleBegin = () => {
     resetInterview();
@@ -40,11 +41,13 @@ export default function TodayScreen() {
         <Text style={styles.title}>
           A conversation to read{'\n'}where you are right now
         </Text>
-        <Text style={styles.copy}>
-          {philosopher?.name ?? 'Your philosopher'} will ask you about four sides of your
-          life — body, mind, heart, and spirit. Share what is actually true, not what you
-          think it should be. The reading emerges from what you say.
-        </Text>
+        {!hasMeasuredBefore && (
+          <Text style={styles.copy}>
+            {philosopher?.name ?? 'Your philosopher'} will ask you about four sides of your
+            life — body, mind, heart, and spirit. Share what is actually true, not what you
+            think it should be. The reading emerges from what you say.
+          </Text>
+        )}
 
         {currentResult && (
           <Text style={styles.lastReading}>
@@ -60,6 +63,15 @@ export default function TodayScreen() {
         >
           <Text style={styles.buttonText}>Begin the conversation</Text>
         </Pressable>
+
+        {hasMeasuredBefore && (
+          <Pressable
+            style={styles.spillLink}
+            onPress={() => router.push('/(tabs)/depths/spill')}
+          >
+            <Text style={styles.spillLinkText}>Or, just write it out →</Text>
+          </Pressable>
+        )}
       </View>
     </View>
   );
@@ -122,5 +134,14 @@ const styles = StyleSheet.create({
     color: colors.bg.base,
     fontFamily: fonts.medium,
     fontSize: fontSizes.base,
+  },
+  spillLink: {
+    alignItems: 'center',
+    paddingTop: spacing[4],
+  },
+  spillLinkText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
   },
 });

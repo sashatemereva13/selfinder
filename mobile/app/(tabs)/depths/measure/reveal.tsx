@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,18 +10,28 @@ import { useMeasureStore } from '../../../../src/store/measureStore';
 import { AXIS_COLORS, THERMOMETER_MAX } from '../../../../src/content/measureConfig';
 import { MeasureLine } from '../../../../src/types';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { track } from '../../../../src/utils/analytics';
 
 export default function RevealScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const { currentResult, resetInterview } = useMeasureStore();
+  const [showConversation, setShowConversation] = useState(false);
 
   useEffect(() => {
     if (!currentResult) router.replace('/(tabs)/depths/measure');
   }, [currentResult]);
 
   if (!currentResult) return null;
+
+  const hasTranscript = Boolean(currentResult.qaPairs && currentResult.qaPairs.length > 0);
+
+  const toggleConversation = () => {
+    const next = !showConversation;
+    setShowConversation(next);
+    if (next) track('history_transcript_viewed');
+  };
 
   const handleRestart = () => {
     resetInterview();
@@ -54,6 +64,17 @@ export default function RevealScreen() {
           Read about {currentResult.vibrationLevel.name} →
         </Text>
       </Pressable>
+
+      {currentResult.combinationMessage && (
+        <Text
+          style={[
+            styles.combinationMessage,
+            { color: `rgb(${AXIS_COLORS[currentResult.dominantAxis] ?? AXIS_COLORS.clarity})` },
+          ]}
+        >
+          {currentResult.combinationMessage}
+        </Text>
+      )}
 
       {(currentResult.microPractice || currentResult.affirmation) && (
         <View style={styles.practiceBlock}>
@@ -88,6 +109,28 @@ export default function RevealScreen() {
           </View>
         ))}
       </View>
+
+      {hasTranscript && (
+        <View style={styles.conversationSection}>
+          <Pressable style={styles.conversationToggle} onPress={toggleConversation}>
+            <Text style={styles.conversationToggleText}>
+              {showConversation ? 'Hide conversation' : 'Show conversation'}
+            </Text>
+            <Text style={styles.conversationChevron}>{showConversation ? '↑' : '↓'}</Text>
+          </Pressable>
+
+          {showConversation && (
+            <View style={styles.conversationDetail}>
+              {currentResult.qaPairs!.map((pair, i) => (
+                <View key={i} style={styles.conversationQA}>
+                  <Text style={styles.conversationQuestion}>{pair.question}</Text>
+                  <Text style={styles.conversationAnswer}>{pair.answer}</Text>
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      )}
 
       <Pressable
         style={[styles.button, { backgroundColor: philosopher?.color ?? colors.brand.purple }]}
@@ -154,6 +197,13 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.normal,
   },
+  combinationMessage: {
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * lineHeights.normal,
+    marginTop: spacing[1],
+  },
   practiceBlock: {
     gap: spacing[2],
     marginTop: spacing[4],
@@ -178,6 +228,41 @@ const styles = StyleSheet.create({
   },
   lineLabel: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base, textTransform: 'capitalize' },
   lineLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  conversationSection: {
+    gap: spacing[2],
+    marginTop: spacing[1],
+    paddingTop: spacing[3],
+    borderTopWidth: 1,
+    borderTopColor: colors.bg.border,
+  },
+  conversationToggle: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing[2],
+  },
+  conversationToggleText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  conversationChevron: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  conversationDetail: { gap: spacing[3] },
+  conversationQA: {
+    gap: spacing[1],
+    padding: spacing[3],
+    borderRadius: radius.md,
+    backgroundColor: colors.bg.elevated,
+  },
+  conversationQuestion: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+  },
+  conversationAnswer: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
   thermo: { gap: spacing[2] },
   thermoCompact: { gap: spacing[1] },
   thermoTrack: {
