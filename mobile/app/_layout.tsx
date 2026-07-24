@@ -9,6 +9,7 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useMeasureStore } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useReminderStore } from '../src/store/reminderStore';
+import { useEngagementStore, getReminderTone } from '../src/store/engagementStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -21,7 +22,13 @@ export default function RootLayout() {
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
   const { hydrated: measureHydrated, hydrate: hydrateMeasure } = useMeasureStore();
   const { hydrated: authHydrated, hydrate: hydrateAuth } = useAuthStore();
-  const { hydrated: reminderHydrated, hydrate: hydrateReminder } = useReminderStore();
+  const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshTone } = useReminderStore();
+  const {
+    hydrated: engagementHydrated,
+    hydrate: hydrateEngagement,
+    lastMeasureAt,
+    recentReadings,
+  } = useEngagementStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -30,9 +37,20 @@ export default function RootLayout() {
     hydrateMeasure();
     hydrateAuth();
     hydrateReminder();
+    hydrateEngagement();
   }, []);
 
-  const ready = fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated;
+  const ready =
+    fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated && engagementHydrated;
+
+  // Re-picks the reminder's copy tone once per cold start, since a native
+  // repeating notification can't be regenerated fresh at delivery time — a
+  // no-op inside refreshTone itself if the reminder is off or the tone
+  // hasn't actually changed since the last time this ran.
+  useEffect(() => {
+    if (!ready || !philosopher) return;
+    refreshTone(philosopher, getReminderTone({ lastMeasureAt, recentReadings }));
+  }, [ready, philosopher]);
 
   useEffect(() => {
     if (!ready) return;

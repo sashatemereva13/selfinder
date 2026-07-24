@@ -8,6 +8,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { getLevelBySlug } from '../../../../src/content/levelsContent';
 import { LEVEL_COLORS } from '../../../../src/content/measureConfig';
 import { track } from '../../../../src/utils/analytics';
+import { useEngagementStore } from '../../../../src/store/engagementStore';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
@@ -29,9 +30,13 @@ export default function LevelScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const level = id ? getLevelBySlug(id) : undefined;
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
+  const markDiscovered = useEngagementStore((s) => s.markDiscovered);
 
   useEffect(() => {
-    if (level) track('level_detail_viewed', { slug: level.slug });
+    if (level) {
+      track('level_detail_viewed', { slug: level.slug });
+      markDiscovered('levels');
+    }
   }, [level?.slug]);
 
   const toggleDeepDive = () => {
