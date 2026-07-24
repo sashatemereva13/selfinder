@@ -16,8 +16,14 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { TUNE_IN_STATES } from '../../../../src/content/tuneInStates';
 import { track } from '../../../../src/utils/analytics';
+import { useEngagementStore } from '../../../../src/store/engagementStore';
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
+const TIMER_OPTIONS = [5, 15, 30, 45, 60];
+// Fading out over the last stretch of a timer matters specifically for the
+// bedtime use case this was built for — an abrupt cut is jarring if you're
+// already half asleep; a fade reads as the sound settling, not stopping.
+const FADE_SECONDS = 15;
 
 function Pulse({ color, active }: { color: string; active: boolean }) {
   const progress = useSharedValue(0);
@@ -53,6 +59,13 @@ export default function TuneInScreen() {
   const [selected, setSelected] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.3);
+  const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  const markDiscovered = useEngagementStore((s) => s.markDiscovered);
+
+  useEffect(() => {
+    markDiscovered('tuneIn');
+  }, []);
 
   const players = [
     useAudioPlayer(TUNE_IN_STATES[0].asset),
@@ -71,12 +84,50 @@ export default function TuneInScreen() {
     });
   }, [volume]);
 
+  // Counts down once a timer is set, fading the active player's volume over
+  // the final FADE_SECONDS rather than cutting it off, then stops playback.
+  // Only ticks while something is actually playing — setting a timer before
+  // pressing Play should hold the chosen duration, not silently burn through
+  // it (or start fading toward silence) while nothing is even sounding.
+  useEffect(() => {
+    if (remainingSeconds === null || !isPlaying) return;
+    if (remainingSeconds <= 0) {
+      players[selected].pause();
+      setIsPlaying(false);
+      players.forEach((player) => { player.volume = volume; });
+      setTimerMinutes(null);
+      setRemainingSeconds(null);
+      return;
+    }
+    if (remainingSeconds <= FADE_SECONDS) {
+      players[selected].volume = volume * (remainingSeconds / FADE_SECONDS);
+    }
+    const id = setTimeout(() => setRemainingSeconds((s) => (s !== null ? s - 1 : null)), 1000);
+    return () => clearTimeout(id);
+  }, [remainingSeconds, isPlaying]);
+
   const activeState = TUNE_IN_STATES[selected];
+
+  const clearTimer = () => {
+    setTimerMinutes(null);
+    setRemainingSeconds(null);
+    players.forEach((player) => { player.volume = volume; });
+  };
+
+  const handleSelectTimer = (minutes: number) => {
+    if (timerMinutes === minutes) {
+      clearTimer();
+      return;
+    }
+    setTimerMinutes(minutes);
+    setRemainingSeconds(minutes * 60);
+  };
 
   const handleToggle = () => {
     if (isPlaying) {
       players[selected].pause();
       setIsPlaying(false);
+      clearTimer();
     } else {
       players[selected].play();
       setIsPlaying(true);
@@ -139,6 +190,37 @@ export default function TuneInScreen() {
             />
           ))}
         </View>
+      </View>
+
+      <View style={styles.timerSection}>
+        <Text style={styles.volumeLabel}>Sleep timer</Text>
+        <View style={styles.timerChipRow}>
+          {TIMER_OPTIONS.map((minutes) => (
+            <Pressable
+              key={minutes}
+              style={[
+                styles.timerChip,
+                timerMinutes === minutes && { borderColor: `rgb(${activeState.color})` },
+              ]}
+              onPress={() => handleSelectTimer(minutes)}
+            >
+              <Text
+                style={[
+                  styles.timerChipText,
+                  timerMinutes === minutes && { color: `rgb(${activeState.color})` },
+                ]}
+              >
+                {minutes}m
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+        {remainingSeconds !== null && (
+          <Text style={styles.timerCountdown}>
+            Fading out in {Math.floor(remainingSeconds / 60)}:
+            {String(remainingSeconds % 60).padStart(2, '0')}
+          </Text>
+        )}
       </View>
 
       <View style={styles.list}>
@@ -234,6 +316,17 @@ const styles = StyleSheet.create({
   volumeLabel: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   volumeSteps: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
   volumeBar: { width: 8, borderRadius: radius.full, backgroundColor: colors.bg.border },
+  timerSection: { alignItems: 'center', gap: spacing[3], marginBottom: spacing[8] },
+  timerChipRow: { flexDirection: 'row', gap: spacing[2] },
+  timerChip: {
+    paddingHorizontal: spacing[3],
+    paddingVertical: spacing[2],
+    borderRadius: radius.full,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+  },
+  timerChipText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.xs },
+  timerCountdown: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   list: { width: '100%', gap: spacing[3] },
   row: {
     flexDirection: 'row',
