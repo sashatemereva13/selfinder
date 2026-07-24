@@ -2,14 +2,27 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Defs, RadialGradient, Stop, Rect, Circle } from 'react-native-svg';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
+import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
 import { getLevelBySlug } from '../../../src/content/levelsContent';
 import { LEVEL_COLORS } from '../../../src/content/measureConfig';
 import { SaveMessageAction } from '../../../src/components/SaveMessageAction';
+
+// Never Spill here, deliberately — it already has its two dedicated homes
+// (the fork on Measure's entry screen, and Guide's rare invitation); adding
+// a third, generic "try this" nudge for it would undercut exactly the
+// positioning fix that gave it those two instead. Priority order matters:
+// understanding what a level means is more foundational than a regulation
+// tool, so it's offered first.
+const DISCOVERY_NUDGES: { feature: DiscoverableFeature; label: string; route: Href }[] = [
+  { feature: 'levels', label: "Haven't tried Levels yet? See what each state actually means →", route: '/(tabs)/depths/levels' },
+  { feature: 'tuneIn', label: "Haven't tried Tune In yet? Shift your state through sound →", route: '/(tabs)/depths/tunein' },
+];
 
 type Tool = { key: string; label: string; description: string; route: Href };
 
@@ -30,14 +43,17 @@ function formatRelativeDay(isoString: string): string {
 
 // Grouped (rather than one flat stack) so the sequence reads as three moves —
 // find out, understand, shift — instead of six equally-weighted options.
-// Measure and Spill sit together deliberately: both surface where you are,
-// one through structured questions, the other through unstructured writing.
+// Spill deliberately isn't listed here — as a plain equal-weight alternative
+// to Measure it went unused, since nothing ever signaled *when* to reach for
+// it. It now lives in two more specific places instead: a quiet link on
+// Measure's own entry screen (the actual decision point between structured
+// and unstructured), and a rare, philosopher-triggered invitation in Guide
+// when someone's message reads as needing to vent rather than converse.
 const TOOL_GROUPS: { label: string; tools: Tool[] }[] = [
   {
     label: 'Find out where you are',
     tools: [
       { key: 'measure', label: 'Measure', description: 'A guided conversation, one question at a time', route: '/(tabs)/depths/measure' },
-      { key: 'spill',   label: 'Spill',   description: 'Let it out before you name it',                   route: '/(tabs)/depths/spill' },
     ],
   },
   {
@@ -50,10 +66,14 @@ const TOOL_GROUPS: { label: string; tools: Tool[] }[] = [
     label: 'Shift it, if you want to',
     tools: [
       { key: 'tunein', label: 'Tune In', description: 'Regulate it with sound', route: '/(tabs)/depths/tunein' },
-      { key: 'moon',   label: 'Moon',    description: 'Understand your timing', route: '/(tabs)/depths/moon' },
     ],
   },
 ];
+// Moon ('Understand your timing') is deliberately pulled out of the current
+// flow, not deleted — its actual value (and a possible Sun/planets
+// expansion) needs to be worked through before it earns a place next to
+// Tune In. The screen still exists at app/(tabs)/depths/moon, unlinked, for
+// when that's ready — likely as paid content.
 
 // Kept outside the sequence and styled quieter — this one isn't a step, it's
 // an alternative to the whole thing: skip finding out, let a message find you.
@@ -64,12 +84,41 @@ const FEELING_LUCKY: Tool = {
   route: '/(tabs)/depths/feeling-lucky',
 };
 
+// Soft outer halo + an off-center-lit core, rather than a flat circle — the
+// same radial-glow signature as AmbientGlow, scaled down to sit inside a row.
+function SphereOrb({ color, gradientId }: { color: string; gradientId: string }) {
+  return (
+    <Svg width={44} height={44}>
+      <Defs>
+        <RadialGradient id={`${gradientId}-halo`} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={color} stopOpacity={0.3} />
+          <Stop offset="1" stopColor={color} stopOpacity={0} />
+        </RadialGradient>
+        <RadialGradient id={`${gradientId}-core`} cx="35%" cy="32%" r="70%">
+          <Stop offset="0" stopColor={color} stopOpacity={1} />
+          <Stop offset="0.55" stopColor={color} stopOpacity={0.45} />
+          <Stop offset="1" stopColor={color} stopOpacity={0.18} />
+        </RadialGradient>
+      </Defs>
+      <Circle cx={22} cy={22} r={22} fill={`url(#${gradientId}-halo)`} />
+      <Circle cx={22} cy={22} r={10} fill={`url(#${gradientId}-core)`} />
+    </Svg>
+  );
+}
+
 export default function DepthsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const currentResult = useMeasureStore((s) => s.currentResult);
+  const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
+  const discovered = useEngagementStore((s) => s.discovered);
   const accentColor = philosopher?.color ?? colors.brand.purple;
+  // At most one nudge, for the highest-priority thing not yet found — never
+  // stacked, never repeated once discovered. Only surfaced for someone who's
+  // already established the core habit, not a first-timer still on Measure.
+  const discoveryNudge =
+    totalMeasureCount >= 2 ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature]) : undefined;
   const lastLevel = currentResult ? getLevelBySlug(currentResult.vibrationLevel.slug) : undefined;
   const levelRgb = lastLevel ? LEVEL_COLORS[lastLevel.slug] ?? colors.brand.purpleRgb : undefined;
   const levelColor = levelRgb ? `rgb(${levelRgb})` : undefined;
@@ -89,9 +138,11 @@ export default function DepthsScreen() {
 
         {currentResult && lastLevel ? (
           <>
-            <Text style={styles.lastReadingLabel}>
-              Your last reading — {formatRelativeDay(currentResult.savedAt)}: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
-            </Text>
+            <Pressable onPress={() => router.push('/(tabs)/depths/measure/reveal')}>
+              <Text style={styles.lastReadingLabel}>
+                Your last reading — {formatRelativeDay(currentResult.savedAt)}: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore} →
+              </Text>
+            </Pressable>
             <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
 
             {headlineMessage && levelRgb && (
@@ -100,23 +151,41 @@ export default function DepthsScreen() {
 
             <View style={styles.spheres}>
               {currentResult.lines.map((line) => {
-                const sphereColor = `rgb(${LEVEL_COLORS[line.vibrationLevel.slug] ?? colors.brand.purpleRgb})`;
+                const sphereRgb = LEVEL_COLORS[line.vibrationLevel.slug] ?? colors.brand.purpleRgb;
+                const sphereColor = `rgb(${sphereRgb})`;
+                const gradientId = `sphereRow-${line.key}`;
                 return (
                   <Pressable
                     key={line.key}
-                    style={styles.sphereItem}
+                    style={styles.sphereRow}
                     onPress={() => goToLevel(line.vibrationLevel.slug)}
                   >
-                    <View style={[styles.sphereDot, { backgroundColor: sphereColor }]} />
-                    <Text style={styles.sphereLabel}>{line.label}</Text>
-                    <Text
-                      style={[styles.sphereValue, { color: sphereColor }]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit
-                      minimumFontScale={0.75}
-                    >
-                      {line.vibrationLevel.name}
-                    </Text>
+                    <Svg style={StyleSheet.absoluteFill} width="100%" height="100%">
+                      <Defs>
+                        <RadialGradient id={gradientId} cx="14%" cy="45%" r="85%">
+                          <Stop offset="0" stopColor={sphereColor} stopOpacity={0.1} />
+                          <Stop offset="1" stopColor={sphereColor} stopOpacity={0} />
+                        </RadialGradient>
+                      </Defs>
+                      <Rect width="100%" height="100%" fill={`url(#${gradientId})`} />
+                    </Svg>
+
+                    <View style={styles.sphereRowText}>
+                      <Text
+                        style={[
+                          styles.sphereRowName,
+                          { color: sphereColor, textShadowColor: sphereColor },
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.8}
+                      >
+                        {line.vibrationLevel.name}
+                      </Text>
+                      <Text style={styles.sphereRowAxis}>{line.label}</Text>
+                    </View>
+
+                    <SphereOrb color={sphereColor} gradientId={`orb-${line.key}`} />
                   </Pressable>
                 );
               })}
@@ -145,6 +214,12 @@ export default function DepthsScreen() {
               ))}
             </View>
           ))}
+
+          {discoveryNudge && (
+            <Pressable style={styles.discoveryNudge} onPress={() => router.push(discoveryNudge.route)}>
+              <Text style={styles.discoveryNudgeText}>{discoveryNudge.label}</Text>
+            </Pressable>
+          )}
 
           <View style={styles.luckyWrap}>
             <Text style={styles.luckyDivider}>· · ·</Text>
@@ -207,34 +282,36 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
   },
   spheres: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: spacing[3],
     marginTop: spacing[6],
   },
-  sphereItem: {
-    flex: 1,
+  sphereRow: {
+    flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing[1],
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[1],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
+    justifyContent: 'space-between',
+    paddingVertical: spacing[4],
+    paddingHorizontal: spacing[5],
+    borderRadius: radius.xl,
     backgroundColor: colors.bg.elevated,
-    marginHorizontal: spacing[1],
+    overflow: 'hidden',
   },
-  sphereDot: { width: 8, height: 8, borderRadius: 4 },
-  sphereLabel: {
+  sphereRowText: {
+    flex: 1,
+    marginRight: spacing[3],
+  },
+  sphereRowName: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.lg,
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 10,
+  },
+  sphereRowAxis: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
     fontSize: fontSizes.xs,
     letterSpacing: letterSpacings.wide,
     textTransform: 'uppercase',
-  },
-  sphereValue: {
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
+    marginTop: spacing[1],
   },
   stack: {},
   group: {
@@ -262,6 +339,17 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     marginTop: spacing[1],
     lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  discoveryNudge: {
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+    marginBottom: spacing[4],
+  },
+  discoveryNudgeText: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
   },
   luckyWrap: {
     alignItems: 'center',
