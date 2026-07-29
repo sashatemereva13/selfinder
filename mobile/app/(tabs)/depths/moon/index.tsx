@@ -128,8 +128,8 @@ export default function MoonScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[4] },
-  backRow: {},
-  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  backRow: { paddingBottom: spacing[8] },
+  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     padding: spacing[4],
     borderRadius: radius.md,
     borderWidth: 1,
-    borderColor: colors.brand.purple,
+    borderColor: colors.accent.ivory,
     backgroundColor: colors.bg.elevated,
   },
   bridgeButton: {
@@ -215,7 +215,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    backgroundColor: colors.brand.purple,
+    backgroundColor: colors.accent.ivory,
   },
   bridgeButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   flowRow: { flexDirection: 'row', gap: spacing[2] },

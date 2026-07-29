@@ -1,84 +1,328 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
+import { useEffect, useRef, useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
+import Svg, { Circle as SvgCircle } from 'react-native-svg';
+import Animated, {
+  cancelAnimation,
+  useSharedValue,
+  useAnimatedStyle,
+  withDelay,
+  withRepeat,
+  withSequence,
+  withTiming,
+  Easing,
+  SlideInLeft,
+  SlideInRight,
+  FadeIn,
+} from 'react-native-reanimated';
 import { PHILOSOPHERS, PHILOSOPHER_MAP } from '../content/philosophers';
 import { Philosopher } from '../types';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
+import { useAppAccentRgb } from '../utils/appAccent';
 import { PhilosopherObject } from './PhilosopherObject';
 
-const ORB_SIZE = 96;
-const ROWS = [PHILOSOPHERS.slice(0, 2), PHILOSOPHERS.slice(2, 3), PHILOSOPHERS.slice(3, 5)];
+const ICON_SIZE = 60;
+// Matches onboarding's RING_MORPH_RADIUS — when this picker follows that
+// transition, the line-turned-circle and this ring are the same size, which
+// does more to sell "this became that" than the position match does.
+const RING_RADIUS = 80;
+const RING_CENTER = { x: 160, y: 150 };
+const CONTAINER = { width: 320, height: 283 };
+const LABEL_GAP = 8;
+// Wide enough for the longest single-word names ("Kierkegaard", "Aristotle")
+// to stay on one line — a mid-word break reads far worse than a slightly
+// generous box.
+const LABEL_WIDTH_VERTICAL = 100;
+const LABEL_WIDTH_SIDE = 72;
+const LABEL_HEIGHT = 30;
+const ENTRANCE_STAGGER = 70;
+
+type LabelSide = 'top' | 'bottom' | 'left' | 'right';
+
+// One fixed ring position + label direction per philosopher, rather than a
+// generic radial-label formula — with only five spots, hand-placing each
+// (top, the two upper corners to the side, the two lower corners below) is
+// simpler and more reliable than deriving alignment from angle math, and
+// keeps every label pointing outward from the ring instead of across it.
+const RING_LAYOUT: { angleDeg: number; labelSide: LabelSide }[] = [
+  { angleDeg: -90, labelSide: 'top' },
+  { angleDeg: -18, labelSide: 'right' },
+  { angleDeg: 54, labelSide: 'bottom' },
+  { angleDeg: 126, labelSide: 'bottom' },
+  { angleDeg: -162, labelSide: 'left' },
+];
+
+function ringPoint(angleDeg: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  return {
+    x: RING_CENTER.x + RING_RADIUS * Math.cos(rad),
+    y: RING_CENTER.y + RING_RADIUS * Math.sin(rad),
+  };
+}
+
+// Items on the right half of the ring slide in from the right, items on the
+// left half from the left — the top item sits dead-center (cos ≈ 0), where
+// neither side is the natural one, so it just fades/scales in instead.
+function ringEntering(angleDeg: number, index: number) {
+  const rad = (angleDeg * Math.PI) / 180;
+  const cos = Math.cos(rad);
+  const delay = index * ENTRANCE_STAGGER;
+  if (Math.abs(cos) < 0.15) return FadeIn.duration(420).delay(delay);
+  return (cos > 0 ? SlideInRight : SlideInLeft).duration(420).delay(delay);
+}
+
+function labelStyle(side: LabelSide, point: { x: number; y: number }): ViewStyle {
+  switch (side) {
+    case 'top':
+      return {
+        left: point.x - LABEL_WIDTH_VERTICAL / 2,
+        top: point.y - ICON_SIZE / 2 - LABEL_GAP - LABEL_HEIGHT,
+        width: LABEL_WIDTH_VERTICAL,
+      };
+    case 'bottom':
+      return {
+        left: point.x - LABEL_WIDTH_VERTICAL / 2,
+        top: point.y + ICON_SIZE / 2 + LABEL_GAP,
+        width: LABEL_WIDTH_VERTICAL,
+      };
+    case 'left':
+      return {
+        left: point.x - ICON_SIZE / 2 - LABEL_GAP - LABEL_WIDTH_SIDE,
+        top: point.y - LABEL_HEIGHT / 2,
+        width: LABEL_WIDTH_SIDE,
+      };
+    case 'right':
+      return {
+        left: point.x + ICON_SIZE / 2 + LABEL_GAP,
+        top: point.y - LABEL_HEIGHT / 2,
+        width: LABEL_WIDTH_SIDE,
+      };
+  }
+}
 
 type OrbState = 'idle' | 'focused' | 'dimmed';
 
-function PhilosopherOrb({
+function PhilosopherRingItem({
   philosopher,
+  index,
+  angleDeg,
+  labelSide,
   state,
+  accentRgb,
   onPress,
 }: {
   philosopher: Philosopher;
+  index: number;
+  angleDeg: number;
+  labelSide: LabelSide;
   state: OrbState;
+  accentRgb: string;
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
+  const shimmer = useSharedValue(0);
+  const point = ringPoint(angleDeg);
 
   useEffect(() => {
-    scale.value = withTiming(state === 'focused' ? 1.08 : state === 'dimmed' ? 0.9 : 1, { duration: 280 });
-    opacity.value = withTiming(state === 'dimmed' ? 0.35 : 1, { duration: 280 });
+    scale.value = withTiming(state === 'focused' ? 1.1 : state === 'dimmed' ? 0.88 : 1, { duration: 280 });
+    opacity.value = withTiming(state === 'dimmed' ? 0.3 : 1, { duration: 280 });
+  }, [state]);
+
+  // Idle affordance: a soft swell that travels the ring — each symbol
+  // breathes in turn (stagger × item count === one full cycle, so the wave
+  // is seamless). It reads as "these are alive, touch one" without a label,
+  // and stops the moment a choice is in progress. Deliberately NOT a
+  // spinning ring: rotation moves the tap targets and drags the labels
+  // with them.
+  useEffect(() => {
+    if (state === 'idle') {
+      shimmer.value = withDelay(
+        index * 520,
+        withRepeat(
+          withSequence(
+            withTiming(1, { duration: 650, easing: Easing.inOut(Easing.sin) }),
+            withTiming(0, { duration: 650, easing: Easing.inOut(Easing.sin) }),
+            withTiming(0, { duration: 1300 }),
+          ),
+          -1,
+          false,
+        ),
+      );
+    } else {
+      cancelAnimation(shimmer);
+      shimmer.value = withTiming(0, { duration: 200 });
+    }
   }, [state]);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value * (1 + shimmer.value * 0.07) }],
     opacity: opacity.value,
   }));
 
+  // entering lives on this outer wrapper (mount-only, plain positioning) so
+  // it never lands on the same component as the focus-driven animatedStyle
+  // below — combining an entering animation with a reactive style on one
+  // component is what Reanimated warns can silently overwrite each other.
   return (
-    <Pressable onPress={onPress} hitSlop={8} style={styles.orbTouchTarget}>
-      <Animated.View style={[styles.orbColumn, animatedStyle]}>
-        <PhilosopherObject id={philosopher.id} rgb={philosopher.accentRgb} size={ORB_SIZE} />
-        <Text style={[styles.orbName, state === 'focused' && { color: philosopher.color }]}>
-          {philosopher.name}
-        </Text>
+    <>
+      <Animated.View
+        entering={ringEntering(angleDeg, index)}
+        style={[
+          styles.iconTouchTarget,
+          { left: point.x - ICON_SIZE / 2, top: point.y - ICON_SIZE / 2, width: ICON_SIZE, height: ICON_SIZE },
+        ]}
+      >
+        <Pressable onPress={onPress} hitSlop={10}>
+          <Animated.View style={animatedStyle}>
+            <PhilosopherObject id={philosopher.id} rgb={accentRgb} size={ICON_SIZE} />
+          </Animated.View>
+        </Pressable>
       </Animated.View>
-    </Pressable>
+      {/* The name is a tap target too — people naturally tap the word, and
+          a label that does nothing makes the ring feel inert. */}
+      <Animated.Text
+        entering={ringEntering(angleDeg, index)}
+        onPress={onPress}
+        suppressHighlighting
+        style={[
+          styles.orbName,
+          labelStyle(labelSide, point),
+          { textAlign: labelSide === 'left' ? 'right' : labelSide === 'right' ? 'left' : 'center' },
+          state === 'focused' && { color: `rgb(${accentRgb})` },
+        ]}
+      >
+        {philosopher.name}
+      </Animated.Text>
+    </>
   );
 }
 
 export function PhilosopherPicker({
   selectedId,
   onSelect,
+  onRingLayout,
+  hideOwnRing,
 }: {
   selectedId?: string | null;
   onSelect: (id: string) => void;
+  // Reports the ring's actual on-screen position/size once laid out — in
+  // window coordinates, via measureInWindow, since this component doesn't
+  // know what screen or scroll offset it's rendered inside of. Onboarding
+  // uses this to land its own traveling ring exactly where this one will
+  // sit, rather than guessing a static travel distance across two screens
+  // whose relative layout (insets, title height) isn't a fixed number.
+  onRingLayout?: (rect: { x: number; y: number; width: number; height: number }) => void;
+  // True while onboarding's own ring is still traveling to this spot — this
+  // component's static ring stays invisible so there's exactly one ring on
+  // screen during the handoff, not two overlapping.
+  hideOwnRing?: boolean;
 }) {
   const [focusedId, setFocusedId] = useState<string | null>(selectedId ?? null);
   const focused = focusedId ? PHILOSOPHER_MAP[focusedId] : null;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
+
+  const ringContainerRef = useRef<View>(null);
+
+  // Own ring's fade-in, as a shared value instead of an `entering` prop —
+  // see the comment at its render site for why. Starts at 0 whenever this
+  // component mounts with hideOwnRing already true (onboarding's traveling
+  // ring owns the moment); otherwise fades in immediately, matching the old
+  // entering-based behavior for every other call site (e.g. the You tab).
+  const ownRingOpacity = useSharedValue(hideOwnRing ? 0 : 1);
+  useEffect(() => {
+    if (hideOwnRing) return;
+    ownRingOpacity.value = withTiming(1, { duration: 450, easing: Easing.out(Easing.cubic) });
+  }, [hideOwnRing]);
+  const ownRingStyle = useAnimatedStyle(() => ({ opacity: ownRingOpacity.value }));
 
   return (
     <View style={styles.wrap}>
-      <View style={styles.cluster}>
-        {ROWS.map((row, i) => (
-          <View key={i} style={styles.row}>
-            {row.map((p) => (
-              <PhilosopherOrb
-                key={p.id}
-                philosopher={p}
-                state={focusedId === null ? 'idle' : focusedId === p.id ? 'focused' : 'dimmed'}
-                onPress={() => setFocusedId(p.id)}
-              />
-            ))}
-          </View>
+      <View
+        ref={ringContainerRef}
+        style={[styles.ringContainer, CONTAINER]}
+        onLayout={() => {
+          // onLayout is the trigger; the measurable node has to come from a
+          // ref, not the event itself (no usable `target` on React Native
+          // Web). Reports the RING's own rect, not this container's — this
+          // View is CONTAINER-sized (320×283, the whole picker area
+          // including labels), so measuring it directly would hand
+          // onboarding's traveling ring that whole box's shape instead of a
+          // same-sized circle. RING_CENTER/RING_RADIUS are in this
+          // container's own local coordinate space (the Svg viewBox
+          // matches CONTAINER exactly), so window-x/y + those local values
+          // gives the ring's real window-space rect — same technique
+          // onboarding's connectLineWrap uses on its side.
+          if (!onRingLayout) return;
+          ringContainerRef.current?.measureInWindow((x, y) => {
+            onRingLayout({
+              x: x + RING_CENTER.x - RING_RADIUS,
+              y: y + RING_CENTER.y - RING_RADIUS,
+              width: RING_RADIUS * 2,
+              height: RING_RADIUS * 2,
+            });
+          });
+        }}
+      >
+        {/* Hidden while onboarding's own ring is still traveling here (see
+            hideOwnRing) — there should be exactly one ring visible during
+            that handoff, the traveling one, not this static one plus that
+            one overlapping. Once the traveler arrives, this fades in and
+            the traveler fades out, so the swap between "the same ring
+            drawn by two different components" is invisible. Outside
+            onboarding (hideOwnRing is undefined outside it), this just
+            fades in on mount as before — no `entering` prop here anymore:
+            it and a static opacity override on the same view fight over
+            the same property (Reanimated warns about exactly this), and
+            `entering` was winning, showing this ring immediately regardless
+            of hideOwnRing. Driving opacity from one shared value avoids the
+            conflict entirely. */}
+        <Animated.View style={[StyleSheet.absoluteFill, ownRingStyle]}>
+          <Svg width={CONTAINER.width} height={CONTAINER.height} style={StyleSheet.absoluteFill}>
+            <SvgCircle
+              cx={RING_CENTER.x}
+              cy={RING_CENTER.y}
+              r={RING_RADIUS}
+              fill="none"
+              stroke={colors.bg.border}
+              strokeWidth={1}
+            />
+          </Svg>
+        </Animated.View>
+
+        <View style={[styles.ringCenter, { left: RING_CENTER.x - 80, top: RING_CENTER.y - 12 }]}>
+          <Text
+            style={[styles.ringCenterText, focused && { color: accentColor }]}
+            numberOfLines={1}
+            adjustsFontSizeToFit
+            minimumFontScale={0.7}
+          >
+            {focused ? focused.name : ''}
+          </Text>
+        </View>
+
+        {PHILOSOPHERS.map((p, i) => (
+          <PhilosopherRingItem
+            key={p.id}
+            philosopher={p}
+            index={i}
+            angleDeg={RING_LAYOUT[i].angleDeg}
+            labelSide={RING_LAYOUT[i].labelSide}
+            state={focusedId === null ? 'idle' : focusedId === p.id ? 'focused' : 'dimmed'}
+            accentRgb={accentRgb}
+            onPress={() => setFocusedId(p.id)}
+          />
         ))}
       </View>
 
       <View style={styles.modeReveal}>
         {focused ? (
           <>
-            <Text style={[styles.modeText, { color: focused.color }]}>{focused.mode}</Text>
+            <Text style={[styles.modeText, { color: accentColor }]}>{focused.mode}</Text>
             <Text style={styles.descriptionText}>{focused.description}</Text>
+            <Text style={styles.symbolLine}>{focused.symbolLine}</Text>
           </>
         ) : (
           <Text style={styles.placeholderText}>Tap someone to begin</Text>
@@ -90,13 +334,17 @@ export function PhilosopherPicker({
           disabled={!focused}
           style={[
             styles.confirmButton,
-            { backgroundColor: focused?.color ?? colors.brand.purple, opacity: focused ? 1 : 0 },
+            { backgroundColor: accentColor, opacity: focused ? 1 : 0 },
           ]}
           onPress={() => focused && onSelect(focused.id)}
         >
           <Text style={styles.confirmText}>{focused ? `Walk with ${focused.name}` : ' '}</Text>
         </Pressable>
-        {focused && <Text style={styles.reassurance}>You can change this anytime</Text>}
+        {/* Always rendered — its height is part of the layout whether or not
+            a philosopher is focused, so focusing never shifts the ring. */}
+        <Text style={[styles.reassurance, !focused && styles.reassuranceHidden]}>
+          You can change this anytime
+        </Text>
       </View>
     </View>
   );
@@ -104,27 +352,47 @@ export function PhilosopherPicker({
 
 const styles = StyleSheet.create({
   wrap: { width: '100%', alignItems: 'center', gap: spacing[6] },
-  cluster: { gap: spacing[5], alignItems: 'center' },
-  row: { flexDirection: 'row', gap: spacing[6], justifyContent: 'center' },
-  orbTouchTarget: { alignItems: 'center' },
-  orbColumn: { alignItems: 'center' },
+  ringContainer: { alignItems: 'center', justifyContent: 'center' },
+  // Wide enough for "Kierkegaard" at this size — 120 truncated it.
+  ringCenter: {
+    position: 'absolute',
+    width: 160,
+    alignItems: 'center',
+  },
+  ringCenterText: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+  },
+  iconTouchTarget: { position: 'absolute', alignItems: 'center', justifyContent: 'center' },
   orbName: {
-    marginTop: spacing[2],
+    position: 'absolute',
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
-    textAlign: 'center',
+    lineHeight: fontSizes.xs * lineHeights.tight,
   },
+  // minHeight fits the TALLEST focused state across all five philosophers —
+  // Kierkegaard's and Marcus' descriptions run five lines where Socrates'
+  // runs four — so no choice ever grows this block and shoves the ring
+  // upward. If a description gets longer, this needs to grow with it.
   modeReveal: {
-    minHeight: fontSizes.sm * lineHeights.normal,
+    minHeight: 200,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing[6],
   },
+  // Color alone used to give this its presence (each philosopher's own
+  // saturated hue against plain grey body text) — now that color is shared
+  // app-wide rather than per-philosopher, the contrast has to come from
+  // type instead: treated like the app's kicker labels (uppercase, wide
+  // tracking) rather than a plain sentence.
   modeText: {
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    letterSpacing: letterSpacings.wide,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
   },
   descriptionText: {
     marginTop: spacing[2],
@@ -152,5 +420,16 @@ const styles = StyleSheet.create({
     color: colors.text.muted,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
+  },
+  reassuranceHidden: { opacity: 0 },
+  // The symbol's meaning, for people who know these thinkers — faint, one
+  // line, under the description.
+  symbolLine: {
+    marginTop: spacing[2],
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+    textAlign: 'center',
   },
 });

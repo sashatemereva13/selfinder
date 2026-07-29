@@ -9,7 +9,13 @@ import { track } from '../utils/analytics';
 interface GuideChatStore {
   conversations: Record<string, ChatCompletionMessage[]>;
   isLoading: boolean;
-  send: (philosopher: Philosopher, text: string) => Promise<void>;
+  // additionalContext is appended to the philosopher's system prompt for
+  // this one exchange only — never shown as a chat bubble. Used so a
+  // sphere-specific "Talk about it" (see Depths) can hand the philosopher
+  // the person's own Measure answer for that sphere, so the first reply
+  // can speak to their specific situation instead of the generic level
+  // description — the visible message stays a clean, human line.
+  send: (philosopher: Philosopher, text: string, additionalContext?: string) => Promise<void>;
   clearConversation: (philosopherId: string) => void;
   resetAll: () => void;
 }
@@ -18,7 +24,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
   conversations: {},
   isLoading: false,
 
-  send: async (philosopher, text) => {
+  send: async (philosopher, text, additionalContext) => {
     const trimmed = text.trim();
     if (!trimmed || get().isLoading) return;
 
@@ -32,7 +38,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
     track('guide_message_sent');
 
     try {
-      const { reply, suggestSpill } = await sendMessage(withUserMessage, philosopher);
+      const { reply, suggestSpill } = await sendMessage(withUserMessage, philosopher, additionalContext);
       set((state) => ({
         conversations: {
           ...state.conversations,

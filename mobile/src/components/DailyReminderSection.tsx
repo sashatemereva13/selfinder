@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
-import { spacing, radius } from '../theme/spacing';
+import { spacing } from '../theme/spacing';
 import { usePhilosopherStore } from '../store/philosopherStore';
 import { useReminderStore } from '../store/reminderStore';
+import { useAppAccentRgb } from '../utils/appAccent';
 
 // Deliberately simple: four fixed times, no custom picker. Tapping the
 // already-active preset turns the reminder off; tapping any other one
@@ -31,6 +32,8 @@ export function DailyReminderSection() {
   const setReminder = useReminderStore((s) => s.setReminder);
   const clearReminder = useReminderStore((s) => s.clearReminder);
   const [deniedNotice, setDeniedNotice] = useState(false);
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   if (!philosopher) return null;
 
@@ -46,7 +49,7 @@ export function DailyReminderSection() {
   };
 
   return (
-    <View style={styles.card}>
+    <View style={styles.section}>
       <Text style={styles.kicker}>Daily reminder</Text>
       <Text style={styles.status}>{enabled ? `On, ${formatTime(hour, minute)}` : 'Off'}</Text>
 
@@ -56,14 +59,10 @@ export function DailyReminderSection() {
           return (
             <Pressable
               key={preset.label}
-              style={[
-                styles.presetButton,
-                { borderColor: active ? philosopher.color : colors.bg.border },
-                active && { backgroundColor: colors.bg.surface },
-              ]}
+              style={styles.presetButton}
               onPress={() => handlePress(preset.hour, preset.minute)}
             >
-              <Text style={[styles.presetLabel, active && { color: philosopher.color }]}>
+              <Text style={[styles.presetLabel, active && { color: accentColor }]}>
                 {preset.label}
               </Text>
               <Text style={styles.presetTime}>{formatTime(preset.hour, preset.minute)}</Text>
@@ -82,14 +81,9 @@ export function DailyReminderSection() {
 }
 
 const styles = StyleSheet.create({
-  card: {
-    gap: spacing[3],
-    padding: spacing[5],
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
-  },
+  // No card — space and the kicker label do the separating, same register
+  // as every other screen.
+  section: { gap: spacing[3] },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
@@ -98,16 +92,16 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   status: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2] },
+  presets: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[4] },
+  // No border/fill — same "position/weight/color, not a bordered box"
+  // affordance the timer chips on Tune In use for the same kind of
+  // four-way toggle.
   presetButton: {
     flexGrow: 1,
     alignItems: 'center',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[2],
-    borderRadius: radius.md,
-    borderWidth: 1,
+    paddingVertical: spacing[2],
   },
-  presetLabel: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  presetLabel: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   presetTime: {
     color: colors.text.muted,
     fontFamily: fonts.light,
@@ -115,7 +109,7 @@ const styles = StyleSheet.create({
     marginTop: spacing[1],
   },
   deniedText: {
-    color: colors.brand.purple,
+    color: colors.accent.ivory,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,

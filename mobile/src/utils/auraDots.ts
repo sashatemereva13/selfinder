@@ -3,15 +3,22 @@
 // dots read as energy escaping the body rather than noise inside it), just
 // ported to a seeded PRNG so React Native gets stable, non-reshuffling output.
 
+export type AuraDotZone = 'head' | 'torso' | 'legs';
+
 export interface AuraDot {
   cx: number;
   cy: number;
   r: number;
   opacity: number;
+  // Which body zone this dot scattered from — undefined for callers that
+  // don't need it (generateObjectDots). Lets a consumer like onboarding
+  // single out "the dots near the head" without re-deriving zones from
+  // raw coordinates.
+  zone?: AuraDotZone;
 }
 
 // mulberry32 — small, fast, deterministic PRNG seeded from a string.
-function makeRng(seed: string) {
+export function makeRng(seed: string) {
   let h = 1779033703 ^ seed.length;
   for (let i = 0; i < seed.length; i++) {
     h = Math.imul(h ^ seed.charCodeAt(i), 3432918353);
@@ -42,7 +49,8 @@ function dotField(
   n: number,
   opacityRange: [number, number],
   radiusRange: [number, number],
-  sigma = 0.16
+  sigma = 0.16,
+  zone?: AuraDotZone
 ): AuraDot[] {
   const dots: AuraDot[] = [];
   for (let i = 0; i < n; i++) {
@@ -61,7 +69,13 @@ function dotField(
     const opacity =
       opacityRange[0] + (opacityRange[1] - opacityRange[0]) * falloff * (0.5 + rng() * 0.5);
     const r = radiusRange[0] + (radiusRange[1] - radiusRange[0]) * falloff * (0.4 + rng() * 0.6);
-    dots.push({ cx: px, cy: py, r: Math.round(r * 10) / 10, opacity: Math.round(opacity * 100) / 100 });
+    dots.push({
+      cx: px,
+      cy: py,
+      r: Math.round(r * 10) / 10,
+      opacity: Math.round(opacity * 100) / 100,
+      zone,
+    });
   }
   return dots;
 }
@@ -71,9 +85,9 @@ function dotField(
 export function generateAuraDots(seed: string): AuraDot[] {
   const rng = makeRng(seed);
   return [
-    ...dotField(rng, 100, 42, 32, 36, 55, [0.15, 0.85], [0.35, 1.2]),
-    ...dotField(rng, 100, 145, 96, 116, 120, [0.12, 0.8], [0.35, 1.3]),
-    ...dotField(rng, 100, 260, 56, 130, 90, [0.12, 0.75], [0.35, 1.2]),
+    ...dotField(rng, 100, 42, 32, 36, 55, [0.15, 0.85], [0.35, 1.2], 0.16, 'head'),
+    ...dotField(rng, 100, 145, 96, 116, 120, [0.12, 0.8], [0.35, 1.3], 0.16, 'torso'),
+    ...dotField(rng, 100, 260, 56, 130, 90, [0.12, 0.75], [0.35, 1.2], 0.16, 'legs'),
   ];
 }
 

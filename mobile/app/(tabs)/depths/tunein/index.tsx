@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +17,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { TUNE_IN_STATES } from '../../../../src/content/tuneInStates';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
 const TIMER_OPTIONS = [5, 15, 30, 45, 60];
@@ -25,30 +26,57 @@ const TIMER_OPTIONS = [5, 15, 30, 45, 60];
 // already half asleep; a fade reads as the sound settling, not stopping.
 const FADE_SECONDS = 15;
 
-function Pulse({ color, active }: { color: string; active: boolean }) {
-  const progress = useSharedValue(0);
+const PULSE_REST_SCALE = 1;
+
+// The transparent ring runs its own slow, independent wave — several
+// seconds to fully spread and fade — separate from the core's own quick
+// 1.8s pulse. Tying the ring's full screen-spanning travel to the same
+// fast beat as the button made it look like it was rushing to keep up,
+// which fought the whole point of Calm/Deep Rest/Sleep. A slow wave
+// underneath a faster pulse reads as the room breathing at its own
+// unhurried pace, echoing AmbientGlow's register, while the core still
+// pulses at the beat that matches the audio.
+const WAVE_DURATION_MS = 6600;
+const WAVE_PEAK_SCALE = 7;
+
+function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
+  const beat = useSharedValue(0);
+  const wave = useSharedValue(0);
 
   useEffect(() => {
     if (active) {
-      progress.value = withRepeat(
+      beat.value = withRepeat(
         withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }),
         -1,
         true
       );
+      wave.value = withRepeat(
+        withTiming(1, { duration: WAVE_DURATION_MS, easing: Easing.out(Easing.sin) }),
+        -1,
+        false
+      );
     } else {
-      progress.value = withSpring(0);
+      beat.value = withSpring(0);
+      wave.value = withTiming(0, { duration: 400 });
     }
   }, [active]);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + progress.value * 0.18 }],
-    opacity: 0.55 + progress.value * 0.45,
+  const coreStyle = useAnimatedStyle(() => ({
+    opacity: 0.55 + beat.value * 0.45,
+  }));
+
+  const ringStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: PULSE_REST_SCALE + wave.value * (WAVE_PEAK_SCALE - PULSE_REST_SCALE) }],
+    opacity: 0.3 * (1 - wave.value),
   }));
 
   return (
-    <View style={styles.pulseWrap}>
-      <Animated.View style={[styles.pulseOrb, { backgroundColor: `rgba(${color},0.35)` }, animatedStyle]} />
-      <View style={[styles.pulseCore, { backgroundColor: `rgb(${color})` }]} />
+    <View style={styles.pulseWrap} pointerEvents="box-none">
+      <Animated.View style={[styles.pulseOrb, ringStyle]} pointerEvents="none" />
+      <Animated.View style={[styles.pulseCoreGlow, coreStyle]} pointerEvents="none" />
+      <Pressable style={styles.pulseCore} onPress={onPress}>
+        <Text style={styles.pulseCoreLabel}>{active ? 'Stop' : 'Play'}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -73,8 +101,17 @@ export default function TuneInScreen() {
     useAudioPlayer(TUNE_IN_STATES[2].asset),
   ];
 
+  // shouldPlayInBackground + doNotMix keep a tune sounding after the screen
+  // locks — deliberately available to every user, not gated behind
+  // Selfinder+: several states are explicitly built for falling asleep
+  // (see Sleep/Deep Rest's intent copy), and a sleep aid that stops the
+  // moment the screen locks doesn't do its job.
   useEffect(() => {
-    setAudioModeAsync({ playsInSilentMode: true });
+    setAudioModeAsync({
+      playsInSilentMode: true,
+      shouldPlayInBackground: true,
+      interruptionMode: 'doNotMix',
+    });
   }, []);
 
   useEffect(() => {
@@ -93,10 +130,12 @@ export default function TuneInScreen() {
     if (remainingSeconds === null || !isPlaying) return;
     if (remainingSeconds <= 0) {
       players[selected].pause();
+      players[selected].setActiveForLockScreen(false);
       setIsPlaying(false);
       players.forEach((player) => { player.volume = volume; });
       setTimerMinutes(null);
       setRemainingSeconds(null);
+      track('tune_in_stopped', { state: TUNE_IN_STATES[selected].name, reason: 'timer' });
       return;
     }
     if (remainingSeconds <= FADE_SECONDS) {
@@ -126,12 +165,18 @@ export default function TuneInScreen() {
   const handleToggle = () => {
     if (isPlaying) {
       players[selected].pause();
+      players[selected].setActiveForLockScreen(false);
       setIsPlaying(false);
       clearTimer();
+      track('tune_in_stopped', { state: activeState.name, reason: 'manual' });
     } else {
       players[selected].play();
+      players[selected].setActiveForLockScreen(true, {
+        title: activeState.name,
+        artist: 'Selfinder — Tune In',
+      });
       setIsPlaying(true);
-      track('tune_in_played', { state: activeState.name });
+      track('tune_in_started', { state: activeState.name });
     }
   };
 
@@ -139,41 +184,46 @@ export default function TuneInScreen() {
     if (index === selected) return;
     if (isPlaying) {
       players[selected].pause();
+      players[selected].setActiveForLockScreen(false);
       players[index].play();
+      players[index].setActiveForLockScreen(true, {
+        title: TUNE_IN_STATES[index].name,
+        artist: 'Selfinder — Tune In',
+      });
+      track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
     }
     setSelected(index);
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
+    <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
+      <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
+
       <Pressable style={styles.backRow} onPress={() => router.back()}>
         <Text style={styles.backLink}>← Back</Text>
       </Pressable>
 
       <Text style={styles.kicker}>Regulation Layer</Text>
       <Text style={styles.title}>Tune your field with frequency</Text>
-      <Text style={styles.copy}>
-        Each state plays two tones a few Hz apart, one per ear — your brain reads the gap
-        between them as a single slow pulse.
+      <Text style={styles.introLine}>
+        Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow
+        pulse. Needs stereo headphones.
       </Text>
-      <Text style={styles.headphonesNote}>🎧 Needs stereo headphones — through speakers the beat won't form.</Text>
 
-      <Pulse color={activeState.color} active={isPlaying} />
+      <View style={styles.pickerRow}>
+        {TUNE_IN_STATES.map((state, i) => (
+          <Pressable key={state.name} style={styles.pickerItem} onPress={() => handleSelect(i)}>
+            <Text style={[styles.pickerName, i === selected && styles.pickerNameActive]}>
+              {state.name}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
 
-      <Text style={[styles.activeLabel, { color: `rgb(${activeState.color})` }]}>
-        {activeState.name} — {activeState.band} ({activeState.beatHz}Hz beat)
-      </Text>
-      <Text style={styles.intent}>{activeState.intent}</Text>
-
-      <Pressable
-        style={[styles.playButton, { backgroundColor: `rgb(${activeState.color})` }]}
-        onPress={handleToggle}
-      >
-        <Text style={styles.playButtonText}>{isPlaying ? 'Stop' : 'Play'}</Text>
-      </Pressable>
+      <View style={styles.centerBlock}>
+        <Pulse active={isPlaying} onPress={handleToggle} />
+        <Text style={styles.intent}>{activeState.intent}</Text>
+      </View>
 
       <View style={styles.volumeRow}>
         <Text style={styles.volumeLabel}>Volume</Text>
@@ -181,11 +231,7 @@ export default function TuneInScreen() {
           {VOLUME_STEPS.map((step) => (
             <Pressable
               key={step}
-              style={[
-                styles.volumeBar,
-                { height: 10 + VOLUME_STEPS.indexOf(step) * 5 },
-                volume >= step && { backgroundColor: `rgb(${activeState.color})` },
-              ]}
+              style={[styles.volumeDot, volume >= step && styles.volumeDotActive]}
               onPress={() => setVolume(step)}
             />
           ))}
@@ -198,18 +244,10 @@ export default function TuneInScreen() {
           {TIMER_OPTIONS.map((minutes) => (
             <Pressable
               key={minutes}
-              style={[
-                styles.timerChip,
-                timerMinutes === minutes && { borderColor: `rgb(${activeState.color})` },
-              ]}
+              style={[styles.timerChip, timerMinutes === minutes && styles.timerChipActive]}
               onPress={() => handleSelectTimer(minutes)}
             >
-              <Text
-                style={[
-                  styles.timerChipText,
-                  timerMinutes === minutes && { color: `rgb(${activeState.color})` },
-                ]}
-              >
+              <Text style={[styles.timerChipText, timerMinutes === minutes && styles.timerChipTextActive]}>
                 {minutes}m
               </Text>
             </Pressable>
@@ -222,32 +260,20 @@ export default function TuneInScreen() {
           </Text>
         )}
       </View>
-
-      <View style={styles.list}>
-        {TUNE_IN_STATES.map((state, i) => (
-          <Pressable
-            key={state.name}
-            style={[styles.row, i === selected && { borderColor: `rgb(${state.color})` }]}
-            onPress={() => handleSelect(i)}
-          >
-            <View style={[styles.rowDot, { backgroundColor: `rgb(${state.color})` }]} />
-            <View style={styles.rowTextCol}>
-              <Text style={styles.rowName}>{state.name}</Text>
-              <Text style={styles.rowIntent}>{state.intent}</Text>
-            </View>
-            <Text style={styles.rowHz}>{state.band} · {state.beatHz}Hz</Text>
-          </Pressable>
-        ))}
-      </View>
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingBottom: spacing[12], alignItems: 'center' },
-  backRow: { alignSelf: 'flex-start', paddingBottom: spacing[4] },
-  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  root: {
+    flex: 1,
+    backgroundColor: colors.bg.base,
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[8],
+    alignItems: 'center',
+  },
+  backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
+  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
@@ -260,26 +286,29 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     color: colors.text.primary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.xl,
-    lineHeight: fontSizes.xl * lineHeights.tight,
+    fontSize: fontSizes.lg,
+    lineHeight: fontSizes.lg * lineHeights.tight,
     marginTop: spacing[2],
   },
-  copy: {
+  introLine: {
     alignSelf: 'flex-start',
     color: colors.text.secondary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
-    marginTop: spacing[3],
-  },
-  headphonesNote: {
-    alignSelf: 'flex-start',
-    color: colors.text.muted,
-    fontFamily: fonts.light,
     fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
     marginTop: spacing[3],
     marginBottom: spacing[6],
   },
+  pickerRow: {
+    flexDirection: 'row',
+    width: '100%',
+    justifyContent: 'center',
+    gap: spacing[6],
+  },
+  pickerItem: { alignItems: 'center', paddingVertical: spacing[2] },
+  pickerName: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  pickerNameActive: { color: colors.accent.ivory, fontSize: fontSizes.base },
+  centerBlock: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   pulseWrap: {
     width: 160,
     height: 160,
@@ -287,26 +316,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: spacing[5],
   },
-  pulseOrb: { position: 'absolute', width: 160, height: 160, borderRadius: 80 },
-  pulseCore: { width: 64, height: 64, borderRadius: 32 },
-  activeLabel: { fontFamily: fonts.medium, fontSize: fontSizes.md, textAlign: 'center' },
+  pulseOrb: {
+    position: 'absolute',
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    backgroundColor: colors.accent.ivory,
+  },
+  // The fast now-playing beat, close to the button — separate from pulseOrb
+  // so the quick 1.8s rhythm stays a small confirmation near the button
+  // rather than the thing traveling across the screen.
+  pulseCoreGlow: {
+    position: 'absolute',
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.accent.ivory,
+  },
+  pulseCore: {
+    width: 76,
+    height: 76,
+    borderRadius: 38,
+    backgroundColor: colors.accent.ivory,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pulseCoreLabel: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   intent: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
-    marginTop: spacing[2],
     marginBottom: spacing[5],
     paddingHorizontal: spacing[4],
   },
-  playButton: {
-    paddingHorizontal: spacing[8],
-    paddingVertical: spacing[4],
-    borderRadius: radius.full,
-    marginBottom: spacing[6],
-  },
-  playButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.base },
   volumeRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -314,8 +358,9 @@ const styles = StyleSheet.create({
     marginBottom: spacing[6],
   },
   volumeLabel: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  volumeSteps: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
-  volumeBar: { width: 8, borderRadius: radius.full, backgroundColor: colors.bg.border },
+  volumeSteps: { flexDirection: 'row', alignItems: 'center', gap: spacing[2] },
+  volumeDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: colors.bg.border },
+  volumeDotActive: { backgroundColor: colors.accent.ivory },
   timerSection: { alignItems: 'center', gap: spacing[3], marginBottom: spacing[8] },
   timerChipRow: { flexDirection: 'row', gap: spacing[2] },
   timerChip: {
@@ -325,27 +370,8 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.bg.border,
   },
+  timerChipActive: { borderColor: colors.accent.ivory },
   timerChipText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.xs },
+  timerChipTextActive: { color: colors.accent.ivory },
   timerCountdown: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  list: { width: '100%', gap: spacing[3] },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[3],
-    padding: spacing[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
-  },
-  rowDot: { width: 10, height: 10, borderRadius: 5 },
-  rowTextCol: { flex: 1, gap: spacing[1] },
-  rowName: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base },
-  rowIntent: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-  },
-  rowHz: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
 });

@@ -12,8 +12,8 @@ import Animated, {
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
-import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { track } from '../../../../src/utils/analytics';
 
 const DURATION_MS = 60_000;
@@ -24,9 +24,9 @@ const GRACE_MS = 4_000;
 
 export default function SpillWriteScreen() {
   const router = useRouter();
-  const philosopher = usePhilosopherStore((s) => s.philosopher);
   const setSpillText = useSpillStore((s) => s.setText);
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   const [text, setText] = useState('');
   const textRef = useRef('');

@@ -8,6 +8,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 
 export default function SpillRevealScreen() {
   const router = useRouter();
@@ -16,7 +17,8 @@ export default function SpillRevealScreen() {
   const text = useSpillStore((s) => s.text);
   const reset = useSpillStore((s) => s.reset);
   const send = useGuideChatStore((s) => s.send);
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   useEffect(() => {
     if (!text) router.replace('/(tabs)/depths/spill');
@@ -36,6 +38,18 @@ export default function SpillRevealScreen() {
       `Here's something I just wrote without thinking about it, without looking back at what I'd already written:\n\n"${text}"\n\nWhat do you notice?`
     );
     router.push('/(tabs)/guide');
+  };
+
+  // Spill's whole premise is "never judged" — a screen that only offers
+  // "talk about it" or "write again" quietly pressures a follow-up action
+  // just to leave, which contradicts that. Writing it out and being done can
+  // be the whole point; this is the neutral third way out. Clears the text
+  // (nothing here persists past this screen by design — see spillStore) and
+  // returns to Depths, the same "back to home" destination every other
+  // finished flow in the app lands on.
+  const handleDone = () => {
+    reset();
+    router.replace('/(tabs)/depths');
   };
 
   return (
@@ -59,6 +73,13 @@ export default function SpillRevealScreen() {
           <Text style={styles.secondaryButtonText}>Write again</Text>
         </Pressable>
       </View>
+
+      {/* Quiet, not a third button competing with the two above — this is
+          the "no, actually, I'm just done" option, and it should read as
+          the easiest one, not one more decision. */}
+      <Pressable style={styles.doneRow} onPress={handleDone}>
+        <Text style={styles.doneText}>Done</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -104,4 +125,6 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
   },
+  doneRow: { alignItems: 'center', paddingTop: spacing[5] },
+  doneText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.sm },
 });

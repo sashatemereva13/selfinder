@@ -5,19 +5,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
-import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 
 export default function SpillScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const philosopher = usePhilosopherStore((s) => s.philosopher);
   const reset = useSpillStore((s) => s.reset);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   useEffect(() => {
     markDiscovered('spill');
@@ -69,12 +69,12 @@ const styles = StyleSheet.create({
   },
   backRow: {
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[2],
+    paddingBottom: spacing[8],
   },
   backLink: {
-    color: colors.text.muted,
+    color: colors.text.faint,
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.xs,
   },
   body: {
     flex: 1,

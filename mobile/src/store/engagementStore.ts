@@ -12,13 +12,25 @@ const RECENT_READINGS_CAP = 5;
 const HEAVY_REGISTER_THRESHOLD = 200;
 const SESSION_GAP_MS = 20 * 60 * 1000; // 20 minutes — a real new sitting-down, not a background blip
 
-export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill';
+export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill' | 'breathing';
 
 interface RecentReading {
   score: number;
   levelName: string;
   savedAt: string;
 }
+
+// How many times someone has tapped "Talk about it" (continuing a past
+// reading's conversation) before the not-subscribed Your Arc preview screen
+// (app/(tabs)/you/your-arc-preview.tsx) starts showing a "Keep the
+// conversation going" Selfinder+ nudge. Depths' own "Talk about it" row
+// stays one plain, always-tappable action regardless of this count — the
+// nudge lives on the screen someone visits to see what subscribing would
+// add, not on the row that's just trying to open Guide. There's no real
+// purchase flow in the app yet, so this is a soft, honest nudge, not an
+// actual paywall/checkout gate — and never shown to a subscribed user, who
+// has nothing left to be nudged toward.
+export const TALK_ABOUT_IT_UPSELL_THRESHOLD = 3;
 
 interface EngagementState {
   totalMeasureCount: number;
@@ -27,6 +39,7 @@ interface EngagementState {
   recentReadings: RecentReading[];
   discovered: Record<DiscoverableFeature, boolean>;
   hasShownSecondVisit: boolean;
+  talkAboutItCount: number;
 }
 
 interface EngagementStore extends EngagementState {
@@ -41,6 +54,7 @@ interface EngagementStore extends EngagementState {
   recordMeasure: (score: number, levelName: string, savedAt: string) => Promise<void>;
   markDiscovered: (feature: DiscoverableFeature) => Promise<void>;
   markSecondVisitShown: () => Promise<void>;
+  recordTalkAboutIt: () => Promise<void>;
   resetAll: () => Promise<void>;
 }
 
@@ -49,8 +63,9 @@ const DEFAULT_STATE: EngagementState = {
   firstMeasureAt: null,
   lastMeasureAt: null,
   recentReadings: [],
-  discovered: { levels: false, tuneIn: false, spill: false },
+  discovered: { levels: false, tuneIn: false, spill: false, breathing: false },
   hasShownSecondVisit: false,
+  talkAboutItCount: 0,
 };
 
 function readState(raw: string | null): EngagementState {
@@ -66,8 +81,10 @@ function readState(raw: string | null): EngagementState {
         levels: !!parsed.discovered?.levels,
         tuneIn: !!parsed.discovered?.tuneIn,
         spill: !!parsed.discovered?.spill,
+        breathing: !!parsed.discovered?.breathing,
       },
       hasShownSecondVisit: !!parsed.hasShownSecondVisit,
+      talkAboutItCount: typeof parsed.talkAboutItCount === 'number' ? parsed.talkAboutItCount : 0,
     };
   } catch {
     return DEFAULT_STATE;
@@ -146,6 +163,13 @@ export const useEngagementStore = create<EngagementStore>((set, get) => ({
     await persist(next);
   },
 
+  recordTalkAboutIt: async () => {
+    const current = get();
+    const next: EngagementState = { ...current, talkAboutItCount: current.talkAboutItCount + 1 };
+    set(next);
+    await persist(next);
+  },
+
   resetAll: async () => {
     set({ ...DEFAULT_STATE, hydrated: true, isNewVisitSinceLastOpen: false });
     try {
@@ -158,7 +182,11 @@ export const useEngagementStore = create<EngagementStore>((set, get) => ({
 }));
 
 // --- Derived segment helpers — pure functions, no store dependency, so
-// they're easy to reuse from reminder scheduling (which runs outside React). ---
+// they're easy to reuse anywhere copy/behavior needs to vary by how active
+// or how "heavy" someone's recent readings have been (discovery nudges,
+// future tone decisions). No longer used by reminder scheduling — the
+// daily reminder now sends Feeling Lucky-style messages rather than
+// segment-varied copy (see dailyReminder.ts). ---
 
 export function getRecencySegment(
   lastMeasureAt: string | null
@@ -174,18 +202,4 @@ export function getVibrationalRegister(recentReadings: RecentReading[]): 'heavy'
   if (recentReadings.length === 0) return null;
   const avg = recentReadings.reduce((sum, r) => sum + r.score, 0) / recentReadings.length;
   return avg < HEAVY_REGISTER_THRESHOLD ? 'heavy' : 'light';
-}
-
-// Combines recency and register into the single tone reminder copy branches
-// on — dormant always wins (longest-elapsed case), otherwise either a
-// lapsing pattern or a heavy recent register calls for the gentler line.
-export function getReminderTone(state: {
-  lastMeasureAt: string | null;
-  recentReadings: RecentReading[];
-}): 'routine' | 'gentle' | 'dormant' {
-  const recency = getRecencySegment(state.lastMeasureAt);
-  if (recency === 'dormant') return 'dormant';
-  const register = getVibrationalRegister(state.recentReadings);
-  if (recency === 'lapsing' || register === 'heavy') return 'gentle';
-  return 'routine';
 }

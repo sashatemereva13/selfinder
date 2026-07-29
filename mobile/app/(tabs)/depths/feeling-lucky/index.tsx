@@ -8,6 +8,9 @@ import { spacing } from '../../../../src/theme/spacing';
 import feelingLuckyList from '../../../../src/content/feelingLuckyList.json';
 import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
 import { track } from '../../../../src/utils/analytics';
+import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
+import { useGuideChatStore } from '../../../../src/store/guideChatStore';
+import { useEngagementStore } from '../../../../src/store/engagementStore';
 
 // Drawn once per visit, deliberately — no reroll button. The whole idea is
 // that whichever message shows up is the one meant to find you right now;
@@ -21,10 +24,21 @@ export default function FeelingLuckyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [message] = useState(pickMessage);
+  const philosopher = usePhilosopherStore((s) => s.philosopher);
+  const sendGuideMessage = useGuideChatStore((s) => s.send);
+  const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
 
   useEffect(() => {
     track('feeling_lucky_viewed');
   }, []);
+
+  const handleTalkAboutIt = () => {
+    if (!philosopher) return;
+    track('feeling_lucky_talk_about_it');
+    recordTalkAboutIt();
+    sendGuideMessage(philosopher, `This found me just now: "${message}" Can we talk about it?`);
+    router.push('/(tabs)/guide');
+  };
 
   return (
     <ScrollView
@@ -40,8 +54,14 @@ export default function FeelingLuckyScreen() {
       </View>
 
       <View style={styles.saveWrap}>
-        <SaveMessageAction message={message} accentRgb={colors.brand.purpleRgb} />
+        <SaveMessageAction message={message} accentRgb={colors.accent.ivoryRgb} />
       </View>
+
+      {philosopher && (
+        <Pressable style={styles.talkLinkWrap} onPress={handleTalkAboutIt}>
+          <Text style={styles.talkLink}>Talk to {philosopher.name} about it →</Text>
+        </Pressable>
+      )}
     </ScrollView>
   );
 }
@@ -49,10 +69,17 @@ export default function FeelingLuckyScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12] },
-  backRow: { paddingBottom: spacing[4] },
-  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  backRow: { paddingBottom: spacing[8] },
+  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   messageWrap: { flex: 1, justifyContent: 'center', paddingVertical: spacing[8] },
   saveWrap: { alignItems: 'center' },
+  talkLinkWrap: { alignItems: 'center', marginTop: spacing[6] },
+  talkLink: {
+    color: colors.text.secondary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+  },
   message: {
     color: colors.text.primary,
     fontFamily: fonts.light,

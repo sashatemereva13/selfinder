@@ -55,7 +55,7 @@ export default function LevelScreen() {
     );
   }
 
-  const accentColor = `rgb(${LEVEL_COLORS[level.slug] ?? colors.brand.purpleRgb})`;
+  const accentColor = `rgb(${LEVEL_COLORS[level.slug] ?? colors.accent.ivoryRgb})`;
 
   return (
     <ScrollView
@@ -129,8 +129,8 @@ const styles = StyleSheet.create({
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   notFoundRoot: { alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
   notFoundText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.base },
-  backRow: { paddingBottom: spacing[4] },
-  backLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  backRow: { paddingBottom: spacing[8] },
+  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     fontFamily: fonts.medium,
     fontSize: fontSizes.xs,

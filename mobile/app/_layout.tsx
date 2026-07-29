@@ -9,7 +9,8 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useMeasureStore } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useReminderStore } from '../src/store/reminderStore';
-import { useEngagementStore, getReminderTone } from '../src/store/engagementStore';
+import { useEngagementStore } from '../src/store/engagementStore';
+import { useSubscriptionStore } from '../src/store/subscriptionStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -22,13 +23,9 @@ export default function RootLayout() {
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
   const { hydrated: measureHydrated, hydrate: hydrateMeasure } = useMeasureStore();
   const { hydrated: authHydrated, hydrate: hydrateAuth } = useAuthStore();
-  const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshTone } = useReminderStore();
-  const {
-    hydrated: engagementHydrated,
-    hydrate: hydrateEngagement,
-    lastMeasureAt,
-    recentReadings,
-  } = useEngagementStore();
+  const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshWindow } = useReminderStore();
+  const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
+  const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -38,18 +35,21 @@ export default function RootLayout() {
     hydrateAuth();
     hydrateReminder();
     hydrateEngagement();
+    hydrateSubscription();
   }, []);
 
   const ready =
-    fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated && engagementHydrated;
+    fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
+    && engagementHydrated && subscriptionHydrated;
 
-  // Re-picks the reminder's copy tone once per cold start, since a native
-  // repeating notification can't be regenerated fresh at delivery time — a
-  // no-op inside refreshTone itself if the reminder is off or the tone
-  // hasn't actually changed since the last time this ran.
+  // Tops up the reminder's rolling window of scheduled notifications once
+  // per cold start — a no-op inside refreshWindow itself if the reminder
+  // is off. See dailyReminder.ts for why this needs topping up at all
+  // (there's no background task keeping the schedule filled while the app
+  // is closed).
   useEffect(() => {
     if (!ready || !philosopher) return;
-    refreshTone(philosopher, getReminderTone({ lastMeasureAt, recentReadings }));
+    refreshWindow(philosopher);
   }, [ready, philosopher]);
 
   useEffect(() => {

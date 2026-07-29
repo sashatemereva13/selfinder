@@ -10,34 +10,49 @@ export const LINES: { key: Sphere; label: string }[] = [
 ];
 
 // Keyed by the backend's dominant psychological axis (calm/clarity/intensity/grounding),
-// not by sphere — matches selfinder-web's measureConfig.js exactly.
+// not by sphere — matches selfinder-web's measureConfig.js exactly. Warmed
+// toward ivory the same way as LEVEL_COLORS just below (same reasoning:
+// this colors live text on the reveal screen, e.g. the philosopher's
+// combinationMessage, so it can't sit at full saturation against the warm
+// background without clashing).
 export const AXIS_COLORS: Record<string, string> = {
-  calm:      '159,255,208',
-  clarity:   '159,211,255',
-  grounding: '255,232,112',
-  intensity: '255,123,123',
+  calm:      '187,243,208',
+  clarity:   '187,215,237',
+  grounding: '244,226,147',
+  intensity: '245,160,154',
 };
 
-// Visual-only (no backend equivalent) — one point per level, low to high, used
-// to color the Levels map from a muted red at the bottom to violet at the top.
+// Visual-only (no backend equivalent) — one point per level, low to high,
+// used to color the Levels map, the reveal screen's spectrum, and the
+// current-reading accent everywhere else in the app (see
+// docs/design/aesthetic.md — this IS the accent color once a reading
+// exists). Still runs muted red (low) to violet (high) — that gradient is
+// real information, not decoration, so it's kept — but every stop is now
+// blended toward AURA_NEUTRAL_COLOR (ivory, 239,227,207) and slightly
+// desaturated. Previously these were fully saturated hues picked
+// independently of the ivory background; the cool end especially (reason,
+// love, unconditionallove, peace) read as a jarring blue-on-warm clash —
+// e.g. Unconditional Love's old 140,170,240 was a near-saturated blue. This
+// keeps the same relative ordering and hue family at every point, just
+// warmed enough that nothing in the run fights the app's one accent color.
 export const LEVEL_COLORS: Record<string, string> = {
-  shame:             '130,58,58',
-  guilt:              '158,66,66',
-  apathy:             '186,90,74',
-  grief:              '214,110,74',
-  fear:               '232,132,80',
-  desire:             '240,152,90',
-  anger:              '246,175,100',
-  pride:              '235,196,110',
-  courage:            '214,214,120',
-  neutrality:         '176,214,140',
-  willingness:        '140,214,170',
-  acceptance:         '116,221,190',
-  reason:             '108,214,214',
-  love:               '120,190,230',
-  unconditionallove:  '140,170,240',
-  peace:              '160,155,250',
-  enlightenment:      '185,140,255',
+  shame:              '160,112,106',
+  guilt:              '178,118,112',
+  apathy:             '197,134,119',
+  grief:              '216,148,120',
+  fear:               '228,163,124',
+  desire:             '233,176,131',
+  anger:              '238,190,138',
+  pride:              '231,203,144',
+  courage:            '218,214,150',
+  neutrality:         '195,215,163',
+  willingness:        '173,215,182',
+  acceptance:         '157,218,193',
+  reason:             '152,213,207',
+  love:               '160,200,218',
+  unconditionallove:  '174,189,226',
+  peace:              '187,181,233',
+  enlightenment:      '202,171,236',
 };
 
 // Mirrors backend/data/vibrationLevels.js — used to resolve a level's slug for

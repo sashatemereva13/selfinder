@@ -18,6 +18,7 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useEngagementStore } from '../../../src/store/engagementStore';
+import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { getNudgeState, getNudgeCopy } from '../../../src/content/guideNudges';
 import { TypingDots } from '../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
@@ -77,7 +78,8 @@ export default function GuideScreen() {
   }, [showSecondVisit]);
 
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
   const nudge = getNudgeCopy(philosopher?.id ?? 'socrates', getNudgeState(currentResult, previousResult));
 
   useEffect(() => {
@@ -126,7 +128,7 @@ export default function GuideScreen() {
       </View>
 
       {metSnapshotRef.current?.hasMet && (
-        <Pressable style={[styles.nudgeBanner, { borderColor: accentColor }]} onPress={() => router.push(nudge.route)}>
+        <Pressable style={styles.nudgeBanner} onPress={() => router.push(nudge.route)}>
           <Text style={styles.nudgeText}>{nudge.text}</Text>
           <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
         </Pressable>
@@ -135,34 +137,46 @@ export default function GuideScreen() {
       <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {messages.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={[styles.greeting, { borderColor: accentColor }]}>
+            <Text style={styles.greeting}>
               {showSecondVisit
                 ? philosopher.secondVisitGreeting
                 : metSnapshotRef.current?.hasMet
                   ? philosopher.greeting
                   : philosopher.firstMeeting}
             </Text>
+            {/* "Measure" is a proper noun in every philosopher's own voice
+                above (each firstMeeting line namedrops it before a new user
+                has any idea what it means) — this is the plain-language
+                layer underneath that voice, saying outright what tapping
+                the button actually does. Keyed off !currentResult, not
+                hasMet: someone who's already measured with philosopher A
+                and is now meeting philosopher B for the first time already
+                knows what Measure is — but someone who's met a philosopher
+                before without ever measuring still doesn't, so this has to
+                stay tied to "have they ever actually done Measure," not
+                "have they met this particular philosopher before." */}
+            {!currentResult && (
+              <Text style={styles.measureExplainer}>
+                A short conversation about your body, mind, heart, and spirit.
+                At the end, {philosopher.name} reflects the state emerging from your answers.
+              </Text>
+            )}
             {!currentResult && (
               <Pressable
-                style={[styles.measureCta, { borderColor: accentColor }]}
+                style={[styles.measureCta, { backgroundColor: accentColor }]}
                 onPress={() => router.push('/(tabs)/depths/measure')}
               >
-                <Text style={[styles.measureCtaText, { color: accentColor }]}>Take Measure →</Text>
+                <Text style={styles.measureCtaText}>Take Measure →</Text>
               </Pressable>
             )}
           </View>
         ) : (
           messages.map((message, i) => (
             <View key={i}>
-              <Bubble isUser={message.role === 'user'} color={accentColor}>
-                {message.content}
-              </Bubble>
+              <Turn isUser={message.role === 'user'}>{message.content}</Turn>
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
-                <Pressable
-                  style={[styles.spillCta, { borderColor: accentColor }]}
-                  onPress={() => router.push('/(tabs)/depths/spill')}
-                >
-                  <Text style={[styles.spillCtaText, { color: accentColor }]}>Write it out instead →</Text>
+                <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
+                  <Text style={styles.spillCtaText}>Write it out instead →</Text>
                 </Pressable>
               )}
             </View>
@@ -170,7 +184,7 @@ export default function GuideScreen() {
         )}
 
         {isLoading && (
-          <View style={[styles.bubble, styles.bubblePhilosopher, styles.typingBubble, { borderColor: accentColor }]}>
+          <View style={styles.typingRow}>
             <TypingDots />
           </View>
         )}
@@ -200,11 +214,18 @@ export default function GuideScreen() {
   );
 }
 
-function Bubble({ children, color, isUser }: { children: string; color: string; isUser: boolean }) {
+// No bubble shape, no card — a conversation with a philosopher reads closer
+// to a transcript or a book dialogue than a messenger thread. Turn-taking
+// still needs to be instantly legible without a border/fill doing that job,
+// so it's carried by alignment (philosopher left, you right) and color
+// (philosopher in primary text, you in secondary) instead — same register
+// the rest of the app uses to differentiate voice (e.g. the greeting's
+// italic vs. plain-line pairing).
+function Turn({ children, isUser }: { children: string; isUser: boolean }) {
   return (
-    <View style={[styles.bubble, isUser ? styles.bubbleUser : styles.bubblePhilosopher, !isUser && { borderColor: color }]}>
-      <Text style={styles.bubbleText}>{children}</Text>
-    </View>
+    <Text style={[styles.turnText, isUser ? styles.turnUser : styles.turnPhilosopher]}>
+      {children}
+    </Text>
   );
 }
 
@@ -234,13 +255,12 @@ const styles = StyleSheet.create({
   },
   headerName: { fontFamily: fonts.medium, fontSize: fontSizes.lg, marginTop: spacing[1] },
   clearLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm, marginTop: spacing[2] },
+  // No border, no fill — plain text with spacing, same register as
+  // Depths' discoveryNudge. The tap affordance is the accent-colored
+  // action line beneath it, not a bordered box around the whole thing.
   nudgeBanner: {
     marginHorizontal: spacing[5],
-    marginBottom: spacing[3],
-    padding: spacing[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    backgroundColor: colors.bg.elevated,
+    marginBottom: spacing[4],
   },
   nudgeText: {
     color: colors.text.secondary,
@@ -259,28 +279,41 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingHorizontal: spacing[5],
     paddingBottom: spacing[4],
-    gap: spacing[3],
+    gap: spacing[4],
   },
   emptyState: { paddingVertical: spacing[8] },
+  // No border-bar — italic already carries "this is the philosopher's own
+  // voice" (same pairing used everywhere else in the app: an italic line,
+  // then a plain one underneath for anything that needs explaining), so a
+  // drawn rule beside it was a redundant second signal for the same thing.
   greeting: {
     color: colors.text.primary,
     fontFamily: fonts.light,
     fontStyle: 'italic',
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.normal,
-    paddingLeft: spacing[4],
-    borderLeftWidth: 2,
   },
+  // Quiet and unitalicized, sitting apart from the philosopher's own voice
+  // above it — plain information, not character.
+  measureExplainer: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[3],
+  },
+  // Filled pill, not outlined — matches the confirm button on the
+  // philosopher picker and every other primary action in the app; an
+  // outlined CTA was the odd one out, not the established pattern.
   measureCta: {
     alignSelf: 'flex-start',
     marginTop: spacing[5],
-    marginLeft: spacing[4],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[5],
     borderRadius: radius.full,
-    borderWidth: 1,
   },
   measureCtaText: {
+    color: colors.bg.base,
     fontFamily: fonts.medium,
     fontSize: fontSizes.sm,
   },
@@ -288,39 +321,34 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginTop: spacing[1],
     marginBottom: spacing[2],
-    paddingVertical: spacing[2],
-    paddingHorizontal: spacing[4],
-    borderRadius: radius.full,
-    borderWidth: 1,
   },
   spillCtaText: {
+    color: colors.text.muted,
     fontFamily: fonts.medium,
     fontSize: fontSizes.sm,
   },
-  bubble: {
-    maxWidth: '85%',
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    marginBottom: spacing[2],
-  },
-  bubblePhilosopher: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.bg.elevated,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  bubbleUser: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.bg.surface,
-  },
-  bubbleText: {
-    color: colors.text.primary,
+  // Turn-taking carried by alignment and color, not a bubble shape — the
+  // philosopher's words sit left in the app's primary text tone (the
+  // "someone is speaking to you" register everywhere else uses), yours
+  // sit right in a more muted tone, closer to how a transcript or a book's
+  // dialogue distinguishes speakers than a messenger's two-tone bubbles.
+  turnText: {
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.chat,
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * lineHeights.chat,
+    maxWidth: '88%',
   },
-  typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
+  turnPhilosopher: {
+    alignSelf: 'flex-start',
+    color: colors.text.primary,
+    textAlign: 'left',
+  },
+  turnUser: {
+    alignSelf: 'flex-end',
+    color: colors.text.secondary,
+    textAlign: 'right',
+  },
+  typingRow: { alignSelf: 'flex-start', paddingVertical: spacing[2] },
   compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
   input: {
@@ -333,7 +361,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.elevated,
     color: colors.text.primary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.sm,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
   },

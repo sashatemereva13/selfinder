@@ -44,7 +44,12 @@
         }
       ],
       "expo-splash-screen",
-      "expo-audio",
+      [
+        "expo-audio",
+        {
+          "enableBackgroundPlayback": true
+        }
+      ],
       "expo-sharing",
       [
         "expo-media-library",

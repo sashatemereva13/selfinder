@@ -108,7 +108,7 @@ function AuthForm({
 
   if (mode === 'forgot-request' || mode === 'forgot-reset') {
     return (
-      <View style={styles.card}>
+      <View style={styles.section}>
         <Text style={styles.cardKicker}>Account</Text>
         <Text style={styles.cardCopy}>
           {mode === 'forgot-request'
@@ -180,7 +180,7 @@ function AuthForm({
   }
 
   return (
-    <View style={styles.card}>
+    <View style={styles.section}>
       <Text style={styles.cardKicker}>Account</Text>
       <Text style={styles.cardCopy}>Create an account to save your readings across sessions.</Text>
 
@@ -231,7 +231,7 @@ function AuthForm({
 
       {mode === 'register' && (
         <Pressable style={styles.consentRow} onPress={() => setAccepted((a) => !a)}>
-          <View style={[styles.checkbox, accepted && { backgroundColor: colors.brand.purple, borderColor: colors.brand.purple }]} />
+          <View style={[styles.checkbox, accepted && { backgroundColor: colors.accent.ivory, borderColor: colors.accent.ivory }]} />
           <Text style={styles.consentRowText}>I accept the privacy policy</Text>
         </Pressable>
       )}
@@ -396,14 +396,14 @@ function LoggedInAccount({
   };
 
   return (
-    <View style={styles.card}>
+    <View style={styles.section}>
       <Text style={styles.cardKicker}>Account</Text>
       <Text style={styles.signedInAs}>Signed in as {session.username}</Text>
 
       <View style={styles.consentToggleRow}>
         <Text style={styles.consentToggleLabel}>Save my readings to my account</Text>
         <Pressable
-          style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.brand.purple, borderColor: colors.brand.purple }]}
+          style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.accent.ivory }]}
           onPress={toggleConsent}
           disabled={consentBusy || loadingProfile}
         >
@@ -596,14 +596,13 @@ function LoggedInAccount({
 }
 
 const styles = StyleSheet.create({
-  card: {
-    gap: spacing[3],
-    padding: spacing[5],
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
-  },
+  // No card — space and the kicker label do the separating, same register
+  // as every other screen. This is the largest section on the page (login
+  // form or the full logged-in account panel), so its internal
+  // subsections (historySection, dataSection) still use a thin top border
+  // to separate from each other — consistent with how Depths uses
+  // sectionDivider, a line rather than a box.
+  section: { gap: spacing[3] },
   cardKicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
@@ -639,7 +638,7 @@ const styles = StyleSheet.create({
     borderColor: colors.bg.border,
   },
   consentRowText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  errorText: { color: colors.brand.purple, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  errorText: { color: colors.accent.ivory, fontFamily: fonts.light, fontSize: fontSizes.sm },
   noticeText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   forgotLink: {
     color: colors.text.muted,
@@ -652,7 +651,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[4],
     borderRadius: radius.full,
     alignItems: 'center',
-    backgroundColor: colors.brand.purple,
+    backgroundColor: colors.accent.ivory,
   },
   submitButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.base },
   signedInAs: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },
@@ -669,12 +668,13 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
+  // Filled, not outlined — matches submitButton's convention for the one
+  // other real action in this file; an outlined pill was the odd one out.
   consentToggleButton: {
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.elevated,
   },
   consentToggleButtonText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   historySection: { gap: spacing[2], paddingTop: spacing[2], borderTopWidth: 1, borderTopColor: colors.bg.border },
@@ -739,21 +739,17 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
-  dataButton: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  dataButtonText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  // No border — weight (medium) and the accent-ish secondary tone carry
+  // the affordance, same register as action rows elsewhere in the app
+  // rather than an outlined-pill convention this file was the only user of.
+  dataButton: { alignSelf: 'flex-start', paddingVertical: spacing[2] },
+  dataButtonText: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   dangerButton: {
     alignSelf: 'flex-start',
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    backgroundColor: `rgb(${colors.axis.heart})`,
+    backgroundColor: colors.danger,
   },
   dangerButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   deleteConfirmBlock: { gap: spacing[3] },

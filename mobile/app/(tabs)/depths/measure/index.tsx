@@ -6,6 +6,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 
@@ -16,7 +17,8 @@ export default function TodayScreen() {
   const resetInterview = useMeasureStore((s) => s.resetInterview);
   const currentResult = useMeasureStore((s) => s.currentResult);
 
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
   const hasMeasuredBefore = Boolean(currentResult);
 
   const handleBegin = () => {
@@ -51,7 +53,7 @@ export default function TodayScreen() {
 
         {currentResult && (
           <Text style={styles.lastReading}>
-            Last reading: {currentResult.vibrationLevel.name} · {currentResult.vibrationScore}
+            Last time, you read as {currentResult.vibrationLevel.name.toLowerCase()}.
           </Text>
         )}
       </View>
@@ -84,12 +86,12 @@ const styles = StyleSheet.create({
   },
   backRow: {
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[2],
+    paddingBottom: spacing[8],
   },
   backLink: {
-    color: colors.text.muted,
+    color: colors.text.faint,
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.xs,
   },
   body: {
     flex: 1,

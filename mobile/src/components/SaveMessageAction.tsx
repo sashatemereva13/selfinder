@@ -41,7 +41,7 @@ export function SaveMessageAction({ message, accentRgb }: { message: string; acc
       <Text style={styles.label}>Keep this message</Text>
       <View style={styles.actions}>
         <Pressable onPress={handleSave} disabled={status === 'saving'}>
-          <Text style={[styles.actionText, { color: `rgb(${accentRgb})` }]}>
+          <Text style={styles.actionText}>
             {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : 'Save as an image'}
           </Text>
         </Pressable>
@@ -69,7 +69,11 @@ const styles = StyleSheet.create({
     marginTop: spacing[4],
   },
   actions: { flexDirection: 'row', gap: spacing[5], marginTop: spacing[2] },
-  actionText: { fontFamily: fonts.medium, fontSize: fontSizes.sm, color: colors.text.secondary },
+  // Ivory, consistently, matching the row actions on Depths — previously
+  // "Save as an image" took the reading's accent color and "Share it" sat
+  // in plain secondary gray, so the two sat at different visual weights
+  // right next to each other despite both being the same kind of action.
+  actionText: { fontFamily: fonts.medium, fontSize: fontSizes.sm, color: colors.accent.ivory },
   hint: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: spacing[2] },
-  error: { color: colors.brand.purple, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: spacing[2] },
+  error: { color: colors.accent.ivory, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: spacing[2] },
 });

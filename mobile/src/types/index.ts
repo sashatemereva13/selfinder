@@ -10,8 +10,10 @@ export interface Philosopher {
   name: string;
   mode: string;
   description: string;
-  color: string;
-  accentRgb: string;
+  /** One line tying the wireframe symbol to the philosopher's idea — shown
+   * when focused in the picker, so the geometry reads as meaning, not
+   * decoration. */
+  symbolLine: string;
   greeting: string;
   firstMeeting: string;
   // Shown once, in place of the routine greeting, the first time someone

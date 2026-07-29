@@ -25,7 +25,19 @@ export async function sendMessage(
     ? `${philosopher.systemPrompt}\n\n${additionalContext}`
     : philosopher.systemPrompt;
 
-  const { reply, suggestSpill } = await request<SendMessageResponse>('/chat', { messages, systemPrompt });
+  // suggestSpill is client-side-only bookkeeping (drives the "write it out
+  // instead" chip) — it must never ride along in the history sent back to
+  // Groq. Groq's message schema rejects unknown properties on a message
+  // object outright, so as soon as a conversation had one assistant reply
+  // in it, every following turn failed with a 400 ('property suggestSpill
+  // is unsupported') — the whole conversation broke after exactly one
+  // reply, silently, until the backend logs were checked.
+  const wireMessages = messages.map(({ role, content }) => ({ role, content }));
+
+  const { reply, suggestSpill } = await request<SendMessageResponse>('/chat', {
+    messages: wireMessages,
+    systemPrompt,
+  });
   return { reply, suggestSpill: suggestSpill === true };
 }
 

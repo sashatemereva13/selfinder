@@ -11,11 +11,13 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
@@ -30,6 +32,16 @@ const SPHERE_LABELS: Record<Sphere, string> = {
   body: 'Body', mind: 'Mind', heart: 'Heart', spirit: 'Spirit',
 };
 const TOTAL_SPHERES = 4;
+
+// The moment the score comes back used to cut straight from ScoringOrbs
+// into Depths' arrival sequence — no beat between "the philosopher is
+// thinking" and "the wheel is already spinning." This fades the screen to
+// black, holds briefly on black (the beat of stillness — long enough to
+// register as a deliberate pause, not a stutter), THEN navigates. Depths
+// itself fades in and starts its own spin from there — this screen never
+// sees that part, it only owns the exit.
+const FADE_OUT_DURATION_MS = 450;
+const BLACK_HOLD_MS = 500;
 
 export default function InterviewScreen() {
   const router = useRouter();
@@ -54,13 +66,17 @@ export default function InterviewScreen() {
   const [isScoring, setIsScoring] = useState(false);
   const [scoringError, setScoringError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+  // Drives the fade-to-black exit — 0 (transparent) until the score comes
+  // back, then animated to 1 to cover the screen before navigating away.
+  const exitFade = useSharedValue(0);
   // Synchronous guard against double-submission — `isAcknowledging` alone has a
   // gap between calling setState and the re-render that disables the button,
   // during which a rapid double-tap can fire handleSend twice concurrently.
   const isSendingRef = useRef(false);
 
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
-  const accentColor = philosopher?.color ?? colors.brand.purple;
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -79,7 +95,14 @@ export default function InterviewScreen() {
       await saveResult({ ...result, qaPairs: pairs, savedAt });
       await recordMeasure(result.vibrationScore, result.vibrationLevel.name, savedAt);
       track('measure_completed');
-      router.replace('/(tabs)/depths/measure/reveal');
+      // Fade to black, hold briefly, then navigate — a fixed pause
+      // regardless of how long the request itself took (see
+      // BLACK_HOLD_MS's own comment), so the ritual feels the same every
+      // time rather than compounding a slow network wait with an
+      // additional one on top of it.
+      exitFade.value = withTiming(1, { duration: FADE_OUT_DURATION_MS, easing: Easing.in(Easing.quad) });
+      await new Promise((resolve) => setTimeout(resolve, FADE_OUT_DURATION_MS + BLACK_HOLD_MS));
+      router.replace('/(tabs)/depths');
     } catch (err) {
       console.error('Measure interview scoring request failed:', err);
       setIsScoring(false);
@@ -166,6 +189,8 @@ export default function InterviewScreen() {
     setGoBackNote(null);
   };
 
+  const exitFadeStyle = useAnimatedStyle(() => ({ opacity: exitFade.value }));
+
   return (
     <KeyboardAvoidingView
       style={[styles.root, { paddingTop: insets.top + spacing[4] }]}
@@ -176,16 +201,16 @@ export default function InterviewScreen() {
 
       <View style={styles.sphereProgress}>
         {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => (
-          <View
+          <Text
             key={sphere}
             style={[
-              styles.sphereDot,
-              i < qaPairs.length && { backgroundColor: accentColor, borderColor: accentColor },
-              i === sphereIndex && { borderColor: accentColor },
+              styles.sphereLabel,
+              i < qaPairs.length && { color: accentColor, fontFamily: fonts.medium },
+              i === sphereIndex && { color: accentColor },
             ]}
           >
-            <Text style={styles.sphereDotLabel}>{SPHERE_LABELS[sphere]}</Text>
-          </View>
+            {SPHERE_LABELS[sphere]}
+          </Text>
         ))}
       </View>
 
@@ -198,27 +223,25 @@ export default function InterviewScreen() {
       <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {qaPairs.map((pair, i) => (
           <View key={pair.sphere} style={styles.exchange}>
-            <Bubble color={accentColor}>{pair.question}</Bubble>
-            <Bubble isUser>{pair.answer}</Bubble>
-            {acknowledgments[i] ? (
-              <Bubble color={accentColor}>{acknowledgments[i]}</Bubble>
-            ) : null}
+            <Turn color={accentColor}>{pair.question}</Turn>
+            <Turn isUser>{pair.answer}</Turn>
+            {acknowledgments[i] ? <Turn color={accentColor}>{acknowledgments[i]}</Turn> : null}
           </View>
         ))}
 
         {!isScoring && !scoringError && currentQuestion && (
-          <Bubble color={accentColor}>{currentQuestion.question}</Bubble>
+          <Turn color={accentColor}>{currentQuestion.question}</Turn>
         )}
 
         {asides.map((aside, i) => (
           <View key={i} style={styles.exchange}>
-            <Bubble isUser>{aside.answer}</Bubble>
-            {aside.reply ? <Bubble color={accentColor}>{aside.reply}</Bubble> : null}
+            <Turn isUser>{aside.answer}</Turn>
+            {aside.reply ? <Turn color={accentColor}>{aside.reply}</Turn> : null}
           </View>
         ))}
 
         {isAcknowledging && (
-          <View style={[styles.bubble, styles.bubblePhilosopher, styles.typingBubble, { borderColor: accentColor }]}>
+          <View style={styles.typingRow}>
             <TypingDots />
           </View>
         )}
@@ -275,41 +298,60 @@ export default function InterviewScreen() {
       <Pressable style={styles.restartButton} onPress={handleRestart}>
         <Text style={styles.restartText}>Start over</Text>
       </Pressable>
+
+      {/* Transparent until the score comes back, then fades to fully
+          opaque and holds briefly before navigating — the "beat of
+          stillness" between the philosopher finishing and Depths
+          appearing. See submitForScoring/exitFade. */}
+      <Animated.View style={[styles.exitFade, exitFadeStyle]} pointerEvents="none" />
     </KeyboardAvoidingView>
   );
 }
 
-function Bubble({ children, color, isUser }: { children: string; color?: string; isUser?: boolean }) {
+// No bubble shape, no card — matches Guide's own Turn component (see
+// app/(tabs)/guide/index.tsx): a measure check-in is still a conversation,
+// so it reads the same way, not as a separate "quiz" register. Turn-taking
+// is carried by alignment and color, not a bordered/filled box. The
+// philosopher's line takes the current level color (the one accent this
+// screen has, before a reading exists) rather than a fixed tone — this
+// used to be the bubble's border color; the visible signal moves from
+// border to text since there's no border left to carry it.
+function Turn({ children, color, isUser }: { children: string; color?: string; isUser?: boolean }) {
   return (
-    <View
+    <Text
       style={[
-        styles.bubble,
-        isUser ? styles.bubbleUser : styles.bubblePhilosopher,
-        !isUser && color ? { borderColor: color } : null,
+        styles.turnText,
+        isUser ? styles.turnUser : styles.turnPhilosopher,
+        !isUser && color ? { color } : null,
       ]}
     >
-      <Text style={styles.bubbleText}>{children}</Text>
-    </View>
+      {children}
+    </Text>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
+  exitFade: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.bg.base,
+  },
+  // No pills/borders — which sphere is current is carried by color/weight
+  // alone (muted for not-yet-reached, accent+medium for done or current),
+  // the same "position and weight, not a box" register the rest of the app
+  // uses (see aesthetic.md's philosopher-picker example).
   sphereProgress: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: spacing[3],
+    gap: spacing[4],
     paddingBottom: spacing[3],
   },
-  sphereDot: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[1],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  sphereDotLabel: {
-    color: colors.text.secondary,
+  sphereLabel: {
+    color: colors.text.muted,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
   },
@@ -331,35 +373,32 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[4],
     gap: spacing[3],
   },
-  exchange: { gap: spacing[2], marginBottom: spacing[2] },
-  bubble: {
-    maxWidth: '85%',
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    marginBottom: spacing[2],
-  },
-  bubblePhilosopher: {
-    alignSelf: 'flex-start',
-    backgroundColor: colors.bg.elevated,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  bubbleUser: {
-    alignSelf: 'flex-end',
-    backgroundColor: colors.bg.surface,
-  },
-  bubbleText: {
-    color: colors.text.primary,
+  exchange: { gap: spacing[3], marginBottom: spacing[3] },
+  // Turn-taking carried by alignment and color, not a bubble shape — same
+  // pattern as Guide's own Turn component (app/(tabs)/guide/index.tsx),
+  // reused here so a Measure check-in reads as the same kind of
+  // conversation, not a separate quiz-styled register.
+  turnText: {
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.chat,
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * lineHeights.chat,
+    maxWidth: '88%',
   },
-  typingBubble: { minWidth: 52, paddingVertical: spacing[4] },
+  turnPhilosopher: {
+    alignSelf: 'flex-start',
+    color: colors.text.primary,
+    textAlign: 'left',
+  },
+  turnUser: {
+    alignSelf: 'flex-end',
+    color: colors.text.secondary,
+    textAlign: 'right',
+  },
+  typingRow: { alignSelf: 'flex-start', paddingVertical: spacing[2] },
   scoringBlock: { alignItems: 'center', gap: spacing[4], paddingVertical: spacing[8] },
   scoringText: { fontFamily: fonts.medium, fontSize: fontSizes.md },
   errorText: {
-    color: colors.brand.purple,
+    color: colors.accent.ivory,
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
     textAlign: 'center',
@@ -384,7 +423,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.elevated,
     color: colors.text.primary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.base,
+    fontSize: fontSizes.sm,
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[3],
   },

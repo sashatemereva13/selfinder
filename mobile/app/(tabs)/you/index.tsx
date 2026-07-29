@@ -7,9 +7,12 @@ import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
+import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
+import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
 import { DailyReminderSection } from '../../../src/components/DailyReminderSection';
+import { AmbientGlow } from '../../../src/components/AmbientGlow';
 
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
@@ -22,6 +25,10 @@ export default function YouScreen() {
   const resetSelection = usePhilosopherStore((s) => s.resetSelection);
   const resetGuideChats = useGuideChatStore((s) => s.resetAll);
   const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
+  const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
+  const setSubscribed = useSubscriptionStore((s) => s.setSubscribed);
+  const accentRgb = useAppAccentRgb();
+  const accentColor = `rgb(${accentRgb})`;
 
   const handleResetOnboarding = () => {
     resetMet();
@@ -38,59 +45,86 @@ export default function YouScreen() {
   };
 
   return (
-    <ScrollView
-      ref={scrollRef}
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
-      <Text style={styles.kicker}>Your guide</Text>
+    <View style={styles.root}>
+      <AmbientGlow />
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+      >
+        {/* "Walking with", not "Your guide" — the walk is the app's one
+            recurring metaphor (walk it through → who walks beside you →
+            Walk with Socrates), and this label keeps it going. */}
+        <Text style={styles.kicker}>Walking with</Text>
 
-      {!changing && philosopher && (
-        <View style={[styles.currentCard, { borderColor: philosopher.color }]}>
-          <Text style={[styles.currentName, { color: philosopher.color }]}>{philosopher.name}</Text>
-          <Text style={styles.currentMode}>{philosopher.mode}</Text>
-          <Text style={styles.currentDescription}>{philosopher.description}</Text>
-          <Pressable
-            onPress={() => {
-              setChanging(true);
-              scrollRef.current?.scrollTo({ y: 0, animated: false });
-            }}
-          >
-            <Text style={styles.changeLink}>Change who walks beside you →</Text>
-          </Pressable>
-        </View>
-      )}
+        {!changing && philosopher && (
+          <View style={styles.currentSection}>
+            <Text style={[styles.currentName, { color: accentColor }]}>{philosopher.name}</Text>
+            <Text style={styles.currentMode}>{philosopher.mode}</Text>
+            <Text style={styles.currentDescription}>{philosopher.description}</Text>
+            <Pressable
+              onPress={() => {
+                setChanging(true);
+                scrollRef.current?.scrollTo({ y: 0, animated: false });
+              }}
+            >
+              <Text style={styles.changeLink}>Change who walks beside you →</Text>
+            </Pressable>
+          </View>
+        )}
 
-      {changing && (
-        <View>
-          <Text style={styles.chooseTitle}>Choose who walks beside you</Text>
-          <PhilosopherPicker selectedId={philosopher?.id} onSelect={handleSelect} />
-          <Pressable style={styles.cancelButton} onPress={() => setChanging(false)}>
-            <Text style={styles.cancelLink}>Cancel</Text>
-          </Pressable>
-        </View>
-      )}
+        {changing && (
+          <View>
+            <Text style={styles.chooseTitle}>Choose who walks beside you</Text>
+            <PhilosopherPicker selectedId={philosopher?.id} onSelect={handleSelect} />
+            <Pressable style={styles.cancelButton} onPress={() => setChanging(false)}>
+              <Text style={styles.cancelLink}>Cancel</Text>
+            </Pressable>
+          </View>
+        )}
 
-      {!changing && <DailyReminderSection />}
+        {!changing && (
+          <>
+            <View style={styles.divider} />
+            <DailyReminderSection />
+          </>
+        )}
 
-      <AccountSection />
+        <View style={styles.divider} />
+        <AccountSection />
 
-      {__DEV__ && (
-        <Pressable
-          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
-          onPress={handleResetOnboarding}
-        >
-          <Text style={styles.devResetText}>
-            {resetDone ? 'Reset ✓' : 'Reset onboarding state (dev only)'}
-          </Text>
-        </Pressable>
-      )}
-    </ScrollView>
+        {__DEV__ && (
+          <>
+            <View style={styles.divider} />
+            <Pressable
+              style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
+              onPress={handleResetOnboarding}
+            >
+              <Text style={styles.devResetText}>
+                {resetDone ? 'Reset ✓' : 'Reset onboarding state (dev only)'}
+              </Text>
+            </Pressable>
+            {/* Placeholder for real entitlement — see subscriptionStore.ts.
+                Toggling this is the only way to see/test the subscribed
+                Your Arc experience until a real purchase flow exists. */}
+            <Pressable
+              style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
+              onPress={() => setSubscribed(!isSubscribed)}
+            >
+              <Text style={styles.devResetText}>
+                {isSubscribed ? 'Subscribed ✓ (dev only, tap to unsubscribe)' : 'Not subscribed (dev only, tap to subscribe)'}
+              </Text>
+            </Pressable>
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
+  scroll: { flex: 1 },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
   kicker: {
     color: colors.text.muted,
@@ -100,13 +134,14 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: spacing[4],
   },
-  currentCard: {
-    gap: spacing[2],
-    padding: spacing[5],
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    backgroundColor: colors.bg.elevated,
-  },
+  // No card — space and the kicker label above it separate this from the
+  // rest of the page, same register as every other screen in the app.
+  currentSection: { gap: spacing[2] },
+  // Thin line between logical groups (current philosopher / Daily Reminder /
+  // Account / dev tools) — same token values as Depths' own sectionDivider,
+  // so a section break reads identically everywhere in the app rather than
+  // each screen inventing its own gap.
+  divider: { height: 1, backgroundColor: colors.bg.border },
   currentName: { fontFamily: fonts.medium, fontSize: fontSizes.lg },
   currentMode: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   currentDescription: {
@@ -118,9 +153,9 @@ const styles = StyleSheet.create({
   },
   changeLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   chooseTitle: {
-    color: colors.text.primary,
+    color: colors.text.secondary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.lg,
+    fontSize: fontSizes.md,
     marginBottom: spacing[4],
   },
   cancelButton: { alignItems: 'center', paddingVertical: spacing[4] },
