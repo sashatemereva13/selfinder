@@ -105,6 +105,21 @@ should be rare — most messages are not this. When true, weave a brief,
 natural invitation into "reply" to just write freely instead of talking,
 fully in your own voice — never a generic suggestion bolted on.`;
 
+// SPILL_SIGNAL_INSTRUCTION asks the model to report its suggestSpill
+// decision as a separate JSON field, but the smaller/faster model
+// (models[1]) sometimes narrates that decision inline instead — a trailing
+// "(No suggestion of Spill)" or similar aside appended to the actual reply
+// text. This still parses as valid JSON (it's just extra text inside the
+// "reply" string), so the fail-open branch above never catches it; this
+// strips that specific meta-commentary pattern before the reply reaches
+// the person on the other end, who should never see the model's own
+// bookkeeping about itself.
+function cleanSpillMetaCommentary(reply) {
+  return reply
+    .replace(/\n*\(\s*(?:no\s+)?suggestion(?:\s+of)?\s+spill\s*\)\s*$/i, "")
+    .trim();
+}
+
 export async function postChat(req, res) {
   const { messages, systemPrompt } = req.body;
 
@@ -143,7 +158,10 @@ export async function postChat(req, res) {
       return res.json({ reply: text, suggestSpill: false });
     }
 
-    res.json({ reply: parsed.reply, suggestSpill: parsed.suggestSpill === true });
+    res.json({
+      reply: cleanSpillMetaCommentary(parsed.reply),
+      suggestSpill: parsed.suggestSpill === true,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "AI request failed" });
