@@ -77,6 +77,7 @@ export function ConsciousnessWheel({
   const startIndex = VIBRATION_LEVELS.findIndex((l) => l.slug === 'neutrality');
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const dragAngle = useSharedValue(angleFor(startIndex, TOTAL));
+  const didPan = useSharedValue(false);
 
   const updateIndex = (index: number) => setActiveIndex(index);
 
@@ -97,15 +98,21 @@ export function ConsciousnessWheel({
       const y = e.y - CENTER;
       const angle = Math.atan2(y, x);
       dragAngle.value = angle;
+      didPan.value = true;
       const idx = nearestLevelIndex(angle, TOTAL);
       runOnJS(updateIndex)(idx);
     })
     .onFinalize(() => {
-      // Settles the dot precisely onto its snapped level's angle once the
-      // gesture ends — mid-drag it follows the finger continuously, but at
-      // rest it should sit exactly on the tick it landed on, not wherever
-      // the finger happened to lift.
-      dragAngle.value = withSpring(angleFor(activeIndex, TOTAL), { damping: 14 });
+      // onFinalize fires even when Pan never activated (e.g. a plain tap
+      // that never moved past minDistance, losing the Race to Tap below) —
+      // without this guard it would still snap dragAngle back to the
+      // *previous* activeIndex, racing against Tap's onEnd and sometimes
+      // overwriting the tap's own, correct position with a stale one.
+      // Only settle here if this gesture actually drove a drag.
+      if (didPan.value) {
+        dragAngle.value = withSpring(angleFor(activeIndex, TOTAL), { damping: 14 });
+        didPan.value = false;
+      }
     });
 
   // A tap on any of the 17 static ticks jumps straight to that level — the
