@@ -708,6 +708,13 @@ export default function OnboardingScreen() {
   // in two frames. Both rects start null; the travel only starts once both
   // are known (see the effect below).
   const [travelActive, setTravelActive] = useState(false);
+  // True once the overlay ring starts its fade-out — separate from
+  // travelActive (which keeps the overlay MOUNTED so that fade-out can
+  // finish) so the picker's own ring can start fading in the same frame
+  // the overlay starts fading out, rather than waiting for travelActive to
+  // go false (which used to happen only after the overlay had already
+  // finished disappearing).
+  const [handoffStarted, setHandoffStarted] = useState(false);
   const [introRingRect, setIntroRingRect] = useState<{
     x: number;
     y: number;
@@ -1061,6 +1068,7 @@ export default function OnboardingScreen() {
     // the picker reports where it needs to land (see the effect below).
     travelOpacity.value = 1;
     setTravelActive(true);
+    setHandoffStarted(false);
     setTimeout(() => setStep("choose"), EXIT_DURATION + RING_HOLD_DURATION);
   };
 
@@ -1076,11 +1084,18 @@ export default function OnboardingScreen() {
       easing: Easing.inOut(Easing.cubic),
     });
     // Once arrived: hand off to the picker's own static ring (fade one out
-    // as the other fades in) and stop rendering the overlay — there's
-    // nothing left for it to do once the two rings coincide.
+    // as the other fades in) — both fades start in the SAME frame
+    // (setHandoffStarted here, not a further delay) so they actually
+    // overlap into a crossfade, instead of the picker's ring waiting for
+    // the overlay to finish fading before it even starts (which left a gap
+    // with neither ring visible). The overlay itself keeps rendering
+    // (travelActive stays true) until its own fade-out duration has
+    // elapsed, so its opacity animation gets to finish instead of being cut
+    // by an unmount mid-fade.
     const handoff = setTimeout(() => {
       travelOpacity.value = withTiming(0, { duration: 250 });
-      setTimeout(() => setTravelActive(false), 260);
+      setHandoffStarted(true);
+      setTimeout(() => setTravelActive(false), 250);
     }, RING_TRAVEL_DURATION);
     return () => clearTimeout(handoff);
   }, [travelActive, introRingRect, pickerRingRect]);
@@ -1390,7 +1405,7 @@ export default function OnboardingScreen() {
           <PhilosopherPicker
             onSelect={handleSelect}
             onRingLayout={setPickerRingRect}
-            hideOwnRing={travelActive}
+            hideOwnRing={travelActive && !handoffStarted}
           />
         </View>
       </View>
@@ -1449,13 +1464,18 @@ export default function OnboardingScreen() {
             viewBox="0 0 160 160"
             style={StyleSheet.absoluteFill}
           >
+            {/* r/stroke matched exactly to PhilosopherPicker's own ring
+                (RING_RADIUS=80, colors.bg.border) — this ring hands off to
+                that one the instant they coincide (see travelOpacity/
+                hideOwnRing), so any difference in radius or color reads as
+                a visible snap right at the handoff, not a clean "same ring"
+                continuation. */}
             <SvgCircle
               cx={80}
               cy={80}
-              r={78}
+              r={80}
               fill="none"
-              stroke={AURA_NEUTRAL_COLOR}
-              strokeOpacity={0.35}
+              stroke={colors.bg.border}
               strokeWidth={1}
             />
           </Svg>
