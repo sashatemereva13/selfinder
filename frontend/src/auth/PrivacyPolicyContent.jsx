@@ -9,7 +9,7 @@ export default function PrivacyPolicyContent({ titleId }) {
       <p className="privacyModalMeta">
         Effective 30 July 2026 · Controller: Aleksandra Temereva, operating
         Selfinder as an individual · Contact:{" "}
-        <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>
+        <a href="mailto:altem1309@gmail.com">altem1309@gmail.com</a>
       </p>
 
       <div className="privacyModalBody">
@@ -21,7 +21,7 @@ export default function PrivacyPolicyContent({ titleId }) {
             This section will be updated if Selfinder is ever transferred
             to a registered business entity. For anything in this
             policy — questions, requests, or complaints — write to{" "}
-            <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>.
+            <a href="mailto:altem1309@gmail.com">altem1309@gmail.com</a>.
           </p>
         </section>
 
@@ -137,7 +137,7 @@ export default function PrivacyPolicyContent({ titleId }) {
           <p>
             If you believe we've mishandled your data, contact us first
             at{" "}
-            <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>{" "}
+            <a href="mailto:altem1309@gmail.com">altem1309@gmail.com</a>{" "}
             so we can fix it. You also have the right to lodge a
             complaint with your country's data protection supervisory
             authority, including the relevant authority if you're in the
