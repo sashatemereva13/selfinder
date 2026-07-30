@@ -41,6 +41,7 @@ mobile/.metro-health-check*
 mobile/*.tsbuildinfo
 mobile/ios/
 mobile/android/
+mobile/*.ipa
 
 # --------------------
 # IDE
