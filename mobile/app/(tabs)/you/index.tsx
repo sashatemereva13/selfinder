@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
@@ -14,10 +15,27 @@ import { AccountSection } from '../../../src/components/AccountSection';
 import { DailyReminderSection } from '../../../src/components/DailyReminderSection';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
 
+// Both directions ride the same crossfade duration/ease as PhilosopherPicker's
+// own ring fade-in (see ownRingOpacity in PhilosopherPicker.tsx) — opening
+// "Change who walks beside you" and confirming a new choice are the same
+// kind of handoff (one block dissolving as the other resolves), so they
+// should feel like the same motion, not two different speeds.
+const CROSSFADE_DURATION = 450;
+
 export default function YouScreen() {
   const [changing, setChanging] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  // Drives which block is actually mounted (see the setTimeout unmounts
+  // below) — kept separate from `changing` itself so the outgoing block can
+  // finish fading out before it's removed, instead of `changing` flipping
+  // and cutting it away mid-fade the way the old plain conditional mount did.
+  const currentOpacity = useSharedValue(1);
+  const pickerOpacity = useSharedValue(0);
+  const [showCurrent, setShowCurrent] = useState(true);
+  const [showPicker, setShowPicker] = useState(false);
+  const currentFadeStyle = useAnimatedStyle(() => ({ opacity: currentOpacity.value }));
+  const pickerFadeStyle = useAnimatedStyle(() => ({ opacity: pickerOpacity.value }));
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
@@ -39,9 +57,30 @@ export default function YouScreen() {
     setTimeout(() => setResetDone(false), 2000);
   };
 
+  // Both directions are the same crossfade, just swapping which block is
+  // "coming in" vs "going out" — the picker's ring dissolves as the restored
+  // "Walking with [name]" text resolves in, rather than one instantly
+  // replacing the other (the gap the onboarding ring-morph fix was based on:
+  // this screen has the exact same picker/ring component, but nothing here
+  // carried its fade-in into a real handoff).
+  const crossfadeTo = (target: 'current' | 'picker') => {
+    setChanging(target === 'picker');
+    if (target === 'picker') {
+      setShowPicker(true);
+      pickerOpacity.value = withTiming(1, { duration: CROSSFADE_DURATION, easing: Easing.out(Easing.cubic) });
+      currentOpacity.value = withTiming(0, { duration: CROSSFADE_DURATION, easing: Easing.inOut(Easing.cubic) });
+      setTimeout(() => setShowCurrent(false), CROSSFADE_DURATION);
+    } else {
+      setShowCurrent(true);
+      currentOpacity.value = withTiming(1, { duration: CROSSFADE_DURATION, easing: Easing.out(Easing.cubic) });
+      pickerOpacity.value = withTiming(0, { duration: CROSSFADE_DURATION, easing: Easing.inOut(Easing.cubic) });
+      setTimeout(() => setShowPicker(false), CROSSFADE_DURATION);
+    }
+  };
+
   const handleSelect = async (id: string) => {
     await select(id);
-    setChanging(false);
+    crossfadeTo('current');
   };
 
   return (
@@ -57,30 +96,30 @@ export default function YouScreen() {
             Walk with Socrates), and this label keeps it going. */}
         <Text style={styles.kicker}>Walking with</Text>
 
-        {!changing && philosopher && (
-          <View style={styles.currentSection}>
+        {showCurrent && philosopher && (
+          <Animated.View style={[styles.currentSection, currentFadeStyle]}>
             <Text style={[styles.currentName, { color: accentColor }]}>{philosopher.name}</Text>
             <Text style={styles.currentMode}>{philosopher.mode}</Text>
             <Text style={styles.currentDescription}>{philosopher.description}</Text>
             <Pressable
               onPress={() => {
-                setChanging(true);
+                crossfadeTo('picker');
                 scrollRef.current?.scrollTo({ y: 0, animated: false });
               }}
             >
               <Text style={styles.changeLink}>Change who walks beside you →</Text>
             </Pressable>
-          </View>
+          </Animated.View>
         )}
 
-        {changing && (
-          <View>
+        {showPicker && (
+          <Animated.View style={pickerFadeStyle}>
             <Text style={styles.chooseTitle}>Choose who walks beside you</Text>
             <PhilosopherPicker selectedId={philosopher?.id} onSelect={handleSelect} />
-            <Pressable style={styles.cancelButton} onPress={() => setChanging(false)}>
+            <Pressable style={styles.cancelButton} onPress={() => crossfadeTo('current')}>
               <Text style={styles.cancelLink}>Cancel</Text>
             </Pressable>
-          </View>
+          </Animated.View>
         )}
 
         {!changing && (
