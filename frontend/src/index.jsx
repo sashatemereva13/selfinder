@@ -20,6 +20,7 @@ import { appendPathStep } from "./tracking/userPathTracker";
 import { ChatProvider } from "./guide/ChatContext";
 import { AuthProvider } from "./auth/AuthContext";
 import PrivacyPolicyPage from "./legal/PrivacyPolicyPage";
+import SupportPage from "./legal/SupportPage";
 
 const AuthPage = lazy(() => import("./auth/AuthPage"));
 const FrontPage = lazy(() => import("./frontpage/FrontPage"));
@@ -143,16 +144,21 @@ function App() {
   // anyone else need this to load directly, not after clicking through the
   // philosopher-selection landing screen.
   const isPrivacyRoute = window.location.pathname === "/privacy";
+  const isSupportRoute = window.location.pathname === "/support";
 
   useEffect(() => {
-    if (isPrivacyRoute) return;
+    if (isPrivacyRoute || isSupportRoute) return;
     if (!hasEntered) {
       appendPathStep({ path: "/entry-gate", source: "gate", navType: null });
     }
-  }, [hasEntered, isPrivacyRoute]);
+  }, [hasEntered, isPrivacyRoute, isSupportRoute]);
 
   if (isPrivacyRoute) {
     return <PrivacyPolicyPage />;
+  }
+
+  if (isSupportRoute) {
+    return <SupportPage />;
   }
 
   if (!hasEntered) {
