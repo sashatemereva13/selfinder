@@ -13,7 +13,14 @@ import { makeRng } from '../utils/auraDots';
 // (no blur/glow filters) rather than the soft halo language used elsewhere —
 // deliberately closer to a technical diagram than to AuraFigure's glow.
 
-function spiralPath(cx: number, cy: number, turns = 2.1, a = 8, b = 13): string {
+// a/b scaled up (~1.76x from the original 8/13) so the spiral's overall
+// footprint (max radius ≈ a + b*turns ≈ 62) is comparable to the other four
+// marks — Aristotle's sphere is r=62, Camus' rock r=46, Marcus' cone spans a
+// 164 base — the original 8/13 only reached ≈35, making Socrates' mark look
+// noticeably smaller/fainter than its siblings despite sharing one viewBox.
+// Same turns and a:b ratio, so the spiral's shape/density is unchanged, just
+// its scale.
+function spiralPath(cx: number, cy: number, turns = 2.1, a = 14, b = 23): string {
   const steps = 120;
   const points: string[] = [];
   for (let i = 0; i <= steps; i++) {

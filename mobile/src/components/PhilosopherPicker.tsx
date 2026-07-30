@@ -34,7 +34,15 @@ const LABEL_GAP = 8;
 // to stay on one line — a mid-word break reads far worse than a slightly
 // generous box.
 const LABEL_WIDTH_VERTICAL = 100;
-const LABEL_WIDTH_SIDE = 72;
+// Marcus Aurelius is the one two-word name and sits on a side label (angle
+// -18°, see RING_LAYOUT) — the original 72 was sized only for the four
+// single-word names, so "Marcus Aurelius" wrapped onto two cramped lines
+// tight against the icon. Widening enough to fit it on one line (~130) runs
+// the label off the right edge of the screen at this ring position — the
+// container isn't centered with that much spare margin on the right side —
+// so this stays a two-line wrap, just with more room than before to
+// breathe rather than crowd the icon.
+const LABEL_WIDTH_SIDE = 96;
 const LABEL_HEIGHT = 30;
 const ENTRANCE_STAGGER = 70;
 
@@ -292,12 +300,22 @@ export function PhilosopherPicker({
           </Svg>
         </Animated.View>
 
-        <View style={[styles.ringCenter, { left: RING_CENTER.x - 80, top: RING_CENTER.y - 12 }]}>
+        <View style={[styles.ringCenter, { left: RING_CENTER.x - 70, top: RING_CENTER.y - 20 }]}>
+          {/* height: 40, top offset -20 — the box (styles.ringCenter) is
+              centered exactly on RING_CENTER.y; justifyContent: 'center'
+              inside it (not a manually-tuned top per line count) is what
+              actually centers one line vs two lines identically. */}
+          {/* adjustsFontSizeToFit doesn't reliably shrink text on web (react-
+              native-web's Text support for it is partial), so a wide name
+              either got clipped to "Marcus Aure…" or rendered visibly
+              smaller than shorter names depending on the box width chosen —
+              neither worked. Allowing two lines instead (numberOfLines={2},
+              no forced single-line fit) matches how the ring's own side/top
+              labels already wrap "Marcus Aurelius" successfully, and every
+              name renders at the same natural font size. */}
           <Text
             style={[styles.ringCenterText, focused && { color: accentColor }]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-            minimumFontScale={0.7}
+            numberOfLines={2}
           >
             {focused ? focused.name : ''}
           </Text>
@@ -353,11 +371,23 @@ export function PhilosopherPicker({
 const styles = StyleSheet.create({
   wrap: { width: '100%', alignItems: 'center', gap: spacing[6] },
   ringContainer: { alignItems: 'center', justifyContent: 'center' },
-  // Wide enough for "Kierkegaard" at this size — 120 truncated it.
+  // Wide enough for "Kierkegaard" at this size — 120 truncated it. Also
+  // needs to comfortably fit "Marcus Aurelius" wrapped onto two lines (see
+  // numberOfLines={2} at the render site) with real padding inside the
+  // ring's own 160-diameter circle — a box as wide as or wider than the
+  // ring itself (220, tried briefly) put the text right against the ring's
+  // boundary instead of clearly inside it.
+  // A fixed height (tall enough for 2 lines) + justifyContent: 'center' so
+  // a one-line name (Socrates, Aristotle, ...) and a two-line name (Marcus
+  // Aurelius) both land on the SAME vertical center — without this, a
+  // one-line Text only occupies its own single line's height starting at
+  // `top`, which sat visibly higher than the two-line block's true center.
   ringCenter: {
     position: 'absolute',
-    width: 160,
+    width: 140,
+    height: 40,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   ringCenterText: {
     color: colors.text.muted,
