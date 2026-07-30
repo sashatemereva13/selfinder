@@ -29,21 +29,25 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>What we collect when you register</h3>
           <p>
             Your username and a bcrypt-hashed copy of your password —
-            never the password itself. That's all that's collected to
-            create and secure your account.
+            never the password itself. You can optionally add an email
+            address, used only so we can send you a reset code if you
+            forget your password — nothing else.
           </p>
         </section>
 
         <section>
           <h3>Conversations with your philosopher</h3>
           <p>
-            We treat anything you say to your guide as sensitive
-            personal data. It is never stored on our servers unless both
-            are true: you're signed in, and you've separately granted
-            explicit consent for it in your account settings. That consent is
-            versioned and logged — both when you grant it and when you
-            withdraw it. Withdrawing consent immediately deletes your
-            stored conversations without deleting your account.
+            We treat anything you say to your guide as sensitive personal
+            data. Right now, Guide conversations are not stored on our
+            servers at all, for any user, under any setting — they exist
+            only on your own device and are cleared when the app
+            restarts. If that changes in the future (for example, as part
+            of a paid feature that keeps a history of your conversations),
+            it will only ever happen for a signed-in account that has
+            separately granted explicit consent in account settings, the
+            same standard that already applies to your assessment
+            results below — and we'll update this policy first.
           </p>
         </section>
 
@@ -55,8 +59,8 @@ export default function PrivacyPolicyContent({ titleId }) {
             your own device. On the mobile app, a reading — including the
             actual answers you gave, not just the resulting score — is
             saved to your account only if both are true: you're signed in,
-            and you've separately granted explicit consent for it — the
-            same standard that already applies to conversations.
+            and you've separately granted explicit consent for it in
+            account settings.
           </p>
         </section>
 
@@ -69,12 +73,14 @@ export default function PrivacyPolicyContent({ titleId }) {
           </p>
           <p>
             We do keep a first-party log of which features get used — for
-            example, that a Measure reading was completed — kept only on
-            our own server, never sent to any third party, and never tied
-            to your account or identity. Each install gets an anonymous
-            identifier so we can tell a returning install from a new one;
-            we use this only to understand which parts of Selfinder are
-            actually useful, not to track individuals.
+            example, that a Measure reading was completed, which
+            philosopher you chose, or what time you set a daily
+            reminder for — kept only on our own server, never sent to
+            any third party, and never tied to your account or identity.
+            Each install gets an anonymous identifier so we can tell a
+            returning install from a new one; we use this only to
+            understand which parts of Selfinder are actually useful, not
+            to track individuals.
           </p>
         </section>
 
