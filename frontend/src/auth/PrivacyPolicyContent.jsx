@@ -7,8 +7,8 @@ export default function PrivacyPolicyContent({ titleId }) {
       <p className="sf-kicker">Selfinder</p>
       <h2 id={titleId} className="privacyModalTitle">Privacy Policy</h2>
       <p className="privacyModalMeta">
-        Effective 28 June 2026 · Controller: AURELIU XIII DIGITAL
-        EXPERIENCE, registered in Dubai, United Arab Emirates · Contact:{" "}
+        Effective 30 July 2026 · Controller: Aleksandra Temereva, operating
+        Selfinder as an individual · Contact:{" "}
         <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>
       </p>
 
@@ -16,10 +16,11 @@ export default function PrivacyPolicyContent({ titleId }) {
         <section>
           <h3>Who controls your data</h3>
           <p>
-            Selfinder is operated by AURELIU XIII DIGITAL EXPERIENCE
-            ("we", "us"), registered in Dubai, United Arab Emirates. For
-            anything in this policy — questions, requests, or
-            complaints — write to{" "}
+            Selfinder is currently operated by Aleksandra Temereva ("we",
+            "us"), as an individual — not through a registered company.
+            This section will be updated if Selfinder is ever transferred
+            to a registered business entity. For anything in this
+            policy — questions, requests, or complaints — write to{" "}
             <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>.
           </p>
         </section>
@@ -138,9 +139,9 @@ export default function PrivacyPolicyContent({ titleId }) {
             at{" "}
             <a href="mailto:sashatemereva13@gmail.com">sashatemereva13@gmail.com</a>{" "}
             so we can fix it. You also have the right to lodge a
-            complaint with your local data protection authority — in the
-            UAE, or in your country's supervisory authority if you're in
-            the EU, EEA, or UK.
+            complaint with your country's data protection supervisory
+            authority, including the relevant authority if you're in the
+            EU, EEA, or UK.
           </p>
         </section>
 
