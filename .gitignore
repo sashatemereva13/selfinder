@@ -42,6 +42,9 @@ mobile/*.tsbuildinfo
 mobile/ios/
 mobile/android/
 mobile/*.ipa
+mobile/*.aab
+mobile/*.apk
+mobile/*.apk.zip
 
 # --------------------
 # IDE
