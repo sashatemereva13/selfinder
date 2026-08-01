@@ -1,5 +1,6 @@
 import { View, Text, Pressable, ScrollView, StyleSheet, Image, Platform } from 'react-native';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRouter, Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -120,13 +121,13 @@ const SPHERE_DISPLAY_ORDER: Sphere[] = ['mind', 'spirit', 'heart', 'body'];
 // positioning fix that gave it those two instead. Priority order matters:
 // understanding what a level means is more foundational than a regulation
 // tool, so it's offered first.
-const DISCOVERY_NUDGES: { feature: DiscoverableFeature; label: string; route: Href }[] = [
-  { feature: 'levels', label: "Haven't tried Levels yet? See what each state actually means →", route: '/(tabs)/depths/levels' },
-  { feature: 'tuneIn', label: "Haven't tried Tune In yet? Shift your state through sound →", route: '/(tabs)/depths/tunein' },
-  { feature: 'breathing', label: "Haven't tried Breathing yet? Shift your state through breath →", route: '/(tabs)/depths/breathing' },
+const DISCOVERY_NUDGES: { feature: DiscoverableFeature; labelKey: string; route: Href }[] = [
+  { feature: 'levels', labelKey: 'depths.nudgeLevels', route: '/(tabs)/depths/levels' },
+  { feature: 'tuneIn', labelKey: 'depths.nudgeTuneIn', route: '/(tabs)/depths/tunein' },
+  { feature: 'breathing', labelKey: 'depths.nudgeBreathing', route: '/(tabs)/depths/breathing' },
 ];
 
-type Tool = { key: string; label: string; description: string; route: Href };
+type Tool = { key: string; labelKey: string; descriptionKey: string; route: Href };
 
 // Grouped (rather than one flat stack) so the sequence reads as three moves —
 // find out, understand, shift — instead of six equally-weighted options.
@@ -142,28 +143,36 @@ type Tool = { key: string; label: string; description: string; route: Href };
 // them a shortcut back to something they've chosen before. It's appended
 // after Measure, not given equal top billing, so first-time framing (Measure
 // is the way in) stays intact for everyone who hasn't found Spill yet.
-function buildToolGroups(spillDiscovered: boolean): { label: string; tools: Tool[] }[] {
+// groupKey is a stable identifier used for render logic (e.g. "only the
+// first group gets the Talk about it / Your arc rows") — labelKey is what
+// actually gets translated for display. These used to be the same string
+// (group.label === 'Find out where you are'), which broke the moment that
+// label needed to render in Russian instead of English.
+function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey: string; tools: Tool[] }[] {
   return [
     {
-      label: 'Find out where you are',
+      groupKey: 'findOutWhereYouAre',
+      labelKey: 'depths.groupFindOutWhereYouAre',
       tools: [
-        { key: 'measure', label: 'Measure', description: 'A short walk through four questions', route: '/(tabs)/depths/measure' },
+        { key: 'measure', labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
         ...(spillDiscovered
-          ? [{ key: 'spill', label: 'Spill', description: 'Write freely, never judged', route: '/(tabs)/depths/spill' as Href }]
+          ? [{ key: 'spill', labelKey: 'depths.spillLabel', descriptionKey: 'depths.spillDescription', route: '/(tabs)/depths/spill' as Href }]
           : []),
       ],
     },
     {
-      label: 'Understand it',
+      groupKey: 'understandIt',
+      labelKey: 'depths.groupUnderstandIt',
       tools: [
-        { key: 'levels', label: 'Levels', description: 'What each state is for', route: '/(tabs)/depths/levels' },
+        { key: 'levels', labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
       ],
     },
     {
-      label: 'Shift it, if you want to',
+      groupKey: 'shiftIt',
+      labelKey: 'depths.groupShiftIt',
       tools: [
-        { key: 'tunein', label: 'Tune In', description: 'Regulate it with sound', route: '/(tabs)/depths/tunein' },
-        { key: 'breathing', label: 'Breathing', description: 'Regulate it with breath', route: '/(tabs)/depths/breathing' },
+        { key: 'tunein', labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
+        { key: 'breathing', labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
       ],
     },
   ];
@@ -181,12 +190,13 @@ function buildToolGroups(spillDiscovered: boolean): { label: string; tools: Tool
 // Selfinder's own voice.
 const FEELING_LUCKY: Tool = {
   key: 'feeling-lucky',
-  label: 'A message for right now',
-  description: 'Skip finding out — let something find you instead',
+  labelKey: 'depths.feelingLuckyLabel',
+  descriptionKey: 'depths.feelingLuckyDescription',
   route: '/(tabs)/depths/feeling-lucky',
 };
 
 export default function DepthsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const currentResult = useMeasureStore((s) => s.currentResult);
@@ -401,7 +411,7 @@ export default function DepthsScreen() {
             one (position, color, the aura itself). The information itself
             (when) still matters — this is where it lives now. */}
         <View style={styles.kickerRow}>
-          <Text style={styles.kicker}>Depths</Text>
+          <Text style={styles.kicker}>{t('depths.kicker')}</Text>
           {currentResult && (
             <Text style={styles.kickerTimestamp}>{formatRelativeDay(currentResult.savedAt)}</Text>
           )}
@@ -480,7 +490,7 @@ export default function DepthsScreen() {
                       { color: ringLevelColor, opacity: selectedSphere && philosopher ? 1 : 0 },
                     ]}
                   >
-                    Talk to {philosopher?.name} about it →
+                    {t('depths.talkToAboutIt', { name: philosopher?.name })}
                   </Text>
                 </Pressable>
               </View>
@@ -515,7 +525,7 @@ export default function DepthsScreen() {
               <View style={styles.conversationSection}>
                 <Pressable style={styles.conversationToggle} onPress={toggleConversation}>
                   <Text style={styles.conversationToggleText}>
-                    {showConversation ? 'Hide conversation' : 'Show conversation'}
+                    {showConversation ? t('depths.hideConversation') : t('depths.showConversation')}
                   </Text>
                   <Text style={styles.conversationChevron}>{showConversation ? '↑' : '↓'}</Text>
                 </Pressable>
@@ -541,10 +551,10 @@ export default function DepthsScreen() {
           </>
         ) : (
           <>
-            <Text style={styles.lastReadingLabel}>Before your first reading</Text>
+            <Text style={styles.lastReadingLabel}>{t('depths.beforeFirstReading')}</Text>
             <AuraWithDots source={AURA_NEUTRAL_IMAGE} />
             <Text style={styles.title}>
-              Whatever you're feeling right now is information, not a problem to fix. Measure is where you find out what it is.
+              {t('depths.firstReadingCopy')}
             </Text>
           </>
         )}
@@ -553,8 +563,8 @@ export default function DepthsScreen() {
 
         <View style={styles.stack}>
           {toolGroups.map((group) => (
-            <View key={group.label} style={styles.group}>
-              <Text style={styles.groupLabel}>{group.label}</Text>
+            <View key={group.groupKey} style={styles.group}>
+              <Text style={styles.groupLabel}>{t(group.labelKey)}</Text>
               {/* Same weight as "Measure again" below it, not a quieter
                   afterthought — this is the row that lets someone taste what
                   an ongoing conversation feels like. Sits ABOVE Measure
@@ -565,11 +575,11 @@ export default function DepthsScreen() {
                   to the not-subscribed Your Arc preview screen (see
                   showTalkAboutItUpsell's own comment), so this row never
                   needs to stop being tappable to make room for a pitch. */}
-              {group.label === 'Find out where you are' && currentResult && philosopher && (
+              {group.groupKey === 'findOutWhereYouAre' && currentResult && philosopher && (
                 <Pressable style={styles.row} onPress={handleTalkAboutIt}>
-                  <Text style={styles.rowLabel}>Talk about it</Text>
+                  <Text style={styles.rowLabel}>{t('depths.talkAboutIt')}</Text>
                   <Text style={styles.rowDescription}>
-                    Continue the conversation with {philosopher.name}
+                    {t('depths.continueConversationWith', { name: philosopher.name })}
                   </Text>
                 </Pressable>
               )}
@@ -588,23 +598,23 @@ export default function DepthsScreen() {
                   entirely on the other side of the tap: your-arc-preview
                   for anyone not subscribed, the full your-arc experience
                   for anyone who is. */}
-              {group.label === 'Find out where you are' && readingLog.length >= 2 && (
+              {group.groupKey === 'findOutWhereYouAre' && readingLog.length >= 2 && (
                 <Pressable
                   style={styles.row}
                   onPress={() =>
                     router.push(isSubscribed ? '/(tabs)/you/your-arc' : '/(tabs)/you/your-arc-preview')
                   }
                 >
-                  <Text style={styles.rowLabel}>Your arc</Text>
-                  <Text style={styles.rowDescription}>The shape your readings are drawing</Text>
+                  <Text style={styles.rowLabel}>{t('depths.yourArc')}</Text>
+                  <Text style={styles.rowDescription}>{t('depths.yourArcDescription')}</Text>
                 </Pressable>
               )}
               {group.tools.map((tool) => (
                 <Pressable key={tool.key} style={styles.row} onPress={() => router.push(tool.route)}>
                   <Text style={styles.rowLabel}>
-                    {tool.key === 'measure' && currentResult ? 'Measure again' : tool.label}
+                    {tool.key === 'measure' && currentResult ? t('depths.measureAgain') : t(tool.labelKey)}
                   </Text>
-                  <Text style={styles.rowDescription}>{tool.description}</Text>
+                  <Text style={styles.rowDescription}>{t(tool.descriptionKey)}</Text>
                 </Pressable>
               ))}
             </View>
@@ -612,15 +622,15 @@ export default function DepthsScreen() {
 
           {discoveryNudge && (
             <Pressable style={styles.discoveryNudge} onPress={() => router.push(discoveryNudge.route)}>
-              <Text style={styles.discoveryNudgeText}>{discoveryNudge.label}</Text>
+              <Text style={styles.discoveryNudgeText}>{t(discoveryNudge.labelKey)}</Text>
             </Pressable>
           )}
 
           <View style={styles.luckyWrap}>
             <Text style={styles.luckyDivider}>· · ·</Text>
             <Pressable style={styles.luckyRow} onPress={() => router.push(FEELING_LUCKY.route)}>
-              <Text style={styles.luckyLabel}>{FEELING_LUCKY.label}</Text>
-              <Text style={styles.luckyDescription}>{FEELING_LUCKY.description}</Text>
+              <Text style={styles.luckyLabel}>{t(FEELING_LUCKY.labelKey)}</Text>
+              <Text style={styles.luckyDescription}>{t(FEELING_LUCKY.descriptionKey)}</Text>
             </Pressable>
           </View>
         </View>
