@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
+import { Trans, useTranslation } from 'react-i18next';
 import { View, Text, TextInput, Pressable, ActivityIndicator, Share, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
+import { useLocaleStore } from '../store/localeStore';
 import { getMe, grantConsent, withdrawConsent, getMeasureHistory, exportMyData, deleteAccount, updateEmail } from '../api/user';
 import { changePassword as changePasswordApi, requestPasswordReset, resetPassword } from '../api/auth';
 import { AuthSession, UserProfile, SavedMeasureResult } from '../types';
 import { track } from '../utils/analytics';
 
-function formatDate(iso: string) {
+// Was hardcoded to 'en-GB' — meant every date rendered in British-English
+// format regardless of the app's own language, the one date-formatting
+// site in the app that didn't already defer to device/app locale
+// automatically. Maps to a real BCP-47 tag per the current app locale.
+const DATE_LOCALE_TAG: Record<'en' | 'ru', string> = { en: 'en-GB', ru: 'ru-RU' };
+
+function formatDate(iso: string, locale: 'en' | 'ru') {
   try {
-    return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    return new Date(iso).toLocaleDateString(DATE_LOCALE_TAG[locale], { day: 'numeric', month: 'short', year: 'numeric' });
   } catch {
     return '';
   }
@@ -36,6 +44,7 @@ function AuthForm({
   onLogin: (username: string, password: string) => Promise<void>;
   onRegister: (username: string, password: string, privacyPolicyAccepted: boolean, email?: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<'login' | 'register' | 'forgot-request' | 'forgot-reset'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -51,7 +60,7 @@ function AuthForm({
     if (!username.trim() || !password) return;
 
     if (mode === 'register' && !accepted) {
-      setError('Accept the privacy policy to create an account.');
+      setError(t('account.acceptPrivacyPolicy'));
       return;
     }
 
@@ -64,7 +73,7 @@ function AuthForm({
         await onRegister(username.trim(), password, accepted, email.trim());
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -76,10 +85,10 @@ function AuthForm({
     setError(null);
     try {
       await requestPasswordReset(username.trim());
-      setNotice('If that account has an email on file, a reset code was sent to it.');
+      setNotice(t('account.forgotRequestSent'));
       setMode('forgot-reset');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -91,13 +100,13 @@ function AuthForm({
     setError(null);
     try {
       await resetPassword(username.trim(), code.trim(), newPassword);
-      setNotice('Password reset. Sign in with your new password.');
+      setNotice(t('account.passwordResetDone'));
       setMode('login');
       setPassword('');
       setCode('');
       setNewPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong.');
+      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
     } finally {
       setLoading(false);
     }
@@ -109,11 +118,9 @@ function AuthForm({
   if (mode === 'forgot-request' || mode === 'forgot-reset') {
     return (
       <View style={styles.section}>
-        <Text style={styles.cardKicker}>Account</Text>
+        <Text style={styles.cardKicker}>{t('account.kicker')}</Text>
         <Text style={styles.cardCopy}>
-          {mode === 'forgot-request'
-            ? "We'll email a code to the address on file, if you've added one."
-            : 'Check your inbox for the 6-digit code.'}
+          {mode === 'forgot-request' ? t('account.forgotRequestCopy') : t('account.forgotResetCopy')}
         </Text>
 
         {notice && <Text style={styles.noticeText}>{notice}</Text>}
@@ -123,7 +130,7 @@ function AuthForm({
             style={styles.input}
             value={username}
             onChangeText={setUsername}
-            placeholder="Username"
+            placeholder={t('account.usernamePlaceholder')}
             placeholderTextColor={colors.text.muted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -134,7 +141,7 @@ function AuthForm({
               style={styles.input}
               value={code}
               onChangeText={setCode}
-              placeholder="Reset code"
+              placeholder={t('account.resetCodePlaceholder')}
               placeholderTextColor={colors.text.muted}
               keyboardType="number-pad"
             />
@@ -142,7 +149,7 @@ function AuthForm({
               style={styles.input}
               value={newPassword}
               onChangeText={setNewPassword}
-              placeholder="New password"
+              placeholder={t('account.newPasswordPlaceholder')}
               placeholderTextColor={colors.text.muted}
               secureTextEntry
             />
@@ -168,12 +175,14 @@ function AuthForm({
           {loading ? (
             <ActivityIndicator color={colors.bg.base} />
           ) : (
-            <Text style={styles.submitButtonText}>{mode === 'forgot-request' ? 'Send code' : 'Reset password'}</Text>
+            <Text style={styles.submitButtonText}>
+              {mode === 'forgot-request' ? t('account.sendCode') : t('account.resetPassword')}
+            </Text>
           )}
         </Pressable>
 
         <Pressable onPress={backToLogin}>
-          <Text style={styles.forgotLink}>Back to sign in</Text>
+          <Text style={styles.forgotLink}>{t('account.backToSignIn')}</Text>
         </Pressable>
       </View>
     );
@@ -181,16 +190,16 @@ function AuthForm({
 
   return (
     <View style={styles.section}>
-      <Text style={styles.cardKicker}>Account</Text>
-      <Text style={styles.cardCopy}>Create an account to save your readings across sessions.</Text>
+      <Text style={styles.cardKicker}>{t('account.kicker')}</Text>
+      <Text style={styles.cardCopy}>{t('account.createAccountCopy')}</Text>
 
       <View style={styles.modeRow}>
         <Pressable onPress={() => { setMode('login'); setError(null); }}>
-          <Text style={[styles.modeText, mode === 'login' && { color: colors.text.primary }]}>Log in</Text>
+          <Text style={[styles.modeText, mode === 'login' && { color: colors.text.primary }]}>{t('account.logIn')}</Text>
         </Pressable>
         <Pressable onPress={() => { setMode('register'); setError(null); }}>
           <Text style={[styles.modeText, mode === 'register' && { color: colors.text.primary }]}>
-            Create account
+            {t('account.createAccount')}
           </Text>
         </Pressable>
       </View>
@@ -199,7 +208,7 @@ function AuthForm({
         style={styles.input}
         value={username}
         onChangeText={setUsername}
-        placeholder="Username"
+        placeholder={t('account.usernamePlaceholder')}
         placeholderTextColor={colors.text.muted}
         autoCapitalize="none"
         autoCorrect={false}
@@ -208,7 +217,7 @@ function AuthForm({
         style={styles.input}
         value={password}
         onChangeText={setPassword}
-        placeholder="Password"
+        placeholder={t('account.passwordPlaceholder')}
         placeholderTextColor={colors.text.muted}
         secureTextEntry
       />
@@ -219,20 +228,20 @@ function AuthForm({
             style={styles.input}
             value={email}
             onChangeText={setEmail}
-            placeholder="Email (optional)"
+            placeholder={t('account.emailPlaceholder')}
             placeholderTextColor={colors.text.muted}
             autoCapitalize="none"
             autoCorrect={false}
             keyboardType="email-address"
           />
-          <Text style={styles.cardCopy}>Used only so you can reset your password if you forget it.</Text>
+          <Text style={styles.cardCopy}>{t('account.emailHelperCopy')}</Text>
         </>
       )}
 
       {mode === 'register' && (
         <Pressable style={styles.consentRow} onPress={() => setAccepted((a) => !a)}>
           <View style={[styles.checkbox, accepted && { backgroundColor: colors.accent.ivory, borderColor: colors.accent.ivory }]} />
-          <Text style={styles.consentRowText}>I accept the privacy policy</Text>
+          <Text style={styles.consentRowText}>{t('account.acceptPrivacyPolicyLabel')}</Text>
         </Pressable>
       )}
 
@@ -246,13 +255,13 @@ function AuthForm({
         {loading ? (
           <ActivityIndicator color={colors.bg.base} />
         ) : (
-          <Text style={styles.submitButtonText}>{mode === 'login' ? 'Log in' : 'Create account'}</Text>
+          <Text style={styles.submitButtonText}>{mode === 'login' ? t('account.logIn') : t('account.createAccount')}</Text>
         )}
       </Pressable>
 
       {mode === 'login' && (
         <Pressable onPress={goToForgot}>
-          <Text style={styles.forgotLink}>Forgot password?</Text>
+          <Text style={styles.forgotLink}>{t('account.forgotPassword')}</Text>
         </Pressable>
       )}
     </View>
@@ -266,6 +275,8 @@ function LoggedInAccount({
   session: AuthSession;
   onLogout: () => Promise<void>;
 }) {
+  const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [history, setHistory] = useState<SavedMeasureResult[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
@@ -339,9 +350,9 @@ function LoggedInAccount({
     try {
       await updateEmail(session.token, emailInput.trim());
       await refreshProfile();
-      setEmailMsg('Email saved. Password resets can now be sent to it.');
+      setEmailMsg(t('account.emailSaved'));
     } catch (err) {
-      setEmailError(err instanceof Error ? err.message : 'Failed to update email.');
+      setEmailError(err instanceof Error ? err.message : t('account.failedToUpdateEmail'));
     } finally {
       setEmailBusy(false);
     }
@@ -353,11 +364,11 @@ function LoggedInAccount({
     setPasswordError(null);
     try {
       await changePasswordApi(session.token, currentPassword, newPassword);
-      setPasswordMsg('Password changed.');
+      setPasswordMsg(t('account.passwordChanged'));
       setCurrentPassword('');
       setNewPassword('');
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'Failed to change password.');
+      setPasswordError(err instanceof Error ? err.message : t('account.failedToChangePassword'));
     } finally {
       setPasswordBusy(false);
     }
@@ -373,7 +384,7 @@ function LoggedInAccount({
         message: JSON.stringify(data, null, 2),
       });
     } catch {
-      setExportError('Export failed. Please try again.');
+      setExportError(t('account.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -381,7 +392,7 @@ function LoggedInAccount({
 
   const handleDelete = async () => {
     if (deleteConfirmText !== session.username) {
-      setDeleteError('Username does not match.');
+      setDeleteError(t('account.usernameDoesNotMatch'));
       return;
     }
     setDeleting(true);
@@ -390,42 +401,42 @@ function LoggedInAccount({
       await deleteAccount(session.token);
       await onLogout();
     } catch {
-      setDeleteError('Deletion failed. Please try again.');
+      setDeleteError(t('account.deletionFailed'));
       setDeleting(false);
     }
   };
 
   return (
     <View style={styles.section}>
-      <Text style={styles.cardKicker}>Account</Text>
-      <Text style={styles.signedInAs}>Signed in as {session.username}</Text>
+      <Text style={styles.cardKicker}>{t('account.kicker')}</Text>
+      <Text style={styles.signedInAs}>{t('account.signedInAs', { username: session.username })}</Text>
 
       <View style={styles.consentToggleRow}>
-        <Text style={styles.consentToggleLabel}>Save my readings to my account</Text>
+        <Text style={styles.consentToggleLabel}>{t('account.saveReadingsToAccount')}</Text>
         <Pressable
           style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.accent.ivory }]}
           onPress={toggleConsent}
           disabled={consentBusy || loadingProfile}
         >
           <Text style={[styles.consentToggleButtonText, consentGiven && { color: colors.bg.base }]}>
-            {consentBusy ? '…' : consentGiven ? 'On' : 'Off'}
+            {consentBusy ? '…' : consentGiven ? t('account.consentOn') : t('account.consentOff')}
           </Text>
         </Pressable>
       </View>
       {consentTimestamp && (
         <Text style={styles.consentTimestamp}>
-          {consentGiven ? 'Granted' : 'Withdrawn'} {formatDate(consentTimestamp)}
+          {consentGiven ? t('account.consentGranted') : t('account.consentWithdrawn')} {formatDate(consentTimestamp, locale)}
         </Text>
       )}
 
       {consentGiven && (
         <View style={styles.historySection}>
-          <Text style={styles.historyKicker}>Your readings</Text>
+          <Text style={styles.historyKicker}>{t('account.yourReadings')}</Text>
           {loadingHistory ? (
-            <Text style={styles.historyEmpty}>Loading…</Text>
+            <Text style={styles.historyEmpty}>{t('account.loading')}</Text>
           ) : history.length === 0 ? (
             <Text style={styles.historyEmpty}>
-              No readings saved yet — take a Measure check-in to start your history.
+              {t('account.noReadingsYet')}
             </Text>
           ) : (
             history.map((reading) => {
@@ -443,7 +454,7 @@ function LoggedInAccount({
                     }}
                   >
                     <View>
-                      <Text style={styles.historyDate}>{formatDate(reading.savedAt)}</Text>
+                      <Text style={styles.historyDate}>{formatDate(reading.savedAt, locale)}</Text>
                       <Text style={styles.historyLabel}>
                         {reading.vibrationLevel.name} · {reading.vibrationScore}
                       </Text>
@@ -471,19 +482,17 @@ function LoggedInAccount({
       )}
 
       <View style={styles.dataSection}>
-        <Text style={styles.dataKicker}>Account security</Text>
+        <Text style={styles.dataKicker}>{t('account.accountSecurity')}</Text>
 
         <View style={styles.dataRow}>
           <Text style={styles.dataRowText}>
-            {profile?.email
-              ? 'Used for password resets.'
-              : "Add an email so you can reset your password if you ever forget it. Optional, but recommended."}
+            {profile?.email ? t('account.emailUsedForReset') : t('account.emailAddHelper')}
           </Text>
           <TextInput
             style={styles.input}
             value={emailInput}
             onChangeText={setEmailInput}
-            placeholder="you@example.com"
+            placeholder={t('account.emailPlaceholderExample')}
             placeholderTextColor={colors.text.muted}
             autoCapitalize="none"
             autoCorrect={false}
@@ -491,19 +500,19 @@ function LoggedInAccount({
             editable={!emailBusy}
           />
           <Pressable style={styles.dataButton} onPress={handleUpdateEmail} disabled={emailBusy || !emailInput.trim()}>
-            <Text style={styles.dataButtonText}>{emailBusy ? '…' : profile?.email ? 'Update' : 'Save'}</Text>
+            <Text style={styles.dataButtonText}>{emailBusy ? '…' : profile?.email ? t('account.update') : t('account.save')}</Text>
           </Pressable>
         </View>
         {emailMsg && <Text style={styles.noticeText}>{emailMsg}</Text>}
         {emailError && <Text style={styles.errorText}>{emailError}</Text>}
 
         <View style={styles.dataRow}>
-          <Text style={styles.dataRowText}>Update your password. You'll need your current one.</Text>
+          <Text style={styles.dataRowText}>{t('account.changePasswordCopy')}</Text>
           <TextInput
             style={styles.input}
             value={currentPassword}
             onChangeText={setCurrentPassword}
-            placeholder="Current password"
+            placeholder={t('account.currentPasswordPlaceholder')}
             placeholderTextColor={colors.text.muted}
             secureTextEntry
             editable={!passwordBusy}
@@ -512,7 +521,7 @@ function LoggedInAccount({
             style={styles.input}
             value={newPassword}
             onChangeText={setNewPassword}
-            placeholder="New password"
+            placeholder={t('account.newPasswordPlaceholder')}
             placeholderTextColor={colors.text.muted}
             secureTextEntry
             editable={!passwordBusy}
@@ -522,7 +531,7 @@ function LoggedInAccount({
             onPress={handleChangePassword}
             disabled={passwordBusy || !currentPassword || !newPassword}
           >
-            <Text style={styles.dataButtonText}>{passwordBusy ? '…' : 'Change password'}</Text>
+            <Text style={styles.dataButtonText}>{passwordBusy ? '…' : t('account.changePassword')}</Text>
           </Pressable>
         </View>
         {passwordMsg && <Text style={styles.noticeText}>{passwordMsg}</Text>}
@@ -530,26 +539,25 @@ function LoggedInAccount({
       </View>
 
       <View style={styles.dataSection}>
-        <Text style={styles.dataKicker}>Your data &amp; privacy</Text>
+        <Text style={styles.dataKicker}>{t('account.dataAndPrivacy')}</Text>
 
         <View style={styles.dataRow}>
           <Text style={styles.dataRowText}>
-            Export everything Selfinder holds about you as JSON — profile, consent records,
-            saved readings and conversations.
+            {t('account.exportCopy')}
           </Text>
           <Pressable style={styles.dataButton} onPress={handleExport} disabled={exporting}>
-            <Text style={styles.dataButtonText}>{exporting ? '…' : 'Export'}</Text>
+            <Text style={styles.dataButtonText}>{exporting ? '…' : t('account.export')}</Text>
           </Pressable>
         </View>
         {exportError && <Text style={styles.errorText}>{exportError}</Text>}
 
         <View style={styles.dangerRow}>
           <Text style={styles.dataRowText}>
-            Permanently delete your account and all associated data. This cannot be undone.
+            {t('account.deleteCopy')}
           </Text>
           {deleteStep === 0 && (
             <Pressable style={styles.dangerButton} onPress={() => setDeleteStep(1)}>
-              <Text style={styles.dangerButtonText}>Delete</Text>
+              <Text style={styles.dangerButtonText}>{t('account.delete')}</Text>
             </Pressable>
           )}
         </View>
@@ -557,12 +565,16 @@ function LoggedInAccount({
         {deleteStep === 1 && (
           <View style={styles.deleteConfirmBlock}>
             <Text style={styles.dataRowText}>
-              Type your username <Text style={{ fontFamily: fonts.medium }}>{session.username}</Text> to confirm.
+              <Trans
+                i18nKey="account.typeUsernameToConfirm"
+                values={{ username: session.username }}
+                components={{ 1: <Text style={{ fontFamily: fonts.medium }} /> }}
+              />
             </Text>
             <TextInput
               style={styles.input}
               value={deleteConfirmText}
-              onChangeText={(t) => { setDeleteConfirmText(t); setDeleteError(null); }}
+              onChangeText={(value) => { setDeleteConfirmText(value); setDeleteError(null); }}
               placeholder={session.username}
               placeholderTextColor={colors.text.muted}
               autoCapitalize="none"
@@ -575,13 +587,13 @@ function LoggedInAccount({
                 onPress={handleDelete}
                 disabled={!deleteConfirmText || deleting}
               >
-                <Text style={styles.dangerButtonText}>{deleting ? '…' : 'Confirm delete'}</Text>
+                <Text style={styles.dangerButtonText}>{deleting ? '…' : t('account.confirmDelete')}</Text>
               </Pressable>
               <Pressable
                 style={styles.dataButton}
                 onPress={() => { setDeleteStep(0); setDeleteConfirmText(''); setDeleteError(null); }}
               >
-                <Text style={styles.dataButtonText}>Cancel</Text>
+                <Text style={styles.dataButtonText}>{t('account.cancel')}</Text>
               </Pressable>
             </View>
           </View>
@@ -589,7 +601,7 @@ function LoggedInAccount({
       </View>
 
       <Pressable style={styles.signOutButton} onPress={onLogout}>
-        <Text style={styles.signOutText}>Sign out</Text>
+        <Text style={styles.signOutText}>{t('account.signOut')}</Text>
       </Pressable>
     </View>
   );
