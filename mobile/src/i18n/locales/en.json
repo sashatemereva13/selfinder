@@ -1,0 +1,15 @@
+{
+  "you": {
+    "walkingWith": "Walking with",
+    "changeWhoWalksBesideYou": "Change who walks beside you →",
+    "chooseWhoWalksBesideYou": "Choose who walks beside you",
+    "cancel": "Cancel",
+    "language": "Language",
+    "languageEnglish": "English",
+    "languageRussian": "Русский",
+    "devResetOnboarding": "Reset onboarding state (dev only)",
+    "devResetDone": "Reset ✓",
+    "devSubscribedOn": "Subscribed ✓ (dev only, tap to unsubscribe)",
+    "devSubscribedOff": "Not subscribed (dev only, tap to subscribe)"
+  }
+}

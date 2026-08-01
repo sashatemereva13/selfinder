@@ -12,6 +12,8 @@ import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useSubscriptionStore } from '../src/store/subscriptionStore';
 import { useLocaleStore } from '../src/store/localeStore';
+import '../src/i18n';
+import { setI18nLocale } from '../src/i18n';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -27,9 +29,18 @@ export default function RootLayout() {
   const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshWindow } = useReminderStore();
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
   const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
-  const { hydrated: localeHydrated, hydrate: hydrateLocale } = useLocaleStore();
+  const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
   const router   = useRouter();
   const segments = useSegments();
+
+  // i18next's active language is kept in sync with localeStore rather than
+  // driven independently — localeStore already owns detection/persistence
+  // (see localeStore.ts), this just mirrors its value into i18next whenever
+  // it changes, whether from hydration or a later toggle in the You tab.
+  useEffect(() => {
+    if (!localeHydrated) return;
+    setI18nLocale(locale);
+  }, [localeHydrated, locale]);
 
   useEffect(() => {
     hydratePhilo();

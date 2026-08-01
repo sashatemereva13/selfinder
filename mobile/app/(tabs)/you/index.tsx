@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
@@ -24,6 +25,7 @@ import { AmbientGlow } from '../../../src/components/AmbientGlow';
 const CROSSFADE_DURATION = 450;
 
 export default function YouScreen() {
+  const { t } = useTranslation();
   const [changing, setChanging] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -97,7 +99,7 @@ export default function YouScreen() {
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →
             Walk with Socrates), and this label keeps it going. */}
-        <Text style={styles.kicker}>Walking with</Text>
+        <Text style={styles.kicker}>{t('you.walkingWith')}</Text>
 
         {showCurrent && philosopher && (
           <Animated.View style={[styles.currentSection, currentFadeStyle]}>
@@ -110,17 +112,17 @@ export default function YouScreen() {
                 scrollRef.current?.scrollTo({ y: 0, animated: false });
               }}
             >
-              <Text style={styles.changeLink}>Change who walks beside you →</Text>
+              <Text style={styles.changeLink}>{t('you.changeWhoWalksBesideYou')}</Text>
             </Pressable>
           </Animated.View>
         )}
 
         {showPicker && (
           <Animated.View style={pickerFadeStyle}>
-            <Text style={styles.chooseTitle}>Choose who walks beside you</Text>
+            <Text style={styles.chooseTitle}>{t('you.chooseWhoWalksBesideYou')}</Text>
             <PhilosopherPicker selectedId={philosopher?.id} onSelect={handleSelect} />
             <Pressable style={styles.cancelButton} onPress={() => crossfadeTo('current')}>
-              <Text style={styles.cancelLink}>Cancel</Text>
+              <Text style={styles.cancelLink}>{t('you.cancel')}</Text>
             </Pressable>
           </Animated.View>
         )}
@@ -134,7 +136,7 @@ export default function YouScreen() {
                 creates one. Placed as its own top-level section so it's
                 never hidden behind login. */}
             <View style={styles.languageSection}>
-              <Text style={styles.languageKicker}>Language</Text>
+              <Text style={styles.languageKicker}>{t('you.language')}</Text>
               <View style={styles.languageRow}>
                 {(['en', 'ru'] as Locale[]).map((option) => (
                   <Pressable
@@ -151,7 +153,7 @@ export default function YouScreen() {
                         locale === option && { color: colors.bg.base },
                       ]}
                     >
-                      {option === 'en' ? 'English' : 'Русский'}
+                      {option === 'en' ? t('you.languageEnglish') : t('you.languageRussian')}
                     </Text>
                   </Pressable>
                 ))}
@@ -174,7 +176,7 @@ export default function YouScreen() {
               onPress={handleResetOnboarding}
             >
               <Text style={styles.devResetText}>
-                {resetDone ? 'Reset ✓' : 'Reset onboarding state (dev only)'}
+                {resetDone ? t('you.devResetDone') : t('you.devResetOnboarding')}
               </Text>
             </Pressable>
             {/* Placeholder for real entitlement — see subscriptionStore.ts.
@@ -185,7 +187,7 @@ export default function YouScreen() {
               onPress={() => setSubscribed(!isSubscribed)}
             >
               <Text style={styles.devResetText}>
-                {isSubscribed ? 'Subscribed ✓ (dev only, tap to unsubscribe)' : 'Not subscribed (dev only, tap to subscribe)'}
+                {isSubscribed ? t('you.devSubscribedOn') : t('you.devSubscribedOff')}
               </Text>
             </Pressable>
           </>

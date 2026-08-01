@@ -1,0 +1,15 @@
+{
+  "you": {
+    "walkingWith": "Идёте вместе с",
+    "changeWhoWalksBesideYou": "Сменить того, кто идёт рядом →",
+    "chooseWhoWalksBesideYou": "Выберите, кто пойдёт рядом с вами",
+    "cancel": "Отмена",
+    "language": "Язык",
+    "languageEnglish": "English",
+    "languageRussian": "Русский",
+    "devResetOnboarding": "Сбросить состояние онбординга (только для разработки)",
+    "devResetDone": "Сброшено ✓",
+    "devSubscribedOn": "Подписка активна ✓ (только для разработки, нажмите, чтобы отписаться)",
+    "devSubscribedOff": "Подписки нет (только для разработки, нажмите, чтобы подписаться)"
+  }
+}
