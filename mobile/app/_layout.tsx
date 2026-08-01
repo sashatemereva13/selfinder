@@ -11,6 +11,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useSubscriptionStore } from '../src/store/subscriptionStore';
+import { useLocaleStore } from '../src/store/localeStore';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -26,6 +27,7 @@ export default function RootLayout() {
   const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshWindow } = useReminderStore();
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
   const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
+  const { hydrated: localeHydrated, hydrate: hydrateLocale } = useLocaleStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -36,11 +38,12 @@ export default function RootLayout() {
     hydrateReminder();
     hydrateEngagement();
     hydrateSubscription();
+    hydrateLocale();
   }, []);
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && subscriptionHydrated;
+    && engagementHydrated && subscriptionHydrated && localeHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder

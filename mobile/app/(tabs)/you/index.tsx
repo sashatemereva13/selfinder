@@ -6,6 +6,7 @@ import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
+import { useLocaleStore, Locale } from '../../../src/store/localeStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
@@ -45,6 +46,8 @@ export default function YouScreen() {
   const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
   const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
   const setSubscribed = useSubscriptionStore((s) => s.setSubscribed);
+  const locale = useLocaleStore((s) => s.locale);
+  const setLocale = useLocaleStore((s) => s.setLocale);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
 
@@ -125,6 +128,37 @@ export default function YouScreen() {
         {!changing && (
           <>
             <View style={styles.divider} />
+            {/* Not nested inside AccountSection, and not gated on being
+                signed in — most usage doesn't require an account, and a
+                language preference is meaningful before someone ever
+                creates one. Placed as its own top-level section so it's
+                never hidden behind login. */}
+            <View style={styles.languageSection}>
+              <Text style={styles.languageKicker}>Language</Text>
+              <View style={styles.languageRow}>
+                {(['en', 'ru'] as Locale[]).map((option) => (
+                  <Pressable
+                    key={option}
+                    style={[
+                      styles.languageOption,
+                      locale === option && { backgroundColor: colors.accent.ivory },
+                    ]}
+                    onPress={() => setLocale(option)}
+                  >
+                    <Text
+                      style={[
+                        styles.languageOptionText,
+                        locale === option && { color: colors.bg.base },
+                      ]}
+                    >
+                      {option === 'en' ? 'English' : 'Русский'}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.divider} />
             <DailyReminderSection />
           </>
         )}
@@ -165,6 +199,25 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   scroll: { flex: 1 },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
+  languageSection: { gap: spacing[3] },
+  languageKicker: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+  languageRow: { flexDirection: 'row', gap: spacing[2] },
+  // Filled pill on the active option, same convention as AccountSection's
+  // consentToggleButton — an outlined pill would be a different visual
+  // language from the one other real toggle already in this screen area.
+  languageOption: {
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[2],
+    borderRadius: radius.full,
+    backgroundColor: colors.bg.elevated,
+  },
+  languageOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
