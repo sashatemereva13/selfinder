@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Pressable, LayoutAnimation, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +26,7 @@ function renderRich(text: string): ReactNode[] {
 }
 
 export default function LevelScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -47,9 +49,9 @@ export default function LevelScreen() {
   if (!level) {
     return (
       <View style={[styles.root, styles.notFoundRoot]}>
-        <Text style={styles.notFoundText}>This level couldn't be found.</Text>
+        <Text style={styles.notFoundText}>{t('level.notFound')}</Text>
         <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>← Back</Text>
+          <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
       </View>
     );
@@ -63,10 +65,10 @@ export default function LevelScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={[styles.kicker, { color: accentColor }]}>Level · {level.score}</Text>
+      <Text style={[styles.kicker, { color: accentColor }]}>{t('level.levelScore', { score: level.score })}</Text>
       <Text style={styles.title}>{level.title}</Text>
       <Text style={[styles.frame, { borderLeftColor: accentColor }]}>{level.frame}</Text>
 
@@ -102,7 +104,7 @@ export default function LevelScreen() {
         <View style={styles.deepDiveBlock}>
           <Pressable onPress={toggleDeepDive}>
             <Text style={[styles.deepDiveToggle, { color: accentColor }]}>
-              {deepDiveOpen ? 'Hide the deeper read ↑' : 'Go deeper ↓'}
+              {deepDiveOpen ? t('level.hideDeeperRead') : t('level.goDeeper')}
             </Text>
           </Pressable>
 

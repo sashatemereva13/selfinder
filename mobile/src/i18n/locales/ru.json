@@ -1,4 +1,7 @@
 {
+  "common": {
+    "back": "← Назад"
+  },
   "you": {
     "walkingWith": "Идёте вместе с",
     "changeWhoWalksBesideYou": "Сменить того, кто идёт рядом →",
@@ -99,5 +102,22 @@
     "nudgeBreathing": "Ещё не пробовали Дыхание? Измените состояние дыханием →",
     "feelingLuckyLabel": "Сообщение для этого момента",
     "feelingLuckyDescription": "Пропустите поиск ответа — пусть что-то само найдёт вас"
+  },
+  "moon": {
+    "kicker": "Луна",
+    "title": "У всего есть цикл",
+    "moonAge": "Возраст луны",
+    "illumination": "Освещённость",
+    "cycleProgress": "Прогресс цикла",
+    "nature": "Природа",
+    "reflection": "Размышление",
+    "practice": "Практика",
+    "startWithMeasure": "Начните с Measure"
+  },
+  "level": {
+    "notFound": "Этот уровень не найден.",
+    "levelScore": "Уровень · {{score}}",
+    "hideDeeperRead": "Скрыть подробности ↑",
+    "goDeeper": "Узнать больше ↓"
   }
 }

@@ -1,4 +1,7 @@
 {
+  "common": {
+    "back": "← Back"
+  },
   "you": {
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
@@ -99,5 +102,22 @@
     "nudgeBreathing": "Haven't tried Breathing yet? Shift your state through breath →",
     "feelingLuckyLabel": "A message for right now",
     "feelingLuckyDescription": "Skip finding out — let something find you instead"
+  },
+  "moon": {
+    "kicker": "Moon",
+    "title": "Everything has a cycle",
+    "moonAge": "Moon age",
+    "illumination": "Illumination",
+    "cycleProgress": "Cycle progress",
+    "nature": "Nature",
+    "reflection": "Reflection",
+    "practice": "Practice",
+    "startWithMeasure": "Start with Measure"
+  },
+  "level": {
+    "notFound": "This level couldn't be found.",
+    "levelScore": "Level · {{score}}",
+    "hideDeeperRead": "Hide the deeper read ↑",
+    "goDeeper": "Go deeper ↓"
   }
 }

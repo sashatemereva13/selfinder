@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,6 +21,7 @@ import {
 } from '../../../../src/content/moonConfig';
 
 export default function MoonScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const currentResult = useMeasureStore((s) => s.currentResult);
@@ -47,11 +49,11 @@ export default function MoonScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Moon</Text>
-      <Text style={styles.title}>Everything has a cycle</Text>
+      <Text style={styles.kicker}>{t('moon.kicker')}</Text>
+      <Text style={styles.title}>{t('moon.title')}</Text>
 
       <View style={styles.discBlock}>
         <MoonPhaseDisc fraction={moon.fraction} />
@@ -67,31 +69,31 @@ export default function MoonScreen() {
 
       <View style={styles.metricsRow}>
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>Moon age</Text>
+          <Text style={styles.metricLabel}>{t('moon.moonAge')}</Text>
           <Text style={styles.metricValue}>{moon.moonAgeDays.toFixed(1)}d</Text>
         </View>
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>Illumination</Text>
+          <Text style={styles.metricLabel}>{t('moon.illumination')}</Text>
           <Text style={styles.metricValue}>{moon.illuminationPercent}%</Text>
         </View>
         <View style={styles.metric}>
-          <Text style={styles.metricLabel}>Cycle progress</Text>
+          <Text style={styles.metricLabel}>{t('moon.cycleProgress')}</Text>
           <Text style={styles.metricValue}>{moon.cycleProgressPercent}%</Text>
         </View>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardKicker}>Nature</Text>
+        <Text style={styles.cardKicker}>{t('moon.nature')}</Text>
         <Text style={styles.cardBody}>{moon.content.nature}</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardKicker}>Reflection</Text>
+        <Text style={styles.cardKicker}>{t('moon.reflection')}</Text>
         <Text style={styles.cardBody}>{moon.content.reflection}</Text>
       </View>
 
       <View style={styles.card}>
-        <Text style={styles.cardKicker}>Practice</Text>
+        <Text style={styles.cardKicker}>{t('moon.practice')}</Text>
         <Text style={styles.cardBody}>{moon.content.practice}</Text>
       </View>
 
@@ -103,7 +105,7 @@ export default function MoonScreen() {
             style={styles.bridgeButton}
             onPress={() => router.push('/(tabs)/depths/measure' as Href)}
           >
-            <Text style={styles.bridgeButtonText}>Start with Measure</Text>
+            <Text style={styles.bridgeButtonText}>{t('moon.startWithMeasure')}</Text>
           </Pressable>
         )}
       </View>
