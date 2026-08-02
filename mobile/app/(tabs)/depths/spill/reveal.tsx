@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { useGuideChatStore } from '../../../../src/store/guideChatStore';
 import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 
 export default function SpillRevealScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -57,7 +59,7 @@ export default function SpillRevealScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[6] }]}
     >
-      <Text style={styles.kicker}>What came out</Text>
+      <Text style={styles.kicker}>{t('spillReveal.whatCameOut')}</Text>
       <Text style={styles.text}>{text}</Text>
 
       <View style={styles.actions}>
@@ -66,11 +68,11 @@ export default function SpillRevealScreen() {
             style={[styles.button, { backgroundColor: accentColor }]}
             onPress={handleTalkToPhilosopher}
           >
-            <Text style={styles.buttonText}>Talk to {philosopher.name} about this</Text>
+            <Text style={styles.buttonText}>{t('spillReveal.talkToAboutThis', { name: philosopher.name })}</Text>
           </Pressable>
         )}
         <Pressable style={styles.secondaryButton} onPress={handleWriteAgain}>
-          <Text style={styles.secondaryButtonText}>Write again</Text>
+          <Text style={styles.secondaryButtonText}>{t('spillReveal.writeAgain')}</Text>
         </Pressable>
       </View>
 
@@ -78,7 +80,7 @@ export default function SpillRevealScreen() {
           the "no, actually, I'm just done" option, and it should read as
           the easiest one, not one more decision. */}
       <Pressable style={styles.doneRow} onPress={handleDone}>
-        <Text style={styles.doneText}>Done</Text>
+        <Text style={styles.doneText}>{t('spillReveal.done')}</Text>
       </Pressable>
     </ScrollView>
   );

@@ -190,5 +190,11 @@
     "title": "Write without looking back",
     "copy1": "For one minute, just keep writing. Whatever comes, in any order, without editing it — you'll only ever see the word you're writing right now, nothing before it. When the minute is up, you can read the whole thing back.",
     "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it."
+  },
+  "spillReveal": {
+    "whatCameOut": "What came out",
+    "talkToAboutThis": "Talk to {{name}} about this",
+    "writeAgain": "Write again",
+    "done": "Done"
   }
 }
