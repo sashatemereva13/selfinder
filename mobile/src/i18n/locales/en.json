@@ -146,5 +146,16 @@
     "volume": "Volume",
     "sleepTimer": "Sleep timer",
     "fadingOutIn": "Fading out in {{time}}"
+  },
+  "yourArcPreview": {
+    "kicker": "Your arc",
+    "title": "The line you're already drawing",
+    "introLine": "Every reading you take is a point. This is the real shape they trace so far.",
+    "whatSelfinderPlusAdds": "What Selfinder+ adds",
+    "fullLine": "The full line, not just your last {{count}} readings — every walk you've ever taken, in order.",
+    "tapAnyPoint": "Tap any point on it to open that day again: what it read as, and what your philosopher said about it.",
+    "keepConversationGoing": "Keep the conversation going",
+    "keepConversationDescription": "You've come back to this a few times — Selfinder+ keeps the whole conversation with {{name}} going, not just one reading at a time.",
+    "footnote": "Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This is about keeping the whole line, not a better version of the daily practice itself."
   }
 }

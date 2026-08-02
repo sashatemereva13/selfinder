@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -26,6 +27,7 @@ import { track } from '../../../src/utils/analytics';
 // revisited once that fuller subscribed experience (your-arc.tsx) is
 // actually designed, not just promised in one line.
 export default function YourArcPreviewScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const readingLog = useMeasureStore((s) => s.readingLog);
@@ -63,13 +65,13 @@ export default function YourArcPreviewScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Your arc</Text>
-      <Text style={styles.title}>The line you're already drawing</Text>
+      <Text style={styles.kicker}>{t('yourArcPreview.kicker')}</Text>
+      <Text style={styles.title}>{t('yourArcPreview.title')}</Text>
       <Text style={styles.introLine}>
-        Every reading you take is a point. This is the real shape they trace so far.
+        {t('yourArcPreview.introLine')}
       </Text>
 
       <View style={styles.sparklineWrap}>
@@ -91,30 +93,28 @@ export default function YourArcPreviewScreen() {
         </Svg>
       </View>
 
-      <Text style={styles.unlockKicker}>What Selfinder+ adds</Text>
+      <Text style={styles.unlockKicker}>{t('yourArcPreview.whatSelfinderPlusAdds')}</Text>
       <Text style={styles.unlockLine}>
-        The full line, not just your last {PREVIEW_POINTS} readings — every walk you've ever taken, in order.
+        {t('yourArcPreview.fullLine', { count: PREVIEW_POINTS })}
       </Text>
       <Text style={styles.unlockLine}>
-        Tap any point on it to open that day again: what it read as, and what your philosopher said about it.
+        {t('yourArcPreview.tapAnyPoint')}
       </Text>
 
       {showTalkAboutItNudge && (
         <>
           <View style={styles.divider} />
           <Pressable style={styles.row} onPress={handleTalkAboutIt}>
-            <Text style={styles.rowLabel}>Keep the conversation going</Text>
+            <Text style={styles.rowLabel}>{t('yourArcPreview.keepConversationGoing')}</Text>
             <Text style={styles.rowDescription}>
-              You've come back to this a few times — Selfinder+ keeps the whole conversation with{' '}
-              {philosopher!.name} going, not just one reading at a time.
+              {t('yourArcPreview.keepConversationDescription', { name: philosopher!.name })}
             </Text>
           </Pressable>
         </>
       )}
 
       <Text style={styles.footnote}>
-        Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This
-        is about keeping the whole line, not a better version of the daily practice itself.
+        {t('yourArcPreview.footnote')}
       </Text>
     </ScrollView>
   );
