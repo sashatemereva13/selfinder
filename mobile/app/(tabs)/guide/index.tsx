@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -25,6 +26,7 @@ import { AmbientGlow } from '../../../src/components/AmbientGlow';
 import { track } from '../../../src/utils/analytics';
 
 export default function GuideScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -95,7 +97,7 @@ export default function GuideScreen() {
   if (!philosopher) {
     return (
       <View style={[styles.root, styles.emptyRoot]}>
-        <Text style={styles.emptyText}>Choose who walks beside you in the You tab to begin.</Text>
+        <Text style={styles.emptyText}>{t('guide.chooseSomeone')}</Text>
       </View>
     );
   }
@@ -110,7 +112,11 @@ export default function GuideScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.root, { paddingTop: insets.top + spacing[4] }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // Same fix as interview.tsx — 'undefined' on Android meant no
+      // keyboard avoidance ran at all, the keyboard just overlaid the
+      // conversation. 'height' is the standard Android equivalent to
+      // iOS's 'padding'.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={80}
     >
       <AmbientGlow />
@@ -122,7 +128,7 @@ export default function GuideScreen() {
         </View>
         {messages.length > 0 && (
           <Pressable onPress={() => clearConversation(philosopher.id)}>
-            <Text style={styles.clearLink}>Clear</Text>
+            <Text style={styles.clearLink}>{t('guide.clear')}</Text>
           </Pressable>
         )}
       </View>
@@ -157,8 +163,7 @@ export default function GuideScreen() {
                 "have they met this particular philosopher before." */}
             {!currentResult && (
               <Text style={styles.measureExplainer}>
-                A short conversation about your body, mind, heart, and spirit.
-                At the end, {philosopher.name} reflects the state emerging from your answers.
+                {t('guide.measureExplainer', { name: philosopher.name })}
               </Text>
             )}
             {!currentResult && (
@@ -166,7 +171,7 @@ export default function GuideScreen() {
                 style={[styles.measureCta, { backgroundColor: accentColor }]}
                 onPress={() => router.push('/(tabs)/depths/measure')}
               >
-                <Text style={styles.measureCtaText}>Take Measure →</Text>
+                <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
               </Pressable>
             )}
           </View>
@@ -176,7 +181,7 @@ export default function GuideScreen() {
               <Turn isUser={message.role === 'user'}>{message.content}</Turn>
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
                 <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
-                  <Text style={styles.spillCtaText}>Write it out instead →</Text>
+                  <Text style={styles.spillCtaText}>{t('guide.writeItOutInstead')}</Text>
                 </Pressable>
               )}
             </View>
@@ -196,7 +201,7 @@ export default function GuideScreen() {
             style={styles.input}
             value={input}
             onChangeText={setInput}
-            placeholder="Say what's true right now…"
+            placeholder={t('guide.inputPlaceholder')}
             placeholderTextColor={colors.text.muted}
             multiline
             editable={!isLoading}

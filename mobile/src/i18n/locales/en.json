@@ -119,5 +119,13 @@
     "levelScore": "Level · {{score}}",
     "hideDeeperRead": "Hide the deeper read ↑",
     "goDeeper": "Go deeper ↓"
+  },
+  "guide": {
+    "chooseSomeone": "Choose who walks beside you in the You tab to begin.",
+    "clear": "Clear",
+    "measureExplainer": "A short conversation about your body, mind, heart, and spirit. At the end, {{name}} reflects the state emerging from your answers.",
+    "takeMeasure": "Take Measure →",
+    "writeItOutInstead": "Write it out instead →",
+    "inputPlaceholder": "Say what's true right now…"
   }
 }
