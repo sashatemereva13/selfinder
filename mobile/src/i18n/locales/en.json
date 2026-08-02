@@ -2,7 +2,11 @@
   "common": {
     "back": "← Back",
     "regulationLayer": "Regulation Layer",
-    "stop": "Stop"
+    "stop": "Stop",
+    "sphereBody": "Body",
+    "sphereMind": "Mind",
+    "sphereHeart": "Heart",
+    "sphereSpirit": "Spirit"
   },
   "you": {
     "walkingWith": "Walking with",
@@ -163,5 +167,22 @@
     "begin": "Begin",
     "readyWhenYouAre": "Ready when you are",
     "roundOf": "Round {{round}} of {{total}}"
+  },
+  "measure": {
+    "previousSphere": "← Previous sphere",
+    "somethingWentWrong": "Something went wrong reading your field.",
+    "yourPhilosopher": "Your philosopher",
+    "readingYourField": "{{name}} is reading your field…",
+    "tryAgain": "Try again",
+    "inputPlaceholder": "Type your answer, or ask why…",
+    "startOver": "Start over"
+  },
+  "measureIntro": {
+    "kicker": "Frequency Check-In",
+    "title": "A conversation to read\nwhere you are right now",
+    "copy": "{{name}} will ask you about four sides of your life — body, mind, heart, and spirit. Share what is actually true, not what you think it should be. The reading emerges from what you say.",
+    "lastReading": "Last time, you read as {{level}}.",
+    "beginConversation": "Begin the conversation",
+    "orJustWriteItOut": "Or, just write it out →"
   }
 }

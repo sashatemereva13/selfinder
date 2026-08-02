@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   View,
   Text,
@@ -28,9 +29,6 @@ import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
 import { track } from '../../../../src/utils/analytics';
 
-const SPHERE_LABELS: Record<Sphere, string> = {
-  body: 'Body', mind: 'Mind', heart: 'Heart', spirit: 'Spirit',
-};
 const TOTAL_SPHERES = 4;
 
 // The moment the score comes back used to cut straight from ScoringOrbs
@@ -44,8 +42,17 @@ const FADE_OUT_DURATION_MS = 450;
 const BLACK_HOLD_MS = 500;
 
 export default function InterviewScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // Moved from a module-level constant — needs t(), which only works
+  // inside a component (hooks can't be called at module scope).
+  const SPHERE_LABELS: Record<Sphere, string> = {
+    body: t('common.sphereBody'),
+    mind: t('common.sphereMind'),
+    heart: t('common.sphereHeart'),
+    spirit: t('common.sphereSpirit'),
+  };
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const authToken = useAuthStore((s) => s.session?.token);
   const { sphereIndex, qaPairs, addQAPair, advanceSphere, goToPreviousSphere, saveResult, resetInterview } =
@@ -106,7 +113,7 @@ export default function InterviewScreen() {
     } catch (err) {
       console.error('Measure interview scoring request failed:', err);
       setIsScoring(false);
-      setScoringError('Something went wrong reading your field.');
+      setScoringError(t('measure.somethingWentWrong'));
     }
   };
 
@@ -226,7 +233,7 @@ export default function InterviewScreen() {
 
       {sphereIndex > 0 && !isScoring && !scoringError && (
         <Pressable style={styles.previousSphereRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
-          <Text style={styles.previousSphereText}>← Previous sphere</Text>
+          <Text style={styles.previousSphereText}>{t('measure.previousSphere')}</Text>
         </Pressable>
       )}
 
@@ -259,7 +266,7 @@ export default function InterviewScreen() {
         {isScoring && (
           <View style={styles.scoringBlock}>
             <Text style={[styles.scoringText, { color: accentColor }]}>
-              {philosopher?.name ?? 'Your philosopher'} is reading your field…
+              {t('measure.readingYourField', { name: philosopher?.name ?? t('measure.yourPhilosopher') })}
             </Text>
             <ScoringOrbs />
           </View>
@@ -272,7 +279,7 @@ export default function InterviewScreen() {
               style={[styles.retryButton, { backgroundColor: accentColor }]}
               onPress={handleRetryScoring}
             >
-              <Text style={styles.retryButtonText}>Try again</Text>
+              <Text style={styles.retryButtonText}>{t('measure.tryAgain')}</Text>
             </Pressable>
           </View>
         )}
@@ -289,7 +296,7 @@ export default function InterviewScreen() {
                 setInput(text);
                 if (goBackNote) setGoBackNote(null);
               }}
-              placeholder="Type your answer, or ask why…"
+              placeholder={t('measure.inputPlaceholder')}
               placeholderTextColor={colors.text.muted}
               multiline
               editable={!isAcknowledging}
@@ -306,7 +313,7 @@ export default function InterviewScreen() {
       )}
 
       <Pressable style={styles.restartButton} onPress={handleRestart}>
-        <Text style={styles.restartText}>Start over</Text>
+        <Text style={styles.restartText}>{t('measure.startOver')}</Text>
       </Pressable>
 
       {/* Transparent until the score comes back, then fades to fully

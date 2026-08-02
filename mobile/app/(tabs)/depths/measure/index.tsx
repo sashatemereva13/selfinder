@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 
 export default function TodayScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -35,25 +37,23 @@ export default function TodayScreen() {
         style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
         onPress={() => router.back()}
       >
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
       <View style={styles.body}>
-        <Text style={styles.kicker}>Frequency Check-In</Text>
+        <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
         <Text style={styles.title}>
-          A conversation to read{'\n'}where you are right now
+          {t('measureIntro.title')}
         </Text>
         {!hasMeasuredBefore && (
           <Text style={styles.copy}>
-            {philosopher?.name ?? 'Your philosopher'} will ask you about four sides of your
-            life — body, mind, heart, and spirit. Share what is actually true, not what you
-            think it should be. The reading emerges from what you say.
+            {t('measureIntro.copy', { name: philosopher?.name ?? t('measure.yourPhilosopher') })}
           </Text>
         )}
 
         {currentResult && (
           <Text style={styles.lastReading}>
-            Last time, you read as {currentResult.vibrationLevel.name.toLowerCase()}.
+            {t('measureIntro.lastReading', { level: currentResult.vibrationLevel.name.toLowerCase() })}
           </Text>
         )}
       </View>
@@ -63,7 +63,7 @@ export default function TodayScreen() {
           style={[styles.button, { backgroundColor: accentColor }]}
           onPress={handleBegin}
         >
-          <Text style={styles.buttonText}>Begin the conversation</Text>
+          <Text style={styles.buttonText}>{t('measureIntro.beginConversation')}</Text>
         </Pressable>
 
         {hasMeasuredBefore && (
@@ -71,7 +71,7 @@ export default function TodayScreen() {
             style={styles.spillLink}
             onPress={() => router.push('/(tabs)/depths/spill')}
           >
-            <Text style={styles.spillLinkText}>Or, just write it out →</Text>
+            <Text style={styles.spillLinkText}>{t('measureIntro.orJustWriteItOut')}</Text>
           </Pressable>
         )}
       </View>
