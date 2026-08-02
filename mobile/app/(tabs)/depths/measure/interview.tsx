@@ -194,7 +194,13 @@ export default function InterviewScreen() {
   return (
     <KeyboardAvoidingView
       style={[styles.root, { paddingTop: insets.top + spacing[4] }]}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      // 'undefined' on Android meant no keyboard avoidance ran at all — the
+      // keyboard just overlaid the screen, covering the question and the
+      // philosopher's reply entirely (confirmed on a real Android device).
+      // 'height' is the standard Android equivalent to iOS's 'padding' —
+      // Android's own soft-input handling differs enough that 'padding'
+      // itself is known to double up with the OS's own resize behavior.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={80}
     >
       <AmbientGlow />
