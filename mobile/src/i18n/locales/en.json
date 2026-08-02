@@ -3,6 +3,7 @@
     "back": "← Back",
     "regulationLayer": "Regulation Layer",
     "stop": "Stop",
+    "begin": "Begin",
     "sphereBody": "Body",
     "sphereMind": "Mind",
     "sphereHeart": "Heart",
@@ -164,7 +165,6 @@
   },
   "breathing": {
     "title": "Change your state through breath",
-    "begin": "Begin",
     "readyWhenYouAre": "Ready when you are",
     "roundOf": "Round {{round}} of {{total}}"
   },
@@ -184,5 +184,11 @@
     "lastReading": "Last time, you read as {{level}}.",
     "beginConversation": "Begin the conversation",
     "orJustWriteItOut": "Or, just write it out →"
+  },
+  "spill": {
+    "kicker": "Spill",
+    "title": "Write without looking back",
+    "copy1": "For one minute, just keep writing. Whatever comes, in any order, without editing it — you'll only ever see the word you're writing right now, nothing before it. When the minute is up, you can read the whole thing back.",
+    "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it."
   }
 }

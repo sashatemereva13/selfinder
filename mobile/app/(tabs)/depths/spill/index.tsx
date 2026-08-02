@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +13,7 @@ import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 
 export default function SpillScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const reset = useSpillStore((s) => s.reset);
@@ -37,25 +39,23 @@ export default function SpillScreen() {
         style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
         onPress={() => router.back()}
       >
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
       <View style={styles.body}>
-        <Text style={styles.kicker}>Spill</Text>
-        <Text style={styles.title}>Write without looking back</Text>
+        <Text style={styles.kicker}>{t('spill.kicker')}</Text>
+        <Text style={styles.title}>{t('spill.title')}</Text>
         <Text style={styles.copy}>
-          For one minute, just keep writing. Whatever comes, in any order, without editing
-          it — you'll only ever see the word you're writing right now, nothing before it.
-          When the minute is up, you can read the whole thing back.
+          {t('spill.copy1')}
         </Text>
         <Text style={styles.copy}>
-          There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it.
+          {t('spill.copy2')}
         </Text>
       </View>
 
       <View style={styles.footer}>
         <Pressable style={[styles.button, { backgroundColor: accentColor }]} onPress={handleBegin}>
-          <Text style={styles.buttonText}>Begin</Text>
+          <Text style={styles.buttonText}>{t('common.begin')}</Text>
         </Pressable>
       </View>
     </View>
