@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -65,6 +66,7 @@ function BreathingOrb({
 }
 
 export default function BreathingScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
@@ -146,11 +148,11 @@ export default function BreathingScreen() {
       <AmbientGlow intensified={active} pulseDurationMs={active ? phase.seconds * 1000 : 4200} />
 
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Regulation Layer</Text>
-      <Text style={styles.title}>Change your state through breath</Text>
+      <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
+      <Text style={styles.title}>{t('breathing.title')}</Text>
 
       <View style={styles.pickerRow}>
         {BREATHING_PATTERNS.map((p, i) => (
@@ -166,14 +168,14 @@ export default function BreathingScreen() {
         <Text style={styles.subtitle}>{pattern.subtitle}</Text>
         <Text style={styles.useFor}>{pattern.useFor}</Text>
 
-        <BreathingOrb scale={scale} onPress={handleToggle} label={active ? 'Stop' : 'Begin'} />
+        <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('breathing.begin')} />
 
         <Text style={styles.phaseLabel}>
-          {active ? phase.label : completionLine ?? 'Ready when you are'}
+          {active ? phase.label : completionLine ?? t('breathing.readyWhenYouAre')}
         </Text>
         {active && (
           <Text style={styles.roundCounter}>
-            Round {round} of {pattern.rounds}
+            {t('breathing.roundOf', { round, total: pattern.rounds })}
           </Text>
         )}
 

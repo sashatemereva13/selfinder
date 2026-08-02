@@ -77,7 +77,7 @@ function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
       <Animated.View style={[styles.pulseOrb, ringStyle]} pointerEvents="none" />
       <Animated.View style={[styles.pulseCoreGlow, coreStyle]} pointerEvents="none" />
       <Pressable style={styles.pulseCore} onPress={onPress}>
-        <Text style={styles.pulseCoreLabel}>{active ? t('tuneIn.stop') : t('tuneIn.play')}</Text>
+        <Text style={styles.pulseCoreLabel}>{active ? t('common.stop') : t('tuneIn.play')}</Text>
       </Pressable>
     </View>
   );
@@ -206,7 +206,7 @@ export default function TuneInScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>{t('tuneIn.kicker')}</Text>
+      <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
       <Text style={styles.title}>{t('tuneIn.title')}</Text>
       <Text style={styles.introLine}>
         {t('tuneIn.introLine')}

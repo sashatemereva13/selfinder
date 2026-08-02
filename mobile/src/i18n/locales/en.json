@@ -1,6 +1,8 @@
 {
   "common": {
-    "back": "← Back"
+    "back": "← Back",
+    "regulationLayer": "Regulation Layer",
+    "stop": "Stop"
   },
   "you": {
     "walkingWith": "Walking with",
@@ -138,9 +140,7 @@
     "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back."
   },
   "tuneIn": {
-    "stop": "Stop",
     "play": "Play",
-    "kicker": "Regulation Layer",
     "title": "Tune your field with frequency",
     "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",
     "volume": "Volume",
@@ -157,5 +157,11 @@
     "keepConversationGoing": "Keep the conversation going",
     "keepConversationDescription": "You've come back to this a few times — Selfinder+ keeps the whole conversation with {{name}} going, not just one reading at a time.",
     "footnote": "Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This is about keeping the whole line, not a better version of the daily practice itself."
+  },
+  "breathing": {
+    "title": "Change your state through breath",
+    "begin": "Begin",
+    "readyWhenYouAre": "Ready when you are",
+    "roundOf": "Round {{round}} of {{total}}"
   }
 }
