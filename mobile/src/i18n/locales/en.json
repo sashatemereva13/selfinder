@@ -136,5 +136,15 @@
     "notEnoughReadings": "Not enough readings yet to draw a line — take Measure a second time to start one.",
     "turnOnSavingNote": "Turn on \"Save my readings to my account\" to keep the full story behind each point, not just the date and level.",
     "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back."
+  },
+  "tuneIn": {
+    "stop": "Stop",
+    "play": "Play",
+    "kicker": "Regulation Layer",
+    "title": "Tune your field with frequency",
+    "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",
+    "volume": "Volume",
+    "sleepTimer": "Sleep timer",
+    "fadingOutIn": "Fading out in {{time}}"
   }
 }

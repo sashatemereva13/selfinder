@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
@@ -40,6 +41,7 @@ const WAVE_DURATION_MS = 6600;
 const WAVE_PEAK_SCALE = 7;
 
 function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
+  const { t } = useTranslation();
   const beat = useSharedValue(0);
   const wave = useSharedValue(0);
 
@@ -75,13 +77,14 @@ function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
       <Animated.View style={[styles.pulseOrb, ringStyle]} pointerEvents="none" />
       <Animated.View style={[styles.pulseCoreGlow, coreStyle]} pointerEvents="none" />
       <Pressable style={styles.pulseCore} onPress={onPress}>
-        <Text style={styles.pulseCoreLabel}>{active ? 'Stop' : 'Play'}</Text>
+        <Text style={styles.pulseCoreLabel}>{active ? t('tuneIn.stop') : t('tuneIn.play')}</Text>
       </Pressable>
     </View>
   );
 }
 
 export default function TuneInScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState(0);
@@ -200,14 +203,13 @@ export default function TuneInScreen() {
       <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
 
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Regulation Layer</Text>
-      <Text style={styles.title}>Tune your field with frequency</Text>
+      <Text style={styles.kicker}>{t('tuneIn.kicker')}</Text>
+      <Text style={styles.title}>{t('tuneIn.title')}</Text>
       <Text style={styles.introLine}>
-        Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow
-        pulse. Needs stereo headphones.
+        {t('tuneIn.introLine')}
       </Text>
 
       <View style={styles.pickerRow}>
@@ -226,7 +228,7 @@ export default function TuneInScreen() {
       </View>
 
       <View style={styles.volumeRow}>
-        <Text style={styles.volumeLabel}>Volume</Text>
+        <Text style={styles.volumeLabel}>{t('tuneIn.volume')}</Text>
         <View style={styles.volumeSteps}>
           {VOLUME_STEPS.map((step) => (
             <Pressable
@@ -239,7 +241,7 @@ export default function TuneInScreen() {
       </View>
 
       <View style={styles.timerSection}>
-        <Text style={styles.volumeLabel}>Sleep timer</Text>
+        <Text style={styles.volumeLabel}>{t('tuneIn.sleepTimer')}</Text>
         <View style={styles.timerChipRow}>
           {TIMER_OPTIONS.map((minutes) => (
             <Pressable
@@ -255,8 +257,9 @@ export default function TuneInScreen() {
         </View>
         {remainingSeconds !== null && (
           <Text style={styles.timerCountdown}>
-            Fading out in {Math.floor(remainingSeconds / 60)}:
-            {String(remainingSeconds % 60).padStart(2, '0')}
+            {t('tuneIn.fadingOutIn', {
+              time: `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}`,
+            })}
           </Text>
         )}
       </View>
