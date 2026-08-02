@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   View,
   Text,
@@ -678,6 +679,7 @@ function IntroFigure({
 }
 
 export default function OnboardingScreen() {
+  const { t } = useTranslation();
   const reduceMotion = useReducedMotion();
   // Reduce Motion skips the greet beat and mounts the intro already
   // fast-forwarded: the full settled composition on gentle fades, no
@@ -1263,7 +1265,7 @@ export default function OnboardingScreen() {
                 need ("Understand") is now redundant with the visual itself. */}
             <Animated.View style={[styles.aboveHeadPosition, exitFadeStyle]}>
               <Animated.Text style={[styles.aboveHead, trackWhatStyle]}>
-                what
+                {t('onboarding.what')}
               </Animated.Text>
             </Animated.View>
 
@@ -1314,7 +1316,7 @@ export default function OnboardingScreen() {
                       trackYouStyle,
                     ]}
                   >
-                    you
+                    {t('onboarding.you')}
                   </Animated.Text>
                   <Animated.Text
                     style={[
@@ -1323,7 +1325,7 @@ export default function OnboardingScreen() {
                       trackFeelStyle,
                     ]}
                   >
-                    feel
+                    {t('onboarding.feel')}
                   </Animated.Text>
                 </View>
               </View>
@@ -1347,20 +1349,20 @@ export default function OnboardingScreen() {
                     fight over the same property on one component. */}
               <Animated.View style={[StyleSheet.absoluteFill, howRevealStyle]}>
                 <Animated.Text style={[styles.howLabel, exitFadeStyle]}>
-                  is an experience
+                  {t('onboarding.isAnExperience')}
                 </Animated.Text>
               </Animated.View>
             </View>
             <Animated.View style={payoffRevealStyle}>
               <Animated.Text style={[styles.introLine3, exitFadeStyle]}>
-                {"Walk it through\nwith a philosopher."}
+                {t('onboarding.walkItThrough')}
               </Animated.Text>
               {/* The one clause of promise: each walk produces something
                     that accumulates. "Arc" is deliberate — it's the seed of
                     the future trend feature by that name, planted in the
                     first minute. Quiet and unbolded: a fact, not a pitch. */}
               <Animated.Text style={[styles.introPromise, exitFadeStyle]}>
-                {"Each walk is a reflection.\nIn time, they build Your Arc."}
+                {t('onboarding.eachWalkPromise')}
               </Animated.Text>
             </Animated.View>
           </View>
@@ -1372,7 +1374,7 @@ export default function OnboardingScreen() {
                 disabled={isExiting}
                 onPress={handleWalk}
               >
-                <Text style={styles.beginButtonText}>walk</Text>
+                <Text style={styles.beginButtonText}>{t('onboarding.walkButton')}</Text>
               </Pressable>
             </Animated.View>
           </Animated.View>
@@ -1399,7 +1401,7 @@ export default function OnboardingScreen() {
           entering={FadeIn.duration(500).delay(120).easing(SOFT_EASE)}
           style={styles.chooseTitle}
         >
-          Choose who walks beside you
+          {t('you.chooseWhoWalksBesideYou')}
         </Animated.Text>
         <View style={styles.chooseBody}>
           <PhilosopherPicker

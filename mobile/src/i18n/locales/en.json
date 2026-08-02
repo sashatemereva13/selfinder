@@ -201,5 +201,14 @@
     "kicker": "Levels",
     "title": "The map of consciousness",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits."
+  },
+  "onboarding": {
+    "what": "what",
+    "you": "you",
+    "feel": "feel",
+    "isAnExperience": "is an experience",
+    "walkItThrough": "Walk it through\nwith a philosopher.",
+    "eachWalkPromise": "Each walk is a reflection.\nIn time, they build Your Arc.",
+    "walkButton": "walk"
   }
 }
