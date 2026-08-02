@@ -21,6 +21,7 @@ import { ChatProvider } from "./guide/ChatContext";
 import { AuthProvider } from "./auth/AuthContext";
 import PrivacyPolicyPage from "./legal/PrivacyPolicyPage";
 import SupportPage from "./legal/SupportPage";
+import DeleteAccountPage from "./legal/DeleteAccountPage";
 
 const AuthPage = lazy(() => import("./auth/AuthPage"));
 const FrontPage = lazy(() => import("./frontpage/FrontPage"));
@@ -145,13 +146,14 @@ function App() {
   // philosopher-selection landing screen.
   const isPrivacyRoute = window.location.pathname === "/privacy";
   const isSupportRoute = window.location.pathname === "/support";
+  const isDeleteAccountRoute = window.location.pathname === "/delete-account";
 
   useEffect(() => {
-    if (isPrivacyRoute || isSupportRoute) return;
+    if (isPrivacyRoute || isSupportRoute || isDeleteAccountRoute) return;
     if (!hasEntered) {
       appendPathStep({ path: "/entry-gate", source: "gate", navType: null });
     }
-  }, [hasEntered, isPrivacyRoute, isSupportRoute]);
+  }, [hasEntered, isPrivacyRoute, isSupportRoute, isDeleteAccountRoute]);
 
   if (isPrivacyRoute) {
     return <PrivacyPolicyPage />;
@@ -159,6 +161,10 @@ function App() {
 
   if (isSupportRoute) {
     return <SupportPage />;
+  }
+
+  if (isDeleteAccountRoute) {
+    return <DeleteAccountPage />;
   }
 
   if (!hasEntered) {

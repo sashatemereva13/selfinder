@@ -1,0 +1,73 @@
+.deleteAccountPage {
+  min-height: 100svh;
+  display: flex;
+  justify-content: center;
+  padding: 3rem 1.2rem;
+  background: #0b0716;
+}
+
+.deleteAccountPageCard {
+  position: relative;
+  width: min(40rem, 100%);
+  height: fit-content;
+  padding: 2.4rem 2rem;
+  border-radius: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background:
+    radial-gradient(circle at 15% 10%, rgba(195, 153, 255, 0.1), transparent 52%),
+    radial-gradient(circle at 88% 85%, rgba(116, 221, 214, 0.08), transparent 48%),
+    rgba(10, 9, 18, 0.92);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 56px rgba(0, 0, 0, 0.42),
+    0 0 0 1px rgba(187, 143, 255, 0.08);
+  color: #f1eafd;
+}
+
+.deleteAccountPageCard h1 {
+  margin: 0 0 1rem;
+  font-size: 1.6rem;
+}
+
+.deleteAccountPageCard h2 {
+  margin: 1.8rem 0 0.8rem;
+  font-size: 1.1rem;
+  color: #f1eafd;
+}
+
+.deleteAccountPageCard p {
+  margin: 0 0 1.2rem;
+  line-height: 1.6;
+  color: rgba(241, 234, 253, 0.78);
+}
+
+.deleteAccountPageCard ol {
+  margin: 0 0 1.2rem;
+  padding-left: 1.4rem;
+  line-height: 1.7;
+  color: rgba(241, 234, 253, 0.78);
+}
+
+.deleteAccountPageCard li {
+  margin-bottom: 0.3rem;
+}
+
+.deleteAccountPageCard a {
+  color: #c399ff;
+  text-decoration: none;
+}
+
+.deleteAccountPageCard a:hover {
+  text-decoration: underline;
+}
+
+.deleteAccountPageCard strong {
+  color: #f1eafd;
+  font-weight: 600;
+}
+
+@media (max-width: 480px) {
+  .deleteAccountPageCard {
+    padding: 1.8rem 1.3rem;
+  }
+}
