@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 
 export default function LevelsScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -25,14 +27,13 @@ export default function LevelsScreen() {
     >
       <AmbientGlow />
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Levels</Text>
-      <Text style={styles.title}>The map of consciousness</Text>
+      <Text style={styles.kicker}>{t('levels.kicker')}</Text>
+      <Text style={styles.title}>{t('levels.title')}</Text>
       <Text style={styles.copy}>
-        Seventeen states, none of them better or worse than another — drag around the
-        wheel to see where each one sits.
+        {t('levels.copy')}
       </Text>
 
       {/* The one screen where showing all 17 level colors together is

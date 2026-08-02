@@ -196,5 +196,10 @@
     "talkToAboutThis": "Talk to {{name}} about this",
     "writeAgain": "Write again",
     "done": "Done"
+  },
+  "levels": {
+    "kicker": "Levels",
+    "title": "The map of consciousness",
+    "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits."
   }
 }
