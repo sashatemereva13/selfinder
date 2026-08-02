@@ -115,9 +115,11 @@ export default function GuideScreen() {
       // Same fix as interview.tsx — 'undefined' on Android meant no
       // keyboard avoidance ran at all, the keyboard just overlaid the
       // conversation. 'height' is the standard Android equivalent to
-      // iOS's 'padding'.
+      // iOS's 'padding'. No keyboardVerticalOffset — no fixed header on
+      // this screen (headerShown: false on the Tabs navigator), so a
+      // manual offset just left a visible gap above the keyboard on both
+      // platforms (confirmed on-device).
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80}
     >
       <AmbientGlow />
 

@@ -200,8 +200,12 @@ export default function InterviewScreen() {
       // 'height' is the standard Android equivalent to iOS's 'padding' —
       // Android's own soft-input handling differs enough that 'padding'
       // itself is known to double up with the OS's own resize behavior.
+      // No keyboardVerticalOffset — this screen has no fixed header
+      // (headerShown: false on the Tabs navigator), so a manual offset
+      // just double-compensated on top of KeyboardAvoidingView's own
+      // frame measurement, leaving a visible gap between the content and
+      // the keyboard on both iOS and Android (confirmed on-device).
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={80}
     >
       <AmbientGlow />
 
