@@ -46,8 +46,7 @@
         "expo-font",
         {
           "fonts": [
-            "./assets/fonts/Panchang-Light.ttf",
-            "./assets/fonts/Panchang-Medium.ttf"
+            "./assets/fonts/Etude-Noire-Medium.ttf"
           ]
         }
       ],

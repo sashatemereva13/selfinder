@@ -1,11 +1,18 @@
 export const fonts = {
+  // Switched from Panchang to Etude Noire — Panchang has zero Cyrillic
+  // glyphs (confirmed via fonttools), so any Russian text fell back to a
+  // system font. Etude Noire has full Cyrillic coverage plus correct
+  // PostScript names in every weight file (Panchang's were corrupted —
+  // literally the string "false" — which also caused it to render bold on
+  // Android regardless of the weight requested). One typeface for every
+  // language, per RULES.md's "one typeface" rule — not a per-locale font.
   // Deliberately mapped to the Medium weight file, not Light — thin strokes
   // on a near-black background blur at the edges (halation) and were hard
   // to read in longer body text. Kept the key name "light" rather than
   // renaming it everywhere, so this stays a one-line, easily reversible
   // change while it's being evaluated live.
-  light: "Panchang-Medium",
-  medium: "Panchang-Medium",
+  light: "EtudeNoire-Medium",
+  medium: "EtudeNoire-Medium",
 } as const;
 
 export const fontSizes = {

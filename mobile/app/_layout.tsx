@@ -18,27 +18,14 @@ import { setI18nLocale } from '../src/i18n';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  // Panchang has zero Cyrillic glyphs (confirmed via fonttools) — every
-  // Russian string rendered so far has been silently falling back to a
-  // system font, not actually using Panchang. Not yet fixed: expo-font's
-  // useFonts explicitly does NOT support swapping which file loads under
-  // a given key after the first mount (confirmed in expo-font's own
-  // source — the loading effect has an empty dependency array, and their
-  // docs say so directly: "the fonts are not 'reloaded' when you
-  // dynamically change the font map"). An earlier attempt at registering
-  // a different binary under the SAME key ("Panchang-Medium") depending
-  // on locale looked like it worked in one screenshot, but didn't — it
-  // silently always resolved to whichever font won the very first mount,
-  // regardless of locale. Loading Narezka under its own key here for now
-  // (harmless, unused) — real per-locale font selection needs each
-  // screen's fontFamily resolved at render time instead of baked into
-  // StyleSheet.create at module-load time, which touches every file that
-  // sets fontFamily: fonts.light/medium (~194 usages across 23 files) —
-  // deliberately not done yet, see conversation history for why.
+  // Switched from Panchang to Etude Noire (see theme/typography.ts) — one
+  // font, loaded once, for every language. No per-locale font logic: the
+  // earlier attempt at swapping which file loads under the same key
+  // depending on locale didn't work (expo-font's useFonts doesn't support
+  // changing the font map after first mount) and isn't needed now that a
+  // single typeface covers both Latin and Cyrillic correctly.
   const [fontsLoaded] = useFonts({
-    'Panchang-Light':  require('../assets/fonts/Panchang-Light.ttf'),
-    'Panchang-Medium': require('../assets/fonts/Panchang-Medium.ttf'),
-    'Narezka':         require('../assets/fonts/Narezka.ttf'),
+    'EtudeNoire-Medium': require('../assets/fonts/Etude-Noire-Medium.ttf'),
   });
 
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
