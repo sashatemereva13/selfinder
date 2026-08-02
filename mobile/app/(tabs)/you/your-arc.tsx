@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
@@ -38,6 +39,7 @@ function formatDate(ts: number) {
 // score) — just not the full story, since that was never saved anywhere
 // to recover. Never pretend detail exists that doesn't.
 export default function YourArcScreen() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const readingLog = useMeasureStore((s) => s.readingLog);
@@ -92,13 +94,13 @@ export default function YourArcScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={styles.kicker}>Your arc</Text>
-      <Text style={styles.title}>Every walk, in order</Text>
+      <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
+      <Text style={styles.title}>{t('yourArc.title')}</Text>
       <Text style={styles.introLine}>
-        {readingLog.length} reading{readingLog.length === 1 ? '' : 's'} so far. Tap a point to open that day again.
+        {t('yourArc.introLine', { count: readingLog.length })}
       </Text>
 
       {readingLog.length >= 2 ? (
@@ -140,7 +142,7 @@ export default function YourArcScreen() {
         </View>
       ) : (
         <Text style={styles.emptyText}>
-          Not enough readings yet to draw a line — take Measure a second time to start one.
+          {t('yourArc.notEnoughReadings')}
         </Text>
       )}
 
@@ -159,14 +161,12 @@ export default function YourArcScreen() {
               <Text style={styles.detailLevel}>{selected.levelSlug}</Text>
               {session && !richHistory && (
                 <Text style={styles.detailNote}>
-                  Turn on "Save my readings to my account" to keep the full story behind each point,
-                  not just the date and level.
+                  {t('yourArc.turnOnSavingNote')}
                 </Text>
               )}
               {!session && (
                 <Text style={styles.detailNote}>
-                  Sign in and save your readings to keep the full story behind each point — what you
-                  said, what your philosopher reflected back.
+                  {t('yourArc.signInToSaveNote')}
                 </Text>
               )}
             </>
