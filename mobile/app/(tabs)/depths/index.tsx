@@ -537,7 +537,7 @@ export default function DepthsScreen() {
                         selectedSphere === line.key && { color: levelColor },
                       ]}
                     >
-                      {line.label}
+                      {t(SPHERE_LABEL_KEYS[line.key] ?? line.label)}
                     </Text>
                   </Pressable>
                 ))}

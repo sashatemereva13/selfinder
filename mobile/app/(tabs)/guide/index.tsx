@@ -86,9 +86,22 @@ export default function GuideScreen() {
   const accentColor = `rgb(${accentRgb})`;
   const nudge = getNudgeCopy(philosopher?.id ?? 'socrates', getNudgeState(currentResult, previousResult));
 
-  useEffect(() => {
+  // Was a useEffect keyed on messages.length/isLoading, calling
+  // scrollToEnd directly — that fires the instant React commits the new
+  // message to the JS side, which can still be a layout pass ahead of the
+  // ScrollView's content actually growing to its new height. scrollToEnd
+  // then computes its offset against the OLD (shorter) content size, so it
+  // lands just short of the newly-sent message instead of showing it — the
+  // message is genuinely there and correctly rendered, it's just sitting
+  // just below the visible fold until something else (the reply arriving,
+  // shifting layout again) happens to scroll far enough to reveal it. That's
+  // the reported "my own message only appears once the philosopher replies"
+  // bug. onContentSizeChange fires once the ScrollView's content has
+  // actually finished laying out at its new size, so scrolling here is
+  // guaranteed to already account for the message that was just added.
+  const handleContentSizeChange = () => {
     scrollRef.current?.scrollToEnd({ animated: true });
-  }, [messages.length, isLoading]);
+  };
 
   useEffect(() => {
     if (!philosopher || metPhilosopherIds.includes(philosopher.id)) return;
@@ -151,6 +164,7 @@ export default function GuideScreen() {
         ref={scrollRef}
         style={styles.scroll}
         contentContainerStyle={[styles.scrollContent, { width: columnWidth, alignSelf: 'center' }]}
+        onContentSizeChange={handleContentSizeChange}
       >
         {messages.length === 0 ? (
           <View style={styles.emptyState}>
