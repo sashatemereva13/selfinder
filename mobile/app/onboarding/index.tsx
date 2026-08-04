@@ -1105,13 +1105,29 @@ export default function OnboardingScreen() {
       duration: EXIT_DURATION,
       easing: Easing.inOut(Easing.cubic),
     });
-    // The overlay ring takes over from here — it's already visible (it's
-    // literally the same ring the V-arcs just morphed into), so it fades in
-    // instantly rather than re-entering, and starts traveling the moment
-    // the picker reports where it needs to land (see the effect below).
-    travelOpacity.value = 1;
-    setTravelActive(true);
-    setHandoffStarted(false);
+    // Android only: skip the traveling-ring overlay entirely. That whole
+    // mechanism depends on measureInWindow reporting the real, correct
+    // position of PhilosopherPicker's ring on the next screen — confirmed
+    // unreliable on Android across two rounds of real fixes (a genuine
+    // measureInWindow (0,0)-before-layout-settles quirk, then a fallback-
+    // timer race against the picker's own mount time) and still not
+    // reliable enough in practice. Never starting travelActive here means
+    // PhilosopherPicker's hideOwnRing prop (gated on
+    // `travelActive && !handoffStarted`) stays false the whole time, so
+    // its own static ring is simply visible the instant it mounts — no
+    // cross-screen coordinate measurement, no fallback timers, nothing
+    // left to race or get stuck. iOS keeps the full travel/morph, which
+    // has not had this problem.
+    if (Platform.OS !== "android") {
+      // The overlay ring takes over from here — it's already visible
+      // (it's literally the same ring the V-arcs just morphed into), so
+      // it fades in instantly rather than re-entering, and starts
+      // traveling the moment the picker reports where it needs to land
+      // (see the effect below).
+      travelOpacity.value = 1;
+      setTravelActive(true);
+      setHandoffStarted(false);
+    }
     setTimeout(() => setStep("choose"), EXIT_DURATION + RING_HOLD_DURATION);
   };
 
