@@ -59,38 +59,29 @@ testing time across the whole app, not just onboarding.
 
 ## Android release builds ship without R8 code/resource shrinking
 
-**Status:** confirmed gap, not yet enabled — deliberately deferred.
-
-`mobile/android/app/build.gradle:69,116-119` reads
-`android.enableMinifyInReleaseBuilds` and
-`android.enableShrinkResourcesInReleaseBuilds` from Gradle properties,
-both defaulting to `false` — and neither is set anywhere in
-`gradle.properties`. This means every release `.aab` built so far ships
-with no code shrinking, no obfuscation, and no unused-resource removal:
-a real, unclaimed reduction in download size and (per Android's own
-optimization guidance) faster cold start / lower memory use is sitting
-unused. This project is on AGP 8.x (pre-9.3), so the fix is the
-property-based path, not AGP 9.3's newer `optimization { enable = true }`
-block:
-
-```properties
-# gradle.properties
-android.enableMinifyInReleaseBuilds=true
-android.enableShrinkResourcesInReleaseBuilds=true
-```
+**Status:** enabled (2026-08-04). `expo-build-properties` was added and
+configured in `app.json`'s plugin list
+(`android.enableProguardInReleaseBuilds` /
+`enableShrinkResourcesInReleaseBuilds`, both `true`) rather than editing
+`mobile/android/app/build.gradle` or `gradle.properties` directly —
+`expo prebuild` regenerates the whole `android/` directory from `app.json`
+on every EAS build (local or cloud), so a hand-edit to the generated
+Gradle files would silently get overwritten on the next build. This was
+prompted by Play Console flagging "no deobfuscation file associated with
+this App Bundle" on a closed-testing upload.
 
 `proguard-rules.pro` already has a keep rule for Reanimated
 (`-keep class com.swmansion.reanimated.** { *; }`,
 `com.facebook.react.turbomodule.**`), which reduces (but doesn't
 eliminate) the usual risk of minification breaking reflection-based
-native modules — **a fresh full regression pass across the app is
-required after enabling this**, not just a smoke test, since a missing
-keep rule for some other native dependency would surface as a runtime
-crash only in the minified build, never in debug.
-
-**Why deferred:** discovered mid-Play-Store-submission; enabling and
-testing this properly deserves its own dedicated pass, not a change
-bundled into an unrelated build.
+native modules — **a fresh full regression pass across the app is still
+needed** (not yet done as of this writing), not just a smoke test, since a
+missing keep rule for some other native dependency would surface as a
+runtime crash only in the minified build, never in debug. Confirmed the
+change alone doesn't break the release build itself (a full local
+`eas build --platform android --profile production --local` succeeded
+with it enabled), but that's not the same as a real regression pass
+through the app's actual screens/flows on a minified build.
 
 ---
 
