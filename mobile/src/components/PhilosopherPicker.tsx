@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import Animated, {
@@ -14,12 +15,13 @@ import Animated, {
   SlideInRight,
   FadeIn,
 } from 'react-native-reanimated';
-import { PHILOSOPHERS, PHILOSOPHER_MAP } from '../content/philosophers';
+import { PHILOSOPHERS, PHILOSOPHER_MAP, getLocalizedPhilosopher } from '../content/philosophers';
 import { Philosopher } from '../types';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAppAccentRgb } from '../utils/appAccent';
+import { useLocaleStore } from '../store/localeStore';
 import { PhilosopherObject } from './PhilosopherObject';
 
 const ICON_SIZE = 60;
@@ -227,8 +229,10 @@ export function PhilosopherPicker({
   // screen during the handoff, not two overlapping.
   hideOwnRing?: boolean;
 }) {
+  const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const [focusedId, setFocusedId] = useState<string | null>(selectedId ?? null);
-  const focused = focusedId ? PHILOSOPHER_MAP[focusedId] : null;
+  const focused = focusedId ? getLocalizedPhilosopher(PHILOSOPHER_MAP[focusedId], locale) : null;
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
 
@@ -278,6 +282,15 @@ export function PhilosopherPicker({
           // after a short delay is enough in practice — this isn't a polling
           // loop, just a second attempt for the specific case where the
           // first one landed before layout was ready.
+          //
+          // A single retry wasn't enough in practice (still reported as a
+          // visible stall on the Russian-locale build, where the picker's
+          // title is a longer string — "Выберите, кто будет рядом" vs.
+          // "Choose who walks beside you" — and reflows the screen slightly
+          // differently, apparently making the mid-layout (0,0) window
+          // wider on some devices). Retrying up to 3 times with a growing
+          // delay covers that wider window without polling indefinitely.
+          const MAX_MEASURE_RETRIES = 3;
           const report = (x: number, y: number) => {
             onRingLayout({
               x: x + RING_CENTER.x - RING_RADIUS,
@@ -286,15 +299,16 @@ export function PhilosopherPicker({
               height: RING_RADIUS * 2,
             });
           };
-          ringContainerRef.current?.measureInWindow((x, y) => {
-            if (x === 0 && y === 0) {
-              setTimeout(() => {
-                ringContainerRef.current?.measureInWindow(report);
-              }, 100);
-              return;
-            }
-            report(x, y);
-          });
+          const measureWithRetry = (attempt: number) => {
+            ringContainerRef.current?.measureInWindow((x, y) => {
+              if (x === 0 && y === 0 && attempt < MAX_MEASURE_RETRIES) {
+                setTimeout(() => measureWithRetry(attempt + 1), 100 * (attempt + 1));
+                return;
+              }
+              report(x, y);
+            });
+          };
+          measureWithRetry(0);
         }}
       >
         {/* Hidden while onboarding's own ring is still traveling here (see
@@ -347,7 +361,7 @@ export function PhilosopherPicker({
         {PHILOSOPHERS.map((p, i) => (
           <PhilosopherRingItem
             key={p.id}
-            philosopher={p}
+            philosopher={getLocalizedPhilosopher(p, locale)}
             index={i}
             angleDeg={RING_LAYOUT[i].angleDeg}
             labelSide={RING_LAYOUT[i].labelSide}
@@ -366,7 +380,7 @@ export function PhilosopherPicker({
             <Text style={styles.symbolLine}>{focused.symbolLine}</Text>
           </>
         ) : (
-          <Text style={styles.placeholderText}>Tap someone to begin</Text>
+          <Text style={styles.placeholderText}>{t('you.tapSomeoneToBegin')}</Text>
         )}
       </View>
 
@@ -379,12 +393,14 @@ export function PhilosopherPicker({
           ]}
           onPress={() => focused && onSelect(focused.id)}
         >
-          <Text style={styles.confirmText}>{focused ? `Walk with ${focused.name}` : ' '}</Text>
+          <Text style={styles.confirmText}>
+            {focused ? t('you.walkWith', { name: focused.name }) : ' '}
+          </Text>
         </Pressable>
         {/* Always rendered — its height is part of the layout whether or not
             a philosopher is focused, so focusing never shifts the ring. */}
         <Text style={[styles.reassurance, !focused && styles.reassuranceHidden]}>
-          You can change this anytime
+          {t('you.changeThisAnytime')}
         </Text>
       </View>
     </View>

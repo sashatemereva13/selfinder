@@ -133,6 +133,36 @@ specific composition.
 
 ---
 
+## Onboarding fixes (2026-08-04)
+
+**Status:** done. Two real bugs found and fixed via real user testing on a
+built Russian APK, not caught in prior web-only verification:
+
+1. **"— это опыт" (payoff text) sat off-center, not aligned with the
+   converging lines above it.** `howLabel`'s `left: -62`/`textAlign: "left"`
+   is a deliberate English-only asymmetric placement (see the style's own
+   comment), tuned for "is an experience" — the fixed offset doesn't scale
+   with string length, so a different-length Russian string drifted off
+   axis. Fixed with a `howLabelCentered` style applied only when
+   `locale === 'ru'` (`left: 0, textAlign: "center"`), not by changing the
+   English layout.
+2. **The philosopher-picker ring appeared "stuck"/stale before the user
+   tapped something, which then made it snap into place.** Root cause was
+   already partially diagnosed in a code comment in `PhilosopherPicker.tsx`:
+   `measureInWindow`'s callback can fire with `(0, 0)` on Android right
+   after mount, before the native view's real position has settled — this
+   sends onboarding's traveling ring a wrong, off-screen-ish target instead
+   of the real one, and the existing single 100ms retry wasn't reliably
+   long enough (worse on the Russian build, whose longer title text —
+   "Выберите, кто будет рядом" vs. "Choose who walks beside you" — seems to
+   shift layout timing). A user tap anywhere caused a re-render, which
+   triggered a fresh (correct) `onLayout`/measurement — that's the "stuck,
+   then snaps into place on tap" symptom. Fixed by extending the retry to
+   up to 3 attempts with a growing delay (`measureWithRetry`), rather than
+   the previous single fixed-delay retry.
+
+---
+
 ## Multi-language support (Russian, French, ...)
 
 **Status:** in progress. English + Russian UI-string extraction is well
@@ -167,14 +197,68 @@ access to `useTranslation`. The Tune In lock-screen media label
 (`tuneIn.lockScreenArtist`) was also hardcoded English and is now
 locale-aware.
 
-**Known gaps deliberately left alone, not silently expanded into** (scope
-was "fix labels," not "translate everything"): `guideNudges.ts` (all five
-philosophers' nudge text is English-only, no i18n mechanism in the file at
-all — translating only `actionLabel` would leave Russian buttons next to
-English body text, worse than leaving both English) and `moonConfig.ts`'s
-reflection paragraphs (labels fixed, the actual "Your last reading
-pointed to..." body text is still English). Each of these needs its own
-translation pass, not a rename-scoped touch-up.
+**Full content translation pass (2026-08-04, later same day):** far beyond
+the original "fix labels" scope — real Russian voice content was written
+for:
+- All 5 philosophers' picker/Guide-facing fields (`philosophers.ts`):
+  name, mode, symbolLine, greeting, firstMeeting, secondVisitGreeting,
+  description, measureQuestions — via a new `translations.ru` field per
+  philosopher and `getLocalizedPhilosopher(philosopher, locale)`.
+  `systemPrompt` deliberately stays English-only in both locales (Qwen is
+  instructed to reply in Russian regardless — see below).
+- Tune In (`tuneInStates.ts`): state names + intent copy, via
+  `getLocalizedTuneInState()`. The base English `name` stays the stable
+  identifier for analytics (`track('tune_in_started', ...)`) and the lock-
+  screen lookup key — only the display string is swapped.
+- Breathing (`breathingPatterns.ts`): pattern name/subtitle/useFor/intent/
+  howTo/phase labels, plus the 6 session-completion lines, via
+  `getLocalizedBreathingPattern()` / `getRandomCompletionLine(locale)`.
+  Same stable-id-for-tracking pattern as Tune In.
+- The 17 vibration-level names (`measureConfig.ts`'s `VIBRATION_LEVELS`)
+  — added as a **display-only** `LEVEL_NAMES_RU` lookup keyed by slug via
+  `getLocalizedLevelName()`, deliberately NOT a change to `.name` itself,
+  since that field is also the backend's AI-scoring reference-table key
+  (`backend/data/vibrationLevels.js`) and what's stored verbatim in saved
+  `MeasureResult` documents — renaming it would have desynced the AI
+  scoring prompt and made historical readings' stored level names
+  inconsistent with newly-translated ones. Wired into every actual render
+  site: Depths (ring label + both "talk about it" AI messages), Measure
+  intro's "last time" line, Levels list, `ConsciousnessWheel`, Your Arc
+  (detail + preview screens), `AccountSection`'s reading history rows.
+- The philosopher picker itself (`PhilosopherPicker.tsx`): "Tap someone to
+  begin," "Walk with {name}," "You can change this anytime" were all
+  hardcoded English with no i18n at all — now `you.tapSomeoneToBegin`/
+  `walkWith`/`changeThisAnytime`.
+- `feelingLuckyList.json`'s 341 hand-written affirmation messages —
+  machine-batch-translated via Qwen (see the AI section below for the
+  model/config) into a parallel `feelingLuckyList.ru.json`, picked from
+  by locale in `feeling-lucky/index.tsx`. Spot-checked across a random
+  sample; quality reads as natural, idiomatic Russian, not literal
+  translation — even correctly inferred an obvious source typo
+  ("manahe" → "справляешься"). The English source list (with its
+  pre-existing duplicate ids and a few garbled test entries like "1414")
+  was left untouched; the translation preserved it faithfully rather than
+  silently cleaning up unrelated data-quality issues.
+- Small components that were plain hardcoded English with zero i18n:
+  `DailyReminderSection.tsx` (also fixed 12-hour AM/PM → 24-hour time for
+  `ru`, a real locale format difference, not just a translated label),
+  `SaveMessageAction.tsx`, `ConsciousnessWheel.tsx`'s "Read about {name}."
+- Two new shared i18n keys, `common.axisCalm/axisClarity/axisIntensity/
+  axisGrounding`, since the visible "I just measured myself..."/"My
+  {sphere} just read as..." messages sent to Guide (previously hardcoded
+  English template literals in `depths/index.tsx` and
+  `your-arc-preview.tsx`) needed the axis name translated too — the
+  *invisible* `additionalContext` passed alongside those messages
+  deliberately stays English (matches the system-prompt-stays-English
+  pattern) since only the visible chat bubble needs to read as Russian.
+
+**Deliberately still out of scope** (each is its own future translation
+pass, not a code fix): `guideNudges.ts` (all five philosophers' nudge
+text, no i18n mechanism in the file at all), `moonConfig.ts`'s reflection
+paragraphs (its 3 tool labels were fixed, the "Your last reading pointed
+to..." body text is still English), and `levelsContent.ts` (~1240 lines —
+the full level-detail page's title/frame/paragraphs/sections/deepDive for
+all 17 levels; almost certainly the single largest remaining gap).
 
 **The AI conversation now uses Qwen for the Russian locale (2026-08-04).**
 Groq hosts `qwen/qwen3.6-27b` (Alibaba Cloud) alongside the Llama models

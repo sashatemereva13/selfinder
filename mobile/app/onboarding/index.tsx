@@ -36,6 +36,7 @@ import {
 import { spacing, radius } from "../../src/theme/spacing";
 import { useReadingColumnWidth } from "../../src/theme/responsive";
 import { usePhilosopherStore } from "../../src/store/philosopherStore";
+import { useLocaleStore } from "../../src/store/localeStore";
 import { PhilosopherPicker } from "../../src/components/PhilosopherPicker";
 import { AmbientGlow } from "../../src/components/AmbientGlow";
 import {
@@ -698,6 +699,7 @@ function IntroFigure({
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const reduceMotion = useReducedMotion();
   // Reduce Motion skips the greet beat and mounts the intro already
   // fast-forwarded: the full settled composition on gentle fades, no
@@ -1409,7 +1411,22 @@ export default function OnboardingScreen() {
                     layout animation (entering) and a reactive style can
                     fight over the same property on one component. */}
               <Animated.View style={[StyleSheet.absoluteFill, howRevealStyle]}>
-                <Animated.Text style={[styles.howLabel, exitFadeStyle]}>
+                {/* howLabel's default left:-62/textAlign:"left" is a
+                    deliberate off-center placement tuned for the English
+                    "is an experience" (see the comment on howLabel itself)
+                    — but that fixed offset doesn't scale with string
+                    length, so the Russian "— это опыт" (a different
+                    length) visibly drifted off from the line/figure axis
+                    instead of reading as intentional. Centered instead for
+                    Russian specifically, rather than changing the English
+                    design. */}
+                <Animated.Text
+                  style={[
+                    styles.howLabel,
+                    locale === 'ru' && styles.howLabelCentered,
+                    exitFadeStyle,
+                  ]}
+                >
                   {t('onboarding.isAnExperience')}
                 </Animated.Text>
               </Animated.View>
@@ -1743,6 +1760,14 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.sm * lineHeights.tight,
+  },
+  // Russian-only override — see the comment where this is applied above.
+  // Cancels howLabel's left:-62/textAlign:"left" asymmetric placement and
+  // centers "— это опыт" on the composition's own axis instead, so it
+  // aligns with the converging lines above it rather than drifting left.
+  howLabelCentered: {
+    left: 0,
+    textAlign: "center",
   },
   // Same warm, thin, quiet register as "why?" / "what" / "you feel" —
   // matching the line-art feel that the rest of the screen has, rather

@@ -5,14 +5,16 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
-import { VIBRATION_LEVELS, LEVEL_COLORS } from '../../../../src/content/measureConfig';
+import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { ConsciousnessWheel } from '../../../../src/components/ConsciousnessWheel';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 
 export default function LevelsScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -51,7 +53,7 @@ export default function LevelsScreen() {
             onPress={() => goToLevel(level.slug)}
           >
             <View style={[styles.rowDot, { backgroundColor: `rgb(${LEVEL_COLORS[level.slug]})` }]} />
-            <Text style={styles.rowName}>{level.name}</Text>
+            <Text style={styles.rowName}>{getLocalizedLevelName(level, locale)}</Text>
           </Pressable>
         ))}
       </View>

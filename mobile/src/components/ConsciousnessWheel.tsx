@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -8,10 +9,11 @@ import Animated, {
   runOnJS,
   withSpring,
 } from 'react-native-reanimated';
-import { VIBRATION_LEVELS, LEVEL_COLORS } from '../content/measureConfig';
+import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../content/measureConfig';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing } from '../theme/spacing';
+import { useLocaleStore } from '../store/localeStore';
 
 // The full color wheel, draggable — this is where "map all 17 vibrations
 // to their colors at once" actually belongs (see docs/design/aesthetic.md
@@ -70,6 +72,8 @@ export function ConsciousnessWheel({
 }: {
   onSelectLevel?: (slug: string) => void;
 }) {
+  const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   // Starts at Neutrality (roughly the middle of the scale) — an arbitrary
   // but deliberately unloaded starting point, rather than defaulting to
   // Shame or Enlightenment, which would make one extreme look like the
@@ -181,12 +185,14 @@ export function ConsciousnessWheel({
       {/* Nothing labeled until you're pointing at it — the wheel itself
           stays uncluttered; dragging is what reveals a name, one at a
           time, rather than 17 labels crowding the circle at rest. */}
-      <Text style={[styles.levelName, { color: activeColor }]}>{activeLevel.name}</Text>
+      <Text style={[styles.levelName, { color: activeColor }]}>
+        {getLocalizedLevelName(activeLevel, locale)}
+      </Text>
       <Text
         style={styles.levelLink}
         onPress={() => onSelectLevel?.(activeLevel.slug)}
       >
-        Read about {activeLevel.name} →
+        {t('levels.readAbout', { name: getLocalizedLevelName(activeLevel, locale) })}
       </Text>
     </View>
   );

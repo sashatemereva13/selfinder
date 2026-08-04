@@ -15,9 +15,10 @@ import Animated, {
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
-import { TUNE_IN_STATES } from '../../../../src/content/tuneInStates';
+import { TUNE_IN_STATES, getLocalizedTuneInState } from '../../../../src/content/tuneInStates';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
@@ -85,6 +86,7 @@ function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
 
 export default function TuneInScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [selected, setSelected] = useState(0);
@@ -175,7 +177,7 @@ export default function TuneInScreen() {
     } else {
       players[selected].play();
       players[selected].setActiveForLockScreen(true, {
-        title: activeState.name,
+        title: getLocalizedTuneInState(activeState, locale).name,
         artist: t('tuneIn.lockScreenArtist'),
       });
       setIsPlaying(true);
@@ -190,7 +192,7 @@ export default function TuneInScreen() {
       players[selected].setActiveForLockScreen(false);
       players[index].play();
       players[index].setActiveForLockScreen(true, {
-        title: TUNE_IN_STATES[index].name,
+        title: getLocalizedTuneInState(TUNE_IN_STATES[index], locale).name,
         artist: t('tuneIn.lockScreenArtist'),
       });
       track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
@@ -216,7 +218,7 @@ export default function TuneInScreen() {
         {TUNE_IN_STATES.map((state, i) => (
           <Pressable key={state.name} style={styles.pickerItem} onPress={() => handleSelect(i)}>
             <Text style={[styles.pickerName, i === selected && styles.pickerNameActive]}>
-              {state.name}
+              {getLocalizedTuneInState(state, locale).name}
             </Text>
           </Pressable>
         ))}
@@ -224,7 +226,7 @@ export default function TuneInScreen() {
 
       <View style={styles.centerBlock}>
         <Pulse active={isPlaying} onPress={handleToggle} />
-        <Text style={styles.intent}>{activeState.intent}</Text>
+        <Text style={styles.intent}>{getLocalizedTuneInState(activeState, locale).intent}</Text>
       </View>
 
       <View style={styles.volumeRow}>

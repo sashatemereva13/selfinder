@@ -13,10 +13,11 @@ import Animated, {
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
-import { BREATHING_PATTERNS, BreathingPhase, getRandomCompletionLine } from '../../../../src/content/breathingPatterns';
+import { BREATHING_PATTERNS, BreathingPhase, getRandomCompletionLine, getLocalizedBreathingPattern } from '../../../../src/content/breathingPatterns';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 const BASE_SCALE = 0.85;
 const PEAK_SCALE = 1.25;
@@ -67,6 +68,7 @@ function BreathingOrb({
 
 export default function BreathingScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
@@ -78,7 +80,7 @@ export default function BreathingScreen() {
   const [completionLine, setCompletionLine] = useState<string | null>(null);
   const scale = useSharedValue(BASE_SCALE);
 
-  const pattern = BREATHING_PATTERNS[patternIndex];
+  const pattern = getLocalizedBreathingPattern(BREATHING_PATTERNS[patternIndex], locale);
   const phase: BreathingPhase = pattern.phases[phaseIndex];
 
   useEffect(() => {
@@ -106,7 +108,7 @@ export default function BreathingScreen() {
           setPhaseIndex(0);
           setRound(1);
           scale.value = withTiming(BASE_SCALE, { duration: SETTLE_MS });
-          setCompletionLine(getRandomCompletionLine());
+          setCompletionLine(getRandomCompletionLine(locale));
           track('breathing_completed', { patternId: pattern.id });
         } else {
           setRound((r) => r + 1);
@@ -158,7 +160,7 @@ export default function BreathingScreen() {
         {BREATHING_PATTERNS.map((p, i) => (
           <Pressable key={p.id} style={styles.pickerItem} onPress={() => handleSelectPattern(i)}>
             <Text style={[styles.pickerName, i === patternIndex && styles.pickerNameActive]}>
-              {p.name}
+              {getLocalizedBreathingPattern(p, locale).name}
             </Text>
           </Pressable>
         ))}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
@@ -6,25 +7,34 @@ import { spacing } from '../theme/spacing';
 import { usePhilosopherStore } from '../store/philosopherStore';
 import { useReminderStore } from '../store/reminderStore';
 import { useAppAccentRgb } from '../utils/appAccent';
+import { useLocaleStore } from '../store/localeStore';
 
 // Deliberately simple: four fixed times, no custom picker. Tapping the
 // already-active preset turns the reminder off; tapping any other one
 // switches to it (re-scheduling replaces the previous time, it doesn't stack).
+// labelKey (not a literal string) resolved via t() at render time.
 const PRESETS = [
-  { label: 'Morning', hour: 8, minute: 0 },
-  { label: 'Midday', hour: 13, minute: 0 },
-  { label: 'Evening', hour: 18, minute: 0 },
-  { label: 'Night', hour: 21, minute: 0 },
+  { labelKey: 'dailyReminder.morning', hour: 8, minute: 0 },
+  { labelKey: 'dailyReminder.midday', hour: 13, minute: 0 },
+  { labelKey: 'dailyReminder.evening', hour: 18, minute: 0 },
+  { labelKey: 'dailyReminder.night', hour: 21, minute: 0 },
 ];
 
-function formatTime(hour: number, minute: number): string {
+// Russian conventionally uses 24-hour time, not 12-hour AM/PM — this isn't
+// just a translated label, the actual time format differs by locale.
+function formatTime(hour: number, minute: number, locale: 'en' | 'ru'): string {
+  const displayMinute = minute.toString().padStart(2, '0');
+  if (locale === 'ru') {
+    return `${hour}:${displayMinute}`;
+  }
   const period = hour >= 12 ? 'PM' : 'AM';
   const displayHour = hour % 12 === 0 ? 12 : hour % 12;
-  const displayMinute = minute.toString().padStart(2, '0');
   return `${displayHour}:${displayMinute} ${period}`;
 }
 
 export function DailyReminderSection() {
+  const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const enabled = useReminderStore((s) => s.enabled);
   const hour = useReminderStore((s) => s.hour);
@@ -50,22 +60,24 @@ export function DailyReminderSection() {
 
   return (
     <View style={styles.section}>
-      <Text style={styles.kicker}>Daily reminder</Text>
-      <Text style={styles.status}>{enabled ? `On, ${formatTime(hour, minute)}` : 'Off'}</Text>
+      <Text style={styles.kicker}>{t('dailyReminder.kicker')}</Text>
+      <Text style={styles.status}>
+        {enabled ? t('dailyReminder.on', { time: formatTime(hour, minute, locale) }) : t('dailyReminder.off')}
+      </Text>
 
       <View style={styles.presets}>
         {PRESETS.map((preset) => {
           const active = enabled && hour === preset.hour && minute === preset.minute;
           return (
             <Pressable
-              key={preset.label}
+              key={preset.labelKey}
               style={styles.presetButton}
               onPress={() => handlePress(preset.hour, preset.minute)}
             >
               <Text style={[styles.presetLabel, active && { color: accentColor }]}>
-                {preset.label}
+                {t(preset.labelKey)}
               </Text>
-              <Text style={styles.presetTime}>{formatTime(preset.hour, preset.minute)}</Text>
+              <Text style={styles.presetTime}>{formatTime(preset.hour, preset.minute, locale)}</Text>
             </Pressable>
           );
         })}
@@ -73,7 +85,7 @@ export function DailyReminderSection() {
 
       {deniedNotice && (
         <Text style={styles.deniedText}>
-          Notifications are off for Selfinder — enable them in Settings to use this.
+          {t('dailyReminder.notificationsOff', { appName: t('common.wordmark') })}
         </Text>
       )}
     </View>

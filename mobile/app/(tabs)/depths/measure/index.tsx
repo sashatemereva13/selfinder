@@ -10,9 +10,12 @@ import { useMeasureStore } from '../../../../src/store/measureStore';
 import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
+import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 export default function TodayScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -53,7 +56,9 @@ export default function TodayScreen() {
 
         {currentResult && (
           <Text style={styles.lastReading}>
-            {t('measureIntro.lastReading', { level: currentResult.vibrationLevel.name.toLowerCase() })}
+            {t('measureIntro.lastReading', {
+              level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
+            })}
           </Text>
         )}
       </View>

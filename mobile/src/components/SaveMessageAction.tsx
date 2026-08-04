@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageCard } from './MessageCard';
 import { saveMessageImage, shareMessageImage } from '../utils/saveMessageImage';
@@ -10,6 +11,7 @@ import { spacing } from '../theme/spacing';
 // MessageCard) purely as the capture target for "save as image" / "share" —
 // the on-screen message elsewhere on the page is untouched by this.
 export function SaveMessageAction({ message, accentRgb }: { message: string; accentRgb: string }) {
+  const { t } = useTranslation();
   const cardRef = useRef<View>(null);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -22,7 +24,7 @@ export function SaveMessageAction({ message, accentRgb }: { message: string; acc
       setStatus('saved');
     } else {
       setStatus('error');
-      setErrorText(result.error ?? 'Something went wrong.');
+      setErrorText(result.error ?? t('saveMessage.somethingWentWrong'));
     }
   };
 
@@ -38,21 +40,23 @@ export function SaveMessageAction({ message, accentRgb }: { message: string; acc
         </View>
       </View>
 
-      <Text style={styles.label}>Keep this message</Text>
+      <Text style={styles.label}>{t('saveMessage.keepThisMessage')}</Text>
       <View style={styles.actions}>
         <Pressable onPress={handleSave} disabled={status === 'saving'}>
           <Text style={styles.actionText}>
-            {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved ✓' : 'Save as an image'}
+            {status === 'saving'
+              ? t('saveMessage.saving')
+              : status === 'saved'
+                ? t('saveMessage.saved')
+                : t('saveMessage.saveAsImage')}
           </Text>
         </Pressable>
         <Pressable onPress={handleShare}>
-          <Text style={styles.actionText}>Share it</Text>
+          <Text style={styles.actionText}>{t('saveMessage.shareIt')}</Text>
         </Pressable>
       </View>
 
-      {status === 'saved' && (
-        <Text style={styles.hint}>Set it as your wallpaper from Settings → Wallpaper.</Text>
-      )}
+      {status === 'saved' && <Text style={styles.hint}>{t('saveMessage.wallpaperHint')}</Text>}
       {status === 'error' && errorText && <Text style={styles.error}>{errorText}</Text>}
     </View>
   );

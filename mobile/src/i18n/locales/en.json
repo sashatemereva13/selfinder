@@ -9,6 +9,10 @@
     "sphereMind": "Mind",
     "sphereHeart": "Heart",
     "sphereSpirit": "Spirit",
+    "axisCalm": "calm",
+    "axisClarity": "clarity",
+    "axisIntensity": "intensity",
+    "axisGrounding": "grounding",
     "tabDepths": "Depths",
     "tabGuide": "Guide",
     "tabYou": "You"
@@ -17,6 +21,9 @@
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
     "chooseWhoWalksBesideYou": "Choose who walks beside you",
+    "tapSomeoneToBegin": "Tap someone to begin",
+    "walkWith": "Walk with {{name}}",
+    "changeThisAnytime": "You can change this anytime",
     "cancel": "Cancel",
     "language": "Language",
     "languageEnglish": "English",
@@ -86,6 +93,8 @@
   "depths": {
     "kicker": "Depths",
     "talkToAboutIt": "Talk to {{name}} about it →",
+    "iJustMeasuredMyself": "I just measured myself: {{level}}, mostly in {{axis}}. Can we talk about it?",
+    "mySphereJustReadAs": "My {{sphere}} just read as {{level}}. Can we talk about it?",
     "hideConversation": "Hide conversation",
     "showConversation": "Show conversation",
     "beforeFirstReading": "Before your first reading",
@@ -148,6 +157,25 @@
     "turnOnSavingNote": "Turn on \"Save my readings to my account\" to keep the full story behind each point, not just the date and level.",
     "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back."
   },
+  "saveMessage": {
+    "keepThisMessage": "Keep this message",
+    "saving": "Saving…",
+    "saved": "Saved ✓",
+    "saveAsImage": "Save as an image",
+    "shareIt": "Share it",
+    "wallpaperHint": "Set it as your wallpaper from Settings → Wallpaper.",
+    "somethingWentWrong": "Something went wrong."
+  },
+  "dailyReminder": {
+    "kicker": "Daily reminder",
+    "on": "On, {{time}}",
+    "off": "Off",
+    "morning": "Morning",
+    "midday": "Midday",
+    "evening": "Evening",
+    "night": "Night",
+    "notificationsOff": "Notifications are off for {{appName}} — enable them in Settings to use this."
+  },
   "tuneIn": {
     "lockScreenArtist": "Selfinder — Tune In",
     "play": "Play",
@@ -205,7 +233,12 @@
   "levels": {
     "kicker": "Levels",
     "title": "The map of consciousness",
-    "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits."
+    "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
+    "readAbout": "Read about {{name}} →"
+  },
+  "feelingLucky": {
+    "talkAboutIt": "Talk to {{name}} about it →",
+    "talkAboutItMessage": "This found me just now: \"{{message}}\" Can we talk about it?"
   },
   "onboarding": {
     "what": "what",

@@ -13,6 +13,8 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useEngagementStore, TALK_ABOUT_IT_UPSELL_THRESHOLD } from '../../../src/store/engagementStore';
 import { track } from '../../../src/utils/analytics';
+import { getLocalizedLevelName } from '../../../src/content/measureConfig';
+import { useLocaleStore } from '../../../src/store/localeStore';
 
 // Not subscribed yet — shown when tapping Depths' "Your arc" row without an
 // active subscription (see arcSparkline.ts). The sparkline here is the
@@ -28,6 +30,7 @@ import { track } from '../../../src/utils/analytics';
 // actually designed, not just promised in one line.
 export default function YourArcPreviewScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const readingLog = useMeasureStore((s) => s.readingLog);
@@ -48,13 +51,23 @@ export default function YourArcPreviewScreen() {
   const showTalkAboutItNudge =
     talkAboutItCount >= TALK_ABOUT_IT_UPSELL_THRESHOLD && !!philosopher && !!currentResult;
 
+  const AXIS_LABEL_KEYS: Record<string, string> = {
+    calm: 'common.axisCalm',
+    clarity: 'common.axisClarity',
+    intensity: 'common.axisIntensity',
+    grounding: 'common.axisGrounding',
+  };
+
   const handleTalkAboutIt = () => {
     if (!philosopher || !currentResult) return;
     track('your_arc_preview_talk_about_it');
     recordTalkAboutIt();
     sendGuideMessage(
       philosopher,
-      `I just measured myself: ${currentResult.vibrationLevel.name.toLowerCase()}, mostly in ${currentResult.dominantAxis}. Can we talk about it?`,
+      t('depths.iJustMeasuredMyself', {
+        level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
+        axis: t(AXIS_LABEL_KEYS[currentResult.dominantAxis] ?? currentResult.dominantAxis),
+      }),
     );
     router.push('/(tabs)/guide');
   };

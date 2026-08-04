@@ -5,23 +5,33 @@ export interface MeasureQuestion {
   question: string;
 }
 
-export interface Philosopher {
-  id: string;
+// The subset of Philosopher that's hand-authored, user-facing voice/copy —
+// distinct from id (a stable key) and systemPrompt (deliberately English-
+// only in every locale; see philosophers.ts's own comment on why). Kept as
+// its own type so a translation object can require exactly these fields,
+// nothing more/less, and so getLocalizedPhilosopher's return type is
+// obviously "the same shape, some fields swapped" rather than a loose
+// Partial<Philosopher> that could accidentally omit something.
+export interface PhilosopherVoice {
   name: string;
   mode: string;
   description: string;
-  /** One line tying the wireframe symbol to the philosopher's idea — shown
-   * when focused in the picker, so the geometry reads as meaning, not
-   * decoration. */
   symbolLine: string;
   greeting: string;
   firstMeeting: string;
-  // Shown once, in place of the routine greeting, the first time someone
-  // opens the app on a new visit after having measured exactly once —
-  // see Guide's screen for the gating logic.
   secondVisitGreeting: string;
   measureQuestions: MeasureQuestion[];
+}
+
+export interface Philosopher extends PhilosopherVoice {
+  id: string;
   systemPrompt: string;
+  // Russian versions of every hand-authored voice field, keyed by locale
+  // code — currently only 'ru' exists since English is the base object
+  // itself. Resolved via getLocalizedPhilosopher(), not read directly by
+  // consuming components (that would mean every one of the ~12 call sites
+  // re-implementing the same locale-check).
+  translations?: Partial<Record<'ru', PhilosopherVoice>>;
 }
 
 export interface VibrationLevel {

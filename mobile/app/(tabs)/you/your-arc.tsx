@@ -13,6 +13,8 @@ import { getMe, getMeasureHistory } from '../../../src/api/user';
 import { SavedMeasureResult } from '../../../src/types';
 import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../../../src/components/arcSparkline';
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
+import { getLocalizedLevelName } from '../../../src/content/measureConfig';
+import { useLocaleStore } from '../../../src/store/localeStore';
 
 const VIEW_W = SPARKLINE_VIEW_W;
 const VIEW_H = SPARKLINE_VIEW_H;
@@ -40,6 +42,7 @@ function formatDate(ts: number) {
 // to recover. Never pretend detail exists that doesn't.
 export default function YourArcScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const readingLog = useMeasureStore((s) => s.readingLog);
@@ -151,7 +154,9 @@ export default function YourArcScreen() {
           <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
           {selectedRich ? (
             <>
-              <Text style={styles.detailLevel}>{selectedRich.vibrationLevel.name}</Text>
+              <Text style={styles.detailLevel}>
+                {getLocalizedLevelName(selectedRich.vibrationLevel, locale)}
+              </Text>
               {selectedRich.combinationMessage && (
                 <Text style={styles.detailReflection}>{selectedRich.combinationMessage}</Text>
               )}

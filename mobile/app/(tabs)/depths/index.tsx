@@ -29,7 +29,8 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
 import { getLevelBySlug } from '../../../src/content/levelsContent';
-import { LEVEL_COLORS } from '../../../src/content/measureConfig';
+import { LEVEL_COLORS, getLocalizedLevelName } from '../../../src/content/measureConfig';
+import { useLocaleStore } from '../../../src/store/localeStore';
 import { Sphere } from '../../../src/types';
 import { SaveMessageAction } from '../../../src/components/SaveMessageAction';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
@@ -198,6 +199,7 @@ const FEELING_LUCKY: Tool = {
 
 export default function DepthsScreen() {
   const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const columnWidth = useReadingColumnWidth();
@@ -333,7 +335,8 @@ export default function DepthsScreen() {
   const [selectedSphere, setSelectedSphere] = useState<Sphere | null>(null);
   const selectedLine = currentResult?.lines.find((l) => l.key === selectedSphere);
   const ringLevelSlug = selectedLine ? selectedLine.vibrationLevel.slug : currentResult?.vibrationLevel.slug;
-  const ringLevelName = selectedLine ? selectedLine.vibrationLevel.name : currentResult?.vibrationLevel.name;
+  const ringLevel = selectedLine ? selectedLine.vibrationLevel : currentResult?.vibrationLevel;
+  const ringLevelName = ringLevel ? getLocalizedLevelName(ringLevel, locale) : undefined;
   // The aura's own image/glow/dots follow whichever level is currently
   // shown on the ring (the sphere you're pointing at, or the overall
   // reading when none is selected) — previously fixed to the overall
@@ -361,13 +364,29 @@ export default function DepthsScreen() {
   // Always sends to Guide now, regardless of how many times it's been used —
   // the past-threshold upsell nudge moved to the not-subscribed Your Arc
   // preview screen (see TALK_ABOUT_IT_UPSELL_THRESHOLD's own comment).
+  const AXIS_LABEL_KEYS: Record<string, string> = {
+    calm: 'common.axisCalm',
+    clarity: 'common.axisClarity',
+    intensity: 'common.axisIntensity',
+    grounding: 'common.axisGrounding',
+  };
+  const SPHERE_LABEL_KEYS: Record<string, string> = {
+    body: 'common.sphereBody',
+    mind: 'common.sphereMind',
+    heart: 'common.sphereHeart',
+    spirit: 'common.sphereSpirit',
+  };
+
   const handleTalkAboutIt = () => {
     if (!philosopher || !currentResult) return;
     track('reveal_talk_about_it');
     recordTalkAboutIt();
     sendGuideMessage(
       philosopher,
-      `I just measured myself: ${currentResult.vibrationLevel.name.toLowerCase()}, mostly in ${currentResult.dominantAxis}. Can we talk about it?`,
+      t('depths.iJustMeasuredMyself', {
+        level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
+        axis: t(AXIS_LABEL_KEYS[currentResult.dominantAxis] ?? currentResult.dominantAxis),
+      }),
     );
     router.push('/(tabs)/guide');
   };
@@ -392,7 +411,10 @@ export default function DepthsScreen() {
       : `They just tapped to talk about their ${selectedLine.key} reading, which came out as ${selectedLine.vibrationLevel.name}. There's no recorded answer for this sphere from their check-in to draw on. Don't just describe what ${selectedLine.vibrationLevel.name} means in general — ask them directly what's going on with their ${selectedLine.key} right now, so you have something real to respond to.`;
     sendGuideMessage(
       philosopher,
-      `My ${selectedLine.key} just read as ${selectedLine.vibrationLevel.name.toLowerCase()}. Can we talk about it?`,
+      t('depths.mySphereJustReadAs', {
+        sphere: t(SPHERE_LABEL_KEYS[selectedLine.key] ?? selectedLine.key),
+        level: getLocalizedLevelName(selectedLine.vibrationLevel, locale).toLowerCase(),
+      }),
       context,
     );
     router.push('/(tabs)/guide');

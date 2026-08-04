@@ -1,4 +1,5 @@
 import { Philosopher } from '../types';
+import { Locale } from '../store/localeStore';
 
 export const PHILOSOPHERS: Philosopher[] = [
   {
@@ -28,6 +29,35 @@ export const PHILOSOPHERS: Philosopher[] = [
         question: "What do you consider worth doing today, regardless of what you cannot change?",
       },
     ],
+    translations: {
+      ru: {
+        name: 'Марк Аврелий',
+        mode: 'Голос опоры',
+        symbolLine: 'Его знак: конус — всё сужается к тому, что действительно ваше.',
+        greeting: 'Рад, что вы вернулись. Ясность не приходит от ожидания — только от взгляда.',
+        firstMeeting: 'Рад знакомству. Ясность приходит от взгляда, а не от ожидания — «Где я» с этого и начинается.',
+        secondVisitGreeting: 'Вы вернулись. Хорошо — ясность никогда не была делом одного взгляда. Это практика — смотреть снова.',
+        description: 'Марк Аврелий говорит, когда разум движется быстрее, чем следует. Он проводит одну чёткую линию: что ваше, а что нет.',
+        measureQuestions: [
+          {
+            sphere: 'body',
+            question: 'Как сегодня несёт вас тело — устойчиво под вами, или напрягается против момента?',
+          },
+          {
+            sphere: 'mind',
+            question: 'Может ли сегодня ваш разум управлять собой, или он блуждает в том, что вам не подвластно?',
+          },
+          {
+            sphere: 'heart',
+            question: 'Что движет вами в этот момент — долг, страх, любовь, или нечто, чему труднее подобрать имя?',
+          },
+          {
+            sphere: 'spirit',
+            question: 'Что вы считаете стоящим сегодня, независимо от того, что вы не можете изменить?',
+          },
+        ],
+      },
+    },
     systemPrompt: `You are Marcus Aurelius — Roman emperor, soldier, and philosopher. You write
 and speak the way you did in your private journal: not performing wisdom for
 an audience, but working through reality honestly, for yourself and for the
@@ -99,6 +129,35 @@ grounding than a single terse line. Clarity takes the space clarity takes.`,
         question: "What feels genuinely worth doing today — not what should, but what actually does?",
       },
     ],
+    translations: {
+      ru: {
+        name: 'Сократ',
+        mode: 'Вопрошающий',
+        symbolLine: 'Его знак: спираль — вопрос, что кружит всё глубже.',
+        greeting: 'Вы вернулись. Хорошо. Непроверенный момент редко стоит того, чтобы его хранить.',
+        firstMeeting: 'Хорошо, что вы здесь. Прежде всего: вы вообще знаете, где сейчас стоите? «Где я» скажет вам это быстрее, чем размышления.',
+        secondVisitGreeting: 'Вы вернулись после одного взгляда. Хорошо — большинство отворачивается, так и не успев ничему научиться из увиденного.',
+        description: 'У Сократа нет ответов. У него есть вопросы, которые достигают тех, что вы уже носите внутри себя.',
+        measureQuestions: [
+          {
+            sphere: 'body',
+            question: 'Что ваше тело говорит вам прямо сейчас, но вы ещё не произнесли это вслух?',
+          },
+          {
+            sphere: 'mind',
+            question: 'Куда сегодня тянется ваше внимание — есть ли ясная нить, или оно рассеяно?',
+          },
+          {
+            sphere: 'heart',
+            question: 'Что это, глубже всего остального, движет вами сегодня?',
+          },
+          {
+            sphere: 'spirit',
+            question: 'Что ощущается по-настоящему стоящим сегодня — не то, что должно, а то, что действительно так?',
+          },
+        ],
+      },
+    },
     systemPrompt: `You are Socrates, speaking with a person who has come to you seeking clarity.
 
 You do not have answers. You have questions — and the belief that the person
@@ -168,6 +227,35 @@ presence.`,
         question: "Does anything feel genuinely meaningful right now, or are you simply moving?",
       },
     ],
+    translations: {
+      ru: {
+        name: 'Кьеркегор',
+        mode: 'Экзистенциальный голос',
+        symbolLine: 'Его знак: куб — порог, который вы переступаете в одиночку.',
+        greeting: 'Вы вернулись. Само по себе это уже кое-что — большинство не возвращается.',
+        firstMeeting: 'Вы здесь — это уже важно. Не знать, где вы стоите, — это исходное состояние, а не поражение. «Где я» назовёт это, когда вы будете готовы.',
+        secondVisitGreeting: 'Вы ушли и вернулись. Это возвращение — не пустяк, возможно, это первый настоящий выбор во всём этом.',
+        description: 'Кьеркегор остаётся с вами там, где нельзя рассуждениями отделаться от боли. Он не решает тревогу становления — он называет её ценой свободы.',
+        measureQuestions: [
+          {
+            sphere: 'body',
+            question: 'Что несёт сегодня ваше тело — его тяжесть, его темп, насколько оно вообще присутствует?',
+          },
+          {
+            sphere: 'mind',
+            question: 'Как сегодня звучит голос внутри вашей головы?',
+          },
+          {
+            sphere: 'heart',
+            question: 'Что заставляет вас сегодня вообще двигаться, под той причиной, которую вы назвали бы кому-то другому?',
+          },
+          {
+            sphere: 'spirit',
+            question: 'Есть ли сейчас что-то по-настоящему значимое, или вы просто движетесь?',
+          },
+        ],
+      },
+    },
     systemPrompt: `You are Søren Kierkegaard, speaking with a person who is caught somewhere
 between who they have been and who they might become.
 
@@ -242,6 +330,35 @@ not rushing them toward an answer.`,
         question: "What feels meaningful today — if anything does?",
       },
     ],
+    translations: {
+      ru: {
+        name: 'Камю',
+        mode: 'Творец смысла',
+        symbolLine: 'Его знак: валун — который несут в гору всё равно.',
+        greeting: 'Вы всё ещё здесь. Хорошо. Уйти было бы легче — вернуться стоит кое-чего.',
+        firstMeeting: 'Вы здесь — хорошо. «Где я» объяснит не всё, но скажет, где вы стоите, а это уже немало.',
+        secondVisitGreeting: 'Вы вернулись. Один взгляд редко говорит достаточно — но вернуться, чтобы взглянуть снова, это уже своего рода вызов.',
+        description: 'Камю не обещает, что всё обретёт смысл. Он остаётся рядом там, где смысла нет.',
+        measureQuestions: [
+          {
+            sphere: 'body',
+            question: 'Где сейчас ваше тело — тяжёлое, лёгкое, взвинченное, или где-то там, куда слова не совсем дотягиваются?',
+          },
+          {
+            sphere: 'mind',
+            question: 'Вы сейчас внутри своих мыслей, бежите от них, или наблюдаете за ними с некоторого расстояния?',
+          },
+          {
+            sphere: 'heart',
+            question: 'Другие существуют — вы это знаете. Как вы с ними сегодня?',
+          },
+          {
+            sphere: 'spirit',
+            question: 'Что сегодня ощущается значимым — если хоть что-то ощущается?',
+          },
+        ],
+      },
+    },
     systemPrompt: `You are Albert Camus, speaking with a person who has come to you because
 something no longer makes sense.
 
@@ -315,6 +432,35 @@ well.`,
         question: "How far can you see what's possible from where you stand today?",
       },
     ],
+    translations: {
+      ru: {
+        name: 'Аристотель',
+        mode: 'Практический компас',
+        symbolLine: 'Его знак: сфера — равновесие, удерживаемое со всех сторон.',
+        greeting: 'Вы вернулись. Это уже говорит кое-что о том, каким человеком вы становитесь.',
+        firstMeeting: 'Рад знакомству. Всё стоящее начинается с первого честного действия, а не намерения — «Где я» отлично для этого подходит.',
+        secondVisitGreeting: 'Вы сделали это однажды. Теперь вы вернулись, чтобы сделать с этим что-то ещё — так на самом деле и начинается практика.',
+        description: 'Аристотель верит, что хорошая жизнь — это не идея, а то, что практикуется.',
+        measureQuestions: [
+          {
+            sphere: 'body',
+            question: 'Тело — инструмент для всего остального. Как сейчас функционирует ваше?',
+          },
+          {
+            sphere: 'mind',
+            question: 'Доступен ли вам сегодня разум, или он ощущается рассеянным?',
+          },
+          {
+            sphere: 'heart',
+            question: 'Что на самом деле движет вами сегодня, под той причиной, которую вы могли бы озвучить вслух?',
+          },
+          {
+            sphere: 'spirit',
+            question: 'Как далеко вы видите возможное оттуда, где стоите сегодня?',
+          },
+        ],
+      },
+    },
     systemPrompt: `You are Aristotle, speaking with a person who is ready to move.
 
 You respect the inner work they have done. But you believe that virtue is not
@@ -366,3 +512,19 @@ a moment to state plainly before it can be asked for.`,
 export const PHILOSOPHER_MAP = Object.fromEntries(
   PHILOSOPHERS.map((p) => [p.id, p])
 ) as Record<string, Philosopher>;
+
+// Merges in a philosopher's Russian voice fields (name, mode, description,
+// symbolLine, greeting, firstMeeting, secondVisitGreeting,
+// measureQuestions) when locale is 'ru' and a translation exists —
+// systemPrompt is deliberately excluded and always stays the English base,
+// since Qwen is instructed to reply in Russian from that same English
+// prompt (see backend/controllers/chatController.js's
+// localizedSystemPrompt) rather than needing the prompt itself translated.
+// Called at the point of use (philosopherStore, PhilosopherPicker) rather
+// than baked into PHILOSOPHERS/PHILOSOPHER_MAP directly, so those two
+// stay simple locale-independent lookups by id.
+export function getLocalizedPhilosopher(philosopher: Philosopher, locale: Locale): Philosopher {
+  const translation = locale === 'ru' ? philosopher.translations?.ru : undefined;
+  if (!translation) return philosopher;
+  return { ...philosopher, ...translation };
+}

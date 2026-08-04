@@ -1,3 +1,5 @@
+import { Locale } from '../store/localeStore';
+
 // Each phase drives the breathing orb directly: `scale` is the target the
 // orb animates to over `seconds` (via withTiming), 'hold' means stay at
 // whatever scale it already reached. This is enough to express any
@@ -7,6 +9,15 @@ export interface BreathingPhase {
   label: string;
   seconds: number;
   scale: number | 'hold';
+}
+
+export interface BreathingPatternVoice {
+  name: string;
+  subtitle: string;
+  useFor: string;
+  intent: string;
+  howTo: string;
+  phases: BreathingPhase[];
 }
 
 export interface BreathingPattern {
@@ -26,6 +37,12 @@ export interface BreathingPattern {
   color: string; // rgb triplet, same convention as TuneInState
   phases: BreathingPhase[];
   rounds: number;
+  // Russian display text — name/subtitle/useFor/intent/howTo/phases all
+  // swapped together at render time via getLocalizedBreathingPattern();
+  // id/color/rounds stay fixed regardless of locale (id is used in
+  // track('breathing_started'/'breathing_completed', { patternId: ... }),
+  // so it must stay a stable English identifier).
+  translations?: { ru: BreathingPatternVoice };
 }
 
 export const BREATHING_PATTERNS: BreathingPattern[] = [
@@ -44,6 +61,21 @@ export const BREATHING_PATTERNS: BreathingPattern[] = [
       { label: 'Breathe out', seconds: 8, scale: 0.85 },
     ],
     rounds: 6,
+    translations: {
+      ru: {
+        name: 'Удлинённый выдох',
+        subtitle: '4 вдох, 8 выдох',
+        useFor: 'Для ровного, повседневного спокойствия.',
+        intent:
+          'Выдох вдвое длиннее вдоха — это именно то, что говорит вашей нервной системе, что можно расслабиться. Хорошо подходит как ежедневная практика, а не только для трудных моментов.',
+        howTo:
+          'Вдыхайте через нос, позволяя животу подниматься — не груди. Выдыхайте медленно через рот, как долгий, мягкий вздох.',
+        phases: [
+          { label: 'Вдох', seconds: 4, scale: 1.15 },
+          { label: 'Выдох', seconds: 8, scale: 0.85 },
+        ],
+      },
+    },
   },
   {
     id: 'physiological-sigh',
@@ -61,8 +93,29 @@ export const BREATHING_PATTERNS: BreathingPattern[] = [
       { label: 'Let it go', seconds: 6, scale: 0.85 },
     ],
     rounds: 5,
+    translations: {
+      ru: {
+        name: 'Физиологический вздох',
+        subtitle: 'Два вдоха, один долгий выдох',
+        useFor: 'Для быстрого облегчения прямо сейчас.',
+        intent:
+          'Самый быстрый известный способ вернуть активированное тело в спокойное состояние — второй короткий вдох поверх первого, затем медленное освобождение. Используйте это, когда облегчение нужно прямо сейчас.',
+        howTo:
+          'Оба вдоха через нос, сначала животом — затем позвольте выдоху выйти через рот, медленно и полностью.',
+        phases: [
+          { label: 'Вдох', seconds: 2, scale: 1.1 },
+          { label: 'Ещё один вдох', seconds: 1, scale: 1.25 },
+          { label: 'Отпустите', seconds: 6, scale: 0.85 },
+        ],
+      },
+    },
   },
 ];
+
+export function getLocalizedBreathingPattern(pattern: BreathingPattern, locale: Locale): BreathingPattern {
+  const translation = locale === 'ru' ? pattern.translations?.ru : undefined;
+  return translation ? { ...pattern, ...translation } : pattern;
+}
 
 // One short in-character line per philosopher, shown once when the screen
 // opens — the "accompaniment" the user asked for. Static and hand-written
@@ -73,17 +126,28 @@ export const BREATHING_PATTERNS: BreathingPattern[] = [
 // manual stop, since congratulating someone for a session they cut short
 // would ring false. Picked at random each time so it doesn't read as a
 // canned toast on repeat use.
-const BREATHING_COMPLETION_LINES: string[] = [
-  'Well done. Have a great day.',
-  "Good job — however you're feeling now, you got there on your own breath.",
-  'That was a full session. Carry that steadiness with you.',
-  "Nicely done. That's not nothing.",
-  'Good work. Go easy on yourself for the rest of today.',
-  'Done — you showed up for it. Have a great day.',
-];
+const BREATHING_COMPLETION_LINES: Record<Locale, string[]> = {
+  en: [
+    'Well done. Have a great day.',
+    "Good job — however you're feeling now, you got there on your own breath.",
+    'That was a full session. Carry that steadiness with you.',
+    "Nicely done. That's not nothing.",
+    'Good work. Go easy on yourself for the rest of today.',
+    'Done — you showed up for it. Have a great day.',
+  ],
+  ru: [
+    'Отлично сделано. Хорошего вам дня.',
+    'Хорошая работа — что бы вы ни чувствовали сейчас, вы дошли до этого на собственном дыхании.',
+    'Это была полная сессия. Пронесите это спокойствие с собой.',
+    'Хорошо получилось. Это уже немало.',
+    'Хорошая работа. Будьте помягче к себе до конца сегодняшнего дня.',
+    'Готово — вы для этого показались. Хорошего вам дня.',
+  ],
+};
 
-export function getRandomCompletionLine(): string {
-  return BREATHING_COMPLETION_LINES[Math.floor(Math.random() * BREATHING_COMPLETION_LINES.length)];
+export function getRandomCompletionLine(locale: Locale): string {
+  const lines = BREATHING_COMPLETION_LINES[locale] ?? BREATHING_COMPLETION_LINES.en;
+  return lines[Math.floor(Math.random() * lines.length)];
 }
 
 export const BREATHING_INTROS: Record<string, string> = {
@@ -98,3 +162,20 @@ export const BREATHING_INTROS: Record<string, string> = {
   aristotle:
     'This is practice, not theory — a few honest breaths, repeated, is how the body actually learns calm.',
 };
+
+export const BREATHING_INTROS_RU: Record<string, string> = {
+  socrates:
+    'Не нужно думать, чтобы выбраться из этого. Просто дышите и замечайте, что остаётся правдой после.',
+  stoics:
+    'Ваше дыхание — единственный рычаг, который всегда в вашей власти, даже когда всё остальное нет. Используйте его.',
+  kierkegaard:
+    'Не обязательно понимать тревогу, чтобы продышать через неё. Начните всё равно.',
+  camus:
+    'Тело не ждёт разрешения, чтобы почувствовать себя лучше. И вам не стоит. Дышите.',
+  aristotle:
+    'Это практика, а не теория — несколько честных вдохов, повторённых снова, — вот как тело на самом деле учится спокойствию.',
+};
+
+export function getLocalizedBreathingIntro(philosopherId: string, locale: Locale): string | undefined {
+  return locale === 'ru' ? BREATHING_INTROS_RU[philosopherId] : BREATHING_INTROS[philosopherId];
+}

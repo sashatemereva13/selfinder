@@ -1,4 +1,5 @@
 import { Sphere, VibrationLevel } from '../types';
+import { Locale } from '../store/localeStore';
 
 export const THERMOMETER_MAX = 750;
 
@@ -76,6 +77,39 @@ export const VIBRATION_LEVELS: VibrationLevel[] = [
   { name: 'Peace',               slug: 'peace',              score: 600, route: '/levels/peace' },
   { name: 'Enlightenment',       slug: 'enlightenment',      score: 700, route: '/levels/enlightenment' },
 ];
+
+// Display-only Russian names, keyed by slug — deliberately NOT a change to
+// VIBRATION_LEVELS[].name itself. That field is the stable English
+// identifier the backend's AI scoring reference table
+// (backend/data/vibrationLevels.js's VIBRATION_SCALE_REFERENCE) and saved
+// MeasureResult documents both key off — renaming it would desync the
+// AI's own scoring prompt from what the app displays, and would make any
+// already-saved reading's stored level name inconsistent with a
+// newly-translated one. getLocalizedLevelName resolves a display string
+// only, at the point of render.
+const LEVEL_NAMES_RU: Record<string, string> = {
+  shame: 'Стыд',
+  guilt: 'Вина',
+  apathy: 'Апатия',
+  grief: 'Горе',
+  fear: 'Страх',
+  desire: 'Желание',
+  anger: 'Гнев',
+  pride: 'Гордость',
+  courage: 'Смелость',
+  neutrality: 'Нейтральность',
+  willingness: 'Готовность',
+  acceptance: 'Принятие',
+  reason: 'Разум',
+  love: 'Любовь',
+  unconditionallove: 'Безусловная любовь',
+  peace: 'Покой',
+  enlightenment: 'Просветление',
+};
+
+export function getLocalizedLevelName(level: VibrationLevel, locale: Locale): string {
+  return locale === 'ru' ? (LEVEL_NAMES_RU[level.slug] ?? level.name) : level.name;
+}
 
 // Position in the diamond grid: body=top, mind=right, heart=bottom, spirit=left
 export const POSITION_ORDER = ['top', 'right', 'bottom', 'left'] as const;

@@ -1,29 +1,38 @@
 import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
-import feelingLuckyList from '../../../../src/content/feelingLuckyList.json';
+import feelingLuckyListEn from '../../../../src/content/feelingLuckyList.json';
+import feelingLuckyListRu from '../../../../src/content/feelingLuckyList.ru.json';
 import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
 import { track } from '../../../../src/utils/analytics';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 // Drawn once per visit, deliberately — no reroll button. The whole idea is
 // that whichever message shows up is the one meant to find you right now;
-// letting people fish for a better one would undo that.
-function pickMessage(): string {
-  const entry = feelingLuckyList[Math.floor(Math.random() * feelingLuckyList.length)];
+// letting people fish for a better one would undo that. Picked by index
+// (not independently randomized per list) so the same random draw lands on
+// the same underlying message in either language, in case that ever
+// matters (e.g. analytics correlating which message id was shown).
+function pickMessage(locale: 'en' | 'ru'): string {
+  const list = locale === 'ru' ? feelingLuckyListRu : feelingLuckyListEn;
+  const entry = list[Math.floor(Math.random() * list.length)];
   return entry.message;
 }
 
 export default function FeelingLuckyScreen() {
+  const { t } = useTranslation();
+  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [message] = useState(pickMessage);
+  const [message] = useState(() => pickMessage(locale));
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const sendGuideMessage = useGuideChatStore((s) => s.send);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
@@ -36,7 +45,7 @@ export default function FeelingLuckyScreen() {
     if (!philosopher) return;
     track('feeling_lucky_talk_about_it');
     recordTalkAboutIt();
-    sendGuideMessage(philosopher, `This found me just now: "${message}" Can we talk about it?`);
+    sendGuideMessage(philosopher, t('feelingLucky.talkAboutItMessage', { message }));
     router.push('/(tabs)/guide');
   };
 
@@ -46,7 +55,7 @@ export default function FeelingLuckyScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>← Back</Text>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
       <View style={styles.messageWrap}>
@@ -59,7 +68,7 @@ export default function FeelingLuckyScreen() {
 
       {philosopher && (
         <Pressable style={styles.talkLinkWrap} onPress={handleTalkAboutIt}>
-          <Text style={styles.talkLink}>Talk to {philosopher.name} about it →</Text>
+          <Text style={styles.talkLink}>{t('feelingLucky.talkAboutIt', { name: philosopher.name })}</Text>
         </Pressable>
       )}
     </ScrollView>

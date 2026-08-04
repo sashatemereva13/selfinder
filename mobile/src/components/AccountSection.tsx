@@ -7,6 +7,7 @@ import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
 import { useLocaleStore } from '../store/localeStore';
 import { getMe, grantConsent, withdrawConsent, getMeasureHistory, exportMyData, deleteAccount, updateEmail } from '../api/user';
+import { getLocalizedLevelName } from '../content/measureConfig';
 import { changePassword as changePasswordApi, requestPasswordReset, resetPassword } from '../api/auth';
 import { AuthSession, UserProfile, SavedMeasureResult } from '../types';
 import { track } from '../utils/analytics';
@@ -456,7 +457,7 @@ function LoggedInAccount({
                     <View>
                       <Text style={styles.historyDate}>{formatDate(reading.savedAt, locale)}</Text>
                       <Text style={styles.historyLabel}>
-                        {reading.vibrationLevel.name} · {reading.vibrationScore}
+                        {getLocalizedLevelName(reading.vibrationLevel, locale)} · {reading.vibrationScore}
                       </Text>
                     </View>
                     {hasTranscript && (
