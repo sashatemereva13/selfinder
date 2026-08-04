@@ -19,6 +19,82 @@ const models = [
   "llama-3.1-8b-instant",
   "mixtral-8x7b-32768",
 ];
+
+// Qwen (Alibaba Cloud), hosted on Groq alongside the Llama models above —
+// confirmed live via groq.models.list() on 2026-08-04. Used for the
+// Russian-locale build instead of models[n], since Qwen is explicitly
+// trained for stronger non-English (including Russian) performance than
+// the Llama models this app otherwise runs on.
+const QWEN_MODEL = "qwen/qwen3.6-27b";
+
+// Qwen's hidden reasoning tokens are generated (and counted against
+// max_tokens) before the visible reply, and the amount varies per request
+// — measured between 1043 and 2460 reasoning tokens across a handful of
+// identical test calls to the same prompt. A max_tokens sized for just the
+// visible reply's own length silently truncates the reply mid-sentence
+// once the model's actual reasoning that request runs long — confirmed
+// live: max_tokens: 1200 cut a reply off mid-word and broke JSON parsing,
+// where max_tokens: 3000 for the same prompt completed cleanly. 2800 (not
+// the ~2460 max observed) leaves real margin above the highest reasoning
+// count seen so far, since a harder question could plausibly need more.
+// This is added on top of each call site's own fallbackMaxTokens (its
+// existing English-locale budget for the visible reply alone) rather than
+// replacing it, so raising a call site's reply-length budget later doesn't
+// also require remembering to re-tune this constant.
+const QWEN_REASONING_TOKEN_HEADROOM = 2800;
+
+// Picks the model (and any model-specific request params, including
+// max_tokens) for a given call: Qwen when the request came from the
+// Russian-locale app, otherwise whichever Llama/Mixtral model and
+// max_tokens that call site already used. Spread the return value
+// directly into groq.chat.completions.create()'s params object — it
+// always includes max_tokens, so call sites should NOT also set their own
+// max_tokens key alongside this spread (the object literal's later key
+// would silently win over this one, undoing the reasoning headroom).
+//
+// reasoning_format: "hidden" is not cosmetic — Qwen3.6 has reasoning mode
+// on by default, and left unconfigured it prepends a raw
+// `<think>...</think>` block to every reply (confirmed live against the
+// real Groq API). That breaks two things at once: the person would see the
+// model's internal chain-of-thought instead of the philosopher's reply,
+// and every call site that parses the reply as JSON (postChat,
+// postMeasureExchange) would fail to parse, since the leaked <think>
+// block isn't valid JSON.
+//
+// Using "hidden" rather than reasoning_effort: "none" specifically because
+// disabling reasoning outright measurably changes the quality of the
+// *answer itself*, not just whether a trace is shown — a philosopher's
+// reply benefits from the model actually reasoning about tone, what's
+// underneath what the person said, and how to phrase it in character,
+// even though none of that reasoning should ever be shown. "hidden" keeps
+// reasoning_effort at its default and lets Qwen think as much as it
+// needs, it just excludes that trace from message.content.
+function resolveModelParams(locale, fallbackModel, fallbackMaxTokens) {
+  if (locale === "ru") {
+    return {
+      model: QWEN_MODEL,
+      reasoning_effort: "default",
+      reasoning_format: "hidden",
+      max_tokens: fallbackMaxTokens + QWEN_REASONING_TOKEN_HEADROOM,
+    };
+  }
+  return { model: fallbackModel, max_tokens: fallbackMaxTokens };
+}
+
+// Appended to the system prompt only for Russian-locale requests — every
+// system prompt in this file (UNIVERSAL_RULES, each philosopher's
+// hand-authored persona, the badge/journey-line prompts) is written in
+// English, so without this the model has no signal that a Russian reply
+// is expected just because the request happened to come from the Russian
+// build. Kept as a short trailing instruction rather than translating the
+// prompts themselves — the persona/rules content stays the single English
+// source of truth; only the output language changes per request.
+const RUSSIAN_REPLY_INSTRUCTION =
+  "\n\nRespond in Russian. Write naturally as a fluent Russian speaker would — do not translate word-for-word from English; express the same voice and meaning in idiomatic Russian.";
+
+function localizedSystemPrompt(basePrompt, locale) {
+  return locale === "ru" ? basePrompt + RUSSIAN_REPLY_INSTRUCTION : basePrompt;
+}
 const BADGE_COMMENT_CACHE_TTL_MS = 1000 * 60 * 60 * 12;
 const badgeCommentCache = new Map();
 
@@ -121,7 +197,7 @@ function cleanSpillMetaCommentary(reply) {
 }
 
 export async function postChat(req, res) {
-  const { messages, systemPrompt } = req.body;
+  const { messages, systemPrompt, locale } = req.body;
 
   if (!messages || !systemPrompt) {
     return res
@@ -131,12 +207,14 @@ export async function postChat(req, res) {
 
   try {
     const response = await groq.chat.completions.create({
-      model: models[1],
-      max_tokens: 512,
+      ...resolveModelParams(locale, models[1], 512),
       messages: [
         {
           role: "system",
-          content: UNIVERSAL_RULES + "\n\n" + systemPrompt + "\n\n" + SPILL_SIGNAL_INSTRUCTION,
+          content: localizedSystemPrompt(
+            UNIVERSAL_RULES + "\n\n" + systemPrompt + "\n\n" + SPILL_SIGNAL_INSTRUCTION,
+            locale
+          ),
         },
         ...messages,
       ],
@@ -318,7 +396,7 @@ export async function postJourneyLine(req, res) {
 }
 
 export async function postMeasureExchange(req, res) {
-  const { systemPrompt, sphere, question, answer, canGoBack } = req.body;
+  const { systemPrompt, sphere, question, answer, canGoBack, locale } = req.body;
 
   if (!systemPrompt || !sphere || !question || typeof answer !== "string") {
     return res
@@ -358,11 +436,10 @@ Either way, stay in character, keep it under 60 words, ground your reply only in
 
   try {
     const response = await groq.chat.completions.create({
-      model: models[1],
-      max_tokens: 200,
+      ...resolveModelParams(locale, models[1], 200),
       temperature: 0.5,
       messages: [
-        { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
+        { role: "system", content: localizedSystemPrompt(UNIVERSAL_RULES + "\n\n" + systemPrompt, locale) },
         { role: "user", content: exchangePrompt },
       ],
     });
@@ -529,7 +606,7 @@ async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs
 // the actual point a single blended "overall" number can't make on its own.
 // Failure here should never break the reading itself, so callers just get
 // `null` back and fall back to showing the reading without it.
-async function requestCombinationMessage(systemPrompt, interpretation) {
+async function requestCombinationMessage(systemPrompt, interpretation, locale) {
   if (!systemPrompt) return null;
 
   const lineSummary = interpretation.lines
@@ -558,11 +635,10 @@ quotation marks.`;
 
   try {
     const response = await groq.chat.completions.create({
-      model: models[0],
-      max_tokens: 90,
+      ...resolveModelParams(locale, models[0], 90),
       temperature: 0.6,
       messages: [
-        { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
+        { role: "system", content: localizedSystemPrompt(UNIVERSAL_RULES + "\n\n" + systemPrompt, locale) },
         { role: "user", content: prompt },
       ],
     });
@@ -576,7 +652,7 @@ quotation marks.`;
 }
 
 export async function postMeasureInterview(req, res) {
-  const { qaPairs, systemPrompt } = req.body;
+  const { qaPairs, systemPrompt, locale } = req.body;
 
   if (!Array.isArray(qaPairs) || qaPairs.length < 4) {
     return res.status(400).json({ error: "qaPairs must contain 4 sphere answers" });
@@ -629,7 +705,7 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
   }
 
   const interpretation = buildInterviewInterpretation(rawScores);
-  interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation);
+  interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation, locale);
   await saveMeasureResultIfConsented(req.user, interpretation, qaPairs);
   res.json(interpretation);
 }

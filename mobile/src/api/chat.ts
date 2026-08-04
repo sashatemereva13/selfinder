@@ -1,5 +1,6 @@
 import request from './client';
 import { Philosopher, Sphere } from '../types';
+import { useLocaleStore } from '../store/localeStore';
 
 export interface ChatCompletionMessage {
   role: 'user' | 'assistant';
@@ -34,9 +35,14 @@ export async function sendMessage(
   // reply, silently, until the backend logs were checked.
   const wireMessages = messages.map(({ role, content }) => ({ role, content }));
 
+  // Read directly from the store rather than threading a `locale` param
+  // through every caller (guideChatStore, the interview screen, etc.) —
+  // useLocaleStore is already the single app-wide source of truth, and
+  // Zustand stores are readable outside React components via getState().
   const { reply, suggestSpill } = await request<SendMessageResponse>('/chat', {
     messages: wireMessages,
     systemPrompt,
+    locale: useLocaleStore.getState().locale,
   });
   return { reply, suggestSpill: suggestSpill === true };
 }
@@ -66,5 +72,6 @@ export function sendMeasureExchange(
     question,
     answer,
     canGoBack,
+    locale: useLocaleStore.getState().locale,
   });
 }

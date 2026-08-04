@@ -176,27 +176,46 @@ reflection paragraphs (labels fixed, the actual "Your last reading
 pointed to..." body text is still English). Each of these needs its own
 translation pass, not a rename-scoped touch-up.
 
-**The AI conversation itself has no Russian support at all — this is a
-separate, not-yet-started track, and does NOT use Qwen.** The backend
-(`backend/controllers/chatController.js`) calls **Groq** exclusively —
-`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768` —
-there is no Qwen integration anywhere in this codebase. Every system
-prompt (`philosophers.ts`'s hand-authored per-philosopher voice,
-`universalAIrules.js`) is English-only, and nothing instructs the model to
-respond in Russian based on the app's locale — confirmed via grep, zero
-language/locale directives anywhere in the prompt-construction code. A
-Russian-speaking user typing Russian today gets whatever Llama does with
-that on its own (likely a Russian reply, since these models are
-multilingual) — that's emergent, not a supported feature, and the
-philosopher's own scripted/hardcoded lines (opening greeting, badge
-comments, nudges) stay English regardless of what the model itself does.
-Building real support means at minimum: passing the active locale into
-`sendMessage`/`sendMeasureExchange` and appending an explicit
-"respond in Russian" instruction to the system prompt when set, deciding
-whether Groq's Llama models are good enough at Russian or whether a
-different provider/model is needed for that locale specifically, and
-translating the hardcoded scripted-line files above so the non-AI parts
-of a Russian conversation don't revert to English mid-flow.
+**The AI conversation now uses Qwen for the Russian locale (2026-08-04).**
+Groq hosts `qwen/qwen3.6-27b` (Alibaba Cloud) alongside the Llama models
+already in use — confirmed live via `groq.models.list()` — so this reused
+the existing Groq account/API key rather than adding a new provider.
+Mobile's `sendMessage`/`sendMeasureExchange`/`submitInterview`
+(`src/api/chat.ts`, `src/api/measure.ts`) now read the active locale from
+`useLocaleStore.getState().locale` and send it to the backend; the three
+corresponding backend handlers (`postChat`, `postMeasureExchange`,
+`postMeasureInterview`'s `requestCombinationMessage`) pick Qwen + append a
+"respond in Russian" instruction to the system prompt when `locale ===
+"ru"`, via `resolveModelParams`/`localizedSystemPrompt` in
+`chatController.js`. `requestRawInterviewScores` (pure numeric scoring, no
+user-facing text) and the web-only `postBadgeComment`/`postJourneyLine`
+endpoints were deliberately left untouched — out of scope for this pass.
+
+**Non-obvious gotcha that would have broken this silently: Qwen3.6 has
+reasoning mode on by default**, and left unconfigured it prepends a raw
+`<think>...</think>` block to `message.content` — confirmed live against
+the real API. That's not just visible clutter; it also breaks every call
+site here, since all three parse the reply as JSON and a leaked `<think>`
+block isn't valid JSON. Fixed with `reasoning_format: "hidden"` (keeps
+`reasoning_effort` at its default rather than disabling reasoning
+outright, since a philosopher's reply is measurably better when the model
+actually reasons about tone and subtext — "hidden" just excludes the
+trace from the visible output). The reasoning tokens still count against
+`max_tokens` though, and the amount varies per request (measured 1043 to
+2460 reasoning tokens across a handful of identical test calls to the
+same prompt) — `max_tokens: 1200` truncated a reply mid-sentence and broke
+JSON parsing in testing; `QWEN_REASONING_TOKEN_HEADROOM = 2800` (added on
+top of each call site's existing English-locale token budget) is the fix.
+If Qwen replies ever start truncating again, this is the first place to
+check — either the headroom needs raising further or a harder prompt is
+consistently pushing reasoning length past it.
+
+**Still a real gap, not fixed by this pass:** the philosopher's own
+scripted/hardcoded lines (opening greeting in `philosophers.ts`, badge
+comments, `guideNudges.ts`) stay English regardless of locale — only the
+live AI reply is Russian-aware now. A Russian conversation can still show
+an English scripted line mid-flow until those files get their own
+translation pass (see the "known gaps" note above this section).
 
 ---
 
