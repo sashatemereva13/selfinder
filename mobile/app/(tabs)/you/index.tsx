@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { colors } from '../../../src/theme/colors';
@@ -91,7 +91,16 @@ export default function YouScreen() {
   };
 
   return (
-    <View style={styles.root}>
+    <KeyboardAvoidingView
+      style={styles.root}
+      // Same fix/reasoning as Guide's own KeyboardAvoidingView: 'height' on
+      // Android (not 'undefined', the RN default when no behavior is set,
+      // which runs no keyboard avoidance at all) — without this, the
+      // login/create-account TextInputs further down this screen were
+      // covered by the keyboard on Android with no way to scroll them into
+      // view. No keyboardVerticalOffset — no fixed header here either.
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
       <AmbientGlow />
       <ScrollView
         ref={scrollRef}
@@ -198,7 +207,7 @@ export default function YouScreen() {
           </>
         )}
       </ScrollView>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
