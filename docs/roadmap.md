@@ -141,6 +141,63 @@ content-file translation and the AI-directive work are separate,
 not-yet-started tracks). For the full implementation-level plan (file/line
 detail, decisions made), see **[`docs/i18n-plan.md`](i18n-plan.md)**.
 
+**Russian-only full rebrand (2026-08-04):** the Russian build now uses a
+genuinely Russian product identity, not just translated UI chrome around
+English feature names — this was a deliberate decision driven by Russia's
+consumer-information-in-Russian requirement taking effect 2026-03-01 (info
+on apps/sites/ads must be in Russian; a registered trademark is exempt, but
+feature names aren't). English stays the main/default version, unaffected.
+
+| English | Russian |
+|---|---|
+| Selfinder (wordmark) | НАЙТИСЬ |
+| Measure | Где я |
+| Tune In | Резонанс |
+| Spill | Поток |
+| Guide | Проводник |
+| Selfinder+ | НАЙТИСЬ+ |
+| Depths / Levels / Your Arc / Breathing | Глубины / Уровни / Ваша траектория / Дыхание (already were) |
+
+Implementation: `common.wordmark` i18n key (was hardcoded `Selfinder` text
+in `onboarding/index.tsx`); tab bar titles (`_layout.tsx`) were hardcoded
+English strings not wired to i18n at all — now `common.tabDepths/tabGuide/
+tabYou`; `moonConfig.ts`'s `TOOLS` labels changed from a hardcoded string to
+an i18n key (`labelKey`) resolved at render time, since that file has no
+access to `useTranslation`. The Tune In lock-screen media label
+(`tuneIn.lockScreenArtist`) was also hardcoded English and is now
+locale-aware.
+
+**Known gaps deliberately left alone, not silently expanded into** (scope
+was "fix labels," not "translate everything"): `guideNudges.ts` (all five
+philosophers' nudge text is English-only, no i18n mechanism in the file at
+all — translating only `actionLabel` would leave Russian buttons next to
+English body text, worse than leaving both English) and `moonConfig.ts`'s
+reflection paragraphs (labels fixed, the actual "Your last reading
+pointed to..." body text is still English). Each of these needs its own
+translation pass, not a rename-scoped touch-up.
+
+**The AI conversation itself has no Russian support at all — this is a
+separate, not-yet-started track, and does NOT use Qwen.** The backend
+(`backend/controllers/chatController.js`) calls **Groq** exclusively —
+`llama-3.3-70b-versatile`, `llama-3.1-8b-instant`, `mixtral-8x7b-32768` —
+there is no Qwen integration anywhere in this codebase. Every system
+prompt (`philosophers.ts`'s hand-authored per-philosopher voice,
+`universalAIrules.js`) is English-only, and nothing instructs the model to
+respond in Russian based on the app's locale — confirmed via grep, zero
+language/locale directives anywhere in the prompt-construction code. A
+Russian-speaking user typing Russian today gets whatever Llama does with
+that on its own (likely a Russian reply, since these models are
+multilingual) — that's emergent, not a supported feature, and the
+philosopher's own scripted/hardcoded lines (opening greeting, badge
+comments, nudges) stay English regardless of what the model itself does.
+Building real support means at minimum: passing the active locale into
+`sendMessage`/`sendMeasureExchange` and appending an explicit
+"respond in Russian" instruction to the system prompt when set, deciding
+whether Groq's Llama models are good enough at Russian or whether a
+different provider/model is needed for that locale specifically, and
+translating the hardcoded scripted-line files above so the non-AI parts
+of a Russian conversation don't revert to English mid-flow.
+
 ---
 
 ## Web frontend redesign — bring the web app in line with mobile

@@ -176,7 +176,7 @@ export default function TuneInScreen() {
       players[selected].play();
       players[selected].setActiveForLockScreen(true, {
         title: activeState.name,
-        artist: 'Selfinder — Tune In',
+        artist: t('tuneIn.lockScreenArtist'),
       });
       setIsPlaying(true);
       track('tune_in_started', { state: activeState.name });
@@ -191,7 +191,7 @@ export default function TuneInScreen() {
       players[index].play();
       players[index].setActiveForLockScreen(true, {
         title: TUNE_IN_STATES[index].name,
-        artist: 'Selfinder — Tune In',
+        artist: t('tuneIn.lockScreenArtist'),
       });
       track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
     }

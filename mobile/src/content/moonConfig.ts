@@ -140,14 +140,19 @@ export function getPersonalizedBridge(phaseName: MoonPhaseName, result: MeasureR
 }
 
 interface FlowTool {
-  label: string;
+  // An i18n key (resolved at render time via t()), not the label itself —
+  // this file has no access to react-i18next's t(), and hardcoding the
+  // English label here silently drifted out of sync with the localized
+  // depths.measureLabel/tuneInLabel/levelsLabel strings shown everywhere
+  // else these same features are named.
+  labelKey: string;
   route: string;
 }
 
 const TOOLS: Record<'measure' | 'tunein' | 'levels', FlowTool> = {
-  measure: { label: 'Measure', route: '/(tabs)/depths/measure' },
-  tunein: { label: 'Tune In', route: '/(tabs)/depths/tunein' },
-  levels: { label: 'Levels', route: '/(tabs)/depths/levels' },
+  measure: { labelKey: 'depths.measureLabel', route: '/(tabs)/depths/measure' },
+  tunein: { labelKey: 'depths.tuneInLabel', route: '/(tabs)/depths/tunein' },
+  levels: { labelKey: 'depths.levelsLabel', route: '/(tabs)/depths/levels' },
 };
 
 export function getFlowSuggestions(stage: MoonStage, band: MeasureBand | 'unknown'): FlowTool[] {

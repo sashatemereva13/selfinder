@@ -57,14 +57,19 @@ const AURA_BODY = require("../../assets/aura/aura-neutral-body.png");
 
 // The actual rendered size of the body image — change this freely to make
 // the figure itself bigger/smaller.
-const FIGURE_SIZE = 120;
+const FIGURE_SIZE = 104;
 // Everything AROUND the body (dots, connecting lines, "why?"/"what"/"you
 // feel?" positions, the core spark) is positioned against this fixed
 // reference size instead of FIGURE_SIZE, so shrinking/growing the body
 // alone doesn't drag the whole surrounding composition along with it. The
 // image itself is then anchored within this larger layout by its own core
 // point (see imageOffsetX/Y in IntroFigure) so the two stay visually aligned.
-const LAYOUT_SIZE = 200;
+// Reduced from 200 (proportionally with FIGURE_SIZE above) to free up real
+// vertical room on short Android screens — the Samsung 3-button nav bar was
+// squeezing the "walk" button against the bottom edge (see stage's
+// paddingBottom below). Shrinking this scales the whole word/line
+// composition down together, not just the body in isolation.
+const LAYOUT_SIZE = 172;
 const FIGURE_METRICS = getAuraFigureMetrics(LAYOUT_SIZE);
 // How far a dot travels outward, in the figure's own drawing-space units
 // (same scale AuraFigure itself uses), during the burst.
@@ -84,11 +89,20 @@ const POSITION = {
   // "you" / "feel" — flank the chest.
   chest: {
     y: -25, // shared baseline for both the text and the line crossing here
-    textOffset: -8, // extra nudge for the TEXT only, relative to that baseline (negative = above the line) — kept small so the words sit close against the line instead of floating above it
+    // Extra nudge for the TEXT only, relative to that baseline (negative =
+    // above the line). Measured directly (via getBoundingClientRect on web)
+    // that -5 actually let the text's own box overlap ~11px into the
+    // line's box — this reads as the word crossing through the line, not
+    // sitting near it. -20 clears the line with a small, deliberate gap
+    // instead.
+    textOffset: -20,
     spread: 30, // how far out from the body's own edge each word sits
   },
   // "is an experience" — after the figure, leading into the final sentence.
-  payoff: { y: -18 },
+  // Small negative offset, not 0 — a tiny gap above the line it leads into
+  // reads as "resting near," while 0 would sit the text flush on the line
+  // itself.
+  payoff: { y: -8 },
 };
 
 const SHAPE = {
@@ -159,7 +173,10 @@ function quadBezierLength(
 // drift apart if they're computed from the same source.
 const WHY_TO_WHAT_PTS = {
   // Starts under "what", which sits right of center (POSITION.why.x).
-  p0: { x: LINE_CENTER + POSITION.why.x, y: WHY_LINE_Y + 20 },
+  // +24, not +20 — measured directly (getBoundingClientRect on web) that
+  // +20 left the line's start essentially touching the text's own bottom
+  // edge (well under 1px gap); +24 opens a small, deliberate gap instead.
+  p0: { x: LINE_CENTER + POSITION.why.x, y: WHY_LINE_Y + 24 },
   p1: {
     x: LINE_CENTER - SHAPE.whyToWhatBow,
     y: (WHY_LINE_Y + CHEST_LINE_Y) / 2,
@@ -1175,10 +1192,18 @@ export default function OnboardingScreen() {
           entering={FadeIn.duration(1100).easing(SOFT_EASE)}
           style={[styles.wordmark, { paddingTop: insets.top + spacing[4] }]}
         >
-          Selfinder
+          {t('common.wordmark')}
         </Animated.Text>
 
-        <View style={[styles.stage, { paddingBottom: insets.bottom + spacing[4] }]}>
+        {/* insets.bottom + spacing[8] (32px), not spacing[4] — some Android
+            OEM skins (confirmed on a Samsung device with 3-button nav)
+            under-report the real nav bar height via useSafeAreaInsets, so a
+            thin fixed margin on top of it wasn't enough to keep "walk" from
+            visually fighting the nav bar. A larger fixed floor here is a
+            safety margin, not a replacement for insets.bottom — devices
+            where insets.bottom reports correctly just get extra breathing
+            room instead of exact-fit spacing. */}
+        <View style={[styles.stage, { paddingBottom: insets.bottom + spacing[8] }]}>
           <View style={styles.stageSpacer} />
           <View style={styles.figureComposition}>
             {/* Traces the reading path "why?" → "what" → "you feel?" — three

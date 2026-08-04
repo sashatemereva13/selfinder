@@ -1,4 +1,5 @@
 import { Tabs } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { colors } from '../../src/theme/colors';
 import { fonts } from '../../src/theme/typography';
 import { usePhilosopherStore } from '../../src/store/philosopherStore';
@@ -6,6 +7,7 @@ import { useAppAccentRgb } from '../../src/utils/appAccent';
 import { DepthsTabIcon, GuideTabIcon, YouTabIcon } from '../../src/components/TabIcons';
 
 export default function TabsLayout() {
+  const { t } = useTranslation();
   const { philosopher, metPhilosopherIds } = usePhilosopherStore();
   const accentRgb = useAppAccentRgb();
   const activeColor = `rgb(${accentRgb})`;
@@ -34,14 +36,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="depths"
         options={{
-          title: 'Depths',
+          title: t('common.tabDepths'),
           tabBarIcon: ({ color }) => <DepthsTabIcon color={color as string} />,
         }}
       />
       <Tabs.Screen
         name="guide"
         options={{
-          title: 'Guide',
+          title: t('common.tabGuide'),
           tabBarIcon: ({ color }) => <GuideTabIcon color={color as string} />,
           tabBarBadge: hasUnmetPhilosopher ? '' : undefined,
           tabBarBadgeStyle: {
@@ -56,7 +58,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="you"
         options={{
-          title: 'You',
+          title: t('common.tabYou'),
           tabBarIcon: ({ color }) => <YouTabIcon color={color as string} />,
         }}
       />

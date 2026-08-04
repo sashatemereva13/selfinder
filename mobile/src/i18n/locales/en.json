@@ -1,5 +1,6 @@
 {
   "common": {
+    "wordmark": "Selfinder",
     "back": "← Back",
     "regulationLayer": "Regulation Layer",
     "stop": "Stop",
@@ -7,7 +8,10 @@
     "sphereBody": "Body",
     "sphereMind": "Mind",
     "sphereHeart": "Heart",
-    "sphereSpirit": "Spirit"
+    "sphereSpirit": "Spirit",
+    "tabDepths": "Depths",
+    "tabGuide": "Guide",
+    "tabYou": "You"
   },
   "you": {
     "walkingWith": "Walking with",
@@ -145,6 +149,7 @@
     "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back."
   },
   "tuneIn": {
+    "lockScreenArtist": "Selfinder — Tune In",
     "play": "Play",
     "title": "Tune your field with frequency",
     "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",

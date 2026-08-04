@@ -118,7 +118,7 @@ export default function MoonScreen() {
               style={styles.flowChip}
               onPress={() => router.push(tool.route as Href)}
             >
-              <Text style={styles.flowChipText}>{tool.label}</Text>
+              <Text style={styles.flowChipText}>{t(tool.labelKey)}</Text>
             </Pressable>
           ))}
         </View>
