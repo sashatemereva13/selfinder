@@ -189,11 +189,11 @@
   },
   {
     "id": 47,
-    "message": "the world responds to what you are. i like to look at life as a constant conversation between myself and god/universe/reality/creator. you say something, the world responds to it. you respond to the world. the world responds to you. the next time you respond, do it from the heart, see what happens."
+    "message": "the world responds to what you are. i like to look at life as a constant conversation between myself and god/ universe/ reality/ creator. you say something, the world responds to it. you respond to the world. the world responds to you. the next time you respond, do it from the heart, see what happens."
   },
   {
     "id": 48,
-    "message": "what are you? a human? an adult? a child? husband/wife/partner/worker/citizen, etc? what are you beyond that? your desires? your thoughts? or the thing that observes all that?"
+    "message": "what are you? a human? an adult? a child? husband/ wife/ partner/ worker/ citizen, etc? what are you beyond that? your desires? your thoughts? or the thing that observes all that?"
   },
   {
     "id": 49,
@@ -775,7 +775,10 @@
     "id": 194,
     "message": "you get triggered because you are levelling up"
   },
-  { "id": 195, "message": "did you ask for it?" },
+  {
+    "id": 195,
+    "message": "did you ask for it?"
+  },
   {
     "id": 196,
     "message": "writing down your emotions will be highly beneficial"
@@ -840,12 +843,18 @@
     "id": 211,
     "message": " i run away but i care about you more than you think"
   },
-  { "id": 212, "message": "stop running away from me" },
+  {
+    "id": 212,
+    "message": "stop running away from me"
+  },
   {
     "id": 213,
     "message": "pause and think, is it actually what your higher self wants?"
   },
-  { "id": 214, "message": "if you could, you would?" },
+  {
+    "id": 214,
+    "message": "if you could, you would?"
+  },
   {
     "id": 215,
     "message": "i'm soo deep into it you can't even imagine i get excited every day just by having a little thought about it to an exetent that it feels like when this thing is going to happen the salvation will arrive to us all and the life on earth will become heaven again just like it was meant to be tell me crazy but i feel all that and you'll see it all for yourself"
@@ -1126,7 +1135,6 @@
     "id": 283,
     "message": "even the trees embrace loss every year because they know it's only a season"
   },
-
   {
     "id": 284,
     "message": "there is a time to plant seeds and there is a time to harvest the fruit. in whcih stage are you now?"
@@ -1187,7 +1195,10 @@
     "id": 298,
     "message": "The move from lower vibrations to higher vibrations is just a move towards yourself - it’s a natural movement, not something that only the super enlightened ones get to. It’s a birthright. Or more like it’s a life meaning - to become more of yourself. It’s the reason we are here."
   },
-  { "id": 299, "message": "there are things you don't know about them yet" },
+  {
+    "id": 299,
+    "message": "there are things you don't know about them yet"
+  },
   {
     "id": 300,
     "message": "tu te fais peut etre des idees"

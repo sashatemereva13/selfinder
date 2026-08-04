@@ -55,6 +55,18 @@ type LabelSide = 'top' | 'bottom' | 'left' | 'right';
 // (top, the two upper corners to the side, the two lower corners below) is
 // simpler and more reliable than deriving alignment from angle math, and
 // keeps every label pointing outward from the ring instead of across it.
+// Positional, matched by index to PHILOSOPHERS' own order — NOT by
+// identity. The 'left'/'right' slots (index 4/1) sit tight against the
+// screen edge (see labelStyle's 'left' case: its box's left edge computes
+// to a negative x, i.e. already past the container's own left edge, even
+// in English) — LABEL_WIDTH_SIDE only has room for a short single word
+// there. 'top'/'bottom' are centered on the ring's own axis and have much
+// more real margin. PHILOSOPHERS is ordered with this in mind: Camus sits
+// at index 4 (the tight 'left' slot) specifically because "Camus"/"Камю"
+// is short in both languages, while Aristotle (a longer name in either
+// language, and "Аристотель" specifically is the widest Russian name of
+// the five) sits at index 3 ('bottom', the roomier slot) instead of the
+// 'left' slot it used to occupy in the original English-only ordering.
 const RING_LAYOUT: { angleDeg: number; labelSide: LabelSide }[] = [
   { angleDeg: -90, labelSide: 'top' },
   { angleDeg: -18, labelSide: 'right' },
@@ -394,7 +406,7 @@ export function PhilosopherPicker({
           onPress={() => focused && onSelect(focused.id)}
         >
           <Text style={styles.confirmText}>
-            {focused ? t('you.walkWith', { name: focused.name }) : ' '}
+            {focused ? t('you.walkWith', { name: focused.nameInstrumental ?? focused.name }) : ' '}
           </Text>
         </Pressable>
         {/* Always rendered — its height is part of the layout whether or not

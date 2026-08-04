@@ -304,14 +304,27 @@ const styles = StyleSheet.create({
     marginTop: spacing[3],
     marginBottom: spacing[6],
   },
+  // flexWrap + a smaller gap (was spacing[6]/24px, fixed regardless of
+  // content) — Russian state names ("Глубокий отдых", two words, longer
+  // than any English name here) could push the row's natural width past
+  // the screen on narrower phones, and a plain row with no wrap would
+  // either overflow or get silently clipped rather than reflow. flex-item
+  // width caps each label so long text wraps onto its own second line
+  // instead of stretching the row wider.
   pickerRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     width: '100%',
     justifyContent: 'center',
-    gap: spacing[6],
+    gap: spacing[4],
   },
-  pickerItem: { alignItems: 'center', paddingVertical: spacing[2] },
-  pickerName: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  pickerItem: { alignItems: 'center', paddingVertical: spacing[2], maxWidth: 110 },
+  pickerName: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+  },
   pickerNameActive: { color: colors.accent.ivory, fontSize: fontSizes.base },
   centerBlock: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   pulseWrap: {

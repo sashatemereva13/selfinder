@@ -214,11 +214,17 @@ const styles = StyleSheet.create({
     marginTop: spacing[2],
     marginBottom: spacing[6],
   },
+  // flexWrap + a smaller gap (was spacing[8]/32px) — Russian pattern names
+  // ("Физиологический вздох" is considerably longer than "Physiological
+  // Sigh") could push two 150px-wide items + a 32px gap past a narrow
+  // phone's available width; wrapping lets the second item drop to its
+  // own row instead of the row overflowing or clipping.
   pickerRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     width: '100%',
     justifyContent: 'center',
-    gap: spacing[8],
+    gap: spacing[5],
   },
   pickerItem: { alignItems: 'center', paddingVertical: spacing[2], maxWidth: 150 },
   pickerName: {

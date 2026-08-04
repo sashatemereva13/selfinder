@@ -14,6 +14,14 @@ export interface MeasureQuestion {
 // Partial<Philosopher> that could accidentally omit something.
 export interface PhilosopherVoice {
   name: string;
+  // Russian-only: the instrumental case of `name` ("with Marcus Aurelius"
+  // needs "Марком Аврелием", not the nominative "Марк Аврелий" — Russian
+  // grammar requires the noun itself to change form, not just a fixed
+  // preposition). Optional/unused on the English base object; every
+  // Russian translation supplies it so "Walk with {{name}}"-style strings
+  // can interpolate the grammatically correct form instead of the
+  // nominative name.
+  nameInstrumental?: string;
   mode: string;
   description: string;
   symbolLine: string;

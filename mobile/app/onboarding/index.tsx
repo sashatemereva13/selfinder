@@ -1077,8 +1077,17 @@ export default function OnboardingScreen() {
   // being discarded, which undercut the whole point of growing it in the
   // first place rather than just fading everything at once. Under Reduce
   // Motion the morph is skipped down to a quick fade with no hold.
+  //
+  // Android-only: 0, not 500 — this hold-and-admire beat was tuned on iOS,
+  // where the full onboarding->picker sequence reads as intentional. On
+  // Android the same fixed durations stacked with this app's real render/
+  // measurement overhead read as a plain multi-second stall instead (users
+  // reported waiting ~2-3s before the picker ring appeared) — removing
+  // just this one pure-waiting beat (no motion happens during it) trims
+  // that without touching the morph/travel animations themselves, which
+  // still visibly happen on both platforms.
   const EXIT_DURATION = reduceMotion ? 250 : 900;
-  const RING_HOLD_DURATION = reduceMotion ? 0 : 500;
+  const RING_HOLD_DURATION = reduceMotion || Platform.OS === "android" ? 0 : 500;
   // How long the overlay ring takes to travel from its intro position to
   // the measured picker position, once both are known.
   const RING_TRAVEL_DURATION = reduceMotion ? 200 : 700;
@@ -1145,6 +1154,22 @@ export default function OnboardingScreen() {
   // travelProgress animating has nothing to visibly interpolate toward).
   // This timer force-completes the handoff after a generous wait so the
   // screen always reaches the picker instead of hanging on a stuck ring.
+  //
+  // The wait was a flat 1200ms measured from travelActive's own start
+  // (handleWalk, i.e. t=0) — but "choose" (and PhilosopherPicker itself)
+  // doesn't even MOUNT until EXIT_DURATION + RING_HOLD_DURATION (900+500 =
+  // 1400ms in the non-reduced-motion case). That means this fallback fired
+  // ~200ms BEFORE the picker's ring could possibly exist to measure,
+  // every single run — not an intermittent Android edge case, but an
+  // unconditional race this fallback always lost. That's what actually
+  // produced the persistent "ring looks stuck, then snaps into place on
+  // tap" symptom users kept hitting, not the occasional measureInWindow
+  // (0,0)/never-fires quirk this effect was originally written to guard
+  // against (that quirk is still real and still needs this fallback — it's
+  // just that the delay itself was racing the picker's own mount time).
+  // Anchoring the wait to the picker's actual earliest possible mount time
+  // (rather than 0) removes that race entirely.
+  const PICKER_MOUNT_DELAY = EXIT_DURATION + RING_HOLD_DURATION;
   useEffect(() => {
     if (!travelActive || handoffStarted) return;
     const forceHandoff = setTimeout(() => {
@@ -1152,7 +1177,7 @@ export default function OnboardingScreen() {
       travelOpacity.value = withTiming(0, { duration: 250 });
       setHandoffStarted(true);
       setTimeout(() => setTravelActive(false), 250);
-    }, 1200);
+    }, PICKER_MOUNT_DELAY + 800);
     return () => clearTimeout(forceHandoff);
   }, [travelActive, handoffStarted, pickerRingRect]);
 
@@ -1499,7 +1524,17 @@ export default function OnboardingScreen() {
         <View
           style={[
             styles.chooseBody,
-            { width: columnWidth, alignSelf: 'center', paddingBottom: spacing[10] + insets.bottom },
+            {
+              // columnWidth alone is the full device width (capped at
+              // READING_COLUMN_MAX_WIDTH) with no side margin — the
+              // confirm button inside PhilosopherPicker is width: '100%'
+              // of this container, so it touched the screen edges exactly
+              // (same root cause as onboarding's own "walk" button, fixed
+              // the same way: subtract real side margin here).
+              width: columnWidth - spacing[6] * 2,
+              alignSelf: 'center',
+              paddingBottom: spacing[10] + insets.bottom,
+            },
           ]}
         >
           <PhilosopherPicker

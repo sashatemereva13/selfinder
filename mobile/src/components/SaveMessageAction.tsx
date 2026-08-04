@@ -72,7 +72,13 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     marginTop: spacing[4],
   },
-  actions: { flexDirection: 'row', gap: spacing[5], marginTop: spacing[2] },
+  // Was flexDirection: 'row' — "Save as an image" next to "Share it" fit
+  // fine in English, but "Сохранить как изображение" (Russian) is long
+  // enough that the two crowded each other or overflowed a narrow phone
+  // width side by side. Stacked vertically instead — costs a little extra
+  // height, but each action gets its own full-width line regardless of
+  // how long its label is in a given language.
+  actions: { gap: spacing[3], marginTop: spacing[2] },
   // Ivory, consistently, matching the row actions on Depths — previously
   // "Save as an image" took the reading's accent color and "Share it" sat
   // in plain secondary gray, so the two sat at different visual weights

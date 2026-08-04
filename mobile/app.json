@@ -88,7 +88,8 @@
         {
           "android": {
             "enableProguardInReleaseBuilds": true,
-            "enableShrinkResourcesInReleaseBuilds": true
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "-dontwarn okhttp3.**\n-dontwarn okio.**\n-keep class okhttp3.** { *; }\n-keep interface okhttp3.** { *; }\n-keep class okio.** { *; }\n-keepclassmembers class okhttp3.** { *; }\n-keep class com.facebook.react.modules.network.** { *; }\n-keep class expo.modules.securestore.** { *; }"
           }
         }
       ]
