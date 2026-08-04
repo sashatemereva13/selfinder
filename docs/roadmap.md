@@ -7,105 +7,219 @@ this file is what's next.
 
 ---
 
-## Multi-language support (Russian, French, ...)
+## Android cold-start: onboarding's first-launch transition feels slow
 
-**Status:** scoped, not started. Deferred past v1 (English-only) submission.
-For Russian specifically, a full implementation-level plan (real file/line
-detail, not just cost estimates) now exists at
-**[`docs/i18n-plan.md`](i18n-plan.md)** — read that before starting; it
-supersedes some of the estimates below (e.g. the real UI-string count is
-~250 sites across ~20 files, not just "a few days").
+**Status:** root-caused, not yet fixed — deliberately deferred, see below.
 
-**What exists today:** nothing. No i18n library, no locale state, no
-`app.json` locale config — this is a from-scratch build, not a config flag.
+**The report:** the onboarding intro's line-becomes-ring transition (word
+beats → "walk" → line closes into a ring → ring travels to become the
+philosopher picker's ring) feels noticeably slow specifically on first-ever
+launch on Android, not on iOS, and not on any later visit (onboarding only
+ever runs once per install, so "later visit" isn't really a thing here —
+confirmed this transition literally cannot be re-triggered without a fresh
+install).
 
-**Two distinct kinds of work:**
+**Root cause:** `app/_layout.tsx`'s `RootLayout` blocks ALL rendering
+(including hiding the splash screen) until fontsLoaded AND all 7 stores'
+`hydrate()` calls resolve (`philosopherStore`, `measureStore`, `authStore`,
+`reminderStore`, `engagementStore`, `subscriptionStore`, `localeStore` —
+see the `ready` boolean, `_layout.tsx:60-62`). Each store's `hydrate()`
+reads from `expo-secure-store`, which on Android is backed by the hardware
+Keystore — measurably slower per-call than iOS's Keychain equivalent,
+especially on the very first access after install (key
+generation/initialization overhead a warm app never pays again). This is a
+genuine platform primitive cost, not a bug in any one store's code — each
+store already parallelizes its own reads internally via `Promise.all`
+where it has more than one key.
 
-1. **UI strings** (buttons, labels, screen copy) — mechanical. Pick a
-   library (`i18next`/`react-i18next` is the standard RN choice), extract
-   ~17 screens' worth of inline `<Text>` strings into translation files.
-   Bounded, normal engineering — roughly a few days once the library is
-   wired in.
+**Why this is fixable, not just "Android is slower":** onboarding itself
+doesn't read from 6 of those 7 stores at all — it only needs
+`philosopherStore` (to decide whether to route to onboarding vs. straight
+to tabs). The other 6 stores' data isn't needed until later screens
+(Depths, You, Guide, etc.), so gating the very first frame on all 7 is
+stricter than the actual dependency requires.
 
-2. **Content translation — the real cost.** ~26,000 words total across
-   `src/content/`:
-   - `philosophers.ts` (~2,880 words) — the highest-stakes: five
-     hand-written philosopher voices, each with a long AI system prompt.
-     Per `RULES.md`, this authored specificity is explicitly the product's
-     moat ("a vaguer or more generic prompt measurably produces worse
-     conversations"). Machine translation risks flattening exactly what
-     differentiates the app — this needs quality, in-character
-     translation, not string-table translation.
-   - `levelsContent.ts` (~13,800 words) — literary prose, larger than
-     philosophers.ts.
-   - Remaining ~9,000 words spread across `feelingLuckyList.json`,
-     `guideNudges.ts`, `moonConfig.ts`, `breathingPatterns.ts`,
-     `measureConfig.ts`, `tuneInStates.ts`, `auraLevelImages.ts`.
+**Recommended fix:** change `RootLayout`'s `ready` gate to only require
+`fontsLoaded && philoHydrated` before rendering/hiding the splash screen.
+Let the other 6 stores continue hydrating in the background — same
+`hydrate()` calls, just not blocking. Screens that read from them
+(Depths reads measureStore, You reads subscriptionStore, etc.) already
+handle their own store's `hydrated` flag or reasonable default state, so
+this shouldn't need per-screen changes, but **verify that assumption
+screen-by-screen before shipping** — a screen that assumes hydration
+already happened by the time it mounts (rather than checking `hydrated`
+itself) would be a real regression risk this change could introduce.
 
-**The part that's easy to miss: the live AI conversation.** Guide and
-Measure's interview are real-time Groq calls (`src/api/chat.ts`), not
-static text. Translating `philosophers.ts` alone doesn't make the
-philosopher *reply* in the target language — the app needs to:
-- Store the user's chosen language (new state — no existing store
-  tracks locale; would need a new store or a field on an existing one).
-- Inject an explicit "respond in [language]" instruction into every
-  request built in `chat.ts` (`sendMessage` and `sendMeasureExchange`,
-  where `systemPrompt`/`additionalContext` is assembled before the
-  `request()` call).
-
-Both pieces are needed together: the explicit instruction is what
-actually keeps the model from falling back to English or code-switching
-mid-conversation, but it only reads well if the underlying persona prompt
-is also well-translated — otherwise the model is improvising a
-Russian/French-speaking philosopher from an English character sheet,
-which drifts from the authored voice.
-
-**Recommendation when this gets picked up:** the engineering (i18n
-library, locale store, string extraction, language directive in
-`chat.ts`) is a boundable, moderate task. The philosopher-voice
-translation is the real risk and cost — treat it as requiring a
-translator who can preserve tone and character, not a mechanical
-translation pass, given how central authored voice is to the product
-(see `RULES.md`, Content/voice section).
+**Why deferred rather than done immediately:** this touches the app's
+root loading gate, used by literally every screen, right in the middle of
+a Play Store submission — not something to change without dedicated
+testing time across the whole app, not just onboarding.
 
 ---
 
-## Crash / diagnostics reporting
+## Android release builds ship without R8 code/resource shrinking
 
-**Status:** scoped, not started. Deferred past v1 submission.
+**Status:** confirmed gap, not yet enabled — deliberately deferred.
 
-**What exists today:** nothing. Confirmed via a full mobile-app audit (see
-the privacy-policy verification pass, 2026-07-30) — no Sentry, Bugsnag,
-Crashlytics, or any crash/diagnostics SDK anywhere in `mobile/`. Zero
-visibility into crashes once the app is in users' hands beyond what they
-self-report.
+`mobile/android/app/build.gradle:69,116-119` reads
+`android.enableMinifyInReleaseBuilds` and
+`android.enableShrinkResourcesInReleaseBuilds` from Gradle properties,
+both defaulting to `false` — and neither is set anywhere in
+`gradle.properties`. This means every release `.aab` built so far ships
+with no code shrinking, no obfuscation, and no unused-resource removal:
+a real, unclaimed reduction in download size and (per Android's own
+optimization guidance) faster cold start / lower memory use is sitting
+unused. This project is on AGP 8.x (pre-9.3), so the fix is the
+property-based path, not AGP 9.3's newer `optimization { enable = true }`
+block:
 
-**Why it's worth doing:** real blind spot once real users are on the app
-— a crash a reviewer or early user hits and doesn't report is currently
-invisible. Standard tooling (Sentry is the usual Expo/React Native
-choice) would close this.
+```properties
+# gradle.properties
+android.enableMinifyInReleaseBuilds=true
+android.enableShrinkResourcesInReleaseBuilds=true
+```
 
-**Why it's not a quick add — the actual tradeoff:**
-- `RULES.md` states "first-party analytics only... privacy is the trust
-  layer the whole pitch leans on" (see Engineering conventions and
-  Product/positioning sections). Sentry-as-a-service is a **third
-  party** — adding it makes "we don't use... third-party analytics" in
-  the privacy policy (`frontend/src/auth/PrivacyPolicyContent.jsx`)
-  false the moment it ships, requiring a new disclosed data flow (device
-  info, stack traces, sometimes IP) to a named vendor.
-- Crash stack traces can inadvertently capture more than intended — a
-  trace touching `guideChatStore`/`authStore` state could in principle
-  surface fragments of conversation content or tokens if not carefully
-  scrubbed before reporting, which cuts against the "anything you say to
-  your guide [is] sensitive personal data" commitment.
-- A self-hosted option (Sentry self-hosted, or GlitchTip as a lighter
-  Sentry-compatible self-hosted alternative) would preserve the
-  first-party-only claim, at the cost of standing up and maintaining
-  another service.
+`proguard-rules.pro` already has a keep rule for Reanimated
+(`-keep class com.swmansion.reanimated.** { *; }`,
+`com.facebook.react.turbomodule.**`), which reduces (but doesn't
+eliminate) the usual risk of minification breaking reflection-based
+native modules — **a fresh full regression pass across the app is
+required after enabling this**, not just a smoke test, since a missing
+keep rule for some other native dependency would surface as a runtime
+crash only in the minified build, never in debug.
 
-**When this gets picked up:** decide third-party-hosted vs. self-hosted
-explicitly before adding anything — this is a privacy-positioning
-decision, not a routine dependency add (same standing rule `RULES.md`
-already states for analytics SDKs generally). Whichever is chosen, the
-privacy policy needs a corresponding update in the same change, not
-after.
+**Why deferred:** discovered mid-Play-Store-submission; enabling and
+testing this properly deserves its own dedicated pass, not a change
+bundled into an unrelated build.
+
+---
+
+## Tablet/rotation support
+
+**Status:** done. `app.json`'s `orientation: "portrait"` lock and
+`ios.supportsTablet: false` are removed — the app now rotates and gets a
+real iPad window instead of letterboxed compatibility mode. A new
+`src/theme/responsive.ts` (`useReadingColumnWidth`, capped at 640px) caps
+the text/content column on Guide, Depths, You, and onboarding so
+paragraphs, chat bubbles, and buttons don't stretch to uncomfortable
+widths on a wide/landscape canvas.
+
+**Deliberate, permanent decision (not a placeholder):** `app/onboarding/
+index.tsx` and `src/components/PhilosopherPicker.tsx`'s SVG/ring geometry
+(onboarding's `LAYOUT_SIZE`/`LINE_WIDTH`/`FIGURE_SIZE`/`V_RING_RADIUS`;
+PhilosopherPicker's `CONTAINER = {320,283}`/`RING_RADIUS = 80`) stays the
+same fixed pixel size on every device, phone or tablet — this was
+evaluated and explicitly chosen over scaling it up, since research on
+hero-illustration scaling confirmed a 1:1-with-screen-width scale reads as
+oversized/cartoonish, and this composition's math is tightly choreographed
+(word-beat timing, line-draw animation, and a measured cross-screen ring
+morph into PhilosopherPicker) — rescaling it would have meant moving all
+of that math from module-load-time constants to live render-time
+calculations, a large, risky rewrite for a purely cosmetic gain. Instead,
+only what's genuinely improved by extra tablet width was addressed: the
+payoff text, the "walk" button, the picker's description text, and its
+confirm button no longer stretch full-bleed — they cap at the same 640px
+reading column as every other screen, so the space around the
+(unchanged-size) ring reads as an intentional frame rather than a phone
+layout with leftover margins. Verified on a real native-resolution
+2560×1600 tablet (Nexus 10 AVD — chosen specifically over `wm size`
+overrides, which upscale a lower native resolution and produce visibly
+blurry text/art; a genuine hardware-matching profile was needed to confirm
+this was actually sharp, not just correctly sized).
+
+If a future session wants the ring/figure to visually grow on tablets too
+(not just its surroundings), that's a separate, larger effort: moving
+onboarding's path math from module-scope constants to a `useWindowDimensions`-
+driven calculation at render time (there is no existing precedent for this in
+the codebase — confirmed zero uses of the live-updating hook anywhere;
+`MessageCard.tsx`'s one `Dimensions.get('screen')` call is static, not
+reactive), re-deriving `ringPoint()` and the line paths from scaled radii,
+and re-verifying the cross-screen ring-morph handoff still lines up at
+every scale. Not currently planned — the user explicitly decided the fixed
+size is fine and any future large-screen enhancement should come from
+"enlarging other details or adding something later," not scaling this
+specific composition.
+
+---
+
+## Multi-language support (Russian, French, ...)
+
+**Status:** in progress. English + Russian UI-string extraction is well
+underway (see `mobile/src/i18n/` — most screens' chrome is translated;
+content-file translation and the AI-directive work are separate,
+not-yet-started tracks). For the full implementation-level plan (file/line
+detail, decisions made), see **[`docs/i18n-plan.md`](i18n-plan.md)**.
+
+---
+
+## Web frontend redesign — bring the web app in line with mobile
+
+**Status:** scoped at a survey level, not planned in detail. Deferred —
+large enough to need its own dedicated planning pass before starting.
+
+**Why now:** mobile went through a full visual overhaul (warm ivory
+accent, `AmbientGlow`, no cards, ring/wireframe visualizations, one
+typeface — see `docs/design/aesthetic.md`) and the web frontend never
+followed. A full-codebase survey (2026-08-02) found the gap is real and
+systemic, not cosmetic — see findings below.
+
+**Decided:** the web app's 3D scenes (react-three-fiber philosopher
+crystal picker, starfields, nebula backgrounds, the 3D lunar calendar)
+are **not** being flattened to match mobile's flat SVG/wireframe
+language. This is a deliberate call: the web experience exists partly
+*because* it can do things mobile can't — "the whole web experience
+exists for the 2D to come more alive." The 3D language stays and should
+lean further into being impressive, not get retired for consistency's
+sake. Any future palette/typography work on these scenes should recolor
+toward the warm ivory language, not restructure the rendering approach.
+
+**What the survey found** (full detail in the 2026-08-02 investigation,
+not reproduced here — re-run a fresh survey before actually planning,
+since this file will drift):
+
+1. **Color palette** — still the old retired cool palette (the lavender-
+   gray `rgba(241,234,253,...)` scale, `#c399ff`/`#74ddd6`-family hexes)
+   baked into `frontend/src/css/selfinder-system.css`'s CSS variable
+   layer (`--sf-accent-violet`, `--sf-accent-cyan`), not just stray
+   leftovers — ~139 occurrences across ~21 files. No ivory token exists
+   anywhere on web yet. This is the first thing any future pass should
+   fix, since most components inherit from these shared variables.
+2. **Typography** — Panchang is already in use on web, so no font
+   migration needed there (unlike mobile, which separately moved off
+   Panchang to Etude Noire for Cyrillic support — see the font-swap
+   commits around 2026-08-02 and decide whether web should follow that
+   change too, since web's Panchang usage would have the same
+   zero-Cyrillic-glyph problem if web ever needs Russian support).
+   Usage is inconsistent (some files hardcode the font-family string,
+   one file — `FeelingLuckyButton.css` — mixes in a third typeface,
+   `Quintessential`) — a mechanical, low-risk cleanup.
+3. **Cards** — real bordered/filled "card" patterns are a default layout
+   choice on web (`.authCard`, `.measure-optionCard`,
+   `.moonMetricCard`/`.moonSelfinderCard`, `LevelCard.jsx`,
+   `PersonalSpace.jsx`, `LocalDataRecord.jsx`), contrary to mobile's "no
+   cards" rule. Removing these means real component restructuring on
+   `PersonalSpace`, `Measure`, `LunarCalendar`, and auth pages, not a
+   style tweak — this is "structural rebuild," not "retheme," work.
+4. **Background** — no single consistent treatment (mobile's
+   `AmbientGlow` equivalent doesn't exist on web); every major surface
+   runs its own bespoke background (3D scenes on FrontPage/Luna/Measure,
+   flat CSS gradients elsewhere). Given the "keep 3D" decision above,
+   this item is really about the *non-3D* pages picking one consistent
+   warm background treatment, not collapsing everything to one thing.
+5. **Missing features** — Spill (free-write) and Breathing don't exist
+   on web at all. This is new product work, not a redesign item, and
+   should probably be scoped/built separately from the visual pass.
+6. **No shared Button/Input components exist** — buttons/inputs are
+   styled per-page. A redesign pass will likely need to introduce these
+   as real shared primitives rather than retheme N per-page copies.
+
+**Recommended shape for when this gets picked up:** split into phases
+rather than one pass — (1) color token + typography cleanup across
+`selfinder-system.css` and per-file overrides, likely fast and low-risk;
+(2) card removal / structural cleanup on `PersonalSpace`, `Measure`,
+`LunarCalendar`, auth, one page at a time; (3) Spill + Breathing as new
+routes, built to match mobile's product behavior; (4) 3D scenes get a
+palette pass only, kept structurally as-is per the decision above. Don't
+attempt this as a single big-bang PR — the surface area (12+ routed
+pages, 3D scenes, no existing shared primitives) is too large for that to
+go well.

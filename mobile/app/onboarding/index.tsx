@@ -34,6 +34,7 @@ import {
   lineHeights,
 } from "../../src/theme/typography";
 import { spacing, radius } from "../../src/theme/spacing";
+import { useReadingColumnWidth } from "../../src/theme/responsive";
 import { usePhilosopherStore } from "../../src/store/philosopherStore";
 import { PhilosopherPicker } from "../../src/components/PhilosopherPicker";
 import { AmbientGlow } from "../../src/components/AmbientGlow";
@@ -79,15 +80,15 @@ const POSITION = {
   // "why?" — crowns the head. Also shifts where its line starts.
   // x pushes "what" right of the composition's axis — the deliberate
   // counterweight to "is an experience" sitting left of it below.
-  why: { y: -10, x: 48 },
+  why: { y: -2, x: 48 },
   // "you" / "feel" — flank the chest.
   chest: {
     y: -25, // shared baseline for both the text and the line crossing here
-    textOffset: -20, // extra nudge for the TEXT only, relative to that baseline (negative = above the line)
+    textOffset: -8, // extra nudge for the TEXT only, relative to that baseline (negative = above the line) — kept small so the words sit close against the line instead of floating above it
     spread: 30, // how far out from the body's own edge each word sits
   },
   // "is an experience" — after the figure, leading into the final sentence.
-  payoff: { y: -35 },
+  payoff: { y: -18 },
 };
 
 const SHAPE = {
@@ -774,6 +775,18 @@ export default function OnboardingScreen() {
   const mergeHow = useSharedValue(0);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // The figure/ring composition itself stays fixed-size everywhere — its
+  // geometry (line paths, ring radius, morph targets) is computed once at
+  // module load from LAYOUT_SIZE/LINE_WIDTH etc, not at render time, and is
+  // tightly choreographed with PhilosopherPicker's own ring for the
+  // cross-screen morph (see travelActive below) — rescaling it live is a
+  // separate, larger effort deliberately deferred (see docs/roadmap.md).
+  // What DOES respond to a wider/tablet canvas: the payoff text and button
+  // stop stretching to the screen's full width, capped at the same reading
+  // column every other screen uses, so the space around the (unchanged)
+  // figure reads as an intentional frame instead of a phone layout with
+  // empty margins.
+  const columnWidth = useReadingColumnWidth();
   const select = usePhilosopherStore((s) => s.select);
 
   useEffect(() => {
@@ -1102,6 +1115,28 @@ export default function OnboardingScreen() {
     return () => clearTimeout(handoff);
   }, [travelActive, introRingRect, pickerRingRect]);
 
+  // Fallback for when pickerRingRect never arrives at all — observed on
+  // Android: measureInWindow's onLayout-triggered callback can, on some
+  // devices/builds, simply never fire for the picker's ring container
+  // (not just "noticeably longer" as the effect above already accounts
+  // for, but indefinitely stuck), which left the traveling ring frozen at
+  // its intro position forever since the interpolation target falls back
+  // to introRingRect itself when pickerRingRect is null (see
+  // travelRingStyle below — target stays equal to introRingRect, so
+  // travelProgress animating has nothing to visibly interpolate toward).
+  // This timer force-completes the handoff after a generous wait so the
+  // screen always reaches the picker instead of hanging on a stuck ring.
+  useEffect(() => {
+    if (!travelActive || handoffStarted) return;
+    const forceHandoff = setTimeout(() => {
+      if (pickerRingRect) return; // already resolved normally above
+      travelOpacity.value = withTiming(0, { duration: 250 });
+      setHandoffStarted(true);
+      setTimeout(() => setTravelActive(false), 250);
+    }, 1200);
+    return () => clearTimeout(forceHandoff);
+  }, [travelActive, handoffStarted, pickerRingRect]);
+
   const exitFadeStyle = useAnimatedStyle(() => ({
     opacity: 1 - exitProgress.value,
   }));
@@ -1143,7 +1178,8 @@ export default function OnboardingScreen() {
           Selfinder
         </Animated.Text>
 
-        <View style={styles.stage}>
+        <View style={[styles.stage, { paddingBottom: insets.bottom + spacing[4] }]}>
+          <View style={styles.stageSpacer} />
           <View style={styles.figureComposition}>
             {/* Traces the reading path "why?" → "what" → "you feel?" — three
                 separately-timed overlays sharing one canvas (rather than one
@@ -1339,7 +1375,7 @@ export default function OnboardingScreen() {
               instead of being centered alone and then shoved upward when
               the text mounts. The figure is the constant; the screen
               assembles around it. */}
-          <View style={styles.payoffWrap}>
+          <View style={[styles.payoffWrap, { width: columnWidth }]}>
             <View style={styles.payoffLineWrap}>
               {/* Hangs in the pocket between the converging V and the
                     payoff sentence. entering and the exit fade are split
@@ -1367,7 +1403,21 @@ export default function OnboardingScreen() {
             </Animated.View>
           </View>
 
-          <Animated.View style={[styles.introFooter, buttonRevealStyle]}>
+          <Animated.View
+            style={[
+              styles.introFooter,
+              buttonRevealStyle,
+              // columnWidth alone is the full device width (capped at
+              // READING_COLUMN_MAX_WIDTH) with no margin subtracted — fine
+              // for wrapped text (payoffWrap above), but the button's own
+              // outline then touches the screen edges exactly, with nothing
+              // to the wordmark/stage's own paddingHorizontal to hold it
+              // back. Subtracting stage's horizontal padding here gives the
+              // button the same side margin every other element in stage
+              // already has.
+              { width: columnWidth - spacing[6] * 2, alignSelf: 'center' },
+            ]}
+          >
             <Animated.View style={exitFadeStyle}>
               <Pressable
                 style={styles.beginButton}
@@ -1378,6 +1428,7 @@ export default function OnboardingScreen() {
               </Pressable>
             </Animated.View>
           </Animated.View>
+          <View style={styles.stageSpacer} />
         </View>
       </Pressable>
     );
@@ -1403,7 +1454,12 @@ export default function OnboardingScreen() {
         >
           {t('you.chooseWhoWalksBesideYou')}
         </Animated.Text>
-        <View style={styles.chooseBody}>
+        <View
+          style={[
+            styles.chooseBody,
+            { width: columnWidth, alignSelf: 'center', paddingBottom: spacing[10] + insets.bottom },
+          ]}
+        >
           <PhilosopherPicker
             onSelect={handleSelect}
             onRingLayout={setPickerRingRect}
@@ -1517,13 +1573,31 @@ const styles = StyleSheet.create({
   // them read as one composition instead of three separate blocks sharing
   // a screen; the leftover space becomes a balanced frame around the whole
   // group instead of a divider fragmenting it.
+  // justifyContent was "center" — on a screen short enough that this
+  // composition's full height (figure + payoff text + button) exceeds
+  // stage's available space, centering pushes the excess up past stage's
+  // OWN top edge (RN doesn't clip overflow by default), carrying "why?"/
+  // "что" — the topmost element, already sitting on a small negative offset
+  // of its own — up through the wordmark's row and off-screen entirely.
+  // flex-start with a spacer above (styles.stageSpacer, flexGrow so it still
+  // centers when there IS room) reproduces the same centered look on any
+  // screen tall enough to fit the content, but can never push content above
+  // stage's top on a screen that isn't.
   stage: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     gap: spacing[5],
     paddingHorizontal: spacing[6],
   },
+  stageSpacer: {
+    flexGrow: 1,
+    flexShrink: 1,
+  },
+  // Android's 3-button gesture nav bar isn't inset-aware the way iOS's home
+  // indicator is — without this, "walk" sat flush against (or under) it on
+  // devices with that nav style (confirmed on a Samsung device). insets.bottom
+  // is 0 on devices using full-screen gesture nav, so this is a no-op there.
   // The app's identity, confirmed once at the very top before anything
   // else — not a kicker introducing the tagline below it.
   wordmark: {
@@ -1545,7 +1619,15 @@ const styles = StyleSheet.create({
   },
   aboveHeadPosition: {
     position: "absolute",
-    top: POSITION.why.y,
+    // Clamped to 0, not POSITION.why.y directly — on a short screen, stage's
+    // centered composition can end up close enough to the wordmark above it
+    // that a negative offset here escapes past figureComposition's own top
+    // edge and renders above "SELFINDER" itself (confirmed by shrinking the
+    // viewport height: "что" scrolled up past the logo with nothing to stop
+    // it, since this was the only thing standing between the label and the
+    // wordmark). Flush with the top edge is the correct floor regardless of
+    // language/string width — this isn't specific to the Russian "что".
+    top: Math.max(0, POSITION.why.y),
     left: 0,
     right: 0,
     transform: [{ translateX: POSITION.why.x }],
@@ -1703,6 +1785,5 @@ const styles = StyleSheet.create({
   chooseBody: {
     flex: 1,
     justifyContent: "center",
-    paddingBottom: spacing[10],
   },
 });

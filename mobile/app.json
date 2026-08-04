@@ -3,11 +3,10 @@
     "name": "Selfinder",
     "slug": "selfinder-app",
     "version": "1.0.0",
-    "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.selfinder.app",
       "buildNumber": "1",
       "infoPlist": {
@@ -55,7 +54,7 @@
         "expo-notifications",
         {
           "icon": "./assets/icon.png",
-          "color": "#c39fff"
+          "color": "#efe3cf"
         }
       ],
       "expo-splash-screen",
@@ -75,7 +74,24 @@
           "savePhotosPermission": "Selfinder saves messages here only when you tap Save."
         }
       ],
-      "expo-localization"
+      "expo-localization",
+      [
+        "expo-navigation-bar",
+        {
+          "enforceContrast": false,
+          "style": "light"
+        }
+      ],
+      "expo-asset",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "extra": {
       "router": {},

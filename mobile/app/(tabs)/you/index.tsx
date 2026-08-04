@@ -6,6 +6,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from '
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
+import { useReadingColumnWidth } from '../../../src/theme/responsive';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../../../src/store/localeStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
@@ -40,6 +41,7 @@ export default function YouScreen() {
   const currentFadeStyle = useAnimatedStyle(() => ({ opacity: currentOpacity.value }));
   const pickerFadeStyle = useAnimatedStyle(() => ({ opacity: pickerOpacity.value }));
   const insets = useSafeAreaInsets();
+  const columnWidth = useReadingColumnWidth();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
   const resetMet = usePhilosopherStore((s) => s.resetMet);
@@ -94,7 +96,10 @@ export default function YouScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
+        ]}
       >
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →

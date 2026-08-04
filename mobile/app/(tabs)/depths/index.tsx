@@ -22,6 +22,7 @@ import Animated, {
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
+import { useReadingColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
@@ -199,6 +200,7 @@ export default function DepthsScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const columnWidth = useReadingColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
   const readingLog = useMeasureStore((s) => s.readingLog);
   const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
@@ -401,7 +403,12 @@ export default function DepthsScreen() {
   return (
     <View style={styles.root}>
       <AmbientGlow />
-      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.content,
+          { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
+        ]}
+      >
         {/* Timestamp sits beside the kicker, not in the content flow below —
             chrome (like a status bar clock), not something the ring's
             symbolic register needs to make room for. It used to be a full

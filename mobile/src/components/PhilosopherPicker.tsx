@@ -264,13 +264,36 @@ export function PhilosopherPicker({
           // gives the ring's real window-space rect — same technique
           // onboarding's connectLineWrap uses on its side.
           if (!onRingLayout) return;
-          ringContainerRef.current?.measureInWindow((x, y) => {
+          // measureInWindow's callback has been observed on Android to
+          // occasionally fire with (0, 0) — a genuinely impossible position
+          // for this container mid-screen — right after this screen mounts,
+          // before the native view's position has actually settled. Passing
+          // that through gave onboarding's cross-screen ring-travel a target
+          // in the top-left corner instead of the real ring position, which
+          // is what made the traveling ring look "stuck" (it wasn't frozen,
+          // it had already jumped to a wrong, off-screen-ish target and the
+          // fallback timer's force-handoff just froze that wrong state
+          // visually until a re-render, e.g. from tapping a philosopher,
+          // triggered a fresh onLayout with the real position). One retry
+          // after a short delay is enough in practice — this isn't a polling
+          // loop, just a second attempt for the specific case where the
+          // first one landed before layout was ready.
+          const report = (x: number, y: number) => {
             onRingLayout({
               x: x + RING_CENTER.x - RING_RADIUS,
               y: y + RING_CENTER.y - RING_RADIUS,
               width: RING_RADIUS * 2,
               height: RING_RADIUS * 2,
             });
+          };
+          ringContainerRef.current?.measureInWindow((x, y) => {
+            if (x === 0 && y === 0) {
+              setTimeout(() => {
+                ringContainerRef.current?.measureInWindow(report);
+              }, 100);
+              return;
+            }
+            report(x, y);
           });
         }}
       >

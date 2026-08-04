@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
+import { useReadingColumnWidth } from '../../../src/theme/responsive';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
@@ -29,6 +30,7 @@ export default function GuideScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const columnWidth = useReadingColumnWidth();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const metPhilosopherIds = usePhilosopherStore((s) => s.metPhilosopherIds);
   const markMet = usePhilosopherStore((s) => s.markMet);
@@ -123,7 +125,7 @@ export default function GuideScreen() {
     >
       <AmbientGlow />
 
-      <View style={styles.header}>
+      <View style={[styles.header, { width: columnWidth, alignSelf: 'center' }]}>
         <View>
           <Text style={styles.headerMode}>{philosopher.mode}</Text>
           <Text style={[styles.headerName, { color: accentColor }]}>{philosopher.name}</Text>
@@ -136,13 +138,20 @@ export default function GuideScreen() {
       </View>
 
       {metSnapshotRef.current?.hasMet && (
-        <Pressable style={styles.nudgeBanner} onPress={() => router.push(nudge.route)}>
+        <Pressable
+          style={[styles.nudgeBanner, { width: columnWidth, alignSelf: 'center' }]}
+          onPress={() => router.push(nudge.route)}
+        >
           <Text style={styles.nudgeText}>{nudge.text}</Text>
           <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
         </Pressable>
       )}
 
-      <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[styles.scrollContent, { width: columnWidth, alignSelf: 'center' }]}
+      >
         {messages.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.greeting}>
@@ -197,7 +206,7 @@ export default function GuideScreen() {
         )}
       </ScrollView>
 
-      <View style={styles.compose}>
+      <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
         <View style={styles.inputRow}>
           <TextInput
             style={styles.input}
