@@ -189,30 +189,34 @@ export default function YouScreen() {
         <View style={styles.divider} />
         <AccountSection />
 
-        {__DEV__ && (
-          <>
-            <View style={styles.divider} />
-            <Pressable
-              style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
-              onPress={handleResetOnboarding}
-            >
-              <Text style={styles.devResetText}>
-                {resetDone ? t('you.devResetDone') : t('you.devResetOnboarding')}
-              </Text>
-            </Pressable>
-            {/* Placeholder for real entitlement — see subscriptionStore.ts.
-                Toggling this is the only way to see/test the subscribed
-                Your Arc experience until a real purchase flow exists. */}
-            <Pressable
-              style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
-              onPress={() => setSubscribed(!isSubscribed)}
-            >
-              <Text style={styles.devResetText}>
-                {isSubscribed ? t('you.devSubscribedOn') : t('you.devSubscribedOff')}
-              </Text>
-            </Pressable>
-          </>
-        )}
+        {/* Not gated on __DEV__ (always false in an eas build --profile
+            production, the only kind testers actually install) — visible
+            in every build for now since closed testing is a developer-
+            heavy group and re-testing onboarding otherwise requires a full
+            uninstall/reinstall. Re-gate before a real public launch (see
+            RULES.md-style note: revisit once Selfinder+ has a real
+            entitlement/purchase flow and onboarding has another way to
+            reset for QA). */}
+        <View style={styles.divider} />
+        <Pressable
+          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
+          onPress={handleResetOnboarding}
+        >
+          <Text style={styles.devResetText}>
+            {resetDone ? t('you.devResetDone') : t('you.devResetOnboarding')}
+          </Text>
+        </Pressable>
+        {/* Placeholder for real entitlement — see subscriptionStore.ts.
+            Toggling this is the only way to see/test the subscribed
+            Your Arc experience until a real purchase flow exists. */}
+        <Pressable
+          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
+          onPress={() => setSubscribed(!isSubscribed)}
+        >
+          <Text style={styles.devResetText}>
+            {isSubscribed ? t('you.devSubscribedOn') : t('you.devSubscribedOff')}
+          </Text>
+        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
