@@ -9,6 +9,7 @@ import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../../../
 import { ConsciousnessWheel } from '../../../../src/components/ConsciousnessWheel';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
+import { useWideColumnWidth } from '../../../../src/theme/responsive';
 
 const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 
@@ -17,6 +18,7 @@ export default function LevelsScreen() {
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const columnWidth = useWideColumnWidth();
 
   const goToLevel = (slug: string) => {
     router.push({ pathname: '/(tabs)/depths/level/[id]', params: { id: slug } });
@@ -25,7 +27,10 @@ export default function LevelsScreen() {
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
+      ]}
     >
       <AmbientGlow />
       <Pressable style={styles.backRow} onPress={() => router.back()}>

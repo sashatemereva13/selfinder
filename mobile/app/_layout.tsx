@@ -77,10 +77,15 @@ export default function RootLayout() {
 
     const inOnboarding = segments[0] === 'onboarding';
     const inTabs = segments[0] === '(tabs)';
-    const inSources = segments[0] === 'sources';
+    // Top-level routes reachable from inside the tabs but not part of the
+    // tab structure itself — sources (see its own fix) and both Your Arc
+    // screens (moved out of app/(tabs)/you/ so their back link/gesture
+    // isn't tied to the you tab regardless of which tab they were opened
+    // from — see your-arc.tsx's comment).
+    const inStandaloneRoute = ['sources', 'your-arc', 'your-arc-preview'].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
-    } else if (philosopher && !inTabs && !inSources) {
+    } else if (philosopher && !inTabs && !inStandaloneRoute) {
       router.replace('/(tabs)/depths');
     }
   }, [ready, philosopher, segments]);
@@ -96,6 +101,8 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)"     />
           <Stack.Screen name="sources"    />
+          <Stack.Screen name="your-arc"   />
+          <Stack.Screen name="your-arc-preview" />
         </Stack>
       </GestureHandlerRootView>
     </SafeAreaProvider>

@@ -6,10 +6,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
-import { getLevelBySlug } from '../../../../src/content/levelsContent';
+import { getLevelBySlug, getLocalizedLevel } from '../../../../src/content/levelsContent';
 import { LEVEL_COLORS } from '../../../../src/content/measureConfig';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
@@ -30,7 +32,10 @@ export default function LevelScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const level = id ? getLevelBySlug(id) : undefined;
+  const locale = useLocaleStore((s) => s.locale);
+  const rawLevel = id ? getLevelBySlug(id) : undefined;
+  const level = rawLevel ? getLocalizedLevel(rawLevel, locale) : undefined;
+  const columnWidth = useReadingColumnWidth();
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
 
@@ -62,7 +67,10 @@ export default function LevelScreen() {
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
+      ]}
     >
       <Pressable style={styles.backRow} onPress={() => router.back()}>
         <Text style={styles.backLink}>{t('common.back')}</Text>

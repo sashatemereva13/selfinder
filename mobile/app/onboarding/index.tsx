@@ -34,7 +34,7 @@ import {
   lineHeights,
 } from "../../src/theme/typography";
 import { spacing, radius } from "../../src/theme/spacing";
-import { useReadingColumnWidth } from "../../src/theme/responsive";
+import { useWideColumnWidth } from "../../src/theme/responsive";
 import { usePhilosopherStore } from "../../src/store/philosopherStore";
 import { useLocaleStore } from "../../src/store/localeStore";
 import { PhilosopherPicker } from "../../src/components/PhilosopherPicker";
@@ -805,7 +805,7 @@ export default function OnboardingScreen() {
   // column every other screen uses, so the space around the (unchanged)
   // figure reads as an intentional frame instead of a phone layout with
   // empty margins.
-  const columnWidth = useReadingColumnWidth();
+  const columnWidth = useWideColumnWidth();
   const select = usePhilosopherStore((s) => s.select);
 
   useEffect(() => {

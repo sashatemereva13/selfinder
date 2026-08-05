@@ -201,7 +201,10 @@
     "tapAnyPoint": "Tap any point on it to open that day again: what it read as, and what your philosopher said about it.",
     "keepConversationGoing": "Keep the conversation going",
     "keepConversationDescription": "You've come back to this a few times — Selfinder+ keeps the whole conversation with {{name}} going, not just one reading at a time.",
-    "footnote": "Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This is about keeping the whole line, not a better version of the daily practice itself."
+    "footnote": "Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This is about keeping the whole line, not a better version of the daily practice itself.",
+    "pointDate": "{{date}}",
+    "pointLevel": "Read as {{level}}",
+    "pointUnlockHint": "Subscribe to Selfinder+ to see what you said and what your philosopher reflected back that day →"
   },
   "breathing": {
     "title": "Change your state through breath",

@@ -1,5 +1,5 @@
 // Shared sparkline constants/helpers for the Your Arc screens
-// (app/(tabs)/you/your-arc-preview.tsx, app/(tabs)/you/your-arc.tsx) — kept
+// (app/your-arc-preview.tsx, app/your-arc.tsx) — kept
 // as one module so both screens always draw the same real data at the same
 // aspect ratio, rather than each re-deriving its own math. Used to also
 // export a YourArcTeaser card shown on the You tab; that entry point was
@@ -25,14 +25,21 @@ const PAD_Y = 4;
 // Shared with the preview/full-arc screens so the same real data always
 // draws the same shape, regardless of which screen is doing the drawing.
 export function sparklinePath(points: number[]): string {
+  return sparklineCoords(points)
+    .map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`)
+    .join(' ');
+}
+
+// The per-point (x, y) coordinates behind sparklinePath's line, so a screen
+// can also mark each individual reading (a dot), not just draw the
+// connecting line — without recomputing the same min/max/span math a
+// second time and risking it drifting out of sync with the line itself.
+export function sparklineCoords(points: number[]): { x: number; y: number }[] {
   const min = Math.min(...points);
   const max = Math.max(...points);
   const span = max - min || 1;
-  return points
-    .map((score, i) => {
-      const x = (i / Math.max(points.length - 1, 1)) * VIEW_W;
-      const y = PAD_Y + (1 - (score - min) / span) * (VIEW_H - PAD_Y * 2);
-      return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-    })
-    .join(' ');
+  return points.map((score, i) => ({
+    x: (i / Math.max(points.length - 1, 1)) * VIEW_W,
+    y: PAD_Y + (1 - (score - min) / span) * (VIEW_H - PAD_Y * 2),
+  }));
 }

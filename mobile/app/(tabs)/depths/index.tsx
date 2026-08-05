@@ -22,13 +22,13 @@ import Animated, {
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
-import { useReadingColumnWidth } from '../../../src/theme/responsive';
+import { useWideColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
-import { getLevelBySlug } from '../../../src/content/levelsContent';
+import { getLevelBySlug, getLocalizedLevel } from '../../../src/content/levelsContent';
 import { LEVEL_COLORS, getLocalizedLevelName } from '../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../src/store/localeStore';
 import { Sphere } from '../../../src/types';
@@ -202,7 +202,7 @@ export default function DepthsScreen() {
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const columnWidth = useReadingColumnWidth();
+  const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
   const readingLog = useMeasureStore((s) => s.readingLog);
   const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
@@ -249,7 +249,8 @@ export default function DepthsScreen() {
   const discoveryNudge =
     totalMeasureCount >= 2 ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature]) : undefined;
   const toolGroups = useMemo(() => buildToolGroups(discovered.spill), [discovered.spill]);
-  const lastLevel = currentResult ? getLevelBySlug(currentResult.vibrationLevel.slug) : undefined;
+  const rawLastLevel = currentResult ? getLevelBySlug(currentResult.vibrationLevel.slug) : undefined;
+  const lastLevel = rawLastLevel ? getLocalizedLevel(rawLastLevel, locale) : undefined;
   // ONE accent color for the whole screen — the current level's, same as
   // everywhere else in the app since the per-philosopher/per-axis color
   // system was retired. The four sphere readings below used to each carry
@@ -631,7 +632,7 @@ export default function DepthsScreen() {
                 <Pressable
                   style={styles.row}
                   onPress={() =>
-                    router.push(isSubscribed ? '/(tabs)/you/your-arc' : '/(tabs)/you/your-arc-preview')
+                    router.push(isSubscribed ? '/your-arc' : '/your-arc-preview')
                   }
                 >
                   <Text style={styles.rowLabel}>{t('depths.yourArc')}</Text>

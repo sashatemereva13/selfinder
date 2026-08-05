@@ -1,20 +1,25 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
-import { spacing } from '../../../src/theme/spacing';
-import { useMeasureStore } from '../../../src/store/measureStore';
-import { sparklinePath, SPARKLINE_VIEW_W, SPARKLINE_VIEW_H, PREVIEW_POINTS } from '../../../src/components/arcSparkline';
-import { useAppAccentRgb } from '../../../src/utils/appAccent';
-import { usePhilosopherStore } from '../../../src/store/philosopherStore';
-import { useGuideChatStore } from '../../../src/store/guideChatStore';
-import { useEngagementStore, TALK_ABOUT_IT_UPSELL_THRESHOLD } from '../../../src/store/engagementStore';
-import { track } from '../../../src/utils/analytics';
-import { getLocalizedLevelName } from '../../../src/content/measureConfig';
-import { useLocaleStore } from '../../../src/store/localeStore';
+import { colors } from '../src/theme/colors';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
+import { spacing } from '../src/theme/spacing';
+import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
+import { sparklinePath, sparklineCoords, SPARKLINE_VIEW_W, SPARKLINE_VIEW_H, PREVIEW_POINTS } from '../src/components/arcSparkline';
+import { useAppAccentRgb } from '../src/utils/appAccent';
+import { usePhilosopherStore } from '../src/store/philosopherStore';
+import { useGuideChatStore } from '../src/store/guideChatStore';
+import { useEngagementStore, TALK_ABOUT_IT_UPSELL_THRESHOLD } from '../src/store/engagementStore';
+import { track } from '../src/utils/analytics';
+import { VIBRATION_LEVELS, getLocalizedLevelName } from '../src/content/measureConfig';
+import { useLocaleStore } from '../src/store/localeStore';
+
+function formatDate(ts: number) {
+  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+}
 
 // Not subscribed yet — shown when tapping Depths' "Your arc" row without an
 // active subscription (see arcSparkline.ts). The sparkline here is the
@@ -41,8 +46,11 @@ export default function YourArcPreviewScreen() {
   const talkAboutItCount = useEngagementStore((s) => s.talkAboutItCount);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
 
-  const points = readingLog.slice(-PREVIEW_POINTS).map((e) => e.score);
+  const previewEntries = readingLog.slice(-PREVIEW_POINTS);
+  const points = previewEntries.map((e) => e.score);
   const d = sparklinePath(points);
+  const coords = sparklineCoords(points);
+  const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
 
   // Same threshold Depths' own "Talk about it" row used to swap its copy
   // at — moved here since this is the screen someone visits to see what
@@ -77,7 +85,9 @@ export default function YourArcPreviewScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable style={styles.backRow} onPress={() => router.back()}>
+      {/* See your-arc.tsx's identical comment — explicit destination, not
+          router.back(), now that this is a top-level route. */}
+      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
@@ -103,8 +113,58 @@ export default function YourArcPreviewScreen() {
             strokeLinecap="round"
             strokeLinejoin="round"
           />
+          {/* Marks each individual reading the line connects — without
+              these the sparkline reads as a bare trend line, not "your last
+              four readings," which is specifically what this screen's own
+              copy promises right below it. */}
+          {coords.map((point, i) => (
+            <Circle
+              key={i}
+              cx={point.x}
+              cy={point.y}
+              r={1.2}
+              fill={`rgb(${accentRgb})`}
+            />
+          ))}
         </Svg>
+        {/* A separate absolutely-positioned tap layer, not SVG onPress per
+            point — same reasoning as your-arc.tsx's own tapLayer (SVG
+            shapes don't reliably take touch events at this marker size
+            across platforms). Tappable here too, unlike a fully inert
+            preview: showing just enough — the date, what it read as — and
+            then naming what's still locked (the actual conversation) is
+            the honest tease this screen is already built around, just
+            extended down to the point level instead of stopping at the
+            line itself. */}
+        <View style={styles.tapLayer} pointerEvents="box-none">
+          {previewEntries.map((entry, i) => (
+            <Pressable
+              key={entry.ts}
+              style={[
+                styles.tapTarget,
+                { left: `${(coords[i].x / SPARKLINE_VIEW_W) * 100}%`, top: `${(coords[i].y / SPARKLINE_VIEW_H) * 100}%` },
+              ]}
+              onPress={() => setSelected(entry)}
+              hitSlop={10}
+            />
+          ))}
+        </View>
       </View>
+
+      {selected && (
+        <View style={styles.pointDetail}>
+          <Text style={styles.pointDate}>{formatDate(selected.ts)}</Text>
+          <Text style={styles.pointLevel}>
+            {t('yourArcPreview.pointLevel', {
+              level: getLocalizedLevelName(
+                VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug) ?? VIBRATION_LEVELS[0],
+                locale
+              ).toLowerCase(),
+            })}
+          </Text>
+          <Text style={styles.pointUnlockHint}>{t('yourArcPreview.pointUnlockHint')}</Text>
+        </View>
+      )}
 
       <Text style={styles.unlockKicker}>{t('yourArcPreview.whatSelfinderPlusAdds')}</Text>
       <Text style={styles.unlockLine}>
@@ -165,7 +225,41 @@ const styles = StyleSheet.create({
   },
   sparklineWrap: {
     width: '100%',
-    marginBottom: spacing[10],
+    marginBottom: spacing[6],
+  },
+  tapLayer: { ...StyleSheet.absoluteFill },
+  tapTarget: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    marginLeft: -8,
+    marginTop: -8,
+    borderRadius: 8,
+  },
+  // No border/fill box — same "no cards" register as the rest of the app,
+  // separated from the sparkline above it by space alone.
+  pointDetail: { gap: spacing[1], marginBottom: spacing[8] },
+  pointDate: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    textTransform: 'uppercase',
+    letterSpacing: letterSpacings.wide,
+  },
+  pointLevel: {
+    color: colors.text.primary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.md,
+    textTransform: 'capitalize',
+    marginTop: spacing[1],
+  },
+  pointUnlockHint: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+    marginTop: spacing[2],
   },
   unlockKicker: {
     alignSelf: 'flex-start',

@@ -18,6 +18,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { TUNE_IN_STATES, getLocalizedTuneInState } from '../../../../src/content/tuneInStates';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
@@ -95,6 +96,7 @@ export default function TuneInScreen() {
   const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
+  const columnWidth = useReadingColumnWidth();
 
   useEffect(() => {
     markDiscovered('tuneIn');
@@ -204,66 +206,68 @@ export default function TuneInScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
 
-      <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <View style={{ width: columnWidth, alignSelf: 'center', flex: 1 }}>
+        <Pressable style={styles.backRow} onPress={() => router.back()}>
+          <Text style={styles.backLink}>{t('common.back')}</Text>
+        </Pressable>
 
-      <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
-      <Text style={styles.title}>{t('tuneIn.title')}</Text>
-      <Text style={styles.introLine}>
-        {t('tuneIn.introLine')}
-      </Text>
+        <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
+        <Text style={styles.title}>{t('tuneIn.title')}</Text>
+        <Text style={styles.introLine}>
+          {t('tuneIn.introLine')}
+        </Text>
 
-      <View style={styles.pickerRow}>
-        {TUNE_IN_STATES.map((state, i) => (
-          <Pressable key={state.name} style={styles.pickerItem} onPress={() => handleSelect(i)}>
-            <Text style={[styles.pickerName, i === selected && styles.pickerNameActive]}>
-              {getLocalizedTuneInState(state, locale).name}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <View style={styles.centerBlock}>
-        <Pulse active={isPlaying} onPress={handleToggle} />
-        <Text style={styles.intent}>{getLocalizedTuneInState(activeState, locale).intent}</Text>
-      </View>
-
-      <View style={styles.volumeRow}>
-        <Text style={styles.volumeLabel}>{t('tuneIn.volume')}</Text>
-        <View style={styles.volumeSteps}>
-          {VOLUME_STEPS.map((step) => (
-            <Pressable
-              key={step}
-              style={[styles.volumeDot, volume >= step && styles.volumeDotActive]}
-              onPress={() => setVolume(step)}
-            />
-          ))}
-        </View>
-      </View>
-
-      <View style={styles.timerSection}>
-        <Text style={styles.volumeLabel}>{t('tuneIn.sleepTimer')}</Text>
-        <View style={styles.timerChipRow}>
-          {TIMER_OPTIONS.map((minutes) => (
-            <Pressable
-              key={minutes}
-              style={[styles.timerChip, timerMinutes === minutes && styles.timerChipActive]}
-              onPress={() => handleSelectTimer(minutes)}
-            >
-              <Text style={[styles.timerChipText, timerMinutes === minutes && styles.timerChipTextActive]}>
-                {minutes}m
+        <View style={styles.pickerRow}>
+          {TUNE_IN_STATES.map((state, i) => (
+            <Pressable key={state.name} style={styles.pickerItem} onPress={() => handleSelect(i)}>
+              <Text style={[styles.pickerName, i === selected && styles.pickerNameActive]}>
+                {getLocalizedTuneInState(state, locale).name}
               </Text>
             </Pressable>
           ))}
         </View>
-        {remainingSeconds !== null && (
-          <Text style={styles.timerCountdown}>
-            {t('tuneIn.fadingOutIn', {
-              time: `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}`,
-            })}
-          </Text>
-        )}
+
+        <View style={styles.centerBlock}>
+          <Pulse active={isPlaying} onPress={handleToggle} />
+          <Text style={styles.intent}>{getLocalizedTuneInState(activeState, locale).intent}</Text>
+        </View>
+
+        <View style={styles.volumeRow}>
+          <Text style={styles.volumeLabel}>{t('tuneIn.volume')}</Text>
+          <View style={styles.volumeSteps}>
+            {VOLUME_STEPS.map((step) => (
+              <Pressable
+                key={step}
+                style={[styles.volumeDot, volume >= step && styles.volumeDotActive]}
+                onPress={() => setVolume(step)}
+              />
+            ))}
+          </View>
+        </View>
+
+        <View style={styles.timerSection}>
+          <Text style={styles.volumeLabel}>{t('tuneIn.sleepTimer')}</Text>
+          <View style={styles.timerChipRow}>
+            {TIMER_OPTIONS.map((minutes) => (
+              <Pressable
+                key={minutes}
+                style={[styles.timerChip, timerMinutes === minutes && styles.timerChipActive]}
+                onPress={() => handleSelectTimer(minutes)}
+              >
+                <Text style={[styles.timerChipText, timerMinutes === minutes && styles.timerChipTextActive]}>
+                  {minutes}m
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {remainingSeconds !== null && (
+            <Text style={styles.timerCountdown}>
+              {t('tuneIn.fadingOutIn', {
+                time: `${Math.floor(remainingSeconds / 60)}:${String(remainingSeconds % 60).padStart(2, '0')}`,
+              })}
+            </Text>
+          )}
+        </View>
       </View>
     </View>
   );

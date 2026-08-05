@@ -28,6 +28,7 @@ import { TypingDots } from '../../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
 import { track } from '../../../../src/utils/analytics';
+import { useWideColumnWidth, useIsLargeScreen } from '../../../../src/theme/responsive';
 
 const TOTAL_SPHERES = 4;
 
@@ -84,6 +85,13 @@ export default function InterviewScreen() {
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const columnWidth = useWideColumnWidth();
+  const isLargeScreen = useIsLargeScreen();
+  // Same "short conversation content on a tall tablet screen" case as
+  // Guide's own empty-state fix — before any answer has been given at all,
+  // there's only the first question, which flex-end would otherwise pin to
+  // the very bottom of the screen with nothing else visible above it.
+  const isBeforeFirstAnswer = qaPairs.length === 0 && asides.length === 0 && !isScoring && !scoringError;
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -237,7 +245,15 @@ export default function InterviewScreen() {
         </Pressable>
       )}
 
-      <ScrollView ref={scrollRef} style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        ref={scrollRef}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { width: columnWidth, alignSelf: 'center' },
+          isLargeScreen && isBeforeFirstAnswer && styles.scrollContentCenteredEmpty,
+        ]}
+      >
         {qaPairs.map((pair, i) => (
           <View key={pair.sphere} style={styles.exchange}>
             <Turn color={accentColor}>{pair.question}</Turn>
@@ -286,7 +302,7 @@ export default function InterviewScreen() {
       </ScrollView>
 
       {!isScoring && !scoringError && currentQuestion && (
-        <View style={styles.compose}>
+        <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
           {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>
             <TextInput
@@ -390,6 +406,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[4],
     gap: spacing[3],
   },
+  // See isLargeScreen && isBeforeFirstAnswer above — only overrides
+  // justifyContent, so an in-progress interview on a tablet still anchors
+  // toward the bottom like it does on phone.
+  scrollContentCenteredEmpty: { justifyContent: 'center' },
   exchange: { gap: spacing[3], marginBottom: spacing[3] },
   // Turn-taking carried by alignment and color, not a bubble shape — same
   // pattern as Guide's own Turn component (app/(tabs)/guide/index.tsx),

@@ -15,7 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
-import { useReadingColumnWidth } from '../../../src/theme/responsive';
+import { useWideColumnWidth, useIsLargeScreen } from '../../../src/theme/responsive';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
@@ -30,7 +30,8 @@ export default function GuideScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const columnWidth = useReadingColumnWidth();
+  const columnWidth = useWideColumnWidth();
+  const isLargeScreen = useIsLargeScreen();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const metPhilosopherIds = usePhilosopherStore((s) => s.metPhilosopherIds);
   const markMet = usePhilosopherStore((s) => s.markMet);
@@ -163,7 +164,19 @@ export default function GuideScreen() {
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
-        contentContainerStyle={[styles.scrollContent, { width: columnWidth, alignSelf: 'center' }]}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { width: columnWidth, alignSelf: 'center' },
+          // On phone, content always overflows the viewport, so flex-end
+          // is a no-op — content just fills and scrolls. On a tablet, an
+          // empty/short conversation is shorter than the screen, and
+          // flex-end collapses it to the bottom edge, leaving the entire
+          // upper portion of the screen empty. Centering the empty state
+          // specifically (not the whole scroll content generally, which
+          // should still anchor new messages toward the bottom once a
+          // conversation exists) fixes that without changing phone layout.
+          isLargeScreen && messages.length === 0 && styles.scrollContentCenteredEmpty,
+        ]}
         onContentSizeChange={handleContentSizeChange}
       >
         {messages.length === 0 ? (
@@ -202,7 +215,7 @@ export default function GuideScreen() {
           </View>
         ) : (
           messages.map((message, i) => (
-            <View key={i}>
+            <View key={i} style={isLargeScreen && styles.turnRowLargeScreen}>
               <Turn isUser={message.role === 'user'}>{message.content}</Turn>
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
                 <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
@@ -288,8 +301,14 @@ const styles = StyleSheet.create({
   // No border, no fill — plain text with spacing, same register as
   // Depths' discoveryNudge. The tap affordance is the accent-colored
   // action line beneath it, not a bordered box around the whole thing.
+  // paddingHorizontal (not marginHorizontal) to match header/scrollContent's
+  // own pattern — this box also gets an explicit `width: columnWidth`
+  // inline (see its usage), and combining a fixed width with an outer
+  // margin on the same box was clipping the margin on real devices
+  // (confirmed on iPhone — text ran flush to the screen edge) even though
+  // it happened to render fine in the web preview.
   nudgeBanner: {
-    marginHorizontal: spacing[5],
+    paddingHorizontal: spacing[5],
     marginBottom: spacing[4],
   },
   nudgeText: {
@@ -311,6 +330,10 @@ const styles = StyleSheet.create({
     paddingBottom: spacing[4],
     gap: spacing[4],
   },
+  // See the isLargeScreen && messages.length === 0 check above this style's
+  // usage — only overrides justifyContent, so a real conversation on a
+  // tablet still anchors to the bottom like it does on phone.
+  scrollContentCenteredEmpty: { justifyContent: 'center' },
   emptyState: { paddingVertical: spacing[8] },
   // No border-bar — italic already carries "this is the philosopher's own
   // voice" (same pairing used everywhere else in the app: an italic line,
@@ -368,6 +391,10 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.base * lineHeights.chat,
     maxWidth: '88%',
   },
+  // A little extra room between turns on a tablet — the conversation
+  // fills more of the available height without inventing new content,
+  // the same way a book sets wider margins on a bigger page.
+  turnRowLargeScreen: { marginBottom: spacing[2] },
   turnPhilosopher: {
     alignSelf: 'flex-start',
     color: colors.text.primary,

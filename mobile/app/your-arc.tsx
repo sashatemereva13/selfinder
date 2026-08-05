@@ -4,17 +4,17 @@ import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
-import { spacing, radius } from '../../../src/theme/spacing';
-import { useMeasureStore, ReadingLogEntry } from '../../../src/store/measureStore';
-import { useAuthStore } from '../../../src/store/authStore';
-import { getMe, getMeasureHistory } from '../../../src/api/user';
-import { SavedMeasureResult } from '../../../src/types';
-import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../../../src/components/arcSparkline';
-import { useAppAccentRgb } from '../../../src/utils/appAccent';
-import { getLocalizedLevelName } from '../../../src/content/measureConfig';
-import { useLocaleStore } from '../../../src/store/localeStore';
+import { colors } from '../src/theme/colors';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
+import { spacing, radius } from '../src/theme/spacing';
+import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
+import { useAuthStore } from '../src/store/authStore';
+import { getMe, getMeasureHistory } from '../src/api/user';
+import { SavedMeasureResult } from '../src/types';
+import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
+import { useAppAccentRgb } from '../src/utils/appAccent';
+import { getLocalizedLevelName } from '../src/content/measureConfig';
+import { useLocaleStore } from '../src/store/localeStore';
 
 const VIEW_W = SPARKLINE_VIEW_W;
 const VIEW_H = SPARKLINE_VIEW_H;
@@ -96,7 +96,12 @@ export default function YourArcScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable style={styles.backRow} onPress={() => router.back()}>
+      {/* Explicit destination, not router.back() — Your Arc's only real
+          entry point is Depths' "Your arc" row, but this is now a
+          top-level route (see app/_layout.tsx), so router.back()'s actual
+          target depends on navigation-stack internals rather than where
+          the user thinks they came from. Same fix as /sources. */}
+      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 

@@ -12,6 +12,7 @@ import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../../src/store/localeStore';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function TodayScreen() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function TodayScreen() {
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const resetInterview = useMeasureStore((s) => s.resetInterview);
   const currentResult = useMeasureStore((s) => s.currentResult);
+  const columnWidth = useReadingColumnWidth();
 
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
@@ -43,7 +45,7 @@ export default function TodayScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <View style={styles.body}>
+      <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
         <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
         <Text style={styles.title}>
           {t('measureIntro.title')}
@@ -63,7 +65,7 @@ export default function TodayScreen() {
         )}
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { width: columnWidth, alignSelf: 'center' }]}>
         <Pressable
           style={[styles.button, { backgroundColor: accentColor }]}
           onPress={handleBegin}

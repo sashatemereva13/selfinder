@@ -22,7 +22,7 @@ interface RecentReading {
 
 // How many times someone has tapped "Talk about it" (continuing a past
 // reading's conversation) before the not-subscribed Your Arc preview screen
-// (app/(tabs)/you/your-arc-preview.tsx) starts showing a "Keep the
+// (app/your-arc-preview.tsx) starts showing a "Keep the
 // conversation going" Selfinder+ nudge. Depths' own "Talk about it" row
 // stays one plain, always-tappable action regardless of this count — the
 // nudge lives on the screen someone visits to see what subscribing would

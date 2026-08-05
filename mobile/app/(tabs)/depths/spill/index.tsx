@@ -11,6 +11,7 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function SpillScreen() {
   const { t } = useTranslation();
@@ -20,6 +21,7 @@ export default function SpillScreen() {
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const columnWidth = useReadingColumnWidth();
 
   useEffect(() => {
     markDiscovered('spill');
@@ -42,7 +44,7 @@ export default function SpillScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <View style={styles.body}>
+      <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
         <Text style={styles.kicker}>{t('spill.kicker')}</Text>
         <Text style={styles.title}>{t('spill.title')}</Text>
         <Text style={styles.copy}>
@@ -53,7 +55,7 @@ export default function SpillScreen() {
         </Text>
       </View>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { width: columnWidth, alignSelf: 'center' }]}>
         <Pressable style={[styles.button, { backgroundColor: accentColor }]} onPress={handleBegin}>
           <Text style={styles.buttonText}>{t('common.begin')}</Text>
         </Pressable>

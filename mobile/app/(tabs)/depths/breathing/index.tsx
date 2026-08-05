@@ -18,6 +18,7 @@ import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 const BASE_SCALE = 0.85;
 const PEAK_SCALE = 1.25;
@@ -72,6 +73,7 @@ export default function BreathingScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
+  const columnWidth = useReadingColumnWidth();
 
   const [patternIndex, setPatternIndex] = useState(0);
   const [active, setActive] = useState(false);
@@ -149,39 +151,41 @@ export default function BreathingScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <AmbientGlow intensified={active} pulseDurationMs={active ? phase.seconds * 1000 : 4200} />
 
-      <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <View style={{ width: columnWidth, alignSelf: 'center', flex: 1, alignItems: 'center' }}>
+        <Pressable style={styles.backRow} onPress={() => router.back()}>
+          <Text style={styles.backLink}>{t('common.back')}</Text>
+        </Pressable>
 
-      <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
-      <Text style={styles.title}>{t('breathing.title')}</Text>
+        <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
+        <Text style={styles.title}>{t('breathing.title')}</Text>
 
-      <View style={styles.pickerRow}>
-        {BREATHING_PATTERNS.map((p, i) => (
-          <Pressable key={p.id} style={styles.pickerItem} onPress={() => handleSelectPattern(i)}>
-            <Text style={[styles.pickerName, i === patternIndex && styles.pickerNameActive]}>
-              {getLocalizedBreathingPattern(p, locale).name}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+        <View style={styles.pickerRow}>
+          {BREATHING_PATTERNS.map((p, i) => (
+            <Pressable key={p.id} style={styles.pickerItem} onPress={() => handleSelectPattern(i)}>
+              <Text style={[styles.pickerName, i === patternIndex && styles.pickerNameActive]}>
+                {getLocalizedBreathingPattern(p, locale).name}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
-      <View style={styles.centerBlock}>
-        <Text style={styles.subtitle}>{pattern.subtitle}</Text>
-        <Text style={styles.useFor}>{pattern.useFor}</Text>
+        <View style={styles.centerBlock}>
+          <Text style={styles.subtitle}>{pattern.subtitle}</Text>
+          <Text style={styles.useFor}>{pattern.useFor}</Text>
 
-        <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('common.begin')} />
+          <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('common.begin')} />
 
-        <Text style={styles.phaseLabel}>
-          {active ? phase.label : completionLine ?? t('breathing.readyWhenYouAre')}
-        </Text>
-        {active && (
-          <Text style={styles.roundCounter}>
-            {t('breathing.roundOf', { round, total: pattern.rounds })}
+          <Text style={styles.phaseLabel}>
+            {active ? phase.label : completionLine ?? t('breathing.readyWhenYouAre')}
           </Text>
-        )}
+          {active && (
+            <Text style={styles.roundCounter}>
+              {t('breathing.roundOf', { round, total: pattern.rounds })}
+            </Text>
+          )}
 
-        <Text style={styles.howToNote}>{pattern.howTo}</Text>
+          <Text style={styles.howToNote}>{pattern.howTo}</Text>
+        </View>
       </View>
     </View>
   );

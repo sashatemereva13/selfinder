@@ -10,6 +10,7 @@ import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
 import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function SpillRevealScreen() {
   const { t } = useTranslation();
@@ -21,6 +22,7 @@ export default function SpillRevealScreen() {
   const send = useGuideChatStore((s) => s.send);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const columnWidth = useReadingColumnWidth();
 
   useEffect(() => {
     if (!text) router.replace('/(tabs)/depths/spill');
@@ -57,7 +59,10 @@ export default function SpillRevealScreen() {
   return (
     <ScrollView
       style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[6] }]}
+      contentContainerStyle={[
+        styles.content,
+        { paddingTop: insets.top + spacing[6], width: columnWidth, alignSelf: 'center' },
+      ]}
     >
       <Text style={styles.kicker}>{t('spillReveal.whatCameOut')}</Text>
       <Text style={styles.text}>{text}</Text>
