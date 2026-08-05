@@ -77,9 +77,10 @@ export default function RootLayout() {
 
     const inOnboarding = segments[0] === 'onboarding';
     const inTabs = segments[0] === '(tabs)';
+    const inSources = segments[0] === 'sources';
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
-    } else if (philosopher && !inTabs) {
+    } else if (philosopher && !inTabs && !inSources) {
       router.replace('/(tabs)/depths');
     }
   }, [ready, philosopher, segments]);
@@ -94,6 +95,7 @@ export default function RootLayout() {
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)"     />
+          <Stack.Screen name="sources"    />
         </Stack>
       </GestureHandlerRootView>
     </SafeAreaProvider>

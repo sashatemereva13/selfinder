@@ -77,6 +77,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "The traditional description",
         paragraphs: [
           `Illumination, self-realisation, and enlightenment denote the Divine states that have historically demonstrated the highest levels of consciousness. These conditions represent the transcendence of the limitations and constraints of the ego's linearity, and the emergence of the radiance of the infinite reality and source of existence.`,
@@ -125,6 +131,12 @@ export const LEVELS: LevelContent[] = [
       },
     ],
     deepDive: [
+      {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
       {
         heading: "The traditional description",
         paragraphs: [
@@ -195,6 +207,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "The shape of this joy",
         paragraphs: [
           `As love becomes increasingly unconditional, it begins to be experienced as inner joy. This is not the sudden joy of a pleasurable turn of events, but instead a constant accompaniment to all activities.`,
@@ -262,6 +280,12 @@ export const LEVELS: LevelContent[] = [
       },
     ],
     deepDive: [
+      {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
       {
         heading: "What this love is",
         paragraphs: [
@@ -340,6 +364,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What reason does well",
         paragraphs: [
           `Intelligence and rationality rise to the forefront when the emotionalism of the lower levels is transcended.`,
@@ -397,7 +427,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "What it's for",
         paragraphs: [
-          `Marsha Linehan, who built Dialectical Behavior Therapy after surviving the psychiatric crisis she spent decades not disclosing publicly, reduced it to an equation: pain is pain, but suffering is pain plus non-acceptance. The suffering isn't the situation — it's the part of you still arguing the situation shouldn't be the situation.`,
+          `Marsha Linehan, who built Dialectical Behavior Therapy after surviving the psychiatric crisis she spent decades not disclosing publicly, reduced it to an equation: pain is pain, but suffering is pain plus non-acceptance. The suffering isn't the situation — it's the part of you still arguing the situation shouldn't be the situation. (See "Where this comes from" for more on her work.)`,
           `Epictetus said the same thing two thousand years earlier: some things are within your control, others aren't, and the entire difficulty of a life is mistaking which is which. Acceptance isn't giving up on the ones you can change. It's finally being accurate about which ones those are.`,
         ],
       },
@@ -415,6 +445,12 @@ export const LEVELS: LevelContent[] = [
       },
     ],
     deepDive: [
+      {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
       {
         heading: "Taking back the source of your happiness",
         paragraphs: [
@@ -498,6 +534,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What changes",
         paragraphs: [
           `At this level, growth is rapid and success is common in all endeavors.`,
@@ -567,6 +609,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What it feels like day to day",
         paragraphs: [
           `To be neutral means to be relatively unattached to outcomes. Not getting one's way is no longer experienced as defeating, frightening, or frustrating.`,
@@ -627,6 +675,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "Crossing the threshold",
         paragraphs: [
           `Level of empowerment. Zone of exploration, accomplishment, fortitude, determination.`,
@@ -649,7 +703,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Self-honesty and what the body already knows",
         paragraphs: [
-          `From consciousness calibration research, it is verified that everyone knows unconsciously when they are being lied to, which is revealed by the muscle test that instantly discerns truth from falsehood. This weakening of the body's musculature response and the alterations of the energy flow through the acupuncture system indicate that the awareness of the difference between truth and falsehood is intrinsic to life energy and is reflected in the body's response, even if the mind denies it.`,
+          `Hawkins claimed that everyone knows unconsciously when they are being lied to, and that his own muscle-testing method could reveal this directly in the body's response — the mind denying something the body still registered as false. This is Hawkins' own theory of "consciousness calibration," not a finding accepted by mainstream science; muscle testing has not been validated in controlled studies. The plainer, uncontroversial version of the same idea: most people can feel in their body when they're not being honest with themselves, even before they can say why.`,
           `Self-honesty brings relief from the negative emotions of lower energy fields. Negative emotions are now unwelcome and unpleasant in both oneself and others. Argument, conflict, and discord are no longer attractive because they have lost their ego appeal.`,
         ],
       },
@@ -697,7 +751,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "What it's for",
         paragraphs: [
-          `Psychologist Jessica Tracy's research (UBC Emotion & Self Lab) found something the word itself hides: there are two distinct forms of pride, not one. Authentic pride — earned, effort-based, tied to something you actually did — measurably boosts creativity and motivates people to keep showing up. Hubristic pride — grandiose, defensive, about dominance rather than achievement — does the opposite.`,
+          `Psychologist Jessica Tracy's research (UBC Emotion & Self Lab) found something the word itself hides: there are two distinct forms of pride, not one. Authentic pride — earned, effort-based, tied to something you actually did — measurably boosts creativity and motivates people to keep showing up. Hubristic pride — grandiose, defensive, about dominance rather than achievement — does the opposite. (See "Where this comes from" for more on her research.)`,
           `Which means the question worth asking when pride shows up isn't whether to feel it. It's which of the two you're actually standing in.`,
         ],
       },
@@ -715,6 +769,12 @@ export const LEVELS: LevelContent[] = [
       },
     ],
     deepDive: [
+      {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
       {
         heading: "Where this self-esteem comes from",
         paragraphs: [
@@ -783,6 +843,12 @@ export const LEVELS: LevelContent[] = [
       },
     ],
     deepDive: [
+      {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
       {
         heading: "What it can do",
         paragraphs: [
@@ -858,6 +924,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What it moves us toward",
         paragraphs: [
           `Desire motivates vast areas of human activity, including the economy. Advertisers play on desires to program us with needs linked to instinctual drives. It is linked to jealousy and greed.`,
@@ -927,6 +999,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "How it runs the show",
         paragraphs: [
           `Fear of danger runs much of the world, spurring on endless activity. Fear of enemies, old age, or death is a basic motivator in the lives of most people.`,
@@ -976,7 +1054,7 @@ export const LEVELS: LevelContent[] = [
         heading: "What it's for",
         paragraphs: [
           `C.S. Lewis, writing after his wife's death, discovered something he hadn't expected: "Grief turns out to be not a state but a process." It wasn't a wound to close as fast as possible — it kept moving, on its own schedule, whether he cooperated or not.`,
-          `His conclusion is the one worth keeping: "Bereavement is a universal and integral part of our experience of love." Grief isn't evidence something is wrong with you. It's the exact size of what you were willing to care about. Kübler-Ross's stages exist for the same reason — not a checklist to complete, but a way of naming what's actually happening so it doesn't feel like it's happening for no reason.`,
+          `His conclusion is the one worth keeping: "Bereavement is a universal and integral part of our experience of love." Grief isn't evidence something is wrong with you. It's the exact size of what you were willing to care about. Kübler-Ross's stages exist for the same reason — not a checklist to complete, but a way of naming what's actually happening so it doesn't feel like it's happening for no reason. (See "Where this comes from" for more on her work.)`,
         ],
       },
       {
@@ -994,11 +1072,17 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "Why it lingers",
         paragraphs: [
           `Most people have experienced it for periods of time, but those who remain at this level live a life of constant regret and depression, which makes them feel like a loser and accept failure as part of their lifestyle. This often results in the loss of jobs, friends, family, opportunities, as well as money and health.`,
           `In grief, one sees sadness everywhere—everything seems miserable and grim.`,
-          `Though grief is the cemetery of life, it has more energy to it than apathy. Thus, when traumatised apathetic patients begin to cry, they are getting better—for once they start to cry, they will eat again.`,
+          `Grief carries more energy than apathy does, even though it doesn't feel that way. In Hawkins' clinical observations, someone who had gone numb and withdrawn started to reconnect with life around the same time they were able to cry again — grief moving through, rather than around, someone.`,
         ],
       },
       {
@@ -1070,6 +1154,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "How it's met by the world",
         paragraphs: [
           `Society often lacks sufficient motivation to be of any real help to cultures or individuals at this level and sees them as drains on resources.`,
@@ -1129,6 +1219,12 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What guilt actually is",
         paragraphs: [
           `Guilt is the consequence of the memory of regretted past actions as they are recalled. These can be transcended by recontextualisation — mistakes are the natural, impersonal consequence of learning and development, and therefore unavoidable.`,
@@ -1157,7 +1253,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "The deeper mechanics",
         paragraphs: [
-          `In psychological terms, the source of guilt is the superego, so named by Freud. This is the part of the mind comprised of introjected judgments, points of view, and learned content.`,
+          `In psychological terms, the source of guilt is the superego, a concept named by Freud (see "Where this comes from" for more) — the part of the mind comprised of introjected judgments, points of view, and learned content.`,
           `Reluctance to forgive is a consequence of the illusion that others do not "deserve" it. In reality, it is the forgiver — not the forgiven — who benefits the most.`,
           `Forgiveness cannot be done by the ego/mind because it lacks the necessary power when caught up in the energy field of hate, which calibrates at only 30. The transformative source of power cannot originate from the mind or the personality called the personal "I." The necessary power resides in the nonlinear quality of consciousness termed the "will."`,
           `Guilt-ridden cultures commonly have a negative view of God as judgmental, vindictive, angry, and punitive — seen through natural disasters contextualised as punishment for wickedness.`,
@@ -1186,7 +1282,7 @@ export const LEVELS: LevelContent[] = [
       { label: "Personality", value: "shy, withdrawn, introverted, self-deprecating." },
       { label: "Used in society", value: "as a fear of disapproval; a tool for cruelty." },
       { label: "Factors leading to it", value: "neglect, physical, emotional, or sexual abuse." },
-      { label: "Prone to", value: "bizarre crimes, paranoia, psychosis, hallucinations of an accusatory nature." },
+      { label: "Prone to", value: "wanting to hide from everyone, and believing others see you the way you see yourself." },
     ],
     sections: [
       {
@@ -1198,7 +1294,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "What it's for",
         paragraphs: [
-          `Brené Brown's research draws the line precisely: guilt is "I did something bad," shame is "I am bad" — and the second one is almost never true, even when it feels total. Her own finding, after years of interviewing people about it: "Shame cannot survive being spoken. It cannot survive being spoken and being met with empathy."`,
+          `Brené Brown's research draws the line precisely: guilt is "I did something bad," shame is "I am bad" — and the second one is almost never true, even when it feels total. Her own finding, after years of interviewing people about it: "Shame cannot survive being spoken. It cannot survive being spoken and being met with empathy." (See "Where this comes from" for more on her research.)`,
           `Which is the opposite of the instinct shame produces — the pull to hide, to go quiet, to make sure no one sees. The way out isn't proving the shame wrong through more achievement. It's saying the actual thing out loud to one person who won't flinch.`,
         ],
       },
@@ -1217,11 +1313,16 @@ export const LEVELS: LevelContent[] = [
     ],
     deepDive: [
       {
+        heading: "About this section",
+        paragraphs: [
+          `The rest of this deeper read follows David R. Hawkins' own account of this state from his book *Power vs. Force* — his framework and his language, not independently verified science. See "Where this comes from" for more on his methodology and its limits.`,
+        ],
+      },
+      {
         heading: "What it can become",
         paragraphs: [
-          `Despair is characterised by helplessness and hopelessness. It is a hellish state to endure. The will to live is lost, while the act of suicide is not possible due to lack of energy. Passive suicide occurs through failure to eat or provide for physical necessities.`,
-          `Shame is reflective of self-hatred, which can result in homicidal aggression.`,
-          `Depression is accompanied by major changes in brain physiology and low levels of critical neurotransmitters such as norepinephrine and serotonin.`,
+          `Despair is helplessness and hopelessness together — a hard state to be in, and one where even everyday things like eating or basic care can start to fall away. If this is where you are, or if the will to live itself feels gone, please reach out to a doctor, a mental health professional, or a crisis line where you are — this app is a self-reflection practice, not a substitute for that kind of help.`,
+          `Left unaddressed for a long time, shame this heavy can turn inward as self-hatred, or, less often, outward as anger at others.`,
         ],
       },
       {

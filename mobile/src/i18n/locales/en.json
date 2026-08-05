@@ -138,7 +138,14 @@
     "notFound": "This level couldn't be found.",
     "levelScore": "Level · {{score}}",
     "hideDeeperRead": "Hide the deeper read ↑",
-    "goDeeper": "Go deeper ↓"
+    "goDeeper": "Go deeper ↓",
+    "sourcesLink": "Where this comes from →"
+  },
+  "sources": {
+    "title": "Where this comes from",
+    "disclaimer": "Selfinder is a self-reflection practice, not medical advice, diagnosis, or treatment. The ideas here — including the map of seventeen states and the psychological concepts referenced on each level's page — are drawn from the named sources below. If you're struggling with your mental health, please talk to a doctor or a licensed mental health professional.",
+    "sectionHeading": "Sources referenced in this app",
+    "openLink": "Open source ↗"
   },
   "guide": {
     "chooseSomeone": "Choose who walks beside you in the You tab to begin.",

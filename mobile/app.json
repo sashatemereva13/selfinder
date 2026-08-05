@@ -8,7 +8,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.selfinder.app",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

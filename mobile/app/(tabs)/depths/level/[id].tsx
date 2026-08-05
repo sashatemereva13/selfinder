@@ -122,6 +122,10 @@ export default function LevelScreen() {
           )}
         </View>
       )}
+
+      <Pressable style={styles.sourcesRow} onPress={() => router.push('/sources')}>
+        <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -209,5 +213,11 @@ const styles = StyleSheet.create({
     paddingTop: spacing[4],
     borderTopWidth: 1,
     borderTopColor: colors.bg.border,
+  },
+  sourcesRow: { marginTop: spacing[8] },
+  sourcesLink: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
   },
 });

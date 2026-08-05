@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { colors } from '../../../src/theme/colors';
@@ -27,6 +28,7 @@ const CROSSFADE_DURATION = 450;
 
 export default function YouScreen() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [changing, setChanging] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -180,6 +182,11 @@ export default function YouScreen() {
         )}
 
         <View style={styles.divider} />
+        <Pressable onPress={() => router.push('/sources')}>
+          <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>
+        </Pressable>
+
+        <View style={styles.divider} />
         <AccountSection />
 
         {__DEV__ && (
@@ -281,4 +288,5 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg.elevated,
   },
   devResetText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
+  sourcesLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
 });
