@@ -1128,7 +1128,43 @@ export default function OnboardingScreen() {
       setTravelActive(true);
       setHandoffStarted(false);
     }
-    setTimeout(() => setStep("choose"), EXIT_DURATION + RING_HOLD_DURATION);
+    setTimeout(() => {
+      // Explicitly stop every shared value that drives an animated SVG
+      // prop (the V-arc morph paths, the line-draw dash offsets) before
+      // unmounting the intro/exit tree that owns them — confirmed via
+      // on-device adb logcat that leaving this implicit (relying on
+      // Reanimated's own unmount cleanup) was the actual cause of the
+      // "picker ring stuck for several seconds" bug on Android: even
+      // with exitProgress settled at 1, react-native-svg's
+      // VirtualView.setClientRect kept firing a layout-changed dispatch
+      // that raced Reanimated's synchronous native-prop update against
+      // the underlying view already being torn down
+      // (RetryableMountingLayerException: "Unable to find
+      // SurfaceMountingManager for tag"), retried every single frame for
+      // several seconds until it happened to resolve. Cancelling here
+      // stops the worklets from ever re-touching these views once we've
+      // committed to leaving this screen, rather than hoping unmount
+      // cleanup catches it in time.
+      for (const v of [
+        exitProgress,
+        lineDrawWhat,
+        lineDrawFeel,
+        lineDrawHow,
+        settleWhat,
+        settleYou,
+        settleFeel,
+        settleHow,
+        mergeWhat,
+        mergeYou,
+        mergeFeel,
+        mergeHow,
+        revealPayoff,
+        revealButton,
+      ]) {
+        cancelAnimation(v);
+      }
+      setStep("choose");
+    }, EXIT_DURATION + RING_HOLD_DURATION);
   };
 
   // Starts the actual travel once BOTH rects are known — the intro rect is
