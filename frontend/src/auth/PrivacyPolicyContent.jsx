@@ -39,10 +39,10 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Conversations with your philosopher</h3>
           <p>
             We treat anything you say to your guide as sensitive personal
-            data. Right now, Guide conversations are not stored on our
-            servers at all, for any user, under any setting — they exist
-            only on your own device and are cleared when the app
-            restarts. If that changes in the future (for example, as part
+            data. Right now, no feature of the app saves Guide
+            conversations to our servers — they exist only on your own
+            device and are cleared when the app restarts. If that changes
+            in the future (for example, as part
             of a paid feature that keeps a history of your conversations),
             it will only ever happen for a signed-in account that has
             separately granted explicit consent in account settings, the
@@ -60,7 +60,11 @@ export default function PrivacyPolicyContent({ titleId }) {
             actual answers you gave, not just the resulting score — is
             saved to your account only if both are true: you're signed in,
             and you've separately granted explicit consent for it in
-            account settings.
+            account settings. That consent controls whether a reading is
+            <em>stored</em> on our server — it doesn't change how the
+            reading is generated in the first place; see "A disclosed
+            limitation" below for what that involves regardless of your
+            consent setting.
           </p>
         </section>
 
@@ -87,11 +91,17 @@ export default function PrivacyPolicyContent({ titleId }) {
         <section>
           <h3>A disclosed limitation</h3>
           <p>
-            When you talk with a philosopher, your message is sent to a
-            third-party AI provider to generate the reply. That provider
-            may process data outside your own country. That's true of
-            any product built on a hosted language model — we're naming
-            it rather than hiding it.
+            When you talk with a philosopher, or answer a question during
+            a Measure reading, your message is sent to a third-party AI
+            provider to generate the reply or the reading itself. This
+            happens every time the feature is used, whether or not you're
+            signed in and whether or not you've granted consent to save
+            readings to your account — that consent, described above,
+            only controls whether the result is later stored on our
+            server, not whether it's sent to the AI provider to be
+            generated. That provider may process data outside your own
+            country. That's true of any product built on a hosted
+            language model — we're naming it rather than hiding it.
           </p>
         </section>
 
