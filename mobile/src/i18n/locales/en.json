@@ -36,6 +36,7 @@
   "account": {
     "kicker": "Account",
     "acceptPrivacyPolicy": "Accept the privacy policy to create an account.",
+    "passwordMinLengthHint": "At least 8 characters.",
     "somethingWentWrong": "Something went wrong.",
     "forgotRequestCopy": "We'll email a code to the address on file, if you've added one.",
     "forgotResetCopy": "Check your inbox for the 6-digit code.",

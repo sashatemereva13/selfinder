@@ -36,6 +36,7 @@
   "account": {
     "kicker": "Аккаунт",
     "acceptPrivacyPolicy": "Чтобы создать аккаунт, примите политику конфиденциальности.",
+    "passwordMinLengthHint": "Не менее 8 символов.",
     "somethingWentWrong": "Что-то пошло не так.",
     "forgotRequestCopy": "Если вы добавили email, мы отправим на него код.",
     "forgotResetCopy": "Проверьте почту — мы отправили вам шестизначный код.",

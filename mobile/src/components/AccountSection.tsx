@@ -222,6 +222,11 @@ function AuthForm({
         placeholderTextColor={colors.text.muted}
         secureTextEntry
       />
+      {/* Shown before submitting, not just after a rejected request — the
+          8-character minimum is enforced server-side (register, same as
+          change/reset password), this is just letting someone know the
+          requirement upfront. */}
+      {mode === 'register' && <Text style={styles.cardCopy}>{t('account.passwordMinLengthHint')}</Text>}
 
       {mode === 'register' && (
         <>

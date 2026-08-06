@@ -24,6 +24,10 @@ export async function register(req, res) {
     return res.status(400).json({ error: "username and password are required" });
   }
 
+  if (password.length < 8) {
+    return res.status(400).json({ error: "Password must be at least 8 characters" });
+  }
+
   if (!privacyPolicyAccepted) {
     return res.status(400).json({ error: "You must accept the privacy policy to create an account" });
   }
