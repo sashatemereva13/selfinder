@@ -23,7 +23,12 @@ export function AIDisclosureOverlay() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[8] }]}>
       <AmbientGlow />
-      <View style={[styles.content, { width: columnWidth, alignSelf: 'center' }]}>
+      <View
+        style={[
+          styles.content,
+          { width: columnWidth, alignSelf: 'center', paddingHorizontal: spacing[6] },
+        ]}
+      >
         <Text style={styles.kicker}>{t('aiDisclosure.kicker')}</Text>
         <Text style={styles.body}>{t('aiDisclosure.body')}</Text>
         <Pressable style={styles.button} onPress={acknowledge}>
@@ -41,7 +46,6 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill,
     zIndex: 100,
     backgroundColor: colors.bg.base,
-    paddingHorizontal: spacing[6],
     paddingBottom: spacing[10],
     justifyContent: 'center',
   },

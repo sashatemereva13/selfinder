@@ -28,7 +28,7 @@ export const TUNE_IN_STATES: TuneInState[] = [
     carrierHz: 200,
     color: '159,255,208',
     intent: 'Relaxed, alert stillness — good for settling before or after something stressful.',
-    asset: require('../../assets/audio/calm-alpha.wav'),
+    asset: require('../../assets/audio/calm-alpha.m4a'),
     translations: {
       ru: {
         name: 'Спокойствие',
@@ -43,7 +43,7 @@ export const TUNE_IN_STATES: TuneInState[] = [
     carrierHz: 200,
     color: '195,153,255',
     intent: 'Meditation-depth stillness. Best with eyes closed, not mid-task.',
-    asset: require('../../assets/audio/deep-rest-theta.wav'),
+    asset: require('../../assets/audio/deep-rest-theta.m4a'),
     translations: {
       ru: {
         name: 'Глубокий отдых',
@@ -58,7 +58,7 @@ export const TUNE_IN_STATES: TuneInState[] = [
     carrierHz: 150,
     color: '126,166,255',
     intent: 'The slowest band, associated with deep sleep. Lie down and let it run.',
-    asset: require('../../assets/audio/sleep-delta.wav'),
+    asset: require('../../assets/audio/sleep-delta.m4a'),
     translations: {
       ru: {
         name: 'Сон',

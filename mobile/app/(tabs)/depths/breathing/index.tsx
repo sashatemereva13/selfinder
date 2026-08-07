@@ -151,7 +151,15 @@ export default function BreathingScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <AmbientGlow intensified={active} pulseDurationMs={active ? phase.seconds * 1000 : 4200} />
 
-      <View style={{ width: columnWidth, alignSelf: 'center', flex: 1, alignItems: 'center' }}>
+      <View
+        style={{
+          width: columnWidth,
+          alignSelf: 'center',
+          flex: 1,
+          alignItems: 'center',
+          paddingHorizontal: spacing[6],
+        }}
+      >
         <Pressable style={styles.backRow} onPress={() => router.back()}>
           <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
@@ -195,7 +203,6 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
-    paddingHorizontal: spacing[6],
     paddingBottom: spacing[8],
     alignItems: 'center',
   },
