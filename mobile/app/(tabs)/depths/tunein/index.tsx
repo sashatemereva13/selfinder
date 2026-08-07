@@ -4,6 +4,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Asset } from 'expo-asset';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,6 +22,13 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+
+// Lock-screen Now Playing artwork — without this, iOS shows a plain grey
+// placeholder box while Tune In plays in the background. Asset.fromModule
+// resolves the bundled require() to an actual URI synchronously (the asset
+// is already bundled at build time, so no download/await is needed the
+// way a remote artworkUrl would require).
+const LOCK_SCREEN_ARTWORK_URI = Asset.fromModule(require('../../../../assets/tunein-artwork.png')).uri;
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
 const TIMER_OPTIONS = [5, 15, 30, 45, 60];
@@ -208,6 +216,7 @@ export default function TuneInScreen() {
       players[selected].setActiveForLockScreen(true, {
         title: getLocalizedTuneInState(activeState, locale).name,
         artist: t('tuneIn.lockScreenArtist'),
+        artworkUrl: LOCK_SCREEN_ARTWORK_URI,
       });
       setIsPlaying(true);
       // Seeds the countdown from whichever timer is currently selected —
@@ -227,6 +236,7 @@ export default function TuneInScreen() {
       players[index].setActiveForLockScreen(true, {
         title: getLocalizedTuneInState(TUNE_IN_STATES[index], locale).name,
         artist: t('tuneIn.lockScreenArtist'),
+        artworkUrl: LOCK_SCREEN_ARTWORK_URI,
       });
       track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
     }
