@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAudioPlayer, setAudioModeAsync } from 'expo-audio';
+import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
@@ -93,7 +93,13 @@ export default function TuneInScreen() {
   const [selected, setSelected] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.3);
-  const [timerMinutes, setTimerMinutes] = useState<number | null>(null);
+  // Defaults to the first timer option (5m) rather than "no timer" — the
+  // lock screen's Now Playing progress bar reflects the actual looped
+  // audio sample's own ~1s length, not the sleep timer, since expo-audio
+  // has no way to override that from JS; always having a real timer
+  // selected at least means the in-app countdown always shows a concrete,
+  // sensible duration instead of implying "plays forever" by default.
+  const [timerMinutes, setTimerMinutes] = useState<number | null>(TIMER_OPTIONS[0]);
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const columnWidth = useReadingColumnWidth();
@@ -107,6 +113,28 @@ export default function TuneInScreen() {
     useAudioPlayer(TUNE_IN_STATES[1].asset),
     useAudioPlayer(TUNE_IN_STATES[2].asset),
   ];
+
+  // Reflects each player's real native state — needed because pausing from
+  // the lock screen's remote controls calls player.pause() natively,
+  // entirely outside this component; the local isPlaying boolean below has
+  // no way to learn about that on its own, which left the in-app button
+  // stuck showing "Stop" after a lock-screen pause even though playback had
+  // actually stopped. Three fixed calls (not a loop) since there are always
+  // exactly three players — hooks can't be called a variable number of times.
+  const statuses = [
+    useAudioPlayerStatus(players[0]),
+    useAudioPlayerStatus(players[1]),
+    useAudioPlayerStatus(players[2]),
+  ];
+
+  // Syncs isPlaying down from the selected player's real native state —
+  // catches the case where playback was paused via the lock screen's own
+  // remote controls (an entirely native path that never touches this
+  // component's state directly) so reopening the app shows "Play" instead
+  // of a stale "Stop" for audio that has actually already paused.
+  useEffect(() => {
+    setIsPlaying(statuses[selected].playing);
+  }, [statuses[selected].playing, selected]);
 
   // shouldPlayInBackground + doNotMix keep a tune sounding after the screen
   // locks — deliberately available to every user, not gated behind
@@ -140,7 +168,6 @@ export default function TuneInScreen() {
       players[selected].setActiveForLockScreen(false);
       setIsPlaying(false);
       players.forEach((player) => { player.volume = volume; });
-      setTimerMinutes(null);
       setRemainingSeconds(null);
       track('tune_in_stopped', { state: TUNE_IN_STATES[selected].name, reason: 'timer' });
       return;
@@ -154,19 +181,19 @@ export default function TuneInScreen() {
 
   const activeState = TUNE_IN_STATES[selected];
 
+  // Resets the countdown, but keeps whichever timer duration was selected
+  // (defaults to TIMER_OPTIONS[0], 5m) rather than clearing it to "no
+  // timer" — so the chip and duration shown before pressing Play stay
+  // consistent across a stop/restart instead of reverting to an
+  // unselected state every time playback ends.
   const clearTimer = () => {
-    setTimerMinutes(null);
     setRemainingSeconds(null);
     players.forEach((player) => { player.volume = volume; });
   };
 
   const handleSelectTimer = (minutes: number) => {
-    if (timerMinutes === minutes) {
-      clearTimer();
-      return;
-    }
     setTimerMinutes(minutes);
-    setRemainingSeconds(minutes * 60);
+    if (isPlaying) setRemainingSeconds(minutes * 60);
   };
 
   const handleToggle = () => {
@@ -183,6 +210,10 @@ export default function TuneInScreen() {
         artist: t('tuneIn.lockScreenArtist'),
       });
       setIsPlaying(true);
+      // Seeds the countdown from whichever timer is currently selected —
+      // handleSelectTimer only sets it live while already playing, so
+      // starting playback needs its own seed from the selected duration.
+      if (timerMinutes !== null) setRemainingSeconds(timerMinutes * 60);
       track('tune_in_started', { state: activeState.name });
     }
   };
