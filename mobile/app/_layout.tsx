@@ -12,6 +12,8 @@ import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useSubscriptionStore } from '../src/store/subscriptionStore';
 import { useLocaleStore } from '../src/store/localeStore';
+import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
+import { AIDisclosureOverlay } from '../src/components/AIDisclosureOverlay';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
 
@@ -35,6 +37,7 @@ export default function RootLayout() {
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
   const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
   const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
+  const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure, acknowledged: aiDisclosureAcknowledged } = useAIDisclosureStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -55,11 +58,12 @@ export default function RootLayout() {
     hydrateEngagement();
     hydrateSubscription();
     hydrateLocale();
+    hydrateAIDisclosure();
   }, []);
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && subscriptionHydrated && localeHydrated;
+    && engagementHydrated && subscriptionHydrated && localeHydrated && aiDisclosureHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder
@@ -92,6 +96,14 @@ export default function RootLayout() {
 
   if (!ready) return null;
 
+  // Onboarding itself never touches the AI provider (no Guide/Measure
+  // reachable from it) — the notice only needs to appear once a
+  // philosopher exists, which is the true first moment those features
+  // become reachable, regardless of account status. Gating on `philosopher`
+  // rather than a route means it also catches someone who somehow lands
+  // back on a fresh install's tabs without re-onboarding.
+  const showAIDisclosure = Boolean(philosopher) && !aiDisclosureAcknowledged;
+
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
@@ -104,6 +116,7 @@ export default function RootLayout() {
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-preview" />
         </Stack>
+        {showAIDisclosure && <AIDisclosureOverlay />}
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

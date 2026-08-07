@@ -1,4 +1,9 @@
 {
+  "aiDisclosure": {
+    "kicker": "Before you begin",
+    "body": "When you talk with a philosopher or answer a question during Measure, what you write is sent to a third-party AI provider to generate the reply or the reading. This happens every time, whether or not you have an account — see the privacy policy for details.",
+    "continue": "Continue"
+  },
   "common": {
     "wordmark": "Selfinder",
     "back": "← Back",
