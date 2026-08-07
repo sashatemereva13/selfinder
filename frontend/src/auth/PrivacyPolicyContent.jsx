@@ -93,15 +93,18 @@ export default function PrivacyPolicyContent({ titleId }) {
           <p>
             When you talk with a philosopher, or answer a question during
             a Measure reading, your message is sent to a third-party AI
-            provider to generate the reply or the reading itself. This
-            happens every time the feature is used, whether or not you're
-            signed in and whether or not you've granted consent to save
-            readings to your account — that consent, described above,
-            only controls whether the result is later stored on our
-            server, not whether it's sent to the AI provider to be
+            provider (currently Groq, which hosts the language model
+            Selfinder uses) to generate the reply or the reading itself.
+            This happens every time the feature is used, whether or not
+            you're signed in and whether or not you've granted consent to
+            save readings to your account — that consent, described
+            above, only controls whether the result is later stored on
+            our server, not whether it's sent to the AI provider to be
             generated. That provider may process data outside your own
             country. That's true of any product built on a hosted
-            language model — we're naming it rather than hiding it.
+            language model — we're naming it rather than hiding it. If
+            we ever change which provider we use, we'll update this
+            section to name the new one.
           </p>
         </section>
 
