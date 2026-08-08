@@ -24,11 +24,19 @@ import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 // Lock-screen Now Playing artwork — without this, iOS shows a plain grey
-// placeholder box while Tune In plays in the background. Asset.fromModule
-// resolves the bundled require() to an actual URI synchronously (the asset
-// is already bundled at build time, so no download/await is needed the
-// way a remote artworkUrl would require).
-const LOCK_SCREEN_ARTWORK_URI = Asset.fromModule(require('../../../../assets/tunein-artwork.png')).uri;
+// placeholder box while Tune In plays in the background. Asset.fromModule's
+// own `.uri` is NOT usable directly here: on Android it resolves to an
+// internal `assets_tuneinartwork`-style scheme with no protocol, which
+// expo-audio's native Metadata parser feeds straight to java.net.URL —
+// that throws MalformedURLException ("no protocol"), which crashed the
+// whole app the instant Play was pressed (confirmed on-device via
+// logcat). iOS is more lenient about this URI form, which is why the bug
+// only showed up on Android. `.downloadAsync()` resolves `.localUri`, a
+// real file:// URI both platforms' URL parsers accept — kicked off once
+// at module load (fire-and-forget promise, read via the ref below) since
+// the artwork is a small bundled asset, not a real network download.
+const tuneInArtworkAsset = Asset.fromModule(require('../../../../assets/tunein-artwork.png'));
+const tuneInArtworkReady = tuneInArtworkAsset.downloadAsync();
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
 const TIMER_OPTIONS = [5, 15, 30, 45, 60];
@@ -111,9 +119,16 @@ export default function TuneInScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const columnWidth = useReadingColumnWidth();
+  // Real file:// URI once resolved — undefined until then, so the lock
+  // screen just gets no artwork for the brief window before this settles
+  // rather than a value that would crash expo-audio's native URL parser.
+  const [artworkUri, setArtworkUri] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     markDiscovered('tuneIn');
+    tuneInArtworkReady.then((asset) => {
+      if (asset.localUri) setArtworkUri(asset.localUri);
+    });
   }, []);
 
   const players = [
@@ -216,7 +231,7 @@ export default function TuneInScreen() {
       players[selected].setActiveForLockScreen(true, {
         title: getLocalizedTuneInState(activeState, locale).name,
         artist: t('tuneIn.lockScreenArtist'),
-        artworkUrl: LOCK_SCREEN_ARTWORK_URI,
+        ...(artworkUri ? { artworkUrl: artworkUri } : null),
       });
       setIsPlaying(true);
       // Seeds the countdown from whichever timer is currently selected —
@@ -236,7 +251,7 @@ export default function TuneInScreen() {
       players[index].setActiveForLockScreen(true, {
         title: getLocalizedTuneInState(TUNE_IN_STATES[index], locale).name,
         artist: t('tuneIn.lockScreenArtist'),
-        artworkUrl: LOCK_SCREEN_ARTWORK_URI,
+        ...(artworkUri ? { artworkUrl: artworkUri } : null),
       });
       track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
     }
