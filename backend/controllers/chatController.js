@@ -241,7 +241,7 @@ export async function postChat(req, res) {
       suggestSpill: parsed.suggestSpill === true,
     });
   } catch (err) {
-    console.error(err);
+    console.error("Chat request failed:", err.message);
     res.status(500).json({ error: "AI request failed" });
   }
 }
@@ -317,7 +317,7 @@ export async function postBadgeComment(req, res) {
 
     res.json({ comment, cached: false });
   } catch (err) {
-    console.error("Badge comment generation failed:", err);
+    console.error("Badge comment generation failed:", err.message);
     if (referenceLine) {
       return res.json({ comment: referenceLine, cached: false, fallback: true });
     }
@@ -390,7 +390,7 @@ export async function postJourneyLine(req, res) {
     journeyLineCache.set(cacheKey, { line, createdAt: Date.now() });
     res.json({ line, cached: false });
   } catch (err) {
-    console.error("Journey line generation failed:", err);
+    console.error("Journey line generation failed:", err.message);
     res.json({ line: reference, cached: false, fallback: true });
   }
 }
@@ -467,7 +467,7 @@ Either way, stay in character, keep it under 60 words, ground your reply only in
       reply: parsed.reply.trim(),
     });
   } catch (err) {
-    console.error("Measure exchange failed:", err);
+    console.error("Measure exchange failed:", err.message);
     res.json({ advance: true, goBack: false, reply: "" });
   }
 }

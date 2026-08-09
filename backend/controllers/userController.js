@@ -78,9 +78,14 @@ export async function exportMyData(req, res) {
   });
 }
 
-// Right to erasure — Art. 17
+// Right to erasure — Art. 17. Deletes child collections before the User
+// document itself (same ordering as withdrawConsent below) — if the process
+// dies partway through, the failure mode is "user still exists, some data
+// gone" (recoverable by retrying deletion) rather than orphaned
+// psychological-data rows referencing a userId that no longer resolves to
+// any account.
 export async function deleteMe(req, res) {
-  const user = await User.findOneAndDelete({ id: req.user.id });
+  const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
   await Promise.all([
@@ -88,6 +93,8 @@ export async function deleteMe(req, res) {
     MeasureResult.deleteMany({ userId: req.user.id }),
     Feedback.deleteMany({ userId: req.user.id }),
   ]);
+
+  await User.deleteOne({ id: req.user.id });
 
   res.json({ success: true });
 }
@@ -110,7 +117,11 @@ export async function grantConsent(req, res) {
   });
 }
 
-// Withdraw consent — Art. 7(3); also deletes stored conversations and measure results
+// Withdraw consent — Art. 7(3); also deletes stored conversations, measure
+// results, and feedback notes (the same three collections deleteMe clears —
+// withdrawing consent stops psychological-data storage without deleting the
+// account itself, so it should remove exactly the same special-category
+// data a full account deletion would).
 export async function withdrawConsent(req, res) {
   const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
@@ -118,6 +129,7 @@ export async function withdrawConsent(req, res) {
   await Promise.all([
     Conversation.deleteMany({ userId: req.user.id }),
     MeasureResult.deleteMany({ userId: req.user.id }),
+    Feedback.deleteMany({ userId: req.user.id }),
   ]);
 
   const now = new Date().toISOString();
