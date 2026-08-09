@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,19 +24,25 @@ import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 
 // Lock-screen Now Playing artwork — without this, iOS shows a plain grey
-// placeholder box while Tune In plays in the background. Asset.fromModule's
-// own `.uri` is NOT usable directly here: on Android it resolves to an
-// internal `assets_tuneinartwork`-style scheme with no protocol, which
-// expo-audio's native Metadata parser feeds straight to java.net.URL —
-// that throws MalformedURLException ("no protocol"), which crashed the
-// whole app the instant Play was pressed (confirmed on-device via
-// logcat). iOS is more lenient about this URI form, which is why the bug
-// only showed up on Android. `.downloadAsync()` resolves `.localUri`, a
-// real file:// URI both platforms' URL parsers accept — kicked off once
-// at module load (fire-and-forget promise, read via the ref below) since
-// the artwork is a small bundled asset, not a real network download.
-const tuneInArtworkAsset = Asset.fromModule(require('../../../../assets/tunein-artwork.png'));
-const tuneInArtworkReady = tuneInArtworkAsset.downloadAsync();
+// placeholder box while Tune In plays in the background. iOS-only: on
+// Android, both Asset.fromModule's synchronous `.uri` (an internal
+// `assets_tuneinartwork`-style scheme with no protocol) AND the resolved
+// `.localUri` from `.downloadAsync()` reliably crashed the app the
+// instant Play was pressed — confirmed twice via on-device adb logcat,
+// including after switching to the (supposedly real file://) resolved
+// localUri, which still surfaced the same native
+// MalformedURLException("no protocol") deep in expo-audio's Kotlin
+// Metadata parsing. The actual native asset-resolution path
+// (expo-asset's Android downloadAsync, which is what's supposed to turn
+// a bundled asset into a real file:// URI) isn't behaving as documented
+// in this build. Since the original complaint was specifically about
+// iOS's lock screen, and Android's lock screen still shows title/artist
+// correctly without an image, this sidesteps the whole broken path
+// rather than continuing to chase it for a cosmetic feature.
+const tuneInArtworkReady =
+  Platform.OS === 'ios'
+    ? Asset.fromModule(require('../../../../assets/tunein-artwork.png')).downloadAsync()
+    : null;
 
 const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
 const TIMER_OPTIONS = [5, 15, 30, 45, 60];
@@ -119,14 +125,15 @@ export default function TuneInScreen() {
   const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const columnWidth = useReadingColumnWidth();
-  // Real file:// URI once resolved — undefined until then, so the lock
-  // screen just gets no artwork for the brief window before this settles
-  // rather than a value that would crash expo-audio's native URL parser.
+  // Real file:// URI once resolved, iOS only (see tuneInArtworkReady's own
+  // comment for why Android never attempts this) — undefined until then,
+  // so the lock screen just gets no artwork for the brief window before
+  // this settles rather than a value that could crash the native layer.
   const [artworkUri, setArtworkUri] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     markDiscovered('tuneIn');
-    tuneInArtworkReady.then((asset) => {
+    tuneInArtworkReady?.then((asset) => {
       if (asset.localUri) setArtworkUri(asset.localUri);
     });
   }, []);
