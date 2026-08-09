@@ -16,6 +16,9 @@ const ALLOWED_EVENT_NAMES = new Set([
   "level_detail_viewed",
   "daily_reminder_enabled",
   "history_transcript_viewed",
+  "cards_drawn",
+  "cards_talk_about_it",
+  "cards_spill_it",
 ]);
 
 const MAX_BATCH_SIZE = 20;
@@ -29,8 +32,8 @@ export async function postEvents(req, res) {
   if (!anonymousId || typeof anonymousId !== "string") {
     return res.status(400).json({ error: "anonymousId is required" });
   }
-  if (platform !== "ios" && platform !== "web") {
-    return res.status(400).json({ error: 'platform must be "ios" or "web"' });
+  if (platform !== "ios" && platform !== "android" && platform !== "web") {
+    return res.status(400).json({ error: 'platform must be "ios", "android", or "web"' });
   }
 
   const docs = events

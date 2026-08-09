@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import request from '../api/client';
 
@@ -48,7 +49,7 @@ async function flush() {
   const batch = queue.splice(0, MAX_BATCH_SIZE);
   const id = await getAnonymousId();
   try {
-    await request('/events', { events: batch, anonymousId: id, platform: 'ios' });
+    await request('/events', { events: batch, anonymousId: id, platform: Platform.OS });
   } catch {
     // Best-effort — analytics should never surface an error to the user,
     // and a dropped batch isn't worth retrying or queuing durably.
