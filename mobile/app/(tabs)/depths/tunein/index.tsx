@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -269,7 +269,20 @@ export default function TuneInScreen() {
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
 
-      <View style={{ width: columnWidth, alignSelf: 'center', flex: 1, paddingHorizontal: spacing[6] }}>
+      {/* Was a plain flex:1 View with no scroll — fine in English, where
+          every string here is short enough that the fixed-height screen
+          never actually overflowed. Russian's longer intro/intent copy
+          and two-line state-picker wraps push the real content height
+          past the screen, and a non-scrolling View doesn't clip or
+          reflow that overflow the way a ScrollView does — it just lets
+          later rows visually collide with earlier ones (reported: the
+          Volume row overlapping the intent text above it). Matches the
+          ScrollView pattern every other screen in the app already uses. */}
+      <ScrollView
+        style={{ width: columnWidth, alignSelf: 'center', flex: 1 }}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <Pressable style={styles.backRow} onPress={() => router.back()}>
           <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
@@ -331,7 +344,7 @@ export default function TuneInScreen() {
             </Text>
           )}
         </View>
-      </View>
+      </ScrollView>
     </View>
   );
 }
@@ -340,8 +353,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
-    paddingBottom: spacing[8],
     alignItems: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[8],
+    flexGrow: 1,
   },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
