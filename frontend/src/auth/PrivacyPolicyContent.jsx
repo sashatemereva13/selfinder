@@ -138,8 +138,13 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Retention</h3>
           <p>
             Account data is kept until you delete your account.
-            Conversation data is kept until you withdraw consent or
-            delete your account, whichever comes first.
+            Conversation data, assessment results, and feedback are kept
+            until you withdraw consent or delete your account, whichever
+            comes first. Anonymous usage analytics (see "Cookies and
+            tracking" above) are never tied to your account or identity,
+            so there's no way to look them up or delete them on request —
+            we keep them indefinitely to understand which parts of
+            Selfinder are actually useful over time.
           </p>
         </section>
 
