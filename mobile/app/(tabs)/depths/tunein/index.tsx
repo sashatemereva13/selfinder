@@ -401,7 +401,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: spacing[4],
   },
-  pickerItem: { alignItems: 'center', paddingVertical: spacing[2], maxWidth: 110 },
+  // 140, not the original 110 — measured "Спокойствие" (Calm's Russian
+  // name, one word, no natural break point) at 133px wide at the active
+  // font size (fontSizes.base/16), so 110 forced it to wrap mid-word
+  // every time it was selected, which reads as broken rather than a
+  // deliberate two-line label the way "Глубокий отдых" (two words, wraps
+  // cleanly between them) does. 140 comfortably fits the one-word case
+  // with a small margin; two-word labels still wrap normally under it —
+  // flexWrap on the row above reflows to a second row on narrow phones
+  // if three 140-wide items don't fit on one line, rather than needing a
+  // tighter per-item cap to force that.
+  pickerItem: { alignItems: 'center', paddingVertical: spacing[2], maxWidth: 140 },
   pickerName: {
     color: colors.text.muted,
     fontFamily: fonts.medium,
