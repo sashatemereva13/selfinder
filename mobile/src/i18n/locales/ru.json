@@ -42,6 +42,8 @@
     "kicker": "Аккаунт",
     "acceptPrivacyPolicy": "Чтобы создать аккаунт, примите политику конфиденциальности.",
     "passwordMinLengthHint": "Не менее 8 символов.",
+    "showPassword": "Показать",
+    "hidePassword": "Скрыть",
     "somethingWentWrong": "Что-то пошло не так.",
     "forgotRequestCopy": "Если вы добавили email, мы отправим на него код.",
     "forgotResetCopy": "Проверьте почту — мы отправили вам шестизначный код.",
@@ -225,6 +227,7 @@
   },
   "breathing": {
     "title": "Измените своё состояние через дыхание",
+    "begin": "Старт",
     "readyWhenYouAre": "Начните, когда почувствуете готовность",
     "roundOf": "Раунд {{round}} из {{total}}"
   },

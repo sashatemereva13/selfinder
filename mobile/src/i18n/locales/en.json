@@ -42,6 +42,8 @@
     "kicker": "Account",
     "acceptPrivacyPolicy": "Accept the privacy policy to create an account.",
     "passwordMinLengthHint": "At least 8 characters.",
+    "showPassword": "Show",
+    "hidePassword": "Hide",
     "somethingWentWrong": "Something went wrong.",
     "forgotRequestCopy": "We'll email a code to the address on file, if you've added one.",
     "forgotResetCopy": "Check your inbox for the 6-digit code.",
@@ -127,7 +129,17 @@
     "nudgeTuneIn": "Haven't tried Tune In yet? Shift your state through sound →",
     "nudgeBreathing": "Haven't tried Breathing yet? Shift your state through breath →",
     "feelingLuckyLabel": "A message for right now",
-    "feelingLuckyDescription": "Skip finding out — let something find you instead"
+    "feelingLuckyDescription": "Skip finding out — let something find you instead",
+    "cardsLabel": "Draw a card",
+    "cardsDescription": "There may be something underneath this"
+  },
+  "cards": {
+    "backLabel": "Draw again",
+    "receive": "Receive",
+    "notice": "Notice",
+    "talkAboutIt": "Talk to {{name}} about it →",
+    "talkAboutItMessage": "I drew a card just now — {{name}}: \"{{line}}\" Can we talk about it?",
+    "spillAboutIt": "Write about it instead →"
   },
   "moon": {
     "kicker": "Moon",
@@ -214,6 +226,7 @@
   },
   "breathing": {
     "title": "Change your state through breath",
+    "begin": "Begin",
     "readyWhenYouAre": "Ready when you are",
     "roundOf": "Round {{round}} of {{total}}"
   },

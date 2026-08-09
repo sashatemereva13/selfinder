@@ -181,7 +181,7 @@ export default function BreathingScreen() {
           <Text style={styles.subtitle}>{pattern.subtitle}</Text>
           <Text style={styles.useFor}>{pattern.useFor}</Text>
 
-          <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('common.begin')} />
+          <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('breathing.begin')} />
 
           <Text style={styles.phaseLabel}>
             {active ? phase.label : completionLine ?? t('breathing.readyWhenYouAre')}

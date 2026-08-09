@@ -26,6 +26,47 @@ function formatDate(iso: string, locale: 'en' | 'ru') {
   }
 }
 
+// Every password field in this file (login/register, forgot-password reset,
+// change-password's current+new) shares this — a plain text toggle rather
+// than an eye icon, matching the app's existing register of plain-text
+// controls (no icon library is used anywhere else in the app). The input
+// itself carries no border/background of its own; the wrapping View owns
+// both so the toggle sits inside the same visual field as a normal
+// TextInput, not beside a second, separately-boxed control.
+function PasswordInput({
+  value,
+  onChangeText,
+  placeholder,
+  editable = true,
+}: {
+  value: string;
+  onChangeText: (text: string) => void;
+  placeholder: string;
+  editable?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [visible, setVisible] = useState(false);
+
+  return (
+    <View style={styles.passwordInputWrap}>
+      <TextInput
+        style={styles.passwordInputField}
+        value={value}
+        onChangeText={onChangeText}
+        placeholder={placeholder}
+        placeholderTextColor={colors.text.muted}
+        secureTextEntry={!visible}
+        editable={editable}
+      />
+      <Pressable onPress={() => setVisible((v) => !v)} hitSlop={8}>
+        <Text style={styles.passwordToggle}>
+          {visible ? t('account.hidePassword') : t('account.showPassword')}
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
 export function AccountSection() {
   const session = useAuthStore((s) => s.session);
   const login = useAuthStore((s) => s.login);
@@ -146,13 +187,10 @@ function AuthForm({
               placeholderTextColor={colors.text.muted}
               keyboardType="number-pad"
             />
-            <TextInput
-              style={styles.input}
+            <PasswordInput
               value={newPassword}
               onChangeText={setNewPassword}
               placeholder={t('account.newPasswordPlaceholder')}
-              placeholderTextColor={colors.text.muted}
-              secureTextEntry
             />
           </>
         )}
@@ -214,13 +252,10 @@ function AuthForm({
         autoCapitalize="none"
         autoCorrect={false}
       />
-      <TextInput
-        style={styles.input}
+      <PasswordInput
         value={password}
         onChangeText={setPassword}
         placeholder={t('account.passwordPlaceholder')}
-        placeholderTextColor={colors.text.muted}
-        secureTextEntry
       />
       {/* Shown before submitting, not just after a rejected request — the
           8-character minimum is enforced server-side (register, same as
@@ -514,22 +549,16 @@ function LoggedInAccount({
 
         <View style={styles.dataRow}>
           <Text style={styles.dataRowText}>{t('account.changePasswordCopy')}</Text>
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={currentPassword}
             onChangeText={setCurrentPassword}
             placeholder={t('account.currentPasswordPlaceholder')}
-            placeholderTextColor={colors.text.muted}
-            secureTextEntry
             editable={!passwordBusy}
           />
-          <TextInput
-            style={styles.input}
+          <PasswordInput
             value={newPassword}
             onChangeText={setNewPassword}
             placeholder={t('account.newPasswordPlaceholder')}
-            placeholderTextColor={colors.text.muted}
-            secureTextEntry
             editable={!passwordBusy}
           />
           <Pressable
@@ -646,6 +675,32 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     paddingHorizontal: spacing[4],
+  },
+  // Same visual field as .input (same border/background/radius/height) —
+  // the TextInput and the toggle sit inside it as a row instead of .input
+  // drawing its own border around just the text field.
+  passwordInputWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.base,
+    paddingRight: spacing[4],
+  },
+  passwordInputField: {
+    flex: 1,
+    minHeight: 44,
+    color: colors.text.primary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.base,
+    paddingHorizontal: spacing[4],
+  },
+  passwordToggle: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
   },
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   checkbox: {
