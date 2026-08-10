@@ -56,7 +56,7 @@ export const LEVELS: LevelContent[] = [
     name: "enlightenment",
     title: "Enlightenment",
     score: 700,
-    frame: `Not an achievement to chase — it is what's left when nothing is being defended.`,
+    frame: `Nothing left to defend.`,
     personalFrame: `You're not chasing an achievement right now — this is just what's left when nothing needs defending.`,
     signals: [
       { label: "Feels like", value: "no gap between what's happening and the awareness of it — nothing left outside to resist." },
@@ -108,7 +108,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Просветление",
-        frame: `Не достижение, к которому стремятся, — а то, что остаётся, когда защищать больше нечего.`,
+        frame: `Защищать больше нечего.`,
         personalFrame: `Сейчас вы не гонитесь за достижением — это просто то, что остаётся, когда защищать больше нечего.`,
         signals: [
           { label: "Ощущается как", value: "отсутствие разрыва между происходящим и осознанием этого — не осталось ничего внешнего, чему нужно сопротивляться." },
@@ -165,7 +165,7 @@ export const LEVELS: LevelContent[] = [
     name: "peace",
     title: "Peace, Bliss and Illumination",
     score: 600,
-    frame: `Stillness here is not the absence of feeling — it is feeling with nothing left to resist.`,
+    frame: `Feeling everything, resisting nothing.`,
     personalFrame: `This stillness isn't the absence of feeling — it's you feeling everything with nothing left to resist.`,
     signals: [
       { label: "Feels like", value: "spacious and unhurried — nothing urgent left to resolve." },
@@ -237,7 +237,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Покой, Блаженство и Озарение",
-        frame: `Здешняя тишина — не отсутствие чувств, а чувствование без остатка, которому больше нечему сопротивляться.`,
+        frame: `Чувствуешь всё, ничему не сопротивляешься.`,
         personalFrame: `Эта тишина — не отсутствие чувств: вы чувствуете всё, и сопротивляться больше нечему.`,
         signals: [
           { label: "Ощущается как", value: "просторно и неспешно — не осталось ничего срочного, что нужно разрешить." },
@@ -314,7 +314,7 @@ export const LEVELS: LevelContent[] = [
     name: "unconditional love",
     title: "Unconditional Love, Joy, Ecstasy",
     score: 540,
-    frame: `Not a feat of willpower — what's left once love no longer needs a condition to stand on.`,
+    frame: `Love without conditions.`,
     personalFrame: `This isn't willpower — it's what's left now that your love doesn't need a condition to stand on.`,
     signals: [
       { label: "Feels like", value: "warmth that isn't waiting for anything back." },
@@ -385,7 +385,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Безусловная любовь, Радость, Экстаз",
-        frame: `Не подвиг силы воли — а то, что остаётся, когда любви больше не нужно условие, на которое можно опереться.`,
+        frame: `Любовь без условий.`,
         personalFrame: `Это не сила воли — это то, что остаётся теперь, когда вашей любви не нужно условие, на которое можно опереться.`,
         signals: [
           { label: "Ощущается как", value: "тепло, которое не ждёт ничего взамен." },
@@ -461,7 +461,7 @@ export const LEVELS: LevelContent[] = [
     name: "love",
     title: "Love",
     score: 500,
-    frame: `Not earned and not owed — energy that has stopped needing somewhere to go.`,
+    frame: `Warmth that goes nowhere in particular.`,
     personalFrame: `This isn't earned and it isn't owed — it's energy in you that's stopped needing somewhere to go.`,
     signals: [
       { label: "Feels like", value: "warm and expansive, less interested in being right than in staying connected." },
@@ -541,7 +541,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Любовь",
-        frame: `Не заслуженная и не должная — энергия, которой больше не нужно куда-то устремляться.`,
+        frame: `Тепло, которому куда-то спешить не нужно.`,
         personalFrame: `Это не заслужено и не должно вам — это энергия в вас, которой больше не нужно куда-то устремляться.`,
         signals: [
           { label: "Ощущается как", value: "тепло и раскрытость, интерес не в том, чтобы быть правым, а в том, чтобы оставаться на связи." },
@@ -626,7 +626,7 @@ export const LEVELS: LevelContent[] = [
     name: "reason",
     title: "Reason",
     score: 400,
-    frame: `The mind organizing experience — useful information, until it mistakes the map for the territory.`,
+    frame: `Clarity that doesn't mistake itself for truth.`,
     personalFrame: `Your mind is organizing experience right now — useful, as long as it doesn't mistake the map for the territory.`,
     signals: [
       { label: "Feels like", value: "clear, ordered, confident you can explain why." },
@@ -705,7 +705,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Разум",
-        frame: `Ум, упорядочивающий опыт, — полезная информация, пока не начинает принимать карту за территорию.`,
+        frame: `Ясность, которая не принимает себя за истину.`,
         personalFrame: `Ваш ум сейчас упорядочивает опыт — это полезно, пока он не путает карту с территорией.`,
         signals: [
           { label: "Ощущается как", value: "ясно, упорядоченно, уверенность, что вы можете объяснить почему." },
@@ -789,7 +789,7 @@ export const LEVELS: LevelContent[] = [
     name: "acceptance",
     title: "Acceptance",
     score: 350,
-    frame: `Not resignation — the moment perception stops arguing with what is already true.`,
+    frame: `What is, without the argument.`,
     personalFrame: `You're not giving up right now — you've just stopped arguing with what's already true.`,
     signals: [
       { label: "Feels like", value: "settled, without the undertow of arguing against what's already true." },
@@ -874,7 +874,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Принятие",
-        frame: `Не смирение — момент, когда восприятие перестаёт спорить с тем, что уже истинно.`,
+        frame: `Что есть, без спора.`,
         personalFrame: `Вы сейчас не сдаётесь — вы просто перестали спорить с тем, что уже истинно.`,
         signals: [
           { label: "Ощущается как", value: "устойчивость, без подводного течения спора с тем, что уже истинно." },
@@ -964,7 +964,7 @@ export const LEVELS: LevelContent[] = [
     name: "willingness",
     title: "Willingness",
     score: 310,
-    frame: `Confirmation that the friction of resistance has finally been spent.`,
+    frame: `The resistance wears itself out.`,
     personalFrame: `You've spent the friction of resistance — you're just willing now, before any proof it'll work.`,
     signals: [
       { label: "Feels like", value: "a quiet \"yes, okay, I'll try\" before any proof it'll work." },
@@ -1036,7 +1036,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Готовность",
-        frame: `Подтверждение того, что трение сопротивления наконец израсходовано.`,
+        frame: `Сопротивление само себя изнашивает.`,
         personalFrame: `Вы израсходовали трение сопротивления — теперь вы просто готовы, ещё до всякого доказательства, что это сработает.`,
         signals: [
           { label: "Ощущается как", value: "тихое «да, хорошо, я попробую» ещё до всякого доказательства, что это сработает." },
@@ -1113,7 +1113,7 @@ export const LEVELS: LevelContent[] = [
     name: "neutrality",
     title: "Neutrality",
     score: 250,
-    frame: `Not indifference — the calm of no longer needing things to go a particular way.`,
+    frame: `Calm without needing anything different.`,
     personalFrame: `You're not being indifferent right now — you've just stopped needing things to go a particular way.`,
     signals: [
       { label: "Feels like", value: "unbothered by which way things go, without having stopped caring." },
@@ -1176,7 +1176,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Нейтральность",
-        frame: `Не безразличие — спокойствие оттого, что вещам больше не нужно складываться определённым образом.`,
+        frame: `Спокойствие без потребности, чтобы всё было иначе.`,
         personalFrame: `Вы сейчас не безразличны — вам просто больше не нужно, чтобы вещи складывались определённым образом.`,
         signals: [
           { label: "Ощущается как", value: "невозмутимость в том, как всё обернётся, без того, чтобы перестать заботиться." },
@@ -1244,7 +1244,7 @@ export const LEVELS: LevelContent[] = [
     name: "courage",
     title: "Courage",
     score: 200,
-    frame: `Not the absence of fear — the willingness to meet it standing up.`,
+    frame: `Fear met straight on.`,
     personalFrame: `You're not fearless right now — you're just meeting the fear standing up.`,
     signals: [
       { label: "Feels like", value: "afraid, and moving anyway." },
@@ -1336,7 +1336,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Смелость",
-        frame: `Не отсутствие страха — готовность встретить его стоя.`,
+        frame: `Страх встречен прямо.`,
         personalFrame: `Вы сейчас не бесстрашны — вы просто встречаете страх стоя.`,
         signals: [
           { label: "Ощущается как", value: "страшно, и всё равно двигаться." },
@@ -1433,7 +1433,7 @@ export const LEVELS: LevelContent[] = [
     name: "pride",
     title: "Pride",
     score: 175,
-    frame: `Not vanity — self-worth borrowing its shape from comparison before it has learned to stand on its own.`,
+    frame: `Self-worth still learning to stand alone.`,
     personalFrame: `This isn't vanity — it's your self-worth borrowing its shape from comparison, before it's learned to stand on its own.`,
     signals: [
       { label: "Feels like", value: "a lift in self-worth, tied to something you did or have." },
@@ -1504,7 +1504,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Гордость",
-        frame: `Не тщеславие — самоценность, ещё занимающая форму у сравнения, прежде чем научилась стоять сама.`,
+        frame: `Самоценность ещё учится стоять одна.`,
         personalFrame: `Это не тщеславие — ваша самоценность сейчас занимает форму у сравнения, прежде чем научилась стоять сама.`,
         signals: [
           { label: "Ощущается как", value: "подъём самоценности, привязанный к тому, что вы сделали или имеете." },
@@ -1580,7 +1580,7 @@ export const LEVELS: LevelContent[] = [
     name: "anger",
     title: "Anger",
     score: 150,
-    frame: `Anger is not pathology; it is the signal that a boundary has been crossed.`,
+    frame: `A boundary was crossed.`,
     personalFrame: `You're not broken right now — something crossed a boundary, and this is the signal telling you so.`,
     signals: [
       { label: "Feels like", value: "heat rising fast, a pull to push back or push through right now." },
@@ -1657,7 +1657,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Гнев",
-        frame: `Гнев — не патология; это сигнал о том, что нарушена граница.`,
+        frame: `Граница нарушена.`,
         personalFrame: `Вы сейчас не сломаны — что-то нарушило границу, и это сигнал, который сообщает вам об этом.`,
         signals: [
           { label: "Ощущается как", value: "быстро поднимающийся жар, тяга дать отпор или прорваться прямо сейчас." },
@@ -1739,7 +1739,7 @@ export const LEVELS: LevelContent[] = [
     name: "desire",
     title: "Desire",
     score: 125,
-    frame: `Not greed — the mind reaching outward to fill a lack it hasn't yet located within.`,
+    frame: `Looking outside for what's missing inside.`,
     personalFrame: `This isn't greed — it's you reaching outward for something, before you've located the actual lack within.`,
     signals: [
       { label: "Feels like", value: "pulled toward something, restless until you have it." },
@@ -1811,7 +1811,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Желание",
-        frame: `Не жадность — ум, тянущийся вовне, чтобы заполнить нехватку, которую он ещё не нашёл внутри.`,
+        frame: `Ищешь снаружи, что потеряно внутри.`,
         personalFrame: `Это не жадность — вы тянетесь к чему-то вовне, ещё не обнаружив настоящую нехватку внутри.`,
         signals: [
           { label: "Ощущается как", value: "тяга к чему-то, беспокойство, пока этого не получишь." },
@@ -1888,7 +1888,7 @@ export const LEVELS: LevelContent[] = [
     name: "fear",
     title: "Fear",
     score: 100,
-    frame: `Fear is not weakness; it is intelligence about uncertainty.`,
+    frame: `Your mind reading the room for danger.`,
     personalFrame: `You're not weak right now — you're just picking up real intelligence about something uncertain.`,
     signals: [
       { label: "Feels like", value: "tight, alert, wanting to avoid or escape something specific." },
@@ -1958,7 +1958,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Страх",
-        frame: `Страх — не слабость; это разум, разбирающийся с неопределённостью.`,
+        frame: `Твой ум читает комнату в поисках опасности.`,
         personalFrame: `Вы не слабы прямо сейчас — вы просто получаете настоящую информацию о чём-то неопределённом.`,
         signals: [
           { label: "Ощущается как", value: "напряжённо, настороженно, хочется избежать или сбежать от чего-то конкретного." },
@@ -2033,7 +2033,7 @@ export const LEVELS: LevelContent[] = [
     name: "grief",
     title: "Grief",
     score: 75,
-    frame: `Not weakness — the honest cost of having valued something enough to feel its loss.`,
+    frame: `You loved it, so you feel it.`,
     personalFrame: `This isn't weakness — it's the honest cost of having valued something enough to feel losing it.`,
     signals: [
       { label: "Feels like", value: "heavy, tearful, pulled backward toward what's gone." },
@@ -2112,7 +2112,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Горе",
-        frame: `Не слабость — честная цена того, что вы ценили что-то достаточно, чтобы почувствовать его утрату.`,
+        frame: `Любил, поэтому чувствуешь.`,
         personalFrame: `Это не слабость — это честная цена того, что вы ценили что-то достаточно, чтобы почувствовать его потерю.`,
         signals: [
           { label: "Ощущается как", value: "тяжело, со слезами, тянет назад к тому, чего больше нет." },
@@ -2196,7 +2196,7 @@ export const LEVELS: LevelContent[] = [
     name: "apathy",
     title: "Apathy, Hatred",
     score: 50,
-    frame: `Not laziness — exhaustion in a system that has stopped expecting help to arrive.`,
+    frame: `Too tired to expect anything.`,
     personalFrame: `You're not lazy right now — you're exhausted, and some part of you has stopped expecting help to arrive.`,
     signals: [
       { label: "Feels like", value: "flat, distant, can't locate the energy to want anything." },
@@ -2258,7 +2258,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Апатия, Ненависть",
-        frame: `Не лень — истощение в системе, переставшей ждать, что помощь придёт.`,
+        frame: `Слишком устал, чтобы чего-то ждать.`,
         personalFrame: `Вы не ленивы прямо сейчас — вы истощены, и какая-то часть вас перестала ждать, что помощь придёт.`,
         signals: [
           { label: "Ощущается как", value: "плоско, отстранённо, не найти энергии, чтобы чего-то хотеть." },
@@ -2325,7 +2325,7 @@ export const LEVELS: LevelContent[] = [
     name: "guilt",
     title: "Guilt and Vindictive Hate",
     score: 30,
-    frame: `Not evidence of being bad — an old standard the mind hasn't yet forgiven itself for missing.`,
+    frame: `The mind still judging itself.`,
     personalFrame: `This isn't evidence you're bad — it's an old standard you haven't forgiven yourself for missing yet.`,
     signals: [
       { label: "Feels like", value: "a specific, nameable weight about something you did." },
@@ -2415,7 +2415,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Вина и Мстительная ненависть",
-        frame: `Не доказательство того, что вы плохой, — старый стандарт, за несоответствие которому ум ещё не простил себя.`,
+        frame: `Ум всё ещё судит себя.`,
         personalFrame: `Это не доказательство того, что вы плохой, — это старый стандарт, за несоответствие которому вы ещё не простили себя.`,
         signals: [
           { label: "Ощущается как", value: "конкретная, называемая тяжесть о чём-то, что вы сделали." },
@@ -2510,7 +2510,7 @@ export const LEVELS: LevelContent[] = [
     name: "shame",
     title: "Shame: Despair",
     score: 20,
-    frame: `Shame is not a failure; it is the soul's extreme sensitivity to dignity.`,
+    frame: `The deepest wound to who you know yourself to be.`,
     personalFrame: `You haven't failed right now — you're just feeling how sensitive you are to your own dignity.`,
     signals: [
       { label: "Feels like", value: "wanting to be invisible." },
@@ -2572,7 +2572,7 @@ export const LEVELS: LevelContent[] = [
     translations: {
       ru: {
         title: "Стыд: Отчаяние",
-        frame: `Стыд — не провал; это крайняя чувствительность души к собственному достоинству.`,
+        frame: `Самая глубокая рана в том, кто ты, по твоему мнению.`,
         personalFrame: `Вы не потерпели неудачу прямо сейчас — вы просто чувствуете, насколько чувствительны к собственному достоинству.`,
         signals: [
           { label: "Ощущается как", value: "желание стать невидимым." },
