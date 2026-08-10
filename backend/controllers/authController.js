@@ -76,7 +76,13 @@ export async function register(req, res) {
     res.status(201).json({ token: signToken(user), username: user.username, role: user.role });
   } catch (err) {
     if (err.code === 11000) {
-      const field = Object.keys(err.keyPattern ?? {})[0];
+      // keyValue (the actual field/value that collided) is the reliable
+      // signal here — keyPattern's key order isn't guaranteed to put the
+      // colliding field first, so reading Object.keys(keyPattern)[0] can
+      // report the wrong field name (e.g. "Email already in use" for a
+      // username collision) even though err.code correctly identified a
+      // real duplicate-key error.
+      const field = Object.keys(err.keyValue ?? {})[0];
       return res.status(409).json({
         error: field === "email" ? "Email already in use" : "Username already taken",
       });
