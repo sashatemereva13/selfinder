@@ -32,7 +32,18 @@ export async function register(req, res) {
     return res.status(400).json({ error: "You must accept the privacy policy to create an account" });
   }
 
-  if (email && !EMAIL_RE.test(email)) {
+  // Normalize an empty/whitespace-only string to the same "no email"
+  // state as omitting the field entirely — the User schema's unique index
+  // on email is `sparse`, which only exempts documents where the field is
+  // truly absent/null from the uniqueness check. A stored "" is a real,
+  // indexed value, so a second account also saved with "" would collide
+  // on that index (E11000 duplicate key), surfacing as "email already
+  // exists" to someone who never actually entered one. Trimming and
+  // treating "" the same as not-provided closes that regardless of what
+  // the client sends.
+  const normalizedEmail = email && email.trim() ? email.trim() : null;
+
+  if (normalizedEmail && !EMAIL_RE.test(normalizedEmail)) {
     return res.status(400).json({ error: "That doesn't look like a valid email" });
   }
 
@@ -46,7 +57,7 @@ export async function register(req, res) {
       passwordHash,
       role: isAdmin ? "admin" : "user",
       createdAt: now,
-      email: email ? email.toLowerCase().trim() : null,
+      email: normalizedEmail ? normalizedEmail.toLowerCase() : null,
       privacyPolicy: {
         accepted: true,
         version: CONSENT_VERSION,
