@@ -1,6 +1,6 @@
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
-import { VIBRATION_LEVELS, LEVEL_COLORS } from '../content/measureConfig';
+import { VIBRATION_LEVELS, useLevelColors } from '../content/measureConfig';
 import { useThemeColors } from '../theme/useThemeColors';
 
 // A wheel, not a line — and not a single-hue marker on a plain track
@@ -108,10 +108,11 @@ export function VibrationSpectrum({
   onlySlugs?: string[];
 }) {
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   const index = levelIndex(levelSlug);
   const total = VIBRATION_LEVELS.length;
   const angle = angleFor(index, total);
-  const color = `rgb(${LEVEL_COLORS[levelSlug] ?? '239,227,207'})`;
+  const color = `rgb(${levelColors[levelSlug] ?? colors.accent.ivoryRgb})`;
 
   const baseR = compact ? COMPACT_RING_RADIUS : RING_RADIUS;
   const baseTickLen = compact ? COMPACT_TICK_LENGTH : TICK_LENGTH;
@@ -146,7 +147,7 @@ export function VibrationSpectrum({
               cx={outer.x}
               cy={outer.y}
               r={isCurrent ? 0 : tickLen / 2.4}
-              fill={`rgb(${LEVEL_COLORS[level.slug]})`}
+              fill={`rgb(${levelColors[level.slug]})`}
               opacity={isCurrent ? 0 : compact ? 0.6 : 0.75}
               // Rendered as small dots rather than <Line> strokes — a dot
               // reads as "one of 17 points on a wheel" at a glance; a

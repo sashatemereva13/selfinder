@@ -9,7 +9,7 @@ import Animated, {
   runOnJS,
   withSpring,
 } from 'react-native-reanimated';
-import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../content/measureConfig';
+import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../content/measureConfig';
 import { useThemeColors } from '../theme/useThemeColors';
 import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
@@ -75,6 +75,7 @@ export function ConsciousnessWheel({
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   // Starts at Neutrality (roughly the middle of the scale) — an arbitrary
@@ -147,7 +148,7 @@ export function ConsciousnessWheel({
   });
 
   const activeLevel = VIBRATION_LEVELS[activeIndex];
-  const activeColor = `rgb(${LEVEL_COLORS[activeLevel.slug]})`;
+  const activeColor = `rgb(${levelColors[activeLevel.slug]})`;
 
   return (
     <View style={styles.wrap}>
@@ -164,7 +165,7 @@ export function ConsciousnessWheel({
                   cx={pos.x}
                   cy={pos.y}
                   r={isActive ? 0 : TICK_LENGTH / 2.2}
-                  fill={`rgb(${LEVEL_COLORS[level.slug]})`}
+                  fill={`rgb(${levelColors[level.slug]})`}
                   opacity={isActive ? 0 : 0.8}
                 />
               );

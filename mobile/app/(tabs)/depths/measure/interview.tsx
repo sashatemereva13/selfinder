@@ -20,7 +20,7 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
-import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentRgb, useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
@@ -90,6 +90,7 @@ export default function InterviewScreen() {
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const columnWidth = useWideColumnWidth();
   const isLargeScreen = useIsLargeScreen();
   // Same "short conversation content on a tall tablet screen" case as
@@ -297,7 +298,7 @@ export default function InterviewScreen() {
           <View style={styles.scoringErrorBlock}>
             <Text style={styles.errorText}>{scoringError}</Text>
             <Pressable
-              style={[styles.retryButton, { backgroundColor: accentColor }]}
+              style={[styles.retryButton, { backgroundColor: accentButtonColor }]}
               onPress={handleRetryScoring}
             >
               <Text style={styles.retryButtonText}>{t('measure.tryAgain')}</Text>
@@ -323,7 +324,7 @@ export default function InterviewScreen() {
               editable={!isAcknowledging}
             />
             <Pressable
-              style={[styles.sendButton, { backgroundColor: accentColor, opacity: input.trim() && !isAcknowledging ? 1 : 0.4 }]}
+              style={[styles.sendButton, { backgroundColor: accentButtonColor, opacity: input.trim() && !isAcknowledging ? 1 : 0.4 }]}
               onPress={handleSend}
               disabled={!input.trim() || isAcknowledging}
             >

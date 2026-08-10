@@ -44,7 +44,6 @@ import { AmbientGlow } from "../../src/components/AmbientGlow";
 import {
   getAuraFigureMetrics,
   auraBodyToPixel,
-  AURA_NEUTRAL_COLOR,
 } from "../../src/components/AuraFigure";
 import { generateAuraDots, AuraDot } from "../../src/utils/auraDots";
 import { track } from "../../src/utils/analytics";
@@ -1349,7 +1348,7 @@ export default function OnboardingScreen() {
                       animatedProps={lineWhatProps}
                       strokeDasharray={[WHY_TO_WHAT_LENGTH, WHY_TO_WHAT_LENGTH]}
                       fill="none"
-                      stroke={AURA_NEUTRAL_COLOR}
+                      stroke={colors.accent.ivory}
                       strokeOpacity={0.35}
                       strokeWidth={1}
                       strokeLinecap="round"
@@ -1370,7 +1369,7 @@ export default function OnboardingScreen() {
                         WHAT_TO_FEEL_LENGTH,
                       ]}
                       fill="none"
-                      stroke={AURA_NEUTRAL_COLOR}
+                      stroke={colors.accent.ivory}
                       strokeOpacity={0.35}
                       strokeWidth={1}
                       strokeLinecap="round"
@@ -1393,7 +1392,7 @@ export default function OnboardingScreen() {
                   <AnimatedPath
                     animatedProps={lineYouDownProps}
                     fill="none"
-                    stroke={AURA_NEUTRAL_COLOR}
+                    stroke={colors.accent.ivory}
                     strokeOpacity={0.35}
                     strokeWidth={1}
                     strokeLinecap="round"
@@ -1401,7 +1400,7 @@ export default function OnboardingScreen() {
                   <AnimatedPath
                     animatedProps={lineFeelDownProps}
                     fill="none"
-                    stroke={AURA_NEUTRAL_COLOR}
+                    stroke={colors.accent.ivory}
                     strokeOpacity={0.35}
                     strokeWidth={1}
                     strokeLinecap="round"
@@ -1696,7 +1695,7 @@ function makeStyles(colors: Colors) {
   dot: {
     position: "absolute",
     borderRadius: 999,
-    backgroundColor: AURA_NEUTRAL_COLOR,
+    backgroundColor: colors.accent.ivory,
   },
   coreRing: {
     position: "absolute",
@@ -1872,7 +1871,7 @@ function makeStyles(colors: Colors) {
   // matching the line-art feel that the rest of the screen has, rather
   // than a bold, saturated block that breaks the mood right at the end.
   introLine3: {
-    color: AURA_NEUTRAL_COLOR,
+    color: colors.accent.ivory,
     fontFamily: fonts.light,
     fontSize: fontSizes.lg,
     lineHeight: fontSizes.lg * lineHeights.tight,
@@ -1907,11 +1906,11 @@ function makeStyles(colors: Colors) {
     borderRadius: radius.full,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: AURA_NEUTRAL_COLOR,
+    borderColor: colors.accent.ivory,
     backgroundColor: "transparent",
   },
   beginButtonText: {
-    color: AURA_NEUTRAL_COLOR,
+    color: colors.accent.ivory,
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
   },

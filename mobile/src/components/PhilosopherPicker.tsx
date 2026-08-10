@@ -21,7 +21,7 @@ import { useThemeColors } from '../theme/useThemeColors';
 import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
-import { useAppAccentRgb } from '../utils/appAccent';
+import { useAppAccentRgb, useAppAccentButtonRgb } from '../utils/appAccent';
 import { useLocaleStore } from '../store/localeStore';
 import { PhilosopherObject } from './PhilosopherObject';
 
@@ -252,6 +252,7 @@ export function PhilosopherPicker({
   const focused = focusedId ? getLocalizedPhilosopher(PHILOSOPHER_MAP[focusedId], locale) : null;
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
 
   const ringContainerRef = useRef<View>(null);
 
@@ -407,7 +408,7 @@ export function PhilosopherPicker({
           disabled={!focused}
           style={[
             styles.confirmButton,
-            { backgroundColor: accentColor, opacity: focused ? 1 : 0 },
+            { backgroundColor: accentButtonColor, opacity: focused ? 1 : 0 },
           ]}
           onPress={() => focused && onSelect(focused.id)}
         >

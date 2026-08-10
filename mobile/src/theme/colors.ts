@@ -21,6 +21,22 @@ const GOLD_RGB = '180,140,60';
 // genuinely darker ink rather than merely less see-through.
 const TEXT_GOLD_RGB = '120,90,40';
 
+// Converts a plain 6-digit hex color (e.g. colors.bg.base) to an rgba()
+// string at a given alpha. Exists specifically for LinearGradient fades
+// that need to end at "this same color, but transparent" — passing the
+// literal string 'transparent' as the other stop lets some gradient
+// renderers interpolate through an unrelated intermediate color (e.g.
+// grey) instead of just ramping alpha on the same RGB, which is what
+// caused Depths' top-of-screen fade to render as a visible dark/grey
+// band in light mode instead of a clean ivory-to-clear fade.
+export function hexToRgba(hex: string, alpha: number): string {
+  const clean = hex.replace('#', '');
+  const r = parseInt(clean.substring(0, 2), 16);
+  const g = parseInt(clean.substring(2, 4), 16);
+  const b = parseInt(clean.substring(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export interface Colors {
   bg: {
     base: string;
@@ -32,6 +48,15 @@ export interface Colors {
   accent: {
     ivory: string;
     ivoryRgb: string;
+    // Filled-button background specifically — separate from `ivory`
+    // because that token also serves as foreground/text color elsewhere
+    // (row labels, links). In dark mode a single bright ivory works for
+    // both jobs; in light mode the darker gold `ivory` needed for
+    // legible text-on-ivory-page reads flat/heavy as a button fill, so
+    // buttons get their own, lighter value. Same value as `ivory` in
+    // dark mode — this only diverges in light mode.
+    buttonFill: string;
+    buttonFillRgb: string;
   };
   // Text color for content sitting on a filled colors.accent.ivory (or
   // LEVEL_COLORS) surface — e.g. a filled button's label. Deliberately NOT
@@ -73,6 +98,8 @@ export const darkColors: Colors = {
   accent: {
     ivory: '#efe3cf',
     ivoryRgb: IVORY_RGB,
+    buttonFill: '#efe3cf',
+    buttonFillRgb: IVORY_RGB,
   },
   onAccent: '#06060d',
   text: {
@@ -114,6 +141,14 @@ export const lightColors: Colors = {
   accent: {
     ivory: '#b48c3c',
     ivoryRgb: '180,140,60',
+    // Noticeably lighter/warmer than `ivory` — a flat mid-gold fill
+    // with dark text read heavy and a little muddy against the page's
+    // own ivory (confirmed via screenshot on the You tab's active
+    // toggle pills and Measure's CTA button). Lighter fill + a soft
+    // shadow (see the shared button style comment in each screen) gives
+    // the pill real lift instead of sitting as a flat color block.
+    buttonFill: '#d6b26c',
+    buttonFillRgb: '214,178,108',
   },
   // Same dark ink AuraFigure's body gradient uses (rgb(30,27,40)) — not
   // bg.base, which is ivory in this theme (see the Colors interface's own

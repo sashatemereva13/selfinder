@@ -221,7 +221,7 @@ function makeStyles(colors: Colors) {
     paddingHorizontal: spacing[4],
     paddingVertical: spacing[2],
     borderRadius: radius.full,
-    backgroundColor: colors.accent.ivory,
+    backgroundColor: colors.accent.buttonFill,
   },
   bridgeButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   flowRow: { flexDirection: 'row', gap: spacing[2] },

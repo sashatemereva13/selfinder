@@ -8,7 +8,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { getLevelBySlug, getLocalizedLevel } from '../../../../src/content/levelsContent';
-import { LEVEL_COLORS } from '../../../../src/content/measureConfig';
+import { useLevelColors } from '../../../../src/content/measureConfig';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
@@ -31,6 +31,7 @@ function renderRich(text: string, styles: ReturnType<typeof makeStyles>): ReactN
 export default function LevelScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -65,7 +66,7 @@ export default function LevelScreen() {
     );
   }
 
-  const accentColor = `rgb(${LEVEL_COLORS[level.slug] ?? colors.accent.ivoryRgb})`;
+  const accentColor = `rgb(${levelColors[level.slug] ?? colors.accent.ivoryRgb})`;
 
   return (
     <ScrollView

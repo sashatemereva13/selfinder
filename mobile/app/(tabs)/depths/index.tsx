@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../src/store/themeStore';
-import type { Colors } from '../../../src/theme/colors';
+import { hexToRgba, type Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
@@ -31,7 +31,7 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
 import { getLevelBySlug, getLocalizedLevel } from '../../../src/content/levelsContent';
-import { LEVEL_COLORS, getLocalizedLevelName } from '../../../src/content/measureConfig';
+import { useLevelColors, getLocalizedLevelName } from '../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../src/store/localeStore';
 import { Sphere } from '../../../src/types';
 import { SaveMessageAction } from '../../../src/components/SaveMessageAction';
@@ -207,6 +207,7 @@ const FEELING_LUCKY: Tool = {
 export default function DepthsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
@@ -267,7 +268,7 @@ export default function DepthsScreen() {
   // their own LEVEL_COLORS hue (four different colors competing in one
   // screen); they're neutral text now, this single color is what's "yours"
   // here.
-  const levelRgb = lastLevel ? LEVEL_COLORS[lastLevel.slug] ?? accentRgb : accentRgb;
+  const levelRgb = lastLevel ? levelColors[lastLevel.slug] ?? accentRgb : accentRgb;
   const levelColor = `rgb(${levelRgb})`;
   // combinationMessage was also shown again on the old reveal screen — that
   // was the literal duplicate (this is its one home now). The reveal
@@ -305,7 +306,7 @@ export default function DepthsScreen() {
   const sphereColors: Record<SphereKey, string> = useMemo(() => {
     const colorFor = (key: SphereKey) => {
       const slug = currentResult?.lines.find((l) => l.key === key)?.vibrationLevel.slug;
-      return `rgb(${(slug && LEVEL_COLORS[slug]) ?? accentRgb})`;
+      return `rgb(${(slug && levelColors[slug]) ?? accentRgb})`;
     };
     return {
       spirit: colorFor('spirit'),
@@ -356,7 +357,7 @@ export default function DepthsScreen() {
   // levelColor (below) stays the screen's one ACCENT color (headline,
   // Save/Share, the selected button's own text) — a different role that
   // should stay tied to the overall reading, not swap with the ring.
-  const ringLevelRgb = ringLevelSlug ? LEVEL_COLORS[ringLevelSlug] ?? accentRgb : accentRgb;
+  const ringLevelRgb = ringLevelSlug ? levelColors[ringLevelSlug] ?? accentRgb : accentRgb;
   const ringLevelColor = `rgb(${ringLevelRgb})`;
 
   const goToLevel = (slug: string) => {
@@ -698,7 +699,7 @@ export default function DepthsScreen() {
       </ScrollView>
 
       <LinearGradient
-        colors={[colors.bg.base, 'transparent']}
+        colors={[colors.bg.base, hexToRgba(colors.bg.base, 0)]}
         style={[styles.topFade, { height: insets.top + spacing[8] }]}
         pointerEvents="none"
       />

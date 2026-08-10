@@ -22,7 +22,7 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useEngagementStore } from '../../../src/store/engagementStore';
-import { useAppAccentRgb } from '../../../src/utils/appAccent';
+import { useAppAccentRgb, useAppAccentButtonRgb } from '../../../src/utils/appAccent';
 import { getNudgeState, getNudgeCopy } from '../../../src/content/guideNudges';
 import { TypingDots } from '../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
@@ -90,6 +90,7 @@ export default function GuideScreen() {
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const nudge = getNudgeCopy(philosopher?.id ?? 'socrates', getNudgeState(currentResult, previousResult));
 
   // Was a useEffect keyed on messages.length/isLoading, calling
@@ -221,7 +222,7 @@ export default function GuideScreen() {
             )}
             {!currentResult && (
               <Pressable
-                style={[styles.measureCta, { backgroundColor: accentColor }]}
+                style={[styles.measureCta, { backgroundColor: accentButtonColor }]}
                 onPress={() => router.push('/(tabs)/depths/measure')}
               >
                 <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
@@ -260,7 +261,7 @@ export default function GuideScreen() {
             editable={!isLoading}
           />
           <Pressable
-            style={[styles.sendButton, { backgroundColor: accentColor, opacity: input.trim() && !isLoading ? 1 : 0.4 }]}
+            style={[styles.sendButton, { backgroundColor: accentButtonColor, opacity: input.trim() && !isLoading ? 1 : 0.4 }]}
             onPress={handleSend}
             disabled={!input.trim() || isLoading}
           >

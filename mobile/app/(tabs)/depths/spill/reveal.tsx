@@ -10,7 +10,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
-import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function SpillRevealScreen() {
@@ -23,7 +23,7 @@ export default function SpillRevealScreen() {
   const text = useSpillStore((s) => s.text);
   const reset = useSpillStore((s) => s.reset);
   const send = useGuideChatStore((s) => s.send);
-  const accentRgb = useAppAccentRgb();
+  const accentRgb = useAppAccentButtonRgb();
   const accentColor = `rgb(${accentRgb})`;
   const columnWidth = useReadingColumnWidth();
 

@@ -74,7 +74,7 @@ function makeStyles(colors: Colors) {
     paddingVertical: spacing[3],
     paddingHorizontal: spacing[5],
     borderRadius: radius.full,
-    backgroundColor: colors.accent.ivory,
+    backgroundColor: colors.accent.buttonFill,
   },
   buttonText: {
     color: colors.onAccent,

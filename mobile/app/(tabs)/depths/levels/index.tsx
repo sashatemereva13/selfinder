@@ -8,7 +8,7 @@ import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
-import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../../../../src/content/measureConfig';
+import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { ConsciousnessWheel } from '../../../../src/components/ConsciousnessWheel';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
@@ -19,6 +19,7 @@ const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 export default function LevelsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
@@ -63,7 +64,7 @@ export default function LevelsScreen() {
             style={styles.row}
             onPress={() => goToLevel(level.slug)}
           >
-            <View style={[styles.rowDot, { backgroundColor: `rgb(${LEVEL_COLORS[level.slug]})` }]} />
+            <View style={[styles.rowDot, { backgroundColor: `rgb(${levelColors[level.slug]})` }]} />
             <Text style={styles.rowName}>{getLocalizedLevelName(level, locale)}</Text>
           </Pressable>
         ))}

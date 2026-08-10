@@ -10,7 +10,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
-import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
@@ -30,7 +30,7 @@ export default function TodayScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
   const columnWidth = useReadingColumnWidth();
 
-  const accentRgb = useAppAccentRgb();
+  const accentRgb = useAppAccentButtonRgb();
   const accentColor = `rgb(${accentRgb})`;
   const hasMeasuredBefore = Boolean(currentResult);
 

@@ -166,7 +166,7 @@ export default function YouScreen() {
                     key={option}
                     style={[
                       styles.languageOption,
-                      locale === option && { backgroundColor: colors.accent.ivory },
+                      locale === option && { backgroundColor: colors.accent.buttonFill },
                     ]}
                     onPress={() => setLocale(option)}
                   >
@@ -192,7 +192,7 @@ export default function YouScreen() {
                     key={option}
                     style={[
                       styles.themeOption,
-                      themePreference === option && { backgroundColor: colors.accent.ivory },
+                      themePreference === option && { backgroundColor: colors.accent.buttonFill },
                     ]}
                     onPress={() => setThemePreference(option)}
                   >

@@ -462,7 +462,7 @@ function LoggedInAccount({
       <View style={styles.consentToggleRow}>
         <Text style={styles.consentToggleLabel}>{t('account.saveReadingsToAccount')}</Text>
         <Pressable
-          style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.accent.ivory }]}
+          style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.accent.buttonFill }]}
           onPress={toggleConsent}
           disabled={consentBusy || loadingProfile}
         >
@@ -732,7 +732,7 @@ function makeStyles(colors: Colors) {
     paddingVertical: spacing[4],
     borderRadius: radius.full,
     alignItems: 'center',
-    backgroundColor: colors.accent.ivory,
+    backgroundColor: colors.accent.buttonFill,
   },
   submitButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.base },
   signedInAs: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },

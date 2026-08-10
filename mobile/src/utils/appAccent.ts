@@ -1,4 +1,4 @@
-import { LEVEL_COLORS } from '../content/measureConfig';
+import { useLevelColors } from '../content/measureConfig';
 import { useMeasureStore } from '../store/measureStore';
 import { useThemeColors } from '../theme/useThemeColors';
 
@@ -16,6 +16,23 @@ import { useThemeColors } from '../theme/useThemeColors';
 export function useAppAccentRgb(): string {
   const slug = useMeasureStore((s) => s.currentResult?.vibrationLevel.slug ?? null);
   const colors = useThemeColors();
+  const levelColors = useLevelColors();
   if (!slug) return colors.accent.ivoryRgb;
-  return LEVEL_COLORS[slug] ?? colors.accent.ivoryRgb;
+  return levelColors[slug] ?? colors.accent.ivoryRgb;
+}
+
+// Same neutral-before-first-reading / level-color-after logic as
+// useAppAccentRgb, but for filled-button backgrounds specifically — once
+// a reading exists this is identical to useAppAccentRgb (a level color is
+// a level color, it doesn't get a separate "button" variant). Only the
+// neutral fallback differs, using colors.accent.buttonFillRgb (a lighter
+// gold in light mode) instead of ivoryRgb, since a flat mid-gold button
+// fill with dark text read heavy/muddy — see colors.ts's own comment on
+// buttonFill for where this was confirmed via screenshot.
+export function useAppAccentButtonRgb(): string {
+  const slug = useMeasureStore((s) => s.currentResult?.vibrationLevel.slug ?? null);
+  const colors = useThemeColors();
+  const levelColors = useLevelColors();
+  if (!slug) return colors.accent.buttonFillRgb;
+  return levelColors[slug] ?? colors.accent.buttonFillRgb;
 }

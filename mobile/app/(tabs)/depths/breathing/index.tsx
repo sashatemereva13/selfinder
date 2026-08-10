@@ -291,7 +291,7 @@ function makeStyles(colors: Colors) {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: colors.accent.ivory,
+    backgroundColor: colors.accent.buttonFill,
   },
   orbTapTarget: {
     width: 76,

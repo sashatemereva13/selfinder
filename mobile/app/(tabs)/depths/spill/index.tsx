@@ -10,7 +10,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
-import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
@@ -24,7 +24,7 @@ export default function SpillScreen() {
   const insets = useSafeAreaInsets();
   const reset = useSpillStore((s) => s.reset);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
-  const accentRgb = useAppAccentRgb();
+  const accentRgb = useAppAccentButtonRgb();
   const accentColor = `rgb(${accentRgb})`;
   const columnWidth = useReadingColumnWidth();
 
