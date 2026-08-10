@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
 import feelingLuckyListEn from '../../../../src/content/feelingLuckyList.json';
@@ -29,6 +30,8 @@ function pickMessage(locale: 'en' | 'ru'): string {
 
 export default function FeelingLuckyScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -75,7 +78,8 @@ export default function FeelingLuckyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { paddingBottom: spacing[8] },
@@ -97,4 +101,5 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.lg * lineHeights.loose,
     textAlign: 'center',
   },
-});
+  });
+}

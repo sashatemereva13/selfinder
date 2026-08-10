@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
@@ -12,6 +14,7 @@ import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useSubscriptionStore } from '../src/store/subscriptionStore';
 import { useLocaleStore } from '../src/store/localeStore';
+import { useThemeStore } from '../src/store/themeStore';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
 import { AIDisclosureOverlay } from '../src/components/AIDisclosureOverlay';
 import '../src/i18n';
@@ -37,6 +40,7 @@ export default function RootLayout() {
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
   const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
   const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
+  const { hydrated: themeHydrated, hydrate: hydrateTheme, theme } = useThemeStore();
   const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure, acknowledged: aiDisclosureAcknowledged } = useAIDisclosureStore();
   const router   = useRouter();
   const segments = useSegments();
@@ -58,12 +62,13 @@ export default function RootLayout() {
     hydrateEngagement();
     hydrateSubscription();
     hydrateLocale();
+    hydrateTheme();
     hydrateAIDisclosure();
   }, []);
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && subscriptionHydrated && localeHydrated && aiDisclosureHydrated;
+    && engagementHydrated && subscriptionHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder
@@ -74,6 +79,16 @@ export default function RootLayout() {
     if (!ready || !philosopher) return;
     refreshWindow(philosopher);
   }, [ready, philosopher]);
+
+  // Android-only — expo-navigation-bar's setStyle is a synchronous native
+  // call, not the async setButtonStyleAsync some older docs reference (that
+  // function no longer exists in this SDK's installed types). 'light'
+  // means light-colored buttons (for a dark bar), matching StatusBar's own
+  // style prop convention below.
+  useEffect(() => {
+    if (!themeHydrated || Platform.OS !== 'android') return;
+    NavigationBar.setStyle(theme === 'dark' ? 'light' : 'dark');
+  }, [themeHydrated, theme]);
 
   useEffect(() => {
     if (!ready) return;
@@ -107,7 +122,7 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <StatusBar style="light" />
+        <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />

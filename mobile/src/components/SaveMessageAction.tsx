@@ -1,9 +1,10 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageCard } from './MessageCard';
 import { saveMessageImage, shareMessageImage } from '../utils/saveMessageImage';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 
@@ -12,6 +13,8 @@ import { spacing } from '../theme/spacing';
 // the on-screen message elsewhere on the page is untouched by this.
 export function SaveMessageAction({ message, accentRgb }: { message: string; accentRgb: string }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const cardRef = useRef<View>(null);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorText, setErrorText] = useState<string | null>(null);
@@ -62,7 +65,8 @@ export function SaveMessageAction({ message, accentRgb }: { message: string; acc
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   offscreen: { position: 'absolute', top: -9999, left: 0 },
   label: {
     color: colors.text.muted,
@@ -86,4 +90,5 @@ const styles = StyleSheet.create({
   actionText: { fontFamily: fonts.medium, fontSize: fontSizes.sm, color: colors.accent.ivory },
   hint: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: spacing[2] },
   error: { color: colors.accent.ivory, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: spacing[2] },
-});
+  });
+}

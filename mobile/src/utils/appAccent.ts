@@ -1,16 +1,6 @@
 import { LEVEL_COLORS } from '../content/measureConfig';
 import { useMeasureStore } from '../store/measureStore';
-
-// The same neutral tone AuraFigure shows before a first reading (see
-// AURA_NEUTRAL_COLOR in AuraFigure.tsx — #efe3cf), expressed as an rgb
-// triplet so it composes the same way LEVEL_COLORS values already do
-// everywhere (`rgb(${accentRgb})`, SVG stopColor, etc).
-export const APP_ACCENT_NEUTRAL_RGB = '239,227,207';
-
-export function getAppAccentRgb(levelSlug: string | null | undefined): string {
-  if (!levelSlug) return APP_ACCENT_NEUTRAL_RGB;
-  return LEVEL_COLORS[levelSlug] ?? APP_ACCENT_NEUTRAL_RGB;
-}
+import { useThemeColors } from '../theme/useThemeColors';
 
 // One color for the whole app: the neutral aura tone before a first
 // reading, the current vibration level's color after — replaces what used
@@ -18,7 +8,14 @@ export function getAppAccentRgb(levelSlug: string | null | undefined): string {
 // real meaning, and one that could land close to an unrelated vibration
 // color and read as the wrong signal). Philosophers are still told apart by
 // name, symbol, and voice — just not by a color that used to mean nothing.
+// Neutral fallback is theme-aware (colors.accent.ivoryRgb) rather than a
+// fixed constant — before this, the neutral default was hardcoded to
+// literal ivory regardless of theme, matching AuraFigure's neutral tone in
+// dark mode but reading as invisible-on-background in light mode (see
+// colors.ts's own accent.ivory comment for the same underlying bug).
 export function useAppAccentRgb(): string {
   const slug = useMeasureStore((s) => s.currentResult?.vibrationLevel.slug ?? null);
-  return getAppAccentRgb(slug);
+  const colors = useThemeColors();
+  if (!slug) return colors.accent.ivoryRgb;
+  return LEVEL_COLORS[slug] ?? colors.accent.ivoryRgb;
 }

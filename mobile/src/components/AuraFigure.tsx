@@ -53,10 +53,13 @@ export function auraBodyToPixel(size: number, x: number, y: number) {
   return { x: (x + PAD_SIDE) * scale, y: (y + PAD_TOP) * scale };
 }
 
-// A standing figure whose body is a constant, near-black form — it's always
-// you, never tinted by the aura color. Only the aura around it changes: soft
-// white noise before a reading, the vibration level's color after. The dark
-// body's fill uses a "goo" filter (blur then re-harden the alpha) so
+// A standing figure whose body is a constant form — it's always you, never
+// tinted by the aura color. Only the aura around it changes: soft white
+// noise before a reading, the vibration level's color after. Dark mode's
+// body is near-black; light mode's is a pale fill instead (see
+// bodyGradientStart/End) — either way the body's own fill never picks up
+// rgb/neutralColor, only the seam lines, core orb, and dots do. The body's
+// fill uses a "goo" filter (blur then re-harden the alpha) so
 // separately-drawn limbs read as one continuous silhouette instead of
 // assembled parts; the rim reuses the same merged shape, dilated and then
 // left softly blurred (no re-hardening), so it diffuses outward like a glow
@@ -67,6 +70,28 @@ export function AuraFigure({
   size = 160,
   uid = 'aura',
   showDots = true,
+  // Light-mode callers pass gold here instead of the hardcoded ivory
+  // AURA_NEUTRAL_COLOR — everything else about the construction (goo-merged
+  // body, core orb gradient) stays byte-identical, per the light-theme
+  // plan's "reuse dark mode's construction unmodified" decision.
+  neutralColor = AURA_NEUTRAL_COLOR,
+  // Light mode skips the rim/glow entirely — an additive soft-blurred glow
+  // reads as a halo on a dark ground but as a muddy smear on ivory.
+  showRim = true,
+  // The body's own fill — defaults to the original near-black gradient.
+  // Light-mode callers pass a light/ivory-toned pair instead: against an
+  // ivory page, a near-black silhouette read as a flat black blob with no
+  // relationship to the rest of the palette, so light mode inverts the
+  // body to a pale fill and lets the seam lines + chest orb (still
+  // neutralColor/rgb) carry the contrast instead.
+  bodyGradientStart = 'rgb(30,27,40)',
+  bodyGradientEnd = 'rgb(18,16,26)',
+  // The two arm-to-torso seam lines' stroke width — thin (2.5) reads fine
+  // against dark mode's near-black body, since the same-hue neutralColor/
+  // rgb stroke still shows real contrast there. Against light mode's pale
+  // body the same thin line was barely visible, so light-mode callers pass
+  // a thicker value.
+  seamStrokeWidth = 2.5,
 }: {
   rgb?: string;
   neutral?: boolean;
@@ -75,12 +100,17 @@ export function AuraFigure({
   // Off when a caller wants to render/animate the dots itself (see
   // auraBodyToPixel) rather than have them baked into this component's output.
   showDots?: boolean;
+  neutralColor?: string;
+  showRim?: boolean;
+  bodyGradientStart?: string;
+  bodyGradientEnd?: string;
+  seamStrokeWidth?: number;
 }) {
   // Warm, not cold — a cool lavender-white on a featureless humanoid
   // silhouette reads closer to horror-movie lighting than a comforting
   // "self" symbol. Only the neutral (pre-reading) state uses this; a real
   // vibration-level color always overrides it.
-  const color = neutral ? AURA_NEUTRAL_COLOR : `rgb(${rgb})`;
+  const color = neutral ? neutralColor : `rgb(${rgb})`;
   const coreColor = neutral ? '#fff9ef' : '#ffffff';
   const dots = generateAuraDots(`${uid}-${neutral ? 'neutral' : rgb}`);
   const metrics = getAuraFigureMetrics(size);
@@ -111,8 +141,8 @@ export function AuraFigure({
             shape would otherwise fit the gradient to its own bounding box and
             show a visible seam where they overlap. */}
         <LinearGradient id={`body-${uid}`} x1="0" y1="0" x2="0" y2="380" gradientUnits="userSpaceOnUse">
-          <Stop offset="0" stopColor="rgb(30,27,40)" stopOpacity={1} />
-          <Stop offset="1" stopColor="rgb(18,16,26)" stopOpacity={1} />
+          <Stop offset="0" stopColor={bodyGradientStart} stopOpacity={1} />
+          <Stop offset="1" stopColor={bodyGradientEnd} stopOpacity={1} />
         </LinearGradient>
         <RadialGradient id={`core-${uid}`} cx="50%" cy="50%" r="50%">
           <Stop offset="0" stopColor={coreColor} stopOpacity={0.95} />
@@ -124,18 +154,20 @@ export function AuraFigure({
 
       {/* rim: a dilated, goo-merged copy of the whole silhouette, softly
           blurred (not re-hardened) so it diffuses outward like an aura */}
-      <G filter={`url(#soft-${uid})`} opacity={0.85}>
-        <G
-          filter={`url(#goo-${uid})`}
-          fill={color}
-          stroke={color}
-          strokeWidth={15}
-          strokeOpacity={1}
-          strokeLinejoin="round"
-        >
-          <BodyPrimitives />
+      {showRim && (
+        <G filter={`url(#soft-${uid})`} opacity={0.85}>
+          <G
+            filter={`url(#goo-${uid})`}
+            fill={color}
+            stroke={color}
+            strokeWidth={15}
+            strokeOpacity={1}
+            strokeLinejoin="round"
+          >
+            <BodyPrimitives />
+          </G>
         </G>
-      </G>
+      )}
 
       {/* dark body — drawn twice: a plain, unfiltered pass first so every
           primitive is guaranteed fully opaque no matter how a given platform's
@@ -168,7 +200,7 @@ export function AuraFigure({
         fill="none"
         stroke={color}
         strokeOpacity={0.3}
-        strokeWidth={2.5}
+        strokeWidth={seamStrokeWidth}
         strokeLinecap="round"
       />
       <Path
@@ -176,7 +208,7 @@ export function AuraFigure({
         fill="none"
         stroke={color}
         strokeOpacity={0.3}
-        strokeWidth={2.5}
+        strokeWidth={seamStrokeWidth}
         strokeLinecap="round"
       />
 

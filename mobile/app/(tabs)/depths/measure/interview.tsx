@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -13,7 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../../src/store/themeStore';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
@@ -44,6 +46,9 @@ const BLACK_HOLD_MS = 500;
 
 export default function InterviewScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   // Moved from a module-level constant — needs t(), which only works
@@ -222,7 +227,7 @@ export default function InterviewScreen() {
       // the keyboard on both iOS and Android (confirmed on-device).
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
 
       <View style={styles.sphereProgress}>
         {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => (
@@ -256,20 +261,20 @@ export default function InterviewScreen() {
       >
         {qaPairs.map((pair, i) => (
           <View key={pair.sphere} style={styles.exchange}>
-            <Turn color={accentColor}>{pair.question}</Turn>
-            <Turn isUser>{pair.answer}</Turn>
-            {acknowledgments[i] ? <Turn color={accentColor}>{acknowledgments[i]}</Turn> : null}
+            <Turn color={accentColor} styles={styles}>{pair.question}</Turn>
+            <Turn isUser styles={styles}>{pair.answer}</Turn>
+            {acknowledgments[i] ? <Turn color={accentColor} styles={styles}>{acknowledgments[i]}</Turn> : null}
           </View>
         ))}
 
         {!isScoring && !scoringError && currentQuestion && (
-          <Turn color={accentColor}>{currentQuestion.question}</Turn>
+          <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
         )}
 
         {asides.map((aside, i) => (
           <View key={i} style={styles.exchange}>
-            <Turn isUser>{aside.answer}</Turn>
-            {aside.reply ? <Turn color={accentColor}>{aside.reply}</Turn> : null}
+            <Turn isUser styles={styles}>{aside.answer}</Turn>
+            {aside.reply ? <Turn color={accentColor} styles={styles}>{aside.reply}</Turn> : null}
           </View>
         ))}
 
@@ -349,7 +354,17 @@ export default function InterviewScreen() {
 // screen has, before a reading exists) rather than a fixed tone — this
 // used to be the bubble's border color; the visible signal moves from
 // border to text since there's no border left to carry it.
-function Turn({ children, color, isUser }: { children: string; color?: string; isUser?: boolean }) {
+function Turn({
+  children,
+  color,
+  isUser,
+  styles,
+}: {
+  children: string;
+  color?: string;
+  isUser?: boolean;
+  styles: ReturnType<typeof makeStyles>;
+}) {
   return (
     <Text
       style={[
@@ -363,7 +378,8 @@ function Turn({ children, color, isUser }: { children: string; color?: string; i
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   exitFade: {
     position: 'absolute',
@@ -447,7 +463,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing[3],
     borderRadius: radius.full,
   },
-  retryButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  retryButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
   input: {
@@ -471,7 +487,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.lg },
+  sendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
   restartButton: { alignItems: 'center', paddingVertical: spacing[4] },
   restartText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-});
+  });
+}

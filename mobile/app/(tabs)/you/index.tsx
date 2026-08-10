@@ -1,10 +1,12 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import { colors } from '../../../src/theme/colors';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { useThemeStore, ThemePreference } from '../../../src/store/themeStore';
+import type { Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useReadingColumnWidth } from '../../../src/theme/responsive';
@@ -29,6 +31,11 @@ const CROSSFADE_DURATION = 450;
 export default function YouScreen() {
   const { t } = useTranslation();
   const router = useRouter();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const themePreference = useThemeStore((s) => s.preference);
+  const setThemePreference = useThemeStore((s) => s.setPreference);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [changing, setChanging] = useState(false);
   const [resetDone, setResetDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
@@ -103,7 +110,7 @@ export default function YouScreen() {
       // view. No keyboardVerticalOffset — no fixed header here either.
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
       <ScrollView
         ref={scrollRef}
         style={styles.scroll}
@@ -166,10 +173,40 @@ export default function YouScreen() {
                     <Text
                       style={[
                         styles.languageOptionText,
-                        locale === option && { color: colors.bg.base },
+                        locale === option && { color: colors.onAccent },
                       ]}
                     >
                       {option === 'en' ? t('you.languageEnglish') : t('you.languageRussian')}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.divider} />
+            <View style={styles.themeSection}>
+              <Text style={styles.themeKicker}>{t('you.theme')}</Text>
+              <View style={styles.themeRow}>
+                {(['system', 'light', 'dark'] as ThemePreference[]).map((option) => (
+                  <Pressable
+                    key={option}
+                    style={[
+                      styles.themeOption,
+                      themePreference === option && { backgroundColor: colors.accent.ivory },
+                    ]}
+                    onPress={() => setThemePreference(option)}
+                  >
+                    <Text
+                      style={[
+                        styles.themeOptionText,
+                        themePreference === option && { color: colors.onAccent },
+                      ]}
+                    >
+                      {option === 'system'
+                        ? t('you.themeSystem')
+                        : option === 'light'
+                          ? t('you.themeLight')
+                          : t('you.themeDark')}
                     </Text>
                   </Pressable>
                 ))}
@@ -222,75 +259,93 @@ export default function YouScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg.base },
-  scroll: { flex: 1 },
-  content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
-  languageSection: { gap: spacing[3] },
-  languageKicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  languageRow: { flexDirection: 'row', gap: spacing[2] },
-  // Filled pill on the active option, same convention as AccountSection's
-  // consentToggleButton — an outlined pill would be a different visual
-  // language from the one other real toggle already in this screen area.
-  languageOption: {
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-    backgroundColor: colors.bg.elevated,
-  },
-  languageOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
-  kicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginBottom: spacing[4],
-  },
-  // No card — space and the kicker label above it separate this from the
-  // rest of the page, same register as every other screen in the app.
-  currentSection: { gap: spacing[2] },
-  // Thin line between logical groups (current philosopher / Daily Reminder /
-  // Account / dev tools) — same token values as Depths' own sectionDivider,
-  // so a section break reads identically everywhere in the app rather than
-  // each screen inventing its own gap.
-  divider: { height: 1, backgroundColor: colors.bg.border },
-  currentName: { fontFamily: fonts.medium, fontSize: fontSizes.lg },
-  currentMode: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  currentDescription: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginBottom: spacing[2],
-  },
-  changeLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  chooseTitle: {
-    color: colors.text.secondary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    marginBottom: spacing[4],
-  },
-  cancelButton: { alignItems: 'center', paddingVertical: spacing[4] },
-  cancelLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  devResetButton: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    borderStyle: 'dashed',
-  },
-  devResetButtonPressed: {
-    opacity: 0.5,
-    backgroundColor: colors.bg.elevated,
-  },
-  devResetText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  sourcesLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-});
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
+    root: { flex: 1, backgroundColor: colors.bg.base },
+    scroll: { flex: 1 },
+    content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
+    languageSection: { gap: spacing[3] },
+    languageKicker: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
+    languageRow: { flexDirection: 'row', gap: spacing[2] },
+    // Filled pill on the active option, same convention as AccountSection's
+    // consentToggleButton — an outlined pill would be a different visual
+    // language from the one other real toggle already in this screen area.
+    languageOption: {
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[2],
+      borderRadius: radius.full,
+      backgroundColor: colors.bg.elevated,
+    },
+    languageOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+    themeSection: { gap: spacing[3] },
+    themeKicker: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
+    themeRow: { flexDirection: 'row', gap: spacing[2] },
+    themeOption: {
+      paddingHorizontal: spacing[4],
+      paddingVertical: spacing[2],
+      borderRadius: radius.full,
+      backgroundColor: colors.bg.elevated,
+    },
+    themeOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+    kicker: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+      marginBottom: spacing[4],
+    },
+    // No card — space and the kicker label above it separate this from the
+    // rest of the page, same register as every other screen in the app.
+    currentSection: { gap: spacing[2] },
+    // Thin line between logical groups (current philosopher / Daily Reminder /
+    // Account / dev tools) — same token values as Depths' own sectionDivider,
+    // so a section break reads identically everywhere in the app rather than
+    // each screen inventing its own gap.
+    divider: { height: 1, backgroundColor: colors.bg.border },
+    currentName: { fontFamily: fonts.medium, fontSize: fontSizes.lg },
+    currentMode: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
+    currentDescription: {
+      color: colors.text.secondary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
+      marginBottom: spacing[2],
+    },
+    changeLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+    chooseTitle: {
+      color: colors.text.secondary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.md,
+      marginBottom: spacing[4],
+    },
+    cancelButton: { alignItems: 'center', paddingVertical: spacing[4] },
+    cancelLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+    devResetButton: {
+      alignItems: 'center',
+      paddingVertical: spacing[3],
+      borderRadius: radius.md,
+      borderWidth: 1,
+      borderColor: colors.bg.border,
+      borderStyle: 'dashed',
+    },
+    devResetButtonPressed: {
+      opacity: 0.5,
+      backgroundColor: colors.bg.elevated,
+    },
+    devResetText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
+    sourcesLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  });
+}

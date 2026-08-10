@@ -1,5 +1,5 @@
 import Svg, { Defs, ClipPath, Circle, RadialGradient, Stop } from 'react-native-svg';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
 
 const MOON_LIGHT = '#f4ead0';
 
@@ -9,6 +9,7 @@ const MOON_LIGHT = '#f4ead0';
 // outside (0% shown); at 0.5 (full moon) it fully overlaps (100% shown); waxing
 // enters from the right, waning exits to the left.
 export function MoonPhaseDisc({ fraction, size = 120 }: { fraction: number; size?: number }) {
+  const colors = useThemeColors();
   const pad = 16;
   const canvas = size + pad * 2;
   const r = size / 2;

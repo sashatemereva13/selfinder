@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ScrollView, View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../../src/store/themeStore';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../../../../src/content/measureConfig';
@@ -15,6 +18,9 @@ const LEVELS_HIGH_TO_LOW = [...VIBRATION_LEVELS].reverse();
 
 export default function LevelsScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -32,7 +38,7 @@ export default function LevelsScreen() {
         { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
       ]}
     >
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
       <Pressable style={styles.backRow} onPress={() => router.back()}>
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
@@ -66,7 +72,8 @@ export default function LevelsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { paddingBottom: spacing[8] },
@@ -107,4 +114,5 @@ const styles = StyleSheet.create({
   },
   rowDot: { width: 10, height: 10, borderRadius: 5 },
   rowName: { flex: 1, color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },
-});
+  });
+}

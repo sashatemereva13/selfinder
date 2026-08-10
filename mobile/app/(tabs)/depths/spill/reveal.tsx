@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
@@ -14,6 +15,8 @@ import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function SpillRevealScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -91,7 +94,8 @@ export default function SpillRevealScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   kicker: {
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: colors.bg.base,
+    color: colors.onAccent,
     fontFamily: fonts.medium,
     fontSize: fontSizes.base,
   },
@@ -134,4 +138,5 @@ const styles = StyleSheet.create({
   },
   doneRow: { alignItems: 'center', paddingTop: spacing[5] },
   doneText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.sm },
-});
+  });
+}

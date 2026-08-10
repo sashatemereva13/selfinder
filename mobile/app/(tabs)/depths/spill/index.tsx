@@ -1,9 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../../src/store/themeStore';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { useSpillStore } from '../../../../src/store/spillStore';
@@ -15,6 +17,9 @@ import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function SpillScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const reset = useSpillStore((s) => s.reset);
@@ -35,7 +40,7 @@ export default function SpillScreen() {
 
   return (
     <View style={styles.root}>
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
 
       <Pressable
         style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
@@ -64,7 +69,8 @@ export default function SpillScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -113,8 +119,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {
-    color: colors.bg.base,
+    color: colors.onAccent,
     fontFamily: fonts.medium,
     fontSize: fontSizes.base,
   },
-});
+  });
+}

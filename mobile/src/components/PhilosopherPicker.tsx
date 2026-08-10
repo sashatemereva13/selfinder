@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet, ViewStyle } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
@@ -17,7 +17,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { PHILOSOPHERS, PHILOSOPHER_MAP, getLocalizedPhilosopher } from '../content/philosophers';
 import { Philosopher } from '../types';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAppAccentRgb } from '../utils/appAccent';
@@ -133,6 +134,7 @@ function PhilosopherRingItem({
   state,
   accentRgb,
   onPress,
+  styles,
 }: {
   philosopher: Philosopher;
   index: number;
@@ -141,6 +143,7 @@ function PhilosopherRingItem({
   state: OrbState;
   accentRgb: string;
   onPress: () => void;
+  styles: ReturnType<typeof makeStyles>;
 }) {
   const scale = useSharedValue(1);
   const opacity = useSharedValue(1);
@@ -242,6 +245,8 @@ export function PhilosopherPicker({
   hideOwnRing?: boolean;
 }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const [focusedId, setFocusedId] = useState<string | null>(selectedId ?? null);
   const focused = focusedId ? getLocalizedPhilosopher(PHILOSOPHER_MAP[focusedId], locale) : null;
@@ -380,6 +385,7 @@ export function PhilosopherPicker({
             state={focusedId === null ? 'idle' : focusedId === p.id ? 'focused' : 'dimmed'}
             accentRgb={accentRgb}
             onPress={() => setFocusedId(p.id)}
+            styles={styles}
           />
         ))}
       </View>
@@ -419,7 +425,8 @@ export function PhilosopherPicker({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   wrap: { width: '100%', alignItems: 'center', gap: spacing[6] },
   ringContainer: { alignItems: 'center', justifyContent: 'center' },
   // Wide enough for "Kierkegaard" at this size — 120 truncated it. Also
@@ -496,7 +503,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     alignItems: 'center',
   },
-  confirmText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.base },
+  confirmText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.base },
   reassurance: {
     color: colors.text.muted,
     fontFamily: fonts.light,
@@ -513,4 +520,5 @@ const styles = StyleSheet.create({
     lineHeight: fontSizes.xs * lineHeights.normal,
     textAlign: 'center',
   },
-});
+  });
+}

@@ -8,7 +8,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
 import { spacing } from '../theme/spacing';
 
 /** Mirrors web's .measure-scoringOrb pulse (measure.css): 1.4s ease-in-out loop,
@@ -35,18 +35,18 @@ function Orb({ delayMs, color }: { delayMs: number; color: string }) {
   return <Animated.View style={[styles.dot, { backgroundColor: color }, animatedStyle]} />;
 }
 
-// This loading indicator fires before Measure knows what level you are —
-// no reading exists yet to color it by — so it uses the level-agnostic
-// ivory accent at two opacities rather than a pair of axis hues, which
-// used to alternate two unrelated purples pulled from two different files
-// (colors.axis.spirit and measureConfig's AXIS_COLORS.clarity) for no real
-// reason beyond "both were purple-ish."
-const DOT_COLORS = [colors.accent.ivory, `${colors.accent.ivory}b3`];
-
 export function ScoringOrbs() {
+  const colors = useThemeColors();
+  // This loading indicator fires before Measure knows what level you are —
+  // no reading exists yet to color it by — so it uses the level-agnostic
+  // ivory accent at two opacities rather than a pair of axis hues, which
+  // used to alternate two unrelated purples pulled from two different files
+  // (colors.axis.spirit and measureConfig's AXIS_COLORS.clarity) for no real
+  // reason beyond "both were purple-ish."
+  const dotColors = [colors.accent.ivory, `${colors.accent.ivory}b3`];
   return (
     <View style={styles.row}>
-      {DOT_COLORS.map((color, i) => (
+      {dotColors.map((color, i) => (
         <Orb key={i} delayMs={i * 200} color={color} />
       ))}
     </View>

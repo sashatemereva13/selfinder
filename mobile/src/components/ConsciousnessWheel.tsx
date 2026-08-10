@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, StyleSheet } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
@@ -10,7 +10,8 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { VIBRATION_LEVELS, LEVEL_COLORS, getLocalizedLevelName } from '../content/measureConfig';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { useLocaleStore } from '../store/localeStore';
@@ -73,6 +74,8 @@ export function ConsciousnessWheel({
   onSelectLevel?: (slug: string) => void;
 }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   // Starts at Neutrality (roughly the middle of the scale) — an arbitrary
   // but deliberately unloaded starting point, rather than defaulting to
@@ -198,7 +201,8 @@ export function ConsciousnessWheel({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   wrap: { alignItems: 'center', gap: spacing[3] },
   dragDot: {
     position: 'absolute',
@@ -219,4 +223,5 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     letterSpacing: letterSpacings.normal,
   },
-});
+  });
+}

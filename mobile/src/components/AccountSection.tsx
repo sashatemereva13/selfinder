@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
 import { View, Text, TextInput, Pressable, ActivityIndicator, Share, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
@@ -45,6 +46,8 @@ function PasswordInput({
   editable?: boolean;
 }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [visible, setVisible] = useState(false);
 
   return (
@@ -87,6 +90,8 @@ function AuthForm({
   onRegister: (username: string, password: string, privacyPolicyAccepted: boolean, email?: string) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [mode, setMode] = useState<'login' | 'register' | 'forgot-request' | 'forgot-reset'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -212,7 +217,7 @@ function AuthForm({
           disabled={loading || (mode === 'forgot-request' ? !username.trim() : !code.trim() || !newPassword)}
         >
           {loading ? (
-            <ActivityIndicator color={colors.bg.base} />
+            <ActivityIndicator color={colors.onAccent} />
           ) : (
             <Text style={styles.submitButtonText}>
               {mode === 'forgot-request' ? t('account.sendCode') : t('account.resetPassword')}
@@ -294,7 +299,7 @@ function AuthForm({
         disabled={loading || !username.trim() || !password}
       >
         {loading ? (
-          <ActivityIndicator color={colors.bg.base} />
+          <ActivityIndicator color={colors.onAccent} />
         ) : (
           <Text style={styles.submitButtonText}>{mode === 'login' ? t('account.logIn') : t('account.createAccount')}</Text>
         )}
@@ -317,6 +322,8 @@ function LoggedInAccount({
   onLogout: () => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [history, setHistory] = useState<SavedMeasureResult[]>([]);
@@ -459,7 +466,7 @@ function LoggedInAccount({
           onPress={toggleConsent}
           disabled={consentBusy || loadingProfile}
         >
-          <Text style={[styles.consentToggleButtonText, consentGiven && { color: colors.bg.base }]}>
+          <Text style={[styles.consentToggleButtonText, consentGiven && { color: colors.onAccent }]}>
             {consentBusy ? '…' : consentGiven ? t('account.consentOn') : t('account.consentOff')}
           </Text>
         </Pressable>
@@ -642,7 +649,8 @@ function LoggedInAccount({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   // No card — space and the kicker label do the separating, same register
   // as every other screen. This is the largest section on the page (login
   // form or the full logged-in account panel), so its internal
@@ -726,7 +734,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: colors.accent.ivory,
   },
-  submitButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.base },
+  submitButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.base },
   signedInAs: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },
   consentToggleRow: {
     flexDirection: 'row',
@@ -824,9 +832,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.danger,
   },
-  dangerButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  dangerButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   deleteConfirmBlock: { gap: spacing[3] },
   deleteConfirmRow: { flexDirection: 'row', gap: spacing[3] },
   signOutButton: { alignItems: 'center', paddingTop: spacing[3] },
   signOutText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-});
+  });
+}

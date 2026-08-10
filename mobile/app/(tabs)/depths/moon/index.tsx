@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -22,6 +23,8 @@ import {
 
 export default function MoonScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const currentResult = useMeasureStore((s) => s.currentResult);
@@ -127,7 +130,8 @@ export default function MoonScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[4] },
   backRow: { paddingBottom: spacing[8] },
@@ -219,7 +223,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
     backgroundColor: colors.accent.ivory,
   },
-  bridgeButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  bridgeButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   flowRow: { flexDirection: 'row', gap: spacing[2] },
   flowChip: {
     flex: 1,
@@ -230,4 +234,5 @@ const styles = StyleSheet.create({
     borderColor: colors.bg.border,
   },
   flowChipText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-});
+  });
+}

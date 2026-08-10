@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, Platform, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -13,7 +13,9 @@ import Animated, {
   withSpring,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../../src/store/themeStore';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { TUNE_IN_STATES, getLocalizedTuneInState } from '../../../../src/content/tuneInStates';
@@ -64,7 +66,15 @@ const PULSE_REST_SCALE = 1;
 const WAVE_DURATION_MS = 6600;
 const WAVE_PEAK_SCALE = 7;
 
-function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
+function Pulse({
+  active,
+  onPress,
+  styles,
+}: {
+  active: boolean;
+  onPress: () => void;
+  styles: ReturnType<typeof makeStyles>;
+}) {
   const { t } = useTranslation();
   const beat = useSharedValue(0);
   const wave = useSharedValue(0);
@@ -109,6 +119,9 @@ function Pulse({ active, onPress }: { active: boolean; onPress: () => void }) {
 
 export default function TuneInScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -267,7 +280,9 @@ export default function TuneInScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
-      <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
+      {theme === 'dark' && (
+        <AmbientGlow intensified={isPlaying} pulseDurationMs={isPlaying ? 1800 : 4200} />
+      )}
 
       {/* Was a plain flex:1 View with no scroll — fine in English, where
           every string here is short enough that the fixed-height screen
@@ -304,7 +319,7 @@ export default function TuneInScreen() {
         </View>
 
         <View style={styles.centerBlock}>
-          <Pulse active={isPlaying} onPress={handleToggle} />
+          <Pulse active={isPlaying} onPress={handleToggle} styles={styles} />
           <Text style={styles.intent}>{getLocalizedTuneInState(activeState, locale).intent}</Text>
         </View>
 
@@ -349,7 +364,8 @@ export default function TuneInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -452,7 +468,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  pulseCoreLabel: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  pulseCoreLabel: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   intent: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
@@ -485,4 +501,5 @@ const styles = StyleSheet.create({
   timerChipText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.xs },
   timerChipTextActive: { color: colors.accent.ivory },
   timerCountdown: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-});
+  });
+}

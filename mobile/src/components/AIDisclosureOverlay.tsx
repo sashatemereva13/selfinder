@@ -1,7 +1,10 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import { useThemeStore } from '../store/themeStore';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useReadingColumnWidth } from '../theme/responsive';
@@ -16,13 +19,16 @@ import { AmbientGlow } from './AmbientGlow';
 // checkbox in AccountSection.tsx, which most people never see.
 export function AIDisclosureOverlay() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const columnWidth = useReadingColumnWidth();
   const acknowledge = useAIDisclosureStore((s) => s.acknowledge);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[8] }]}>
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
       <View
         style={[
           styles.content,
@@ -39,7 +45,8 @@ export function AIDisclosureOverlay() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   // Absolute, not a sibling in normal flow — sits above the whole app
   // (mounted in app/_layout.tsx) rather than gating one screen's own tree.
   root: {
@@ -70,8 +77,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.accent.ivory,
   },
   buttonText: {
-    color: colors.bg.base,
+    color: colors.onAccent,
     fontFamily: fonts.medium,
     fontSize: fontSizes.sm,
   },
-});
+  });
+}

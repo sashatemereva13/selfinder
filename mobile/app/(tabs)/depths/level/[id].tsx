@@ -1,9 +1,10 @@
-import { ReactNode, useEffect, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Pressable, LayoutAnimation, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { getLevelBySlug, getLocalizedLevel } from '../../../../src/content/levelsContent';
@@ -16,7 +17,7 @@ import { useLocaleStore } from '../../../../src/store/localeStore';
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
 // instead of showing literal asterisks (RN Text has no markdown support).
-function renderRich(text: string): ReactNode[] {
+function renderRich(text: string, styles: ReturnType<typeof makeStyles>): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) => {
     const match = part.match(/^\*\*([^*]+)\*\*$/);
     return match ? (
@@ -29,6 +30,8 @@ function renderRich(text: string): ReactNode[] {
 
 export default function LevelScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -94,7 +97,7 @@ export default function LevelScreen() {
       {level.paragraphs && (
         <View style={styles.sectionBlock}>
           {level.paragraphs.map((paragraph, i) => (
-            <Text key={i} style={styles.paragraph}>{renderRich(paragraph)}</Text>
+            <Text key={i} style={styles.paragraph}>{renderRich(paragraph, styles)}</Text>
           ))}
         </View>
       )}
@@ -103,7 +106,7 @@ export default function LevelScreen() {
         <View key={section.heading} style={styles.sectionBlock}>
           <Text style={styles.sectionHeading}>{section.heading}</Text>
           {section.paragraphs.map((paragraph, i) => (
-            <Text key={i} style={styles.paragraph}>{renderRich(paragraph)}</Text>
+            <Text key={i} style={styles.paragraph}>{renderRich(paragraph, styles)}</Text>
           ))}
         </View>
       ))}
@@ -122,7 +125,7 @@ export default function LevelScreen() {
                 <View key={section.heading} style={styles.sectionBlock}>
                   <Text style={styles.sectionHeading}>{section.heading}</Text>
                   {section.paragraphs.map((paragraph, i) => (
-                    <Text key={i} style={styles.paragraph}>{renderRich(paragraph)}</Text>
+                    <Text key={i} style={styles.paragraph}>{renderRich(paragraph, styles)}</Text>
                   ))}
                 </View>
               ))}
@@ -138,7 +141,8 @@ export default function LevelScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   notFoundRoot: { alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
@@ -228,4 +232,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
   },
-});
+  });
+}

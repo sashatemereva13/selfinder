@@ -9,7 +9,7 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
 import { spacing } from '../theme/spacing';
 
 /** Mirrors web's .measure-typingDot bounce (measure.css): 1.2s ease-in-out loop,
@@ -41,6 +41,7 @@ function Dot({ delayMs, color }: { delayMs: number; color: string }) {
 }
 
 export function TypingDots({ color }: { color?: string }) {
+  const colors = useThemeColors();
   const dotColor = color ?? colors.text.secondary;
 
   return (

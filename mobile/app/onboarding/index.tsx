@@ -26,7 +26,9 @@ import Animated, {
   Easing,
   FadeIn,
 } from "react-native-reanimated";
-import { colors } from "../../src/theme/colors";
+import { useThemeColors } from "../../src/theme/useThemeColors";
+import { useThemeStore } from "../../src/store/themeStore";
+import type { Colors } from "../../src/theme/colors";
 import {
   fonts,
   fontSizes,
@@ -344,6 +346,7 @@ function BurstDot({
   exitProgress,
   merge,
   mergeTarget,
+  styles,
 }: {
   dot: AuraDot;
   index: number;
@@ -362,6 +365,7 @@ function BurstDot({
   // named it rather than lingering as generic ambient scatter.
   merge?: SharedValue<number>;
   mergeTarget?: { x: number; y: number };
+  styles: ReturnType<typeof makeStyles>;
 }) {
   const pos = auraBodyToPixel(LAYOUT_SIZE, dot.cx, dot.cy);
   // The chest core-glow is the burst's origin — dots read as radiating from
@@ -459,7 +463,7 @@ function BurstDot({
 // core glow at that exact spot and a plain circle would be hard to tell
 // apart from it. A ring "shockwave" reads as ignition regardless of what's
 // underneath it.
-function CoreSpark({ arrive }: { arrive: SharedValue<number> }) {
+function CoreSpark({ arrive, styles }: { arrive: SharedValue<number>; styles: ReturnType<typeof makeStyles> }) {
   const pos = auraBodyToPixel(LAYOUT_SIZE, 100, 148);
   const r = 34 * (LAYOUT_SIZE / 200);
 
@@ -530,6 +534,7 @@ function IntroFigure({
   settleHow,
   mergeHow,
   reduceMotion,
+  styles,
 }: {
   burst: SharedValue<number>;
   exitProgress: SharedValue<number>;
@@ -542,6 +547,7 @@ function IntroFigure({
   settleHow: SharedValue<number>;
   mergeHow: SharedValue<number>;
   reduceMotion: boolean;
+  styles: ReturnType<typeof makeStyles>;
 }) {
   const pulse = useSharedValue(0);
   const arrive = useSharedValue(0);
@@ -633,7 +639,7 @@ function IntroFigure({
           </Animated.View>
         </Animated.View>
       </Animated.View>
-      <CoreSpark arrive={arrive} />
+      <CoreSpark arrive={arrive} styles={styles} />
       {/* Deliberately NOT wrapped in pulseStyle — the body breathes, the
           dots don't. When the dots shared the breathing pulse, they seemed
           to pulsate for no reason; now their only motions are the ones that
@@ -689,6 +695,7 @@ function IntroFigure({
               exitProgress={exitProgress}
               merge={merge}
               mergeTarget={mergeTarget}
+              styles={styles}
             />
           );
         })}
@@ -699,6 +706,9 @@ function IntroFigure({
 
 export default function OnboardingScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const reduceMotion = useReducedMotion();
   // Reduce Motion skips the greet beat and mounts the intro already
@@ -1262,7 +1272,7 @@ export default function OnboardingScreen() {
         disabled={revealed && ff}
         onPress={handleIntroTap}
       >
-        <AmbientGlow />
+        {theme === 'dark' && <AmbientGlow />}
 
         {/* The brand name, not the tagline's kicker — established immediately,
             separately from the figure+copy, rather than fading in as one more
@@ -1423,6 +1433,7 @@ export default function OnboardingScreen() {
                   mergeFeel={mergeFeel}
                   settleHow={settleHow}
                   mergeHow={mergeHow}
+                  styles={styles}
                 />
 
                 {/* "Know" dropped — embracing the glowing core already implies
@@ -1562,7 +1573,7 @@ export default function OnboardingScreen() {
             (see AmbientGlow's own comment) that it doesn't compete with
             this screen's elegance-through-restraint — just enough warmth
             that the darkness reads as intentional, not empty. */}
-        <AmbientGlow />
+        {theme === 'dark' && <AmbientGlow />}
         {/* A short fade rather than popping in instantly on mount — pairs
             with the ring's own entering fade (see PhilosopherPicker) so the
             whole handoff from the held circle reads as one continuous
@@ -1672,7 +1683,8 @@ export default function OnboardingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   introRoot: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -1923,4 +1935,5 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-});
+  });
+}

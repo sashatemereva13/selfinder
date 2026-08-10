@@ -1,8 +1,11 @@
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Pressable, Linking, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../src/theme/colors';
+import { useThemeColors } from '../../src/theme/useThemeColors';
+import { useThemeStore } from '../../src/store/themeStore';
+import type { Colors } from '../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../src/theme/typography';
 import { spacing } from '../../src/theme/spacing';
 import { AmbientGlow } from '../../src/components/AmbientGlow';
@@ -62,6 +65,9 @@ const SOURCES: Source[] = [
 
 export default function SourcesScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -70,7 +76,7 @@ export default function SourcesScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
       <Pressable style={styles.backRow} onPress={() => router.back()}>
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
@@ -97,7 +103,8 @@ export default function SourcesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { paddingBottom: spacing[8] },
@@ -151,4 +158,5 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
   },
-});
+  });
+}

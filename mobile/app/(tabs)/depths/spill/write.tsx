@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, {
@@ -9,7 +9,8 @@ import Animated, {
   withTiming,
   Easing,
 } from 'react-native-reanimated';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
 import { useSpillStore } from '../../../../src/store/spillStore';
@@ -23,6 +24,8 @@ const DURATION_MS = 60_000;
 const GRACE_MS = 4_000;
 
 export default function SpillWriteScreen() {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const setSpillText = useSpillStore((s) => s.setText);
   const accentRgb = useAppAccentRgb();
@@ -108,7 +111,8 @@ export default function SpillWriteScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -137,4 +141,5 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.base,
     padding: spacing[6],
   },
-});
+  });
+}

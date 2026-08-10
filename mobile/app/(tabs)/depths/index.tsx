@@ -19,7 +19,9 @@ import Animated, {
   Easing,
   type SharedValue,
 } from 'react-native-reanimated';
-import { colors } from '../../../src/theme/colors';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../src/store/themeStore';
+import type { Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
@@ -43,7 +45,12 @@ import {
   getAuraFigureMetrics,
   AURA_NEUTRAL_COLOR,
 } from '../../../src/components/AuraFigure';
-import { AURA_LEVEL_IMAGES, AURA_NEUTRAL_IMAGE } from '../../../src/content/auraLevelImages';
+import {
+  AURA_LEVEL_IMAGES,
+  AURA_NEUTRAL_IMAGE,
+  AURA_LEVEL_IMAGES_LIGHT,
+  AURA_NEUTRAL_IMAGE_LIGHT,
+} from '../../../src/content/auraLevelImages';
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { track } from '../../../src/utils/analytics';
 import { formatRelativeDay } from '../../../src/utils/relativeTime';
@@ -199,6 +206,9 @@ const FEELING_LUCKY: Tool = {
 
 export default function DepthsScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -425,7 +435,7 @@ export default function DepthsScreen() {
 
   return (
     <View style={styles.root}>
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -480,11 +490,15 @@ export default function DepthsScreen() {
                 sphereScores={sphereScores}
                 selectedSphere={selectedSphere}
                 neutralAura={
-                  <AuraWithDots source={AURA_NEUTRAL_IMAGE} overlay />
+                  <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
                 }
                 settledAura={
                   <AuraWithDots
-                    source={AURA_LEVEL_IMAGES[ringLevelSlug!] ?? AURA_LEVEL_IMAGES[lastLevel.slug]}
+                    source={
+                      theme === 'light'
+                        ? AURA_LEVEL_IMAGES_LIGHT[ringLevelSlug!] ?? AURA_LEVEL_IMAGES_LIGHT[lastLevel.slug]
+                        : AURA_LEVEL_IMAGES[ringLevelSlug!] ?? AURA_LEVEL_IMAGES[lastLevel.slug]
+                    }
                     overlay
                   />
                 }
@@ -582,7 +596,7 @@ export default function DepthsScreen() {
         ) : (
           <>
             <Text style={styles.lastReadingLabel}>{t('depths.beforeFirstReading')}</Text>
-            <AuraWithDots source={AURA_NEUTRAL_IMAGE} />
+            <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} />
             <Text style={styles.title}>
               {t('depths.firstReadingCopy')}
             </Text>
@@ -611,6 +625,23 @@ export default function DepthsScreen() {
                   <Text style={styles.rowDescription}>
                     {t('depths.continueConversationWith', { name: philosopher.name })}
                   </Text>
+                </Pressable>
+              )}
+              {/* Standing invitation on every reading, always available
+                  (not occasional/rare like Feeling Lucky) — a real peer to
+                  Talk about it / Measure again, not a quieter aside. The
+                  reading motivates the OFFER to draw, never the card that's
+                  drawn — the draw itself stays fully random regardless of
+                  this reading's sphere scores. See docs/cards-concept.md,
+                  "Cards as a second layer of a reading," for why: letting
+                  the reading select a "relevant" card would be the same
+                  inferential-judgment violation as content-echoing the
+                  wish — the app deciding what's "underneath" instead of
+                  the person discovering it themselves. */}
+              {group.groupKey === 'findOutWhereYouAre' && currentResult && (
+                <Pressable style={styles.row} onPress={() => router.push('/(tabs)/depths/cards')}>
+                  <Text style={styles.rowLabel}>{t('depths.cardsLabel')}</Text>
+                  <Text style={styles.rowDescription}>{t('depths.cardsDescription')}</Text>
                 </Pressable>
               )}
               {/* Same job as "Talk about it" above — a reference to the
@@ -725,6 +756,8 @@ function AuraArrival({
   settledAura: React.ReactNode;
   selectedSphere: SphereKey | null;
 }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   // Unlike the other progress values, anticipation has no "settled" state
   // to hold at — it's a one-shot dip that always starts and ends at 0,
   // whether or not arriving is true, so a non-arriving render never
@@ -1141,6 +1174,8 @@ function AuraWithDots({
   source: number;
   overlay?: boolean;
 }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={[styles.auraWrap, overlay && styles.auraWrapOverlay]}>
       <View style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}>
@@ -1154,7 +1189,8 @@ function AuraWithDots({
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -1445,4 +1481,5 @@ const styles = StyleSheet.create({
     marginTop: spacing[1],
     textAlign: 'center',
   },
-});
+  });
+}

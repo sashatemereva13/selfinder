@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -12,7 +12,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../../../src/theme/colors';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../src/store/themeStore';
+import type { Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth, useIsLargeScreen } from '../../../src/theme/responsive';
@@ -28,6 +30,9 @@ import { track } from '../../../src/utils/analytics';
 
 export default function GuideScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const columnWidth = useWideColumnWidth();
@@ -137,7 +142,7 @@ export default function GuideScreen() {
       // platforms (confirmed on-device).
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <AmbientGlow />
+      {theme === 'dark' && <AmbientGlow />}
 
       <View style={[styles.header, { width: columnWidth, alignSelf: 'center' }]}>
         <View>
@@ -152,13 +157,23 @@ export default function GuideScreen() {
       </View>
 
       {metSnapshotRef.current?.hasMet && (
-        <Pressable
-          style={[styles.nudgeBanner, { width: columnWidth, alignSelf: 'center' }]}
-          onPress={() => router.push(nudge.route)}
-        >
+        <View style={[styles.nudgeBanner, { width: columnWidth, alignSelf: 'center' }]}>
           <Text style={styles.nudgeText}>{nudge.text}</Text>
-          <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
-        </Pressable>
+          {nudge.secondActionLabel && nudge.secondRoute ? (
+            <View style={styles.nudgeActionRow}>
+              <Pressable onPress={() => router.push(nudge.route)}>
+                <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push(nudge.secondRoute!)}>
+                <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.secondActionLabel} →</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={() => router.push(nudge.route)}>
+              <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
+            </Pressable>
+          )}
+        </View>
       )}
 
       <ScrollView
@@ -216,7 +231,7 @@ export default function GuideScreen() {
         ) : (
           messages.map((message, i) => (
             <View key={i} style={isLargeScreen && styles.turnRowLargeScreen}>
-              <Turn isUser={message.role === 'user'}>{message.content}</Turn>
+              <Turn isUser={message.role === 'user'} styles={styles}>{message.content}</Turn>
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
                 <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
                   <Text style={styles.spillCtaText}>{t('guide.writeItOutInstead')}</Text>
@@ -264,7 +279,15 @@ export default function GuideScreen() {
 // (philosopher in primary text, you in secondary) instead — same register
 // the rest of the app uses to differentiate voice (e.g. the greeting's
 // italic vs. plain-line pairing).
-function Turn({ children, isUser }: { children: string; isUser: boolean }) {
+function Turn({
+  children,
+  isUser,
+  styles,
+}: {
+  children: string;
+  isUser: boolean;
+  styles: ReturnType<typeof makeStyles>;
+}) {
   return (
     <Text style={[styles.turnText, isUser ? styles.turnUser : styles.turnPhilosopher]}>
       {children}
@@ -272,7 +295,8 @@ function Turn({ children, isUser }: { children: string; isUser: boolean }) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   emptyRoot: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing[6] },
   emptyText: {
@@ -322,6 +346,10 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     marginTop: spacing[2],
   },
+  nudgeActionRow: {
+    flexDirection: 'row',
+    gap: spacing[5],
+  },
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
@@ -366,7 +394,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.full,
   },
   measureCtaText: {
-    color: colors.bg.base,
+    color: colors.onAccent,
     fontFamily: fonts.medium,
     fontSize: fontSizes.sm,
   },
@@ -429,5 +457,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendButtonText: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.lg },
-});
+  sendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
+  });
+}

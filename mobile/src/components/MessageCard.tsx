@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 
@@ -22,10 +24,12 @@ const CLOCK_ZONE_HEIGHT = SCREEN_HEIGHT * 0.27;
 // exactly — used as the capture target for "save as image", not shown as
 // the primary in-app presentation.
 export function MessageCard({ message, accentRgb }: { message: string; accentRgb: string }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
     <View style={styles.card}>
       <LinearGradient
-        colors={[`rgba(${accentRgb},0.24)`, 'rgba(6,6,13,1)']}
+        colors={[`rgba(${accentRgb},0.24)`, colors.bg.base]}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.clockZone} />
@@ -37,37 +41,39 @@ export function MessageCard({ message, accentRgb }: { message: string; accentRgb
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: SCREEN_WIDTH,
-    height: SCREEN_HEIGHT,
-    backgroundColor: colors.bg.base,
-    overflow: 'hidden',
-  },
-  clockZone: {
-    height: CLOCK_ZONE_HEIGHT,
-  },
-  messageZone: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[8],
-    paddingBottom: spacing[12],
-  },
-  message: {
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xl,
-    lineHeight: fontSizes.xl * lineHeights.loose,
-    textAlign: 'center',
-  },
-  wordmark: {
-    position: 'absolute',
-    bottom: spacing[10],
-    alignSelf: 'center',
-    color: colors.text.faint,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: 3,
-  },
-});
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
+    card: {
+      width: SCREEN_WIDTH,
+      height: SCREEN_HEIGHT,
+      backgroundColor: colors.bg.base,
+      overflow: 'hidden',
+    },
+    clockZone: {
+      height: CLOCK_ZONE_HEIGHT,
+    },
+    messageZone: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing[8],
+      paddingBottom: spacing[12],
+    },
+    message: {
+      fontFamily: fonts.light,
+      fontStyle: 'italic',
+      fontSize: fontSizes.xl,
+      lineHeight: fontSizes.xl * lineHeights.loose,
+      textAlign: 'center',
+    },
+    wordmark: {
+      position: 'absolute',
+      bottom: spacing[10],
+      alignSelf: 'center',
+      color: colors.text.faint,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: 3,
+    },
+  });
+}

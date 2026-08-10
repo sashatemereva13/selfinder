@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -10,7 +10,9 @@ import Animated, {
   Easing,
   SharedValue,
 } from 'react-native-reanimated';
-import { colors } from '../../../../src/theme/colors';
+import { useThemeColors } from '../../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../../src/store/themeStore';
+import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
 import { BREATHING_PATTERNS, BreathingPhase, getRandomCompletionLine, getLocalizedBreathingPattern } from '../../../../src/content/breathingPatterns';
@@ -39,6 +41,8 @@ function BreathingOrb({
   onPress: () => void;
   label: string;
 }) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const coreStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
   }));
@@ -69,6 +73,9 @@ function BreathingOrb({
 
 export default function BreathingScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -149,7 +156,9 @@ export default function BreathingScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
-      <AmbientGlow intensified={active} pulseDurationMs={active ? phase.seconds * 1000 : 4200} />
+      {theme === 'dark' && (
+        <AmbientGlow intensified={active} pulseDurationMs={active ? phase.seconds * 1000 : 4200} />
+      )}
 
       <View
         style={{
@@ -199,7 +208,8 @@ export default function BreathingScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: colors.bg.base,
@@ -290,7 +300,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  orbCoreLabel: { color: colors.bg.base, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  orbCoreLabel: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   phaseLabel: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
@@ -304,4 +314,5 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.sm,
     marginTop: spacing[1],
   },
-});
+  });
+}

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '../src/theme/colors';
+import { useThemeColors } from '../src/theme/useThemeColors';
+import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
 import { spacing } from '../src/theme/spacing';
 import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
@@ -35,6 +36,8 @@ function formatDate(ts: number) {
 // actually designed, not just promised in one line.
 export default function YourArcPreviewScreen() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -193,7 +196,8 @@ export default function YourArcPreviewScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
@@ -296,4 +300,5 @@ const styles = StyleSheet.create({
     marginTop: spacing[1],
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
-});
+  });
+}

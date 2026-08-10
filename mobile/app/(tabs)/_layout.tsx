@@ -1,6 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { colors } from '../../src/theme/colors';
+import { useThemeColors } from '../../src/theme/useThemeColors';
 import { fonts } from '../../src/theme/typography';
 import { usePhilosopherStore } from '../../src/store/philosopherStore';
 import { useAppAccentRgb } from '../../src/utils/appAccent';
@@ -8,6 +8,7 @@ import { DepthsTabIcon, GuideTabIcon, YouTabIcon } from '../../src/components/Ta
 
 export default function TabsLayout() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
   const { philosopher, metPhilosopherIds } = usePhilosopherStore();
   const accentRgb = useAppAccentRgb();
   const activeColor = `rgb(${accentRgb})`;

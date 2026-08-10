@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { VIBRATION_LEVELS, LEVEL_COLORS } from '../content/measureConfig';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
 
 // A wheel, not a line — and not a single-hue marker on a plain track
 // either. Two decisions stacked on each other, both from the same
@@ -107,6 +107,7 @@ export function VibrationSpectrum({
   // dots for the finished look.
   onlySlugs?: string[];
 }) {
+  const colors = useThemeColors();
   const index = levelIndex(levelSlug);
   const total = VIBRATION_LEVELS.length;
   const angle = angleFor(index, total);

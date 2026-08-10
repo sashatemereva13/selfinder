@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { colors } from '../theme/colors';
+import { useThemeColors } from '../theme/useThemeColors';
+import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 import { usePhilosopherStore } from '../store/philosopherStore';
@@ -34,6 +35,8 @@ function formatTime(hour: number, minute: number, locale: 'en' | 'ru'): string {
 
 export function DailyReminderSection() {
   const { t } = useTranslation();
+  const colors = useThemeColors();
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const enabled = useReminderStore((s) => s.enabled);
@@ -92,7 +95,8 @@ export function DailyReminderSection() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: Colors) {
+  return StyleSheet.create({
   // No card — space and the kicker label do the separating, same register
   // as every other screen.
   section: { gap: spacing[3] },
@@ -126,4 +130,5 @@ const styles = StyleSheet.create({
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,
   },
-});
+  });
+}
