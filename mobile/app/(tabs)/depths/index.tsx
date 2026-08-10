@@ -26,7 +26,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/them
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
-import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
+import { useIsSubscribed } from '../../../src/utils/useIsSubscribed';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
@@ -216,7 +216,7 @@ export default function DepthsScreen() {
   const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
   const readingLog = useMeasureStore((s) => s.readingLog);
-  const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
+  const isSubscribed = useIsSubscribed();
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
   const discovered = useEngagementStore((s) => s.discovered);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
@@ -224,6 +224,7 @@ export default function DepthsScreen() {
   const accentColor = `rgb(${accentRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const sendGuideMessage = useGuideChatStore((s) => s.send);
+  const setPendingMeasureResultId = useGuideChatStore((s) => s.setPendingMeasureResultId);
   const [showConversation, setShowConversation] = useState(false);
   // Read synchronously (safe — no store mutation) so the very first paint
   // already starts hidden/scaled-down when arriving; the flag itself is
@@ -393,6 +394,7 @@ export default function DepthsScreen() {
     if (!philosopher || !currentResult) return;
     track('reveal_talk_about_it');
     recordTalkAboutIt();
+    setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
     sendGuideMessage(
       philosopher,
       t('depths.iJustMeasuredMyself', {
@@ -417,6 +419,7 @@ export default function DepthsScreen() {
     if (!philosopher || !currentResult || !selectedLine) return;
     track('depths_sphere_talk_about_it', { sphere: selectedLine.key });
     recordTalkAboutIt();
+    setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
     const qa = currentResult.qaPairs?.find((p) => p.sphere === selectedLine.key);
     const context = qa
       ? `They just tapped to talk about their ${selectedLine.key} reading, which came out as ${selectedLine.vibrationLevel.name}. When asked "${qa.question}" during their check-in, they answered: "${qa.answer}". Use this to speak to what's actually going on for THEM specifically — do not just describe what ${selectedLine.vibrationLevel.name} means in general, they can already read that on the level's own page. If their answer doesn't give you enough to go on, ask a clarifying question rather than generalizing. If it feels like there's real weight underneath they haven't said yet, you can invite them to Spill it out first, in your own voice.`

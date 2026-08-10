@@ -14,6 +14,7 @@ export interface ExportedAccountData {
   consent: unknown;
   conversations: unknown[];
   measureResults: unknown[];
+  spillEntries: unknown[];
   feedback: unknown[];
 }
 

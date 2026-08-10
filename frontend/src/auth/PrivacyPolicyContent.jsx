@@ -7,7 +7,7 @@ export default function PrivacyPolicyContent({ titleId }) {
       <p className="sf-kicker">Selfinder</p>
       <h2 id={titleId} className="privacyModalTitle">Privacy Policy</h2>
       <p className="privacyModalMeta">
-        Effective 30 July 2026 · Controller: Aleksandra Temereva, operating
+        Effective 10 August 2026 · Controller: Aleksandra Temereva, operating
         Selfinder as an individual · Contact:{" "}
         <a href="mailto:altem1309@gmail.com">altem1309@gmail.com</a>
       </p>
@@ -39,15 +39,16 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Conversations with your philosopher</h3>
           <p>
             We treat anything you say to your guide as sensitive personal
-            data. Right now, no feature of the app saves Guide
-            conversations to our servers — they exist only on your own
-            device and are cleared when the app restarts. If that changes
-            in the future (for example, as part
-            of a paid feature that keeps a history of your conversations),
-            it will only ever happen for a signed-in account that has
-            separately granted explicit consent in account settings, the
-            same standard that already applies to your assessment
-            results below — and we'll update this policy first.
+            data. As part of Selfinder+, a signed-in account that has
+            separately granted explicit consent in account settings — the
+            same standard that already applies to your assessment results
+            below — has its Guide conversations saved to our servers, so
+            you can return to them later as part of your history. If a
+            conversation followed one of your readings, we also note
+            which reading it followed, so you can find your way back to
+            it from there. Without that consent, or if you're not signed
+            in, Guide conversations exist only on your own device and are
+            cleared when the app restarts, exactly as before.
           </p>
         </section>
 
@@ -65,6 +66,25 @@ export default function PrivacyPolicyContent({ titleId }) {
             reading is generated in the first place; see "A disclosed
             limitation" below for what that involves regardless of your
             consent setting.
+          </p>
+        </section>
+
+        <section>
+          <h3>Free-writing (Spill)</h3>
+          <p>
+            Spill is where you write freely, without it being judged or
+            scored. By default nothing you write there is saved anywhere —
+            it exists only for the length of that writing session and is
+            discarded afterward, on web and mobile alike. If you choose to
+            keep a specific entry (using "keep this moment," available to
+            a signed-in account that has separately granted the same
+            explicit consent described above), the text of that entry is
+            saved to our servers under your account. Nothing is kept
+            unless you take that explicit action for that specific entry —
+            granting consent alone doesn't turn on saving everything you
+            write. Kept entries are covered by the same export, deletion,
+            and consent-withdrawal rights as your conversations and
+            assessment results, described below.
           </p>
         </section>
 
@@ -122,11 +142,13 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Your rights</h3>
           <p>
             You can export everything tied to your account — profile,
-            consent history, conversations, and assessment results — as
+            consent history, conversations, assessment results, and any
+            free-writing entries you've chosen to keep — as
             a JSON file at any time from your account settings (Your Space
             on web, the You tab on mobile). You can also
             permanently delete your account, which cascades to remove
-            your conversations, assessment results, and feedback, not
+            your conversations, assessment results, kept free-writing
+            entries, and feedback, not
             just your account record. If you're in the EU, EEA, or UK,
             these map to your GDPR rights of access, portability, and
             erasure; we apply the same standard to everyone regardless
@@ -138,7 +160,8 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Retention</h3>
           <p>
             Account data is kept until you delete your account.
-            Conversation data, assessment results, and feedback are kept
+            Conversation data, assessment results, kept free-writing
+            entries, and feedback are kept
             until you withdraw consent or delete your account, whichever
             comes first. Anonymous usage analytics (see "Cookies and
             tracking" above) are never tied to your account or identity,

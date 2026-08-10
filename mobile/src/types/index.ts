@@ -86,6 +86,10 @@ export interface MeasureResult {
   savedAt: string;
   /** Added client-side on save — the actual conversation this reading came from. */
   qaPairs?: QAPair[];
+  /** The persisted MeasureResult's id, if the reading was saved server-side
+   * (signed in + consent given) — null otherwise. Lets a later Guide
+   * conversation opened via "Talk about it" link back to this reading. */
+  measureResultId?: string | null;
 }
 
 export interface ChatMessage {
@@ -112,6 +116,12 @@ export interface ConsentState {
   timestamp: string | null;
 }
 
+export interface SubscriptionState {
+  active: boolean;
+  source: 'manual' | 'apple' | 'google' | null;
+  expiresAt: string | null;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -119,6 +129,7 @@ export interface UserProfile {
   createdAt: string;
   email: string | null;
   consent: { psychologicalData: ConsentState };
+  subscription: SubscriptionState;
 }
 
 /** Shape returned by GET /measure/history — a persisted MeasureResult document. */

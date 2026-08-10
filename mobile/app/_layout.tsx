@@ -12,7 +12,6 @@ import { useMeasureStore } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
-import { useSubscriptionStore } from '../src/store/subscriptionStore';
 import { useLocaleStore } from '../src/store/localeStore';
 import { useThemeStore } from '../src/store/themeStore';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
@@ -38,7 +37,6 @@ export default function RootLayout() {
   const { hydrated: authHydrated, hydrate: hydrateAuth } = useAuthStore();
   const { hydrated: reminderHydrated, hydrate: hydrateReminder, refreshWindow } = useReminderStore();
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
-  const { hydrated: subscriptionHydrated, hydrate: hydrateSubscription } = useSubscriptionStore();
   const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
   const { hydrated: themeHydrated, hydrate: hydrateTheme, theme } = useThemeStore();
   const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure, acknowledged: aiDisclosureAcknowledged } = useAIDisclosureStore();
@@ -60,7 +58,6 @@ export default function RootLayout() {
     hydrateAuth();
     hydrateReminder();
     hydrateEngagement();
-    hydrateSubscription();
     hydrateLocale();
     hydrateTheme();
     hydrateAIDisclosure();
@@ -68,7 +65,7 @@ export default function RootLayout() {
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && subscriptionHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated;
+    && engagementHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder

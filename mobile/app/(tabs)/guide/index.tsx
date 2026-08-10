@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   View,
@@ -10,7 +10,7 @@ import {
   Platform,
   StyleSheet,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../src/store/themeStore';
@@ -44,6 +44,7 @@ export default function GuideScreen() {
   const isLoading = useGuideChatStore((s) => s.isLoading);
   const send = useGuideChatStore((s) => s.send);
   const clearConversation = useGuideChatStore((s) => s.clearConversation);
+  const flushPendingSave = useGuideChatStore((s) => s.flushPendingSave);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const previousResult = useMeasureStore((s) => s.previousResult);
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
@@ -86,6 +87,20 @@ export default function GuideScreen() {
   useEffect(() => {
     if (showSecondVisit) markSecondVisitShown();
   }, [showSecondVisit]);
+
+  // Best-effort save (Selfinder+) when leaving Guide — tab blur, not every
+  // message, since Groq replies already stream independently of
+  // persistence. Reads the current philosopher fresh in the cleanup rather
+  // than closing over the outer `philosopher`, since a blur can happen
+  // after switching philosophers mid-visit.
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        const current = usePhilosopherStore.getState().philosopher;
+        if (current) flushPendingSave(current.id);
+      };
+    }, [flushPendingSave])
+  );
 
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
   const accentRgb = useAppAccentRgb();

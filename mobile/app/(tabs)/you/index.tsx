@@ -14,7 +14,6 @@ import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../../../src/store/localeStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
-import { useSubscriptionStore } from '../../../src/store/subscriptionStore';
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
@@ -57,8 +56,6 @@ export default function YouScreen() {
   const resetSelection = usePhilosopherStore((s) => s.resetSelection);
   const resetGuideChats = useGuideChatStore((s) => s.resetAll);
   const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
-  const isSubscribed = useSubscriptionStore((s) => s.isSubscribed);
-  const setSubscribed = useSubscriptionStore((s) => s.setSubscribed);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const accentRgb = useAppAccentRgb();
@@ -241,17 +238,6 @@ export default function YouScreen() {
         >
           <Text style={styles.devResetText}>
             {resetDone ? t('you.devResetDone') : t('you.devResetOnboarding')}
-          </Text>
-        </Pressable>
-        {/* Placeholder for real entitlement — see subscriptionStore.ts.
-            Toggling this is the only way to see/test the subscribed
-            Your Arc experience until a real purchase flow exists. */}
-        <Pressable
-          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
-          onPress={() => setSubscribed(!isSubscribed)}
-        >
-          <Text style={styles.devResetText}>
-            {isSubscribed ? t('you.devSubscribedOn') : t('you.devSubscribedOff')}
           </Text>
         </Pressable>
       </ScrollView>

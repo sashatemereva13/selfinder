@@ -45,6 +45,7 @@ export default function YourArcPreviewScreen() {
   const accentRgb = useAppAccentRgb();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const sendGuideMessage = useGuideChatStore((s) => s.send);
+  const setPendingMeasureResultId = useGuideChatStore((s) => s.setPendingMeasureResultId);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const talkAboutItCount = useEngagementStore((s) => s.talkAboutItCount);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
@@ -73,6 +74,7 @@ export default function YourArcPreviewScreen() {
     if (!philosopher || !currentResult) return;
     track('your_arc_preview_talk_about_it');
     recordTalkAboutIt();
+    setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
     sendGuideMessage(
       philosopher,
       t('depths.iJustMeasuredMyself', {

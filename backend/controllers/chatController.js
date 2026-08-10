@@ -572,15 +572,19 @@ async function requestRawInterviewScores(scoringPrompt) {
 
 // Best-effort — a save failure should never break the reading itself. Requires
 // both an authenticated user and explicit special-category consent (Art. 9),
-// same gate the conversation-storage flow already uses.
+// same gate the conversation-storage flow already uses. Returns the saved
+// document's id (or null if it no-opped/failed) so the caller can hand it
+// back to the client — without this, the client has no way to later link a
+// Guide conversation to the reading it followed, since a fresh MeasureResult
+// otherwise has no id anywhere in the interview response.
 async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs) {
-  if (!userPayload?.id) return;
+  if (!userPayload?.id) return null;
 
   try {
     const user = await User.findOne({ id: userPayload.id });
-    if (!user?.consent?.psychologicalData?.given) return;
+    if (!user?.consent?.psychologicalData?.given) return null;
 
-    await MeasureResult.create({
+    const saved = await MeasureResult.create({
       userId: userPayload.id,
       vibrationScore: interpretation.vibrationScore,
       rawVibrationScore: interpretation.rawVibrationScore,
@@ -596,8 +600,10 @@ async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs
       qaPairs: Array.isArray(qaPairs) ? qaPairs : [],
       savedAt: new Date().toISOString(),
     });
+    return saved.id;
   } catch (err) {
     console.error("Failed to save measure result:", err.message);
+    return null;
   }
 }
 
@@ -706,6 +712,9 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
 
   const interpretation = buildInterviewInterpretation(rawScores);
   interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation, locale);
-  await saveMeasureResultIfConsented(req.user, interpretation, qaPairs);
+  // null when the reading wasn't persisted (signed out, or consent not
+  // given) — the client uses this to link a later Guide conversation back
+  // to this specific reading, only when one actually exists to link to.
+  interpretation.measureResultId = await saveMeasureResultIfConsented(req.user, interpretation, qaPairs);
   res.json(interpretation);
 }

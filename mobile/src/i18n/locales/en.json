@@ -38,9 +38,7 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "devResetOnboarding": "Reset onboarding state (dev only)",
-    "devResetDone": "Reset ✓",
-    "devSubscribedOn": "Subscribed ✓ (dev only, tap to unsubscribe)",
-    "devSubscribedOff": "Not subscribed (dev only, tap to subscribe)"
+    "devResetDone": "Reset ✓"
   },
   "account": {
     "kicker": "Account",
@@ -184,7 +182,11 @@
     "introLine_other": "{{count}} readings so far. Tap a point to open that day again.",
     "notEnoughReadings": "Not enough readings yet to draw a line — take Measure a second time to start one.",
     "turnOnSavingNote": "Turn on \"Save my readings to my account\" to keep the full story behind each point, not just the date and level.",
-    "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back."
+    "signInToSaveNote": "Sign in and save your readings to keep the full story behind each point — what you said, what your philosopher reflected back.",
+    "sphereArcHeading": "Body, mind, heart, spirit — over time",
+    "whatYouSaid": "What you said",
+    "whatYouTalkedAbout": "What you talked about",
+    "whatYouWrote": "What you wrote"
   },
   "saveMessage": {
     "keepThisMessage": "Keep this message",
@@ -261,7 +263,11 @@
     "whatCameOut": "What came out",
     "talkToAboutThis": "Talk to {{name}} about this",
     "writeAgain": "Write again",
-    "done": "Done"
+    "done": "Done",
+    "keepThisMoment": "Keep this moment",
+    "keeping": "Keeping…",
+    "kept": "Kept — you can find it later from your account.",
+    "keepNeedsConsent": "Turn on saving your data in account settings to keep entries like this"
   },
   "levels": {
     "kicker": "Levels",

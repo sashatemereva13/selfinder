@@ -11,11 +11,24 @@ import { spacing, radius } from '../src/theme/spacing';
 import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
+import { getConversationForMeasureResult, SavedConversation } from '../src/api/conversation';
+import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { SavedMeasureResult } from '../src/types';
 import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
+import { SphereArc } from '../src/components/SphereArc';
+import { ChatTurn } from '../src/components/ChatTurn';
+import { buildSphereHistory } from '../src/utils/sphereHistory';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
+
+// Same loose-match window your-arc.tsx already uses for qaPairs/rich-
+// history matching — Spill has no reading link (it's its own free-standing
+// practice, not reading-scoped by design, see RULES.md), so a kept entry
+// only counts as "from this moment" if it's close in time, not by a hard
+// foreign key. Wider than the 60s used for matching a reading to itself,
+// since writing a Spill entry is a separate, slightly later action.
+const SPILL_MATCH_WINDOW_MS = 30 * 60 * 1000;
 
 const VIEW_W = SPARKLINE_VIEW_W;
 const VIEW_H = SPARKLINE_VIEW_H;
@@ -53,7 +66,10 @@ export default function YourArcScreen() {
   const accentRgb = useAppAccentRgb();
 
   const [richHistory, setRichHistory] = useState<SavedMeasureResult[] | null>(null);
+  const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
+  const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
+  const [loadingConversation, setLoadingConversation] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -62,8 +78,14 @@ export default function YourArcScreen() {
       try {
         const profile = await getMe(session.token);
         if (cancelled || !profile.consent?.psychologicalData?.given) return;
-        const history = await getMeasureHistory(session.token);
-        if (!cancelled) setRichHistory(history);
+        const [history, entries] = await Promise.all([
+          getMeasureHistory(session.token),
+          listMySpillEntries(session.token),
+        ]);
+        if (!cancelled) {
+          setRichHistory(history);
+          setSpillEntries(entries);
+        }
       } catch {
         // Best-effort — the local-only readingLog view still works without this.
       }
@@ -93,6 +115,47 @@ export default function YourArcScreen() {
   const selectedRich = selected
     ? richHistory?.find((r) => Math.abs(new Date(r.savedAt).getTime() - selected.ts) < 60_000)
     : undefined;
+
+  // The Guide conversation that followed this specific reading, if any and
+  // if it was saved (Selfinder+ — see guideChatStore.ts's flushPendingSave).
+  // Re-fetched per selection rather than bulk-loaded up front, since most
+  // readings won't have one and there's no reason to pull every saved
+  // conversation just to check.
+  useEffect(() => {
+    const measureResultId = selectedRich?.id;
+    if (!measureResultId || !session) {
+      setLinkedConversation(null);
+      return;
+    }
+    let cancelled = false;
+    setLoadingConversation(true);
+    (async () => {
+      const conversation = await getConversationForMeasureResult(measureResultId, session.token);
+      if (!cancelled) {
+        setLinkedConversation(conversation);
+        setLoadingConversation(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRich?.id, session]);
+
+  // Spill has no reading link by design (see the module comment on
+  // SPILL_MATCH_WINDOW_MS) — the closest kept entry in time, if any is
+  // close enough to plausibly belong to this moment.
+  const linkedSpillEntry = selected
+    ? spillEntries?.find((e) => Math.abs(new Date(e.savedAt).getTime() - selected.ts) < SPILL_MATCH_WINDOW_MS)
+    : undefined;
+
+  // Sphere breakdown only exists in richHistory (server-side, signed-in +
+  // consented) — the local-only readingLog never carried per-sphere data.
+  // No sphere trace at all is a legitimate state (not every account has
+  // opted into saving), same as the rest of this screen's two-tier detail.
+  const sphereHistory = useMemo(
+    () => (richHistory ? buildSphereHistory(richHistory) : null),
+    [richHistory]
+  );
 
   return (
     <ScrollView
@@ -157,6 +220,8 @@ export default function YourArcScreen() {
         </Text>
       )}
 
+      {sphereHistory && <SphereArc history={sphereHistory} />}
+
       {selected && (
         <View style={styles.detailSection}>
           <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
@@ -167,6 +232,43 @@ export default function YourArcScreen() {
               </Text>
               {selectedRich.combinationMessage && (
                 <Text style={styles.detailReflection}>{selectedRich.combinationMessage}</Text>
+              )}
+
+              {/* What you said — grouped by sphere, reusing AccountSection's
+                  own question/answer rendering pattern rather than
+                  inventing a second one. Purely descriptive, same as
+                  everywhere else on this screen — never captioned with
+                  what any of it means. */}
+              {selectedRich.qaPairs.length > 0 && (
+                <View style={styles.momentSection}>
+                  <Text style={styles.momentHeading}>{t('yourArc.whatYouSaid')}</Text>
+                  {selectedRich.qaPairs.map((pair, i) => (
+                    <View key={i} style={styles.momentQA}>
+                      <Text style={styles.momentQuestion}>{pair.question}</Text>
+                      <Text style={styles.momentAnswer}>{pair.answer}</Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              {/* The conversation that followed, if one was saved (Selfinder+). */}
+              {loadingConversation ? null : linkedConversation && (
+                <View style={styles.momentSection}>
+                  <Text style={styles.momentHeading}>{t('yourArc.whatYouTalkedAbout')}</Text>
+                  {linkedConversation.messages.map((msg, i) => (
+                    <ChatTurn key={i} role={msg.role}>{msg.content}</ChatTurn>
+                  ))}
+                </View>
+              )}
+
+              {/* A Spill entry kept close in time to this reading, if any —
+                  see SPILL_MATCH_WINDOW_MS's own comment for why this is a
+                  loose match, not a hard link. */}
+              {linkedSpillEntry && (
+                <View style={styles.momentSection}>
+                  <Text style={styles.momentHeading}>{t('yourArc.whatYouWrote')}</Text>
+                  <Text style={styles.momentSpillText}>{linkedSpillEntry.text}</Text>
+                </View>
               )}
             </>
           ) : (
@@ -276,6 +378,35 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,
     marginTop: spacing[1],
+  },
+  momentSection: { marginTop: spacing[5], gap: spacing[3] },
+  momentHeading: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+  momentQA: { gap: spacing[1] },
+  momentQuestion: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+  },
+  momentAnswer: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  momentSpillText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
   },
   });
 }

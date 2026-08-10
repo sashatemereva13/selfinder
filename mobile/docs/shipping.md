@@ -113,10 +113,15 @@ dead/local-only backend is a common rejection cause.
 
 ## Subscriptions / Your Arc (Selfinder+)
 
-No real purchase flow exists yet — `src/store/subscriptionStore.ts` is a
-local, manually-toggled dev flag (`isSubscribed`, persisted to
-SecureStore) that exists only so both UI states can be built/tested. v1
-ships free-only with the passive `YourArcTeaser.tsx` seed, per
-`RULES.md`. When real IAP is added later, this store's flag should be
-replaced by actual entitlement checks from StoreKit/RevenueCat/whatever
-is chosen — not extended in place.
+No real purchase flow exists yet, but a real entitlement source of truth
+does: `User.subscription` (`backend/models/User.js`), checked client-side
+via `src/utils/useIsSubscribed.ts` (a live `GET /user/me` call, not local
+device state). Today the only way `subscription.active` gets set to `true`
+is a manual admin grant — run `node backend/scripts/grantSubscription.js
+<username>` from `backend/` (add `--revoke` to undo). There is no local
+dev toggle anymore; a signed-out session, or a signed-in account with no
+grant, always sees the free `your-arc-preview` experience — the same as
+any real non-subscriber will. When real IAP is added, StoreKit/Play
+Billing receipt sync should write to this same `User.subscription` field
+(with `source: 'apple'`/`'google'` instead of `'manual'`) rather than
+introducing a separate entitlement mechanism.

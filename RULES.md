@@ -42,6 +42,46 @@ numeric score shown, the reason Selfinder explicitly isn't therapy (see
 description requires the words "better," "worse," "should," or "fix,"
 that's a signal something is off-brief, not a copy-editing problem.
 
+**The answers are already inside the person — Selfinder never supplies
+them, even in the paid tier.** Like Socrates questioning rather than
+lecturing, every product in Selfinder — free or paid — is an *experience*
+(a question, a sound, a breath, a prompt, a reading revisited) that
+creates the conditions for someone to hear their own answer, not a
+mechanism that generates that answer for them and hands it over. Tune In
+never says anything; it calms the nervous system so the person can hear
+themselves underneath the noise. Breathing doesn't interpret; it settles
+the body so what was already there becomes audible. Guide questions,
+it doesn't conclude. This is a stronger and more specific version of the
+anti-diagnosis rule above: it's not just "don't say something is good or
+bad," it's "don't say anything about what's inside someone at all — offer
+the conditions for them to say it to themselves." Concretely, this means:
+  - No feature — including any future paid one — should output a claim
+    about the user ("you tend to avoid conflict," "you're calmer than
+    last month," "this relationship brings out your anxious side"). If a
+    feature's honest description requires the app to state a fact about
+    who the user is or how they've changed, that's the app being the
+    "teacher who tells you what to do" — off-brief, not a wording issue.
+  - Longitudinal/historical features (Your Arc, and its future
+    extensions) are the record of experience, not an analysis of it. They
+    can show the shape of what happened — points, a line, dates,
+    revisiting an old reading in the person's own words — because that's
+    just memory, not inference. The moment a feature adds interpretation
+    on top of that record ("this pattern means X"), it has crossed from
+    holding a mirror to being a teacher. Depth on the paid side comes from
+    the record itself getting richer to hold and to return to — the full
+    line instead of a slice, better ways back into an old moment, more of
+    what was actually said or felt preserved and reachable — never from
+    more content (philosophers, sounds) or from the app generating insight
+    about the person and asserting it as true. See "History is the
+    product" below.
+  - This also shapes what data processing is legitimate under GDPR: an
+    app that only ever reflects a user's own words back to them (a
+    record) is on much firmer ground than one that runs inference over
+    accumulated psychological data to produce claims about the user
+    (profiling, GDPR Art. 4(4)/Art. 9 territory) — so this rule is a
+    product/brand commitment and a real constraint on what the backend
+    is allowed to compute, not just a tone note.
+
 ---
 
 ## UI / Visual
@@ -141,14 +181,37 @@ Full pitch, mechanisms, and business model: **[`docs/pitch.md`](docs/pitch.md)**
 flowing copy) — read before writing anything user-facing about what
 Selfinder is or why it costs money.
 
+- **History is the product. Not more philosophers, not more sounds.**
+  Selfinder+ sells exactly one thing: the accumulated record of you
+  becoming fully yours to hold and return to. That means the full line
+  across every reading (not a recent slice), rich re-entry into any past
+  moment (reopening what you said, what your philosopher said back, not
+  just a date and a dot), and the app actively bringing a past moment back
+  to you at a meaningful time — not five more philosophers, not a deeper
+  sound library. This is a deliberate, considered choice (see
+  `collaboration-log.md` for the reasoning), not a placeholder waiting for
+  more content to be built. **The single experience to make magical is
+  revisiting your own past** — every other feature (Measure, Guide, Spill,
+  Tune In, Breathing) exists to make that history worth having, by feeding
+  it. Cross-app research on what retains paying subscribers long-term
+  (Oura, Strava, Day One, Timehop-style memory surfacing) converges on the
+  same mechanism: people don't resubscribe because the feature list grew,
+  they resubscribe because the app is where a year of themselves lives,
+  and losing access would mean losing that. Two things make this
+  legitimate rather than a dark pattern: the record was always theirs (see
+  the GDPR/profiling point above — it's a mirror, not an analysis), and it
+  must stay exportable even if someone cancels — never lock someone out of
+  their own past to punish non-payment. That distinction — richer *access
+  to your own record* vs. richer *content the app supplies* — is the whole
+  rewrite; treat "more philosophers" or "more sound/breathing content" as
+  explicitly off-brief for Selfinder+ until this file says otherwise.
 - **Free core, paid depth — never free features, paid access.** Measure,
-  Guide, Spill, Tune In, Breathing are free for everyone, unconditionally.
-  What Selfinder+ sells is *accumulation over time* (Your Arc — the long
-  line across every reading) and *expansion* (additional philosophers,
-  deeper sound/breathing content) — never a worse version of the daily
-  practice itself. The core loop being free is load-bearing for the pitch
-  ("a gym, not a hospital," never gated like therapy) — don't let a growth
-  idea erode it.
+  Guide, Spill, Tune In, Breathing are free for everyone, unconditionally,
+  and stay exactly as rich as they are today — free is never made to feel
+  incomplete on purpose. What's paid is depth of *history*: the full arc
+  instead of a preview slice, and richer ways back into an old moment.
+  The core loop being free is load-bearing for the pitch ("a gym, not a
+  hospital," never gated like therapy) — don't let a growth idea erode it.
 - **No live purchase/subscribe flow exists yet.** `YourArcTeaser.tsx` (a
   passive, non-pressable card shown once someone has 2+ readings) and the
   Depths "Talk about it" → "Keep the conversation going" copy-swap (after

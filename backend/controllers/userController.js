@@ -1,6 +1,7 @@
 import User from "../models/User.js";
 import Conversation from "../models/Conversation.js";
 import MeasureResult from "../models/MeasureResult.js";
+import SpillEntry from "../models/SpillEntry.js";
 import Feedback from "../models/Feedback.js";
 import { CONSENT_VERSION } from "../stores.js";
 import { EMAIL_RE } from "../validators.js";
@@ -22,6 +23,11 @@ export async function getMe(req, res) {
         version: user.consent.psychologicalData.version,
         timestamp: user.consent.psychologicalData.timestamp,
       },
+    },
+    subscription: {
+      active: user.subscription?.active ?? false,
+      source: user.subscription?.source ?? null,
+      expiresAt: user.subscription?.expiresAt ?? null,
     },
   });
 }
@@ -55,9 +61,10 @@ export async function exportMyData(req, res) {
   const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
-  const [userConversations, userMeasures, userFeedback] = await Promise.all([
+  const [userConversations, userMeasures, userSpillEntries, userFeedback] = await Promise.all([
     Conversation.find({ userId: req.user.id }),
     MeasureResult.find({ userId: req.user.id }),
+    SpillEntry.find({ userId: req.user.id }),
     Feedback.find({ userId: req.user.id }),
   ]);
 
@@ -74,6 +81,7 @@ export async function exportMyData(req, res) {
     consent: user.consent,
     conversations: userConversations,
     measureResults: userMeasures,
+    spillEntries: userSpillEntries,
     feedback: userFeedback,
   });
 }
@@ -91,6 +99,7 @@ export async function deleteMe(req, res) {
   await Promise.all([
     Conversation.deleteMany({ userId: req.user.id }),
     MeasureResult.deleteMany({ userId: req.user.id }),
+    SpillEntry.deleteMany({ userId: req.user.id }),
     Feedback.deleteMany({ userId: req.user.id }),
   ]);
 
@@ -118,10 +127,10 @@ export async function grantConsent(req, res) {
 }
 
 // Withdraw consent — Art. 7(3); also deletes stored conversations, measure
-// results, and feedback notes (the same three collections deleteMe clears —
-// withdrawing consent stops psychological-data storage without deleting the
-// account itself, so it should remove exactly the same special-category
-// data a full account deletion would).
+// results, kept Spill entries, and feedback notes (the same collections
+// deleteMe clears — withdrawing consent stops psychological-data storage
+// without deleting the account itself, so it should remove exactly the same
+// special-category data a full account deletion would).
 export async function withdrawConsent(req, res) {
   const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
@@ -129,6 +138,7 @@ export async function withdrawConsent(req, res) {
   await Promise.all([
     Conversation.deleteMany({ userId: req.user.id }),
     MeasureResult.deleteMany({ userId: req.user.id }),
+    SpillEntry.deleteMany({ userId: req.user.id }),
     Feedback.deleteMany({ userId: req.user.id }),
   ]);
 

@@ -8,6 +8,7 @@ import philosophersRouter from "./routes/philosophers.js";
 import chatRouter         from "./routes/chat.js";
 import measureRouter      from "./routes/measure.js";
 import conversationRouter from "./routes/conversation.js";
+import spillRouter        from "./routes/spill.js";
 import feedbackRouter     from "./routes/feedback.js";
 import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
@@ -44,6 +45,7 @@ app.use("/api/user",          userRouter);
 app.use("/api/chat",          chatRouter);
 app.use("/api/measure",       measureRouter);
 app.use("/api/conversation",  conversationRouter);
+app.use("/api/spill",         spillRouter);
 app.use("/api/feedback",      feedbackRouter);
 app.use("/api/events",        eventsRouter);
 
