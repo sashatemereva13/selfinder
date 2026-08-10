@@ -17,9 +17,14 @@ const userSchema = new mongoose.Schema({
   role: { type: String, default: "user" },
   createdAt: { type: String, required: true },
   // Optional — existing accounts predate this field. Forgot-password only
-  // works once an email is on file. `sparse` lets many users share `null`
-  // without tripping the unique index.
-  email: { type: String, default: null, unique: true, sparse: true, lowercase: true, trim: true },
+  // works once an email is on file. The unique index is declared with a
+  // partialFilterExpression below (not `sparse` here) — a sparse index
+  // only exempts documents where the field is truly *absent*, but every
+  // account is written with an explicit `email: null` (see
+  // authController.js), so a plain sparse index still saw two `null`s as
+  // a real collision. A partial index keyed on `$type: "string"` only
+  // enforces uniqueness once an email is actually a string.
+  email: { type: String, default: null, lowercase: true, trim: true },
   privacyPolicy: {
     accepted: { type: Boolean, default: false },
     version: String,
@@ -42,5 +47,10 @@ const userSchema = new mongoose.Schema({
     requestedAt: { type: String, default: null },
   },
 });
+
+userSchema.index(
+  { email: 1 },
+  { unique: true, partialFilterExpression: { email: { $type: "string" } } },
+);
 
 export default mongoose.model("User", userSchema);
