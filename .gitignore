@@ -56,3 +56,9 @@ mobile/*.apk.zip
 # Build artifacts
 # --------------------
 frontend/dist/
+
+# --------------------
+# Atlas (Instagram carousel/reel export tooling — standalone, unrelated
+# to the app, not meant to be tracked in this repo)
+# --------------------
+atlas/
