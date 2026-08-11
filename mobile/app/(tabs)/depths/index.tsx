@@ -1311,6 +1311,14 @@ function makeStyles(colors: Colors) {
     alignSelf: 'center',
     alignItems: 'center',
     justifyContent: 'center',
+    // Gives the topmost point's label (Measure, at 12 o'clock) real
+    // breathing room from the kicker row above — without this, "Measure
+    // again" and its dot crowded right against "today"/the kicker text.
+    marginTop: spacing[8],
+    // Same reasoning below — the bottom-most label (Levels) previously
+    // had only ringLevelName's own small marginTop before the level name
+    // link, which read as crowded against the spiral's own lower labels.
+    marginBottom: spacing[8],
   },
   spiralOverlay: {
     position: 'absolute',

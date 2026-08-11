@@ -392,6 +392,7 @@ export function DepthsSpiral({
               </Pressable>
               <Text
                 pointerEvents="none"
+                numberOfLines={2}
                 style={[
                   styles.pointLabel,
                   {
@@ -399,10 +400,20 @@ export function DepthsSpiral({
                     opacity: labelOpacity,
                     top: labelY - fontSizes.xs * 0.7,
                     textAlign: align,
+                    // Width is generous, not tightly clamped to the space
+                    // between the dot and the spiral canvas's own edge —
+                    // a dot near 9/3 o'clock can sit close enough to that
+                    // edge that the strict remaining space is too narrow
+                    // for a real label ("Breathing" wrapped to two lines
+                    // at ~40px). auraSpiralWrap has no overflow:hidden, so
+                    // a label is safe to extend slightly past the canvas
+                    // into the screen's own padding gutter when needed —
+                    // two lines (numberOfLines={2} above) is the actual
+                    // fallback for anything still too long at this width.
                     ...(align === 'right'
-                      ? { right: size - labelX, left: undefined }
+                      ? { right: size - labelX, left: undefined, width: 96 }
                       : align === 'left'
-                        ? { left: labelX, right: undefined }
+                        ? { left: labelX, right: undefined, width: 96 }
                         : { left: labelX - 60, width: 120 }),
                   },
                 ]}
