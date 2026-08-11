@@ -49,6 +49,15 @@ export default function LevelsScreen() {
       <Text style={styles.copy}>
         {t('levels.copy')}
       </Text>
+      {/* The one place this caveat lives — not repeated on individual
+          level pages' own "Why here" section, since this screen is where
+          all 17 are seen as one territory. Without it, "Why here"'s
+          resolves/still-open language between neighbors risks being
+          misread as a required order of travel, which would smuggle in
+          exactly the ranking judgment the ring shape exists to refuse. */}
+      <Text style={styles.copy}>
+        {t('levels.note')}
+      </Text>
 
       {/* The one screen where showing all 17 level colors together is
           correct — this is a map of the whole territory, not a reading of

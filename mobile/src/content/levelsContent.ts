@@ -90,6 +90,12 @@ export const LEVELS: LevelContent[] = [
           `The real risk at this level isn't avoiding it — it's performing it. Mistaking the idea of enlightenment for the thing itself builds a subtler, harder-to-spot ego around "being the one who's arrived," which is exactly the kind of defending this state is supposed to be free of.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Peace settles into feeling everything without resisting any of it — but even that settling doesn't hold forever. No state stays, not even this one, and what a self feels when the state it thought was final turns out not to be is the same wound this whole map starts with. The ring closes here, not because the two ends match, but because neither end was ever the last stop.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -140,6 +146,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Настоящий риск на этом уровне — не избегать его, а разыгрывать его. Принять идею просветления за само просветление — значит выстроить более тонкое, труднее уловимое эго вокруг «того, кто уже пришёл», а это ровно то защищание, от которого это состояние должно быть свободно.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Покой — это когда чувствуешь всё и ничему не сопротивляешься, но даже это не длится вечно. Ни одно состояние не остаётся навсегда, и это тоже. И то, что чувствует человек, когда состояние, казавшееся окончательным, таким не оказывается, — та же самая рана, с которой начинается вся эта карта. Круг замыкается здесь не потому, что два конца совпадают, а потому, что ни один из них никогда не был последней остановкой.`,
             ],
           },
         ],
@@ -197,6 +209,12 @@ export const LEVELS: LevelContent[] = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Peace performed for an audience isn't peace — it's a calm face over an unresolved feeling, which tends to leak out sideways later. The real version doesn't need anyone to notice it.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Unconditional love is warmth without a direction, without needing anywhere to go — but it's still warmth in motion, still something happening. Peace is what's left once even that motion settles: nothing left to resist. What stays open is the last separation — peace still feels everything, and there's not yet no gap between what's felt and who is feeling it.`,
         ],
       },
     ],
@@ -269,6 +287,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Покой, разыгранный на публику, — не покой, а спокойное лицо поверх нерешённого чувства, которое позже обычно просачивается наружу сбоку. Настоящий не нуждается в том, чтобы кто-то его заметил.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Безусловная любовь — это тепло без направления, которому некуда стремиться, но это всё ещё тепло в движении, всё ещё что-то происходящее. Покой — это то, что остаётся, когда даже это движение успокаивается: сопротивляться больше нечему. Открытым остаётся последнее разделение — покой всё ещё чувствует всё, и пока нет полного слияния между тем, что чувствуется, и тем, кто это чувствует.`,
             ],
           },
         ],
@@ -348,6 +372,12 @@ export const LEVELS: LevelContent[] = [
           `Unconditional doesn't mean unlimited — it's not the same as having no boundaries or absorbing harm indefinitely. Mother Teresa's love had structure and discipline behind it. Without that, what looks like unconditional love is often just self-erasure.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Love is warmth that goes somewhere — it has a direction, someone or something it's warm toward. Unconditional love drops even that: nothing to attach to, nowhere it has to go. What's still open is that it's still warmth in motion, still something happening, not yet settled.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -417,6 +447,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Безусловная не значит безграничная — это не то же самое, что отсутствие границ или бесконечное поглощение вреда. За любовью Матери Терезы стояли структура и дисциплина. Без этого то, что выглядит как безусловная любовь, часто оказывается просто самостиранием.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Любовь — это тепло, у которого есть направление, кто-то или что-то, к чему оно обращено. Безусловная любовь отпускает и это: не к чему привязываться, некуда стремиться. Открытым остаётся то, что это всё ещё тепло в движении, всё ещё что-то происходящее, ещё не улёгшееся.`,
             ],
           },
         ],
@@ -493,6 +529,12 @@ export const LEVELS: LevelContent[] = [
         heading: "Where people get it wrong",
         paragraphs: [
           `What most people call love at the lower end of this range is really attachment — glamour, possession, the specialness of a particular person or outcome. It's intense, and it fades the moment the object does, because it was never really about them.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Reason organizes experience by explaining it — useful, but it still needs a reason to stand on. Love is warmth that doesn't require a reason to justify itself. What's still open is that this warmth still has a direction, someone or something it's warm toward.`,
         ],
       },
     ],
@@ -573,6 +615,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `То, что большинство людей называют любовью в нижней части этого диапазона, на самом деле привязанность — очарование, обладание, особость конкретного человека или исхода. Она интенсивна и гаснет в момент, когда меняется объект, потому что на самом деле никогда не была про него.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Разум упорядочивает опыт, объясняя его, — это полезно, но ему всё ещё нужна причина, на которую можно опереться. Любовь — это тепло, которому не нужна причина, чтобы оправдать своё существование. Открытым остаётся то, что у этого тепла всё ещё есть направление — кто-то или что-то, к чему оно тянется.`,
             ],
           },
         ],
@@ -660,6 +708,12 @@ export const LEVELS: LevelContent[] = [
           `Reason is brilliant at handling data and terrible at knowing when it's the wrong tool — grief, love, and meaning don't resolve by being explained. Used as a way to avoid feeling something rather than to understand it, reason becomes a very sophisticated form of hiding.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Acceptance stops arguing with what's real. Reason neighbors that stillness by picking experience back up and organizing it, now that it's stopped fighting it. What's still open: organizing still explains — nothing here is settled enough not to need the explaining.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -737,6 +791,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Разум блестяще справляется с данными и ужасно — с пониманием того, когда он не тот инструмент: горе, любовь и смысл не разрешаются через объяснение. Используемый как способ не чувствовать что-то, а не понять это, разум становится очень изощрённой формой укрытия.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Принятие перестаёт спорить с тем, что реально. Разум соседствует с этой тишиной тем, что снова берётся за опыт и упорядочивает его — теперь, когда перестал с ним бороться. Открытым остаётся то, что упорядочивание всё ещё объясняет — здесь ничто ещё не устоялось настолько, чтобы объяснение стало не нужным.`,
             ],
           },
         ],
@@ -823,6 +883,12 @@ export const LEVELS: LevelContent[] = [
           `Acceptance gets mistaken for giving up. It's the opposite — Linehan's whole clinical point was that acceptance is what makes change possible, not what replaces it. You can't successfully change what you haven't first admitted is real.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Willingness spends the friction of resistance, leaning toward change before any proof it'll work. Acceptance is what's left once even trying stops being necessary — the argument with what's already true finally ends. What's still open: accepting reality isn't yet doing anything with it.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -906,6 +972,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Принятие принимают за капитуляцию. На деле всё наоборот — вся клиническая мысль Линехан в том, что принятие — это то, что делает изменение возможным, а не то, что его заменяет. Нельзя успешно изменить то, что вы сначала не признали реальным.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Готовность расходует трение сопротивления, склоняясь к переменам ещё до всякого доказательства, что это сработает. Принятие — это то, что остаётся, когда даже попытка перестаёт быть нужной, — спор с тем, что уже истинно, наконец заканчивается. Открытым остаётся то, что принять реальность — ещё не значит что-то с ней делать.`,
             ],
           },
         ],
@@ -998,6 +1070,12 @@ export const LEVELS: LevelContent[] = [
           `People wait to feel willing before acting, when it usually runs the other way — the willingness shows up once you've already started the half-measure. Waiting for the feeling first is usually just a slower way of not doing it.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Neutrality doesn't need things to be different, but it doesn't move either. Willingness neighbors that stillness with a lean toward change, without the friction that usually makes change feel like effort. What's still open: willingness still has the shape of trying — it hasn't stopped needing to.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1068,6 +1146,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Люди ждут, что сначала почувствуют готовность, а потом будут действовать, тогда как обычно всё наоборот — готовность появляется, когда вы уже начали половинчатую меру. Ждать чувства сначала — обычно просто более медленный способ этого не делать.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Нейтральность не нуждается в том, чтобы всё было иначе, но и не движется. Готовность соседствует с этой неподвижностью склонностью к переменам — без трения, которое обычно делает перемены похожими на усилие. Открытым остаётся то, что готовность всё ещё имеет форму попытки — она ещё не перестала нуждаться в том, чтобы пытаться.`,
             ],
           },
         ],
@@ -1147,6 +1231,12 @@ export const LEVELS: LevelContent[] = [
           `Neutrality looks like apathy from the outside, and the two get confused constantly. The real test: apathy has stopped believing anything will help. Neutrality just isn't gripping the outcome — help is still welcome, it's just not required.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Courage meets something difficult standing up. Neutrality is what's left once nothing urgent is left to meet at all. What's still open: not needing things to be different isn't yet the same as leaning toward anything — neutrality doesn't move.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1208,6 +1298,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Нейтральность со стороны выглядит как апатия, и эти два состояния постоянно путают. Настоящая проверка: апатия перестала верить, что что-либо поможет. Нейтральность просто не вцепляется в исход — помощь по-прежнему желанна, просто не обязательна.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Смелость встречает что-то трудное, не отступая. Нейтральность — это то, что остаётся, когда встречать уже нечего — ничего срочного не осталось. Открытым остаётся то, что не нуждаться в переменах — это ещё не то же самое, что склоняться к чему-то. Нейтральность не движется.`,
             ],
           },
         ],
@@ -1276,6 +1372,12 @@ export const LEVELS: LevelContent[] = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Waiting to feel fearless before acting means waiting forever — fearlessness isn't a prerequisite, it's what courage sometimes produces afterward, not before. Mandela was afraid the whole time. That's not a disqualifying detail, it's the definition.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Pride's worth still needs a comparison to hold it up. Courage is worth that can finally face something hard without needing to win against anyone first. What's still open: courage still has to meet something difficult — nothing here is at rest yet.`,
         ],
       },
     ],
@@ -1368,6 +1470,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Ждать, что почувствуешь бесстрашие, прежде чем действовать, значит ждать вечно — бесстрашие не предпосылка, а то, что смелость иногда производит уже после, а не до. Мандела боялся всё это время. Это не дисквалифицирующая деталь, это и есть определение.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Ценность гордости всё ещё нуждается в сравнении, чтобы держаться. Смелость — это ценность, способная наконец встретить что-то трудное, не нуждаясь в победе над кем-то. Открытым остаётся то, что смелости всё ещё приходится встречать трудное — здесь пока ничто не находится в покое.`,
             ],
           },
         ],
@@ -1467,6 +1575,12 @@ export const LEVELS: LevelContent[] = [
           `Hubristic pride — the defensive, ego-driven kind — gets triggered the moment the achievement is questioned, because the whole thing was propping something up. Authentic pride doesn't flinch at a challenge the same way, because it was never that fragile to begin with.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Anger defends a boundary from outside. Pride is the self trying to build a boundary from within — worth, not just defense, no longer needing someone to have crossed a line first. What's still open: that worth still needs a comparison to hold it up — it can't yet stand without one.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1536,6 +1650,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Высокомерная гордость — защитная, движимая эго — включается в тот момент, когда достижение ставят под вопрос, потому что вся конструкция что-то подпирала. Подлинная гордость не вздрагивает от вызова так же, потому что изначально не была настолько хрупкой.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Гнев защищает границу извне. Гордость — это попытка выстроить границу изнутри: ценность, а не просто защита, которой больше не нужно, чтобы кто-то сначала пересёк черту. Открытым остаётся то, что этой ценности всё ещё нужно сравнение, чтобы держаться, — сама по себе она пока стоять не может.`,
             ],
           },
         ],
@@ -1614,6 +1734,12 @@ export const LEVELS: LevelContent[] = [
           `Anger that never gets expressed doesn't go away — it tends to leak out sideways, at whoever's nearest rather than whoever actually caused it, or turn inward as resentment that quietly outlasts the original reason. Years of that is its own kind of exhausting: a body kept in a low simmer that never gets to finish what it started.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Desire wants without a place to stand. Anger is what happens when that want meets something real enough to defend: an actual boundary, actually crossed. What's still open: a boundary defended from outside isn't yet a self that can hold its own worth from inside.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1689,6 +1815,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Гнев, который никогда не выражается, не исчезает — он обычно просачивается наружу сбоку, на того, кто оказался ближе, а не на того, кто действительно его вызвал, или уходит внутрь как обида, которая тихо переживает изначальную причину. Годы этого — свой собственный вид изнурения: тело, годами удерживаемое на медленном огне, которому так и не дали закончить то, что оно начало.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Желание хочет, не имея опоры. Гнев — это то, что происходит, когда это желание встречает что-то достаточно реальное, чтобы это защищать: настоящую границу, которую действительно нарушили. Открытым остаётся то, что граница, защищённая снаружи, — это ещё не «я», способное удерживать собственную ценность изнутри.`,
             ],
           },
         ],
@@ -1773,6 +1905,12 @@ export const LEVELS: LevelContent[] = [
           `Desire becomes addiction exactly at the point where satisfying it stops being the goal and avoiding the discomfort of wanting becomes the goal instead. Tesla's desire built things. Desire that's only trying to numb itself just needs more of itself, endlessly.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Fear is alertness that only watches for threat, one direction only. Desire is that same alertness reaching toward something instead of only away from it. What's still open: reaching from lack means the want has no claim to stand on yet — nothing yet makes it legitimate.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1843,6 +1981,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Желание становится зависимостью именно в той точке, где удовлетворение перестаёт быть целью, а целью становится избегание дискомфорта самого желания. Желание Теслы строило вещи. Желание, которое лишь пытается притупить себя, бесконечно требует ещё себя самого.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Страх — это бдительность, которая лишь высматривает угрозу, в одну сторону. Желание — та же бдительность, только теперь она тянется к чему-то, а не только прочь от чего-то. Открытым остаётся то, что тянуться из нехватки значит, что этому хотению не на что опереться — пока ничто не делает его законным.`,
             ],
           },
         ],
@@ -1922,6 +2066,12 @@ export const LEVELS: LevelContent[] = [
           `Treating every instance of fear as a stop sign means avoiding things that were never actually dangerous, just unfamiliar. The skill isn't eliminating fear — it's telling the useful kind from the kind that's just an old alarm still going off.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Grief looks backward at what's gone. Fear turns that same vulnerability forward, toward what might still be lost. What's still open: forward-facing vulnerability still only watches for threat — nothing yet reaches for anything.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1990,6 +2140,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Воспринимать каждый случай страха как знак «стоп» означает избегать вещей, которые никогда на самом деле не были опасны, просто непривычны. Навык не в устранении страха — а в том, чтобы отличить полезный от того, что просто старая сигнализация, всё ещё срабатывающая.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Горе смотрит назад, на то, что уже потеряно. Страх поворачивает ту же уязвимость вперёд — к тому, что ещё может быть потеряно. Открытым остаётся то, что эта обращённая вперёд уязвимость всё ещё только высматривает угрозу — она пока ни к чему не тянется.`,
             ],
           },
         ],
@@ -2065,6 +2221,12 @@ export const LEVELS: LevelContent[] = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Treating grief as a malfunction to fix quickly usually just delays it — it tends to resurface later, often at a worse time, in a less recognizable shape. Grief isn't evidence something is wrong with you. It's the accurate size of what you were willing to care about.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Apathy is blankness — nothing here expects anything anymore. Grief is what apathy becomes once that blankness cracks and finally has a name again. What's still open: the thing named is a loss, still entirely about what's gone, not yet about what's next.`,
         ],
       },
     ],
@@ -2144,6 +2306,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Обращение с горем как с поломкой, которую нужно быстро починить, обычно просто откладывает его — оно склонно всплывать позже, часто в худший момент, в менее узнаваемой форме. Горе — не свидетельство того, что с вами что-то не так. Это точный размер того, о чём вы были готовы заботиться.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Апатия — это пустота: здесь уже никто ничего не ждёт. Горе — это то, во что превращается апатия, когда эта пустота даёт трещину и снова обретает имя. Открытым остаётся то, что названное — это потеря, всё ещё целиком о том, чего не стало, а не о том, что будет дальше.`,
             ],
           },
         ],
@@ -2230,6 +2398,12 @@ export const LEVELS: LevelContent[] = [
           `Apathy gets treated as laziness or a moral failing, which just adds shame on top of exhaustion. Norris's distinction is the useful one: this isn't refusing to care, it's a system that's stopped expecting help to arrive — and the way out starts with naming it accurately, not pushing harder.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Guilt still has energy to judge. Apathy is what's left once even judging stops — nothing left to prosecute, so the case closes. What's still open: closing the case isn't the same as feeling anything again — there's nothing here yet to replace the judging with.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -2290,6 +2464,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `С апатией обращаются как с ленью или моральным изъяном, что просто добавляет стыд поверх истощения. Различие Норрис — полезное: это не отказ заботиться, это система, переставшая ждать, что помощь придёт, — и выход начинается с точного называния, а не с того, чтобы давить сильнее.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Вина всё ещё имеет силы, чтобы судить. Апатия — это то, что остаётся, когда даже осуждение прекращается: преследовать больше нечего, и дело закрывается. Открытым остаётся то, что закрыть дело — не то же самое, что снова начать что-то чувствовать. Здесь пока нечем заменить осуждение.`,
             ],
           },
         ],
@@ -2357,6 +2537,12 @@ export const LEVELS: LevelContent[] = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Left unresolved, guilt tends to slide into shame — "I did something bad" becomes "I am bad," which is a much harder place to think clearly from. The fix isn't more guilt, it's the specific correction the guilt was pointing at.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Shame condemns the whole self. Guilt narrows that down to something smaller than all of you — not everything you are, just something you did. What's still open: the mind is still the judge and the judged at once, with no rest from either job.`,
         ],
       },
     ],
@@ -2447,6 +2633,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Оставленная неразрешённой, вина склонна соскальзывать в стыд — «я сделал что-то плохое» становится «я плохой», а из этого места гораздо труднее мыслить ясно. Исправление — не больше вины, а конкретная коррекция, на которую указывала вина.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `Стыд осуждает всё существо целиком. Вина сужает это до чего-то меньшего, чем ты весь, — не всё, чем ты являешься, а только то, что ты сделал. Открытым остаётся то, что ум всё ещё одновременно и судья, и подсудимый, — и нет отдыха ни от одной из этих ролей.`,
             ],
           },
         ],
@@ -2545,6 +2737,12 @@ export const LEVELS: LevelContent[] = [
           `The instinct shame produces — hide, go quiet, make sure no one sees — is exactly backwards. Proving the shame wrong through more achievement doesn't touch it, because achievement was never the actual question it was asking.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `What closes the loop back to shame isn't punishment for losing enlightenment — it's the oldest proof in this whole map that no position is where you're supposed to stay. If even the state everyone reaches for doesn't hold, then wherever you actually are right now was never a waiting room for somewhere realer. It was already the real thing. What stays open here: shame still condemns the whole self — the neighboring move is narrowing that down to something smaller than all of you.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -2605,6 +2803,12 @@ export const LEVELS: LevelContent[] = [
             heading: "В чём люди ошибаются",
             paragraphs: [
               `Инстинкт, который порождает стыд, — спрятаться, замолчать, убедиться, что никто не видит, — работает ровно наоборот. Опровержение стыда новыми достижениями его не касается, потому что достижение никогда не было тем вопросом, который он на самом деле задавал.`,
+            ],
+          },
+          {
+            heading: "Почему тут",
+            paragraphs: [
+              `То, что замыкает круг обратно к стыду, — не наказание за утрату просветления. Это самое старое доказательство во всей этой карте: ни одна позиция не является тем местом, где нужно оставаться. Если даже состояние, к которому все тянутся, не держится вечно, — значит, то, где ты находишься прямо сейчас, никогда не было залом ожидания перед чем-то более настоящим. Это уже было настоящим. Открытым здесь остаётся то, что стыд всё ещё осуждает всё существо целиком, — соседний шаг сужает это до чего-то меньшего, чем ты весь.`,
             ],
           },
         ],

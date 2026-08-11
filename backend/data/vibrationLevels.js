@@ -1,26 +1,30 @@
-// `frame` is a one-line qualitative anchor for each level, ported from
-// frontend/src/levels/levelsContent.js (keep in sync by hand) — used to
+// `frame` is a one-line qualitative anchor for each level — used to
 // ground the interview scoring prompt so it discriminates between
 // adjacent/similar-sounding levels (e.g. fear vs. anger vs. desire) instead
 // of guessing from bare word association with the level name alone.
+// Source of truth is mobile/src/content/levelsContent.ts (the actively
+// developed app) — keep this file, frontend/src/levels/levelsContent.js,
+// and selfinder-app/src/content/levelsContent.ts in sync by hand whenever
+// mobile's frame text changes, so the philosopher's own grounding never
+// reads a different version of a level than the user does.
 export const VIBRATION_LEVELS = [
-  { name: "Shame", slug: "shame", score: 20, route: "/levels/shame", frame: "Shame is not a failure; it is the soul's extreme sensitivity to dignity." },
-  { name: "Guilt", slug: "guilt", score: 30, route: "/levels/guilt", frame: "Not evidence of being bad — an old standard the mind hasn't yet forgiven itself for missing." },
-  { name: "Apathy", slug: "apathy", score: 50, route: "/levels/apathy", frame: "Not laziness — exhaustion in a system that has stopped expecting help to arrive." },
-  { name: "Grief", slug: "grief", score: 75, route: "/levels/grief", frame: "Not weakness — the honest cost of having valued something enough to feel its loss." },
-  { name: "Fear", slug: "fear", score: 100, route: "/levels/fear", frame: "Fear is not weakness; it is intelligence about uncertainty." },
-  { name: "Desire", slug: "desire", score: 125, route: "/levels/desire", frame: "Not greed — the mind reaching outward to fill a lack it hasn't yet located within." },
-  { name: "Anger", slug: "anger", score: 150, route: "/levels/anger", frame: "Anger is not pathology; it is the signal that a boundary has been crossed." },
-  { name: "Pride", slug: "pride", score: 175, route: "/levels/pride", frame: "Not vanity — self-worth borrowing its shape from comparison before it has learned to stand on its own." },
-  { name: "Courage", slug: "courage", score: 200, route: "/levels/courage", frame: "Not the absence of fear — the willingness to meet it standing up." },
-  { name: "Neutrality", slug: "neutrality", score: 250, route: "/levels/neutrality", frame: "Not indifference — the calm of no longer needing things to go a particular way." },
-  { name: "Willingness", slug: "willingness", score: 310, route: "/levels/willingness", frame: "Confirmation that the friction of resistance has finally been spent." },
-  { name: "Acceptance", slug: "acceptance", score: 350, route: "/levels/acceptance", frame: "Not resignation — the moment perception stops arguing with what is already true." },
-  { name: "Reason", slug: "reason", score: 400, route: "/levels/reason", frame: "The mind organizing experience — useful information, until it mistakes the map for the territory." },
-  { name: "Love", slug: "love", score: 500, route: "/levels/love", frame: "Not earned and not owed — energy that has stopped needing somewhere to go." },
-  { name: "Unconditional Love", slug: "unconditionallove", score: 540, route: "/levels/unconditionallove", frame: "Not a feat of willpower — what's left once love no longer needs a condition to stand on." },
-  { name: "Peace", slug: "peace", score: 600, route: "/levels/peace", frame: "Stillness here is not the absence of feeling — it is feeling with nothing left to resist." },
-  { name: "Enlightenment", slug: "enlightenment", score: 700, route: "/levels/enlightenment", frame: "Not an achievement to chase — it is what's left when nothing is being defended." },
+  { name: "Shame", slug: "shame", score: 20, route: "/levels/shame", frame: "The deepest wound to who you know yourself to be." },
+  { name: "Guilt", slug: "guilt", score: 30, route: "/levels/guilt", frame: "The mind still judging itself." },
+  { name: "Apathy", slug: "apathy", score: 50, route: "/levels/apathy", frame: "Too tired to expect anything." },
+  { name: "Grief", slug: "grief", score: 75, route: "/levels/grief", frame: "You loved it, so you feel it." },
+  { name: "Fear", slug: "fear", score: 100, route: "/levels/fear", frame: "Your mind reading the room for danger." },
+  { name: "Desire", slug: "desire", score: 125, route: "/levels/desire", frame: "Looking outside for what's missing inside." },
+  { name: "Anger", slug: "anger", score: 150, route: "/levels/anger", frame: "A boundary was crossed." },
+  { name: "Pride", slug: "pride", score: 175, route: "/levels/pride", frame: "Self-worth still learning to stand alone." },
+  { name: "Courage", slug: "courage", score: 200, route: "/levels/courage", frame: "Fear met straight on." },
+  { name: "Neutrality", slug: "neutrality", score: 250, route: "/levels/neutrality", frame: "Calm without needing anything different." },
+  { name: "Willingness", slug: "willingness", score: 310, route: "/levels/willingness", frame: "The resistance wears itself out." },
+  { name: "Acceptance", slug: "acceptance", score: 350, route: "/levels/acceptance", frame: "What is, without the argument." },
+  { name: "Reason", slug: "reason", score: 400, route: "/levels/reason", frame: "Clarity that doesn't mistake itself for truth." },
+  { name: "Love", slug: "love", score: 500, route: "/levels/love", frame: "Warmth that goes nowhere in particular." },
+  { name: "Unconditional Love", slug: "unconditionallove", score: 540, route: "/levels/unconditionallove", frame: "Love without conditions." },
+  { name: "Peace", slug: "peace", score: 600, route: "/levels/peace", frame: "Feeling everything, resisting nothing." },
+  { name: "Enlightenment", slug: "enlightenment", score: 700, route: "/levels/enlightenment", frame: "Nothing left to defend." },
 ];
 
 // Single source of truth for "the 17 levels, briefly" — used both in the

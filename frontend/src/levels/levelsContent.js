@@ -9,7 +9,7 @@ export const LEVELS = [
     name: "enlightenment",
     title: "Enlightenment",
     score: 700,
-    frame: `Not an achievement to chase — it is what's left when nothing is being defended.`,
+    frame: `Nothing left to defend.`,
     personalFrame: `You're not chasing an achievement right now — this is just what's left when nothing needs defending.`,
     signals: [
       { label: "Feels like", value: "no gap between what's happening and the awareness of it — nothing left outside to resist." },
@@ -43,6 +43,12 @@ export const LEVELS = [
           `The real risk at this level isn't avoiding it — it's performing it. Mistaking the idea of enlightenment for the thing itself builds a subtler, harder-to-spot ego around "being the one who's arrived," which is exactly the kind of defending this state is supposed to be free of.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Peace settles into feeling everything without resisting any of it — but even that settling doesn't hold forever. No state stays, not even this one, and what a self feels when the state it thought was final turns out not to be is the same wound this whole map starts with. The ring closes here, not because the two ends match, but because neither end was ever the last stop.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -58,7 +64,7 @@ export const LEVELS = [
     name: "peace",
     title: "Peace, Bliss and Illumination",
     score: 600,
-    frame: `Stillness here is not the absence of feeling — it is feeling with nothing left to resist.`,
+    frame: `Feeling everything, resisting nothing.`,
     personalFrame: `This stillness isn't the absence of feeling — it's you feeling everything with nothing left to resist.`,
     signals: [
       { label: "Feels like", value: "spacious and unhurried — nothing urgent left to resolve." },
@@ -90,6 +96,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Peace performed for an audience isn't peace — it's a calm face over an unresolved feeling, which tends to leak out sideways later. The real version doesn't need anyone to notice it.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Unconditional love is warmth without a direction, without needing anywhere to go — but it's still warmth in motion, still something happening. Peace is what's left once even that motion settles: nothing left to resist. What stays open is the last separation — peace still feels everything, and there's not yet no gap between what's felt and who is feeling it.`,
         ],
       },
     ],
@@ -127,7 +139,7 @@ export const LEVELS = [
     name: "unconditional love",
     title: "Unconditional Love, Joy, Ecstasy",
     score: 540,
-    frame: `Not a feat of willpower — what's left once love no longer needs a condition to stand on.`,
+    frame: `Love without conditions.`,
     personalFrame: `This isn't willpower — it's what's left now that your love doesn't need a condition to stand on.`,
     signals: [
       { label: "Feels like", value: "warmth that isn't waiting for anything back." },
@@ -159,6 +171,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Unconditional doesn't mean unlimited — it's not the same as having no boundaries or absorbing harm indefinitely. Mother Teresa's love had structure and discipline behind it. Without that, what looks like unconditional love is often just self-erasure.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Love is warmth that goes somewhere — it has a direction, someone or something it's warm toward. Unconditional love drops even that: nothing to attach to, nowhere it has to go. What's still open is that it's still warmth in motion, still something happening, not yet settled.`,
         ],
       },
     ],
@@ -195,7 +213,7 @@ export const LEVELS = [
     name: "love",
     title: "Love",
     score: 500,
-    frame: `Not earned and not owed — energy that has stopped needing somewhere to go.`,
+    frame: `Warmth that goes nowhere in particular.`,
     personalFrame: `This isn't earned and it isn't owed — it's energy in you that's stopped needing somewhere to go.`,
     signals: [
       { label: "Feels like", value: "warm and expansive, less interested in being right than in staying connected." },
@@ -227,6 +245,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `What most people call love at the lower end of this range is really attachment — glamour, possession, the specialness of a particular person or outcome. It's intense, and it fades the moment the object does, because it was never really about them.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Reason organizes experience by explaining it — useful, but it still needs a reason to stand on. Love is warmth that doesn't require a reason to justify itself. What's still open is that this warmth still has a direction, someone or something it's warm toward.`,
         ],
       },
     ],
@@ -272,7 +296,7 @@ export const LEVELS = [
     name: "reason",
     title: "Reason",
     score: 400,
-    frame: `The mind organizing experience — useful information, until it mistakes the map for the territory.`,
+    frame: `Clarity that doesn't mistake itself for truth.`,
     personalFrame: `Your mind is organizing experience right now — useful, as long as it doesn't mistake the map for the territory.`,
     signals: [
       { label: "Feels like", value: "clear, ordered, confident you can explain why." },
@@ -304,6 +328,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Reason is brilliant at handling data and terrible at knowing when it's the wrong tool — grief, love, and meaning don't resolve by being explained. Used as a way to avoid feeling something rather than to understand it, reason becomes a very sophisticated form of hiding.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Acceptance stops arguing with what's real. Reason neighbors that stillness by picking experience back up and organizing it, now that it's stopped fighting it. What's still open: organizing still explains — nothing here is settled enough not to need the explaining.`,
         ],
       },
     ],
@@ -348,7 +378,7 @@ export const LEVELS = [
     name: "acceptance",
     title: "Acceptance",
     score: 350,
-    frame: `Not resignation — the moment perception stops arguing with what is already true.`,
+    frame: `What is, without the argument.`,
     personalFrame: `You're not giving up right now — you've just stopped arguing with what's already true.`,
     signals: [
       { label: "Feels like", value: "settled, without the undertow of arguing against what's already true." },
@@ -380,6 +410,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Acceptance gets mistaken for giving up. It's the opposite — Linehan's whole clinical point was that acceptance is what makes change possible, not what replaces it. You can't successfully change what you haven't first admitted is real.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Willingness spends the friction of resistance, leaning toward change before any proof it'll work. Acceptance is what's left once even trying stops being necessary — the argument with what's already true finally ends. What's still open: accepting reality isn't yet doing anything with it.`,
         ],
       },
     ],
@@ -430,7 +466,7 @@ export const LEVELS = [
     name: "willingness",
     title: "Willingness",
     score: 310,
-    frame: `Confirmation that the friction of resistance has finally been spent.`,
+    frame: `The resistance wears itself out.`,
     personalFrame: `You've spent the friction of resistance — you're just willing now, before any proof it'll work.`,
     signals: [
       { label: "Feels like", value: "a quiet \"yes, okay, I'll try\" before any proof it'll work." },
@@ -462,6 +498,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `People wait to feel willing before acting, when it usually runs the other way — the willingness shows up once you've already started the half-measure. Waiting for the feeling first is usually just a slower way of not doing it.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Neutrality doesn't need things to be different, but it doesn't move either. Willingness neighbors that stillness with a lean toward change, without the friction that usually makes change feel like effort. What's still open: willingness still has the shape of trying — it hasn't stopped needing to.`,
         ],
       },
     ],
@@ -499,7 +541,7 @@ export const LEVELS = [
     name: "neutrality",
     title: "Neutrality",
     score: 250,
-    frame: `Not indifference — the calm of no longer needing things to go a particular way.`,
+    frame: `Calm without needing anything different.`,
     personalFrame: `You're not being indifferent right now — you've just stopped needing things to go a particular way.`,
     signals: [
       { label: "Feels like", value: "unbothered by which way things go, without having stopped caring." },
@@ -533,6 +575,12 @@ export const LEVELS = [
           `Neutrality looks like apathy from the outside, and the two get confused constantly. The real test: apathy has stopped believing anything will help. Neutrality just isn't gripping the outcome — help is still welcome, it's just not required.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Courage meets something difficult standing up. Neutrality is what's left once nothing urgent is left to meet at all. What's still open: not needing things to be different isn't yet the same as leaning toward anything — neutrality doesn't move.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -559,7 +607,7 @@ export const LEVELS = [
     name: "courage",
     title: "Courage",
     score: 200,
-    frame: `Not the absence of fear — the willingness to meet it standing up.`,
+    frame: `Fear met straight on.`,
     personalFrame: `You're not fearless right now — you're just meeting the fear standing up.`,
     signals: [
       { label: "Feels like", value: "afraid, and moving anyway." },
@@ -591,6 +639,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Waiting to feel fearless before acting means waiting forever — fearlessness isn't a prerequisite, it's what courage sometimes produces afterward, not before. Mandela was afraid the whole time. That's not a disqualifying detail, it's the definition.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Pride's worth still needs a comparison to hold it up. Courage is worth that can finally face something hard without needing to win against anyone first. What's still open: courage still has to meet something difficult — nothing here is at rest yet.`,
         ],
       },
     ],
@@ -648,7 +702,7 @@ export const LEVELS = [
     name: "pride",
     title: "Pride",
     score: 175,
-    frame: `Not vanity — self-worth borrowing its shape from comparison before it has learned to stand on its own.`,
+    frame: `Self-worth still learning to stand alone.`,
     personalFrame: `This isn't vanity — it's your self-worth borrowing its shape from comparison, before it's learned to stand on its own.`,
     signals: [
       { label: "Feels like", value: "a lift in self-worth, tied to something you did or have." },
@@ -680,6 +734,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Hubristic pride — the defensive, ego-driven kind — gets triggered the moment the achievement is questioned, because the whole thing was propping something up. Authentic pride doesn't flinch at a challenge the same way, because it was never that fragile to begin with.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Anger defends a boundary from outside. Pride is the self trying to build a boundary from within — worth, not just defense, no longer needing someone to have crossed a line first. What's still open: that worth still needs a comparison to hold it up — it can't yet stand without one.`,
         ],
       },
     ],
@@ -716,7 +776,7 @@ export const LEVELS = [
     name: "anger",
     title: "Anger",
     score: 150,
-    frame: `Anger is not pathology; it is the signal that a boundary has been crossed.`,
+    frame: `A boundary was crossed.`,
     personalFrame: `You're not broken right now — something crossed a boundary, and this is the signal telling you so.`,
     signals: [
       { label: "Feels like", value: "heat rising fast, a pull to push back or push through right now." },
@@ -748,6 +808,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Anger that never gets expressed doesn't go away — it tends to leak out sideways, at whoever's nearest rather than whoever actually caused it, or turn inward as resentment that quietly outlasts the original reason. Years of that is its own kind of exhausting: a body kept in a low simmer that never gets to finish what it started.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Desire wants without a place to stand. Anger is what happens when that want meets something real enough to defend: an actual boundary, actually crossed. What's still open: a boundary defended from outside isn't yet a self that can hold its own worth from inside.`,
         ],
       },
     ],
@@ -790,7 +856,7 @@ export const LEVELS = [
     name: "desire",
     title: "Desire",
     score: 125,
-    frame: `Not greed — the mind reaching outward to fill a lack it hasn't yet located within.`,
+    frame: `Looking outside for what's missing inside.`,
     personalFrame: `This isn't greed — it's you reaching outward for something, before you've located the actual lack within.`,
     signals: [
       { label: "Feels like", value: "pulled toward something, restless until you have it." },
@@ -822,6 +888,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Desire becomes addiction exactly at the point where satisfying it stops being the goal and avoiding the discomfort of wanting becomes the goal instead. Tesla's desire built things. Desire that's only trying to numb itself just needs more of itself, endlessly.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Fear is alertness that only watches for threat, one direction only. Desire is that same alertness reaching toward something instead of only away from it. What's still open: reaching from lack means the want has no claim to stand on yet — nothing yet makes it legitimate.`,
         ],
       },
     ],
@@ -859,7 +931,7 @@ export const LEVELS = [
     name: "fear",
     title: "Fear",
     score: 100,
-    frame: `Fear is not weakness; it is intelligence about uncertainty.`,
+    frame: `Your mind reading the room for danger.`,
     personalFrame: `You're not weak right now — you're just picking up real intelligence about something uncertain.`,
     signals: [
       { label: "Feels like", value: "tight, alert, wanting to avoid or escape something specific." },
@@ -891,6 +963,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Treating every instance of fear as a stop sign means avoiding things that were never actually dangerous, just unfamiliar. The skill isn't eliminating fear — it's telling the useful kind from the kind that's just an old alarm still going off.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Grief looks backward at what's gone. Fear turns that same vulnerability forward, toward what might still be lost. What's still open: forward-facing vulnerability still only watches for threat — nothing yet reaches for anything.`,
         ],
       },
     ],
@@ -926,7 +1004,7 @@ export const LEVELS = [
     name: "grief",
     title: "Grief",
     score: 75,
-    frame: `Not weakness — the honest cost of having valued something enough to feel its loss.`,
+    frame: `You loved it, so you feel it.`,
     personalFrame: `This isn't weakness — it's the honest cost of having valued something enough to feel losing it.`,
     signals: [
       { label: "Feels like", value: "heavy, tearful, pulled backward toward what's gone." },
@@ -958,6 +1036,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Treating grief as a malfunction to fix quickly usually just delays it — it tends to resurface later, often at a worse time, in a less recognizable shape. Grief isn't evidence something is wrong with you. It's the accurate size of what you were willing to care about.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Apathy is blankness — nothing here expects anything anymore. Grief is what apathy becomes once that blankness cracks and finally has a name again. What's still open: the thing named is a loss, still entirely about what's gone, not yet about what's next.`,
         ],
       },
     ],
@@ -1002,7 +1086,7 @@ export const LEVELS = [
     name: "apathy",
     title: "Apathy, Hatred",
     score: 50,
-    frame: `Not laziness — exhaustion in a system that has stopped expecting help to arrive.`,
+    frame: `Too tired to expect anything.`,
     personalFrame: `You're not lazy right now — you're exhausted, and some part of you has stopped expecting help to arrive.`,
     signals: [
       { label: "Feels like", value: "flat, distant, can't locate the energy to want anything." },
@@ -1036,6 +1120,12 @@ export const LEVELS = [
           `Apathy gets treated as laziness or a moral failing, which just adds shame on top of exhaustion. Norris's distinction is the useful one: this isn't refusing to care, it's a system that's stopped expecting help to arrive — and the way out starts with naming it accurately, not pushing harder.`,
         ],
       },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Guilt still has energy to judge. Apathy is what's left once even judging stops — nothing left to prosecute, so the case closes. What's still open: closing the case isn't the same as feeling anything again — there's nothing here yet to replace the judging with.`,
+        ],
+      },
     ],
     deepDive: [
       {
@@ -1061,7 +1151,7 @@ export const LEVELS = [
     name: "guilt",
     title: "Guilt and Vindictive Hate",
     score: 30,
-    frame: `Not evidence of being bad — an old standard the mind hasn't yet forgiven itself for missing.`,
+    frame: `The mind still judging itself.`,
     personalFrame: `This isn't evidence you're bad — it's an old standard you haven't forgiven yourself for missing yet.`,
     signals: [
       { label: "Feels like", value: "a specific, nameable weight about something you did." },
@@ -1093,6 +1183,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `Left unresolved, guilt tends to slide into shame — "I did something bad" becomes "I am bad," which is a much harder place to think clearly from. The fix isn't more guilt, it's the specific correction the guilt was pointing at.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `Shame condemns the whole self. Guilt narrows that down to something smaller than all of you — not everything you are, just something you did. What's still open: the mind is still the judge and the judged at once, with no rest from either job.`,
         ],
       },
     ],
@@ -1148,7 +1244,7 @@ export const LEVELS = [
     name: "shame",
     title: "Shame: Despair",
     score: 20,
-    frame: `Shame is not a failure; it is the soul's extreme sensitivity to dignity.`,
+    frame: `The deepest wound to who you know yourself to be.`,
     personalFrame: `You haven't failed right now — you're just feeling how sensitive you are to your own dignity.`,
     signals: [
       { label: "Feels like", value: "wanting to be invisible." },
@@ -1181,6 +1277,12 @@ export const LEVELS = [
         heading: "Where people get it wrong",
         paragraphs: [
           `The instinct shame produces — hide, go quiet, make sure no one sees — is exactly backwards. Proving the shame wrong through more achievement doesn't touch it, because achievement was never the actual question it was asking.`,
+        ],
+      },
+      {
+        heading: "Why here",
+        paragraphs: [
+          `What closes the loop back to shame isn't punishment for losing enlightenment — it's the oldest proof in this whole map that no position is where you're supposed to stay. If even the state everyone reaches for doesn't hold, then wherever you actually are right now was never a waiting room for somewhere realer. It was already the real thing. What stays open here: shame still condemns the whole self — the neighboring move is narrowing that down to something smaller than all of you.`,
         ],
       },
     ],
