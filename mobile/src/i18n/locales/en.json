@@ -67,10 +67,13 @@
     "forgotPassword": "Forgot password?",
     "signedInAs": "Signed in as {{username}}",
     "saveReadingsToAccount": "Save my readings to my account",
+    "saveDataDescription": "This also covers Guide conversations you continue and any Spill entries you choose to keep — all under this one setting.",
     "consentOn": "On",
     "consentOff": "Off",
     "consentGranted": "Granted",
     "consentWithdrawn": "Withdrawn",
+    "selfinderPlusActive": "Selfinder+ is active on this account.",
+    "selfinderPlusInactive": "Selfinder+ is not active on this account.",
     "yourReadings": "Your readings",
     "loading": "Loading…",
     "noReadingsYet": "No readings saved yet — take a Measure check-in to start your history.",
@@ -273,6 +276,7 @@
     "kicker": "Levels",
     "title": "The map of consciousness",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
+    "note": "These connections describe what's true between neighboring states, not a route everyone has to walk — you can move from Anger to Love and back to Reason without passing through everything between, and that's not doing it wrong.",
     "readAbout": "Read about {{name}} →"
   },
   "feelingLucky": {

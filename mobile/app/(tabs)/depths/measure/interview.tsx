@@ -29,6 +29,7 @@ import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
+import { AttentionScan } from '../../../../src/components/AttentionScan';
 import { track } from '../../../../src/utils/analytics';
 import { useWideColumnWidth, useIsLargeScreen } from '../../../../src/theme/responsive';
 
@@ -86,6 +87,12 @@ export default function InterviewScreen() {
   // gap between calling setState and the re-render that disables the button,
   // during which a rapid double-tap can fire handleSend twice concurrently.
   const isSendingRef = useRef(false);
+  // The attention scan before each sphere's question (see
+  // docs/measure-experience-concept.md §1 and AttentionScan.tsx) — starts
+  // 'playing' on mount (the first sphere's scan) and again every time
+  // advanceSphere() fires; both currentQuestion render guards below stay
+  // gated on 'done' so the question/compose bar never appear mid-scan.
+  const [scanPhase, setScanPhase] = useState<'playing' | 'done'>('playing');
 
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
   const accentRgb = useAppAccentRgb();
@@ -183,6 +190,7 @@ export default function InterviewScreen() {
       setAsides([]);
 
       if (sphereIndex < TOTAL_SPHERES - 1) {
+        setScanPhase('playing');
         advanceSphere();
         return;
       }
@@ -245,7 +253,21 @@ export default function InterviewScreen() {
         ))}
       </View>
 
-      {sphereIndex > 0 && !isScoring && !scoringError && (
+      {/* First scan (sphereIndex === 0) is slower/more spacious than the
+          rest — see docs/measure-experience-concept.md §1's own "first
+          scan longer, later ones quicker" resolution. Both durations are
+          tune-during-build placeholders, not final. */}
+      {!isScoring && !scoringError && currentQuestion && scanPhase === 'playing' && (
+        <AttentionScan
+          key={sphereIndex}
+          sphere={currentQuestion.sphere}
+          phrase={philosopher?.scanPhrases?.[sphereIndex]?.phrase}
+          durationMs={sphereIndex === 0 ? 2000 : 1000}
+          onComplete={() => setScanPhase('done')}
+        />
+      )}
+
+      {sphereIndex > 0 && !isScoring && !scoringError && scanPhase === 'done' && (
         <Pressable style={styles.previousSphereRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
           <Text style={styles.previousSphereText}>{t('measure.previousSphere')}</Text>
         </Pressable>
@@ -268,7 +290,7 @@ export default function InterviewScreen() {
           </View>
         ))}
 
-        {!isScoring && !scoringError && currentQuestion && (
+        {!isScoring && !scoringError && currentQuestion && scanPhase === 'done' && (
           <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
         )}
 
@@ -307,7 +329,7 @@ export default function InterviewScreen() {
         )}
       </ScrollView>
 
-      {!isScoring && !scoringError && currentQuestion && (
+      {!isScoring && !scoringError && currentQuestion && scanPhase === 'done' && (
         <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
           {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>

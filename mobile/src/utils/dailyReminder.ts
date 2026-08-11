@@ -1,6 +1,8 @@
 import * as Notifications from 'expo-notifications';
 import { Philosopher } from '../types';
-import feelingLuckyList from '../content/feelingLuckyList.json';
+import feelingLuckyListEn from '../content/feelingLuckyList.json';
+import feelingLuckyListRu from '../content/feelingLuckyList.ru.json';
+import { useLocaleStore } from '../store/localeStore';
 
 // Reminder notifications now draw from the same content as Feeling Lucky
 // ("A message for right now") rather than a fixed, philosopher-voiced
@@ -22,8 +24,13 @@ import feelingLuckyList from '../content/feelingLuckyList.json';
 const REMINDER_WINDOW_DAYS = 14;
 const IDENTIFIER_PREFIX = 'selfinder-daily-reminder-';
 
+// Not a component, so the locale comes from the Zustand store's own
+// getState() rather than the useLocaleStore() hook — same pattern
+// feeling-lucky/index.tsx's pickMessage uses, just read outside React.
 function pickRandomMessage(): string {
-  const entry = feelingLuckyList[Math.floor(Math.random() * feelingLuckyList.length)];
+  const locale = useLocaleStore.getState().locale;
+  const list = locale === 'ru' ? feelingLuckyListRu : feelingLuckyListEn;
+  const entry = list[Math.floor(Math.random() * list.length)];
   return entry.message;
 }
 

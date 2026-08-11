@@ -63,7 +63,7 @@ for (let i = 1; i < argv.length; i++) {
   const a = argv[i];
   if (a === "--fresh") fresh = true;
   else if (a === "--out") outDir = argv[++i];
-  else if (a === "--wait" || a === "--shot" || a === "--tap" || a === "--tapxy") actions.push([a, argv[++i]]);
+  else if (a === "--wait" || a === "--shot" || a === "--tap" || a === "--tapxy" || a === "--fill") actions.push([a, argv[++i]]);
   else {
     console.error(`unknown arg: ${a}`);
     process.exit(2);
@@ -108,6 +108,9 @@ try {
     } else if (op === "--tapxy") {
       const [x, y] = arg.split(",").map(Number);
       await page.mouse.click(x, y);
+      clock = Date.now();
+    } else if (op === "--fill") {
+      await page.keyboard.type(arg);
       clock = Date.now();
     }
   }

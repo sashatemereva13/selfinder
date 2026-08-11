@@ -27,6 +27,13 @@ interface ReminderStore extends ReminderState {
   // should show; there's no tone to refresh now that each notification is
   // its own random message.
   refreshWindow: (philosopher: Philosopher) => Promise<void>;
+  // Cancels and fully reschedules the window — unlike refreshWindow, this
+  // rewrites every already-pending notification, not just gaps. Needed
+  // when the notification body's language changes (a locale switch):
+  // topUpDailyReminder alone would leave up to REMINDER_WINDOW_DAYS days
+  // of already-scheduled notifications in the old language until they
+  // naturally cycle out. A no-op if the reminder is off.
+  rescheduleWindow: (philosopher: Philosopher) => Promise<void>;
 }
 
 const DEFAULT_STATE: ReminderState = { enabled: false, hour: 18, minute: 0 };
@@ -93,5 +100,11 @@ export const useReminderStore = create<ReminderStore>((set, get) => ({
     const current = get();
     if (!current.enabled) return;
     await topUpDailyReminder(philosopher, current.hour, current.minute);
+  },
+
+  rescheduleWindow: async (philosopher) => {
+    const current = get();
+    if (!current.enabled) return;
+    await enableDailyReminder(philosopher, current.hour, current.minute);
   },
 }));

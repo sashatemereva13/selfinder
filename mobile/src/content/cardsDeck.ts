@@ -1,4 +1,5 @@
 import { CardSymbolId } from '../components/CardSymbol';
+import type { ResolvedTheme } from '../store/themeStore';
 
 // The Selfinder Cards deck — see docs/cards-concept.md for the full
 // rationale. Each card is a statement to receive or an instruction to
@@ -13,6 +14,26 @@ export interface CardEntry {
   kind: CardKind;
   line: { en: string; ru: string };
   rgb: string;
+}
+
+// Every card's rgb is one of exactly two dark-mode-tuned tones (bright
+// ivory / a muted tan), chosen when the deck was only ever seen against
+// the near-black dark-mode ground. In light mode the page itself is that
+// same pale ivory (see docs/design/aesthetic.md's accent/text tokens), so
+// drawing the symbol, name, and save-accent in the raw rgb makes them
+// nearly invisible — confirmed the bright-ivory tone is a literal exact
+// match against the light-mode background. Same fix as AuraFigure's
+// neutralColor and colors.accent.ivory: swap to the gold tones already
+// built for "the one bright accent, made legible on an ivory page,"
+// rather than adding a shadow (aesthetic.md's own note on AuraFigure is
+// that a glow/shadow reads as a muddy smear on ivory, not a fix).
+const LIGHT_MODE_RGB: Record<string, string> = {
+  '239,227,207': '180,140,60', // accent.ivory's rgb in light mode
+  '224,196,168': '120,90,40', // a deeper gold, keeping the deck's two-tone contrast
+};
+
+export function cardRgbForTheme(rgb: string, theme: ResolvedTheme): string {
+  return theme === 'light' ? (LIGHT_MODE_RGB[rgb] ?? rgb) : rgb;
 }
 
 export const CARDS_DECK: CardEntry[] = [

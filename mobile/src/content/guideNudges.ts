@@ -33,6 +33,14 @@ interface NudgeCopy {
   text: string;
   actionLabel: string;
   route: Href;
+  // Only measured_today carries a second option — the reading is fresh
+  // enough that going deeper (Levels) and settling into it (Tune In) are
+  // both genuinely live choices. The app asks rather than picking one for
+  // you: see RULES.md, "The answers are already inside the person" — a
+  // single auto-advancing nudge would be the app deciding what the user
+  // needs next, which is exactly what that rule rules out.
+  secondActionLabel?: string;
+  secondRoute?: Href;
 }
 
 // Pre-written per philosopher, not a live LLM call — this needs to render
@@ -40,35 +48,35 @@ interface NudgeCopy {
 export const NUDGE_COPY: Record<string, Record<NudgeState, NudgeCopy>> = {
   socrates: {
     never_measured: { text: "You haven't asked yourself the first question yet.", actionLabel: 'Measure', route: '/(tabs)/depths/measure' },
-    measured_today: { text: "You've looked once today. Want to sit with what you found?", actionLabel: 'Tune In', route: '/(tabs)/depths/tunein' },
+    measured_today: { text: "You've looked once today. Have you gone further into what you found, or just sat with it?", actionLabel: 'Levels', route: '/(tabs)/depths/levels', secondActionLabel: 'Tune In', secondRoute: '/(tabs)/depths/tunein' },
     measured_yesterday: { text: 'Has anything shifted since yesterday?', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_this_week: { text: 'Still the same answer as a few days ago — or has the question changed?', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_longer_ago: { text: "It's been a while since you asked. Have you noticed, or just not looked?", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
   },
   stoics: {
     never_measured: { text: "You can't govern what you haven't yet observed.", actionLabel: 'Measure', route: '/(tabs)/depths/measure' },
-    measured_today: { text: "You've taken your reading. Now steady what you found.", actionLabel: 'Tune In', route: '/(tabs)/depths/tunein' },
+    measured_today: { text: "You've taken your reading. Have you examined it further, or only settled into it?", actionLabel: 'Levels', route: '/(tabs)/depths/levels', secondActionLabel: 'Tune In', secondRoute: '/(tabs)/depths/tunein' },
     measured_yesterday: { text: 'The ground may have shifted since yesterday.', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_this_week: { text: "Several days have passed. What was true then isn't owed to still be true.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_longer_ago: { text: "It's been weeks since you last observed yourself closely. That's long enough for the ground to have moved.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
   },
   kierkegaard: {
     never_measured: { text: "You haven't yet named where you actually are.", actionLabel: 'Measure', route: '/(tabs)/depths/measure' },
-    measured_today: { text: "You've named it once today. Sit inside it a while.", actionLabel: 'Tune In', route: '/(tabs)/depths/tunein' },
+    measured_today: { text: "You've named it once today. Have you looked closer at what the name means, or just sat inside it?", actionLabel: 'Levels', route: '/(tabs)/depths/levels', secondActionLabel: 'Tune In', secondRoute: '/(tabs)/depths/tunein' },
     measured_yesterday: { text: 'Whoever you were yesterday may not be who you are now.', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_this_week: { text: 'Whoever you were a few days ago has already had days to become someone else.', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_longer_ago: { text: "Whoever you were weeks ago is nearly a stranger by now — and you've been calling yourself by their name since.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
   },
   camus: {
     never_measured: { text: "You haven't looked at where you're standing yet.", actionLabel: 'Measure', route: '/(tabs)/depths/measure' },
-    measured_today: { text: "You've looked once today. That's enough truth for now — or tune in a while.", actionLabel: 'Tune In', route: '/(tabs)/depths/tunein' },
+    measured_today: { text: "You've looked once today. Have you gone looking for what it means, or just let it be?", actionLabel: 'Levels', route: '/(tabs)/depths/levels', secondActionLabel: 'Tune In', secondRoute: '/(tabs)/depths/tunein' },
     measured_yesterday: { text: "The ground didn't stay still overnight. Worth a second look.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_this_week: { text: "Days have passed without you checking. The ground moved anyway — it doesn't wait for witnesses.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_longer_ago: { text: "Weeks since you looked. You've been standing somewhere new this whole time, unwitnessed.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
   },
   aristotle: {
     never_measured: { text: 'A good life starts with an honest reading of where you are.', actionLabel: 'Measure', route: '/(tabs)/depths/measure' },
-    measured_today: { text: "You've checked in today. Now practice steadying it.", actionLabel: 'Tune In', route: '/(tabs)/depths/tunein' },
+    measured_today: { text: "You've checked in today. Have you studied it yet, or gone straight to practicing it?", actionLabel: 'Levels', route: '/(tabs)/depths/levels', secondActionLabel: 'Tune In', secondRoute: '/(tabs)/depths/tunein' },
     measured_yesterday: { text: 'Habits are built daily. Worth checking in again.', actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_this_week: { text: "A few days without checking in is how good practice quietly lapses. Pick it back up.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },
     measured_longer_ago: { text: "It's been weeks. A practice you don't return to isn't really a practice anymore.", actionLabel: 'Measure again', route: '/(tabs)/depths/measure' },

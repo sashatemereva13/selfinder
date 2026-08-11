@@ -10,7 +10,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { AnimatedCardSymbol } from '../../../../src/components/AnimatedCardSymbol';
-import { CARDS_DECK, CardEntry, drawCard } from '../../../../src/content/cardsDeck';
+import { CARDS_DECK, CardEntry, drawCard, cardRgbForTheme } from '../../../../src/content/cardsDeck';
 import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
@@ -57,6 +57,7 @@ export default function CardsScreen() {
 
   const name = card.name[locale] ?? card.name.en;
   const line = card.line[locale] ?? card.line.en;
+  const cardRgb = cardRgbForTheme(card.rgb, theme);
 
   const handleDrawAgain = () => {
     if (isRedrawing) return;
@@ -112,15 +113,15 @@ export default function CardsScreen() {
           way around. */}
       <Animated.View style={[styles.cardPlane, cardFadeStyle]}>
         <View style={styles.symbolWrap}>
-          <AnimatedCardSymbol id={card.id} rgb={card.rgb} size={240} />
+          <AnimatedCardSymbol id={card.id} rgb={cardRgb} size={240} />
         </View>
 
         <Text style={styles.kind}>{t(card.kind === 'statement' ? 'cards.receive' : 'cards.notice')}</Text>
-        <Text style={[styles.name, { color: `rgb(${card.rgb})` }]}>{name}</Text>
+        <Text style={[styles.name, { color: `rgb(${cardRgb})` }]}>{name}</Text>
         <Text style={styles.line}>{line}</Text>
 
         <View style={styles.saveWrap}>
-          <SaveMessageAction message={line} accentRgb={card.rgb} />
+          <SaveMessageAction message={line} accentRgb={cardRgb} />
         </View>
       </Animated.View>
 

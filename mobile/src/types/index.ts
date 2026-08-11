@@ -5,6 +5,16 @@ export interface MeasureQuestion {
   question: string;
 }
 
+// A short, wordless-but-spoken phrase accompanying the attention scan that
+// plays before each sphere's question in Measure (see
+// docs/measure-experience-concept.md §1) — gives the body/mind something
+// to notice before being asked to report on it. Not yet authored for any
+// philosopher; see philosophers.ts's own TODO comments on scanPhrases.
+export interface ScanPhrase {
+  sphere: Sphere;
+  phrase: string;
+}
+
 // The subset of Philosopher that's hand-authored, user-facing voice/copy —
 // distinct from id (a stable key) and systemPrompt (deliberately English-
 // only in every locale; see philosophers.ts's own comment on why). Kept as
@@ -29,6 +39,11 @@ export interface PhilosopherVoice {
   firstMeeting: string;
   secondVisitGreeting: string;
   measureQuestions: MeasureQuestion[];
+  // Optional (not yet authored for any philosopher — see philosophers.ts)
+  // so AttentionScan can render its motion with no phrase text until this
+  // is filled in, rather than the type lying about content that isn't
+  // there yet.
+  scanPhrases?: ScanPhrase[];
 }
 
 export interface Philosopher extends PhilosopherVoice {

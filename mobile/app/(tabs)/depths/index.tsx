@@ -27,9 +27,16 @@ import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
 import { useIsSubscribed } from '../../../src/utils/useIsSubscribed';
+import { useAuthStore } from '../../../src/store/authStore';
+import { getMe, getMeasureHistory } from '../../../src/api/user';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
-import { useEngagementStore, DiscoverableFeature } from '../../../src/store/engagementStore';
+import {
+  useEngagementStore,
+  DiscoverableFeature,
+  BreadcrumbTool,
+  isToolVisitedToday,
+} from '../../../src/store/engagementStore';
 import { getLevelBySlug, getLocalizedLevel } from '../../../src/content/levelsContent';
 import { useLevelColors, getLocalizedLevelName } from '../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../src/store/localeStore';
@@ -76,6 +83,15 @@ const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
 // Depths feels like the same hand as the very first bloom-in, not a
 // separate, unrelated animation system.
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+// The one deliberately-oversized gap on this screen — marks Regulate
+// (Tune In, Breathing) as a real departure from the ring, not more list.
+// Don't reuse this value elsewhere, or it stops reading as unique. See
+// docs/depths-structure-concept.md for why Regulate specifically gets
+// this treatment and Understand doesn't: Regulate is the one real
+// practice among the three zones (time passes, you're meant to be
+// different after), so the distance itself is meant to do honest work —
+// it's farther because arriving there asks more of you, not decoration.
+const REGULATE_ZONE_GAP = 130;
 // PHASE B — the reveal animation for the concentric-rings field (see
 // AuraField.tsx for why this replaced the earlier 17-dot wheel entirely).
 // Two acts, same discipline as the wheel version: suspense before payoff,
@@ -120,6 +136,18 @@ const COLOR_START_MS = ALL_RINGS_GROWN_MS + ANTICIPATION_DURATION_MS;
 const LAST_RING_COLOR_SETTLED_MS = COLOR_START_MS + (RING_COUNT - 1) * RING_COLOR_STAGGER_MS + RING_COLOR_DURATION_MS;
 const CONTENT_DELAY_MS = Math.max(LAST_RING_COLOR_SETTLED_MS, COLOR_START_MS + COLOR_SETTLE_DURATION_MS);
 
+// Understand's one-time first-run bloom (see showFirstRunCarry) — grow
+// beat, then settle beat. Timed off CONTENT_DURATION_MS's own scale
+// rather than an arbitrary new number, since this plays right as that
+// same content is finishing its reveal — it should read as part of the
+// same arrival settling, not a separate, later event with its own pace.
+const BLOOM_GROW_DURATION_MS = CONTENT_DURATION_MS * 0.5;
+const BLOOM_SETTLE_DURATION_MS = CONTENT_DURATION_MS;
+// Emphasis, not a jump-scare — subtle enough to read as "this grew a
+// little," never enough to shift surrounding rows' perceived weight or
+// look like a bug/glitch. TUNE VISUALLY against a real screenshot.
+const BLOOM_PEAK_SCALE = 1.08;
+
 // Order for the four sphere buttons under the ring — mind first, then
 // spirit, heart, body.
 const SPHERE_DISPLAY_ORDER: Sphere[] = ['mind', 'spirit', 'heart', 'body'];
@@ -152,16 +180,25 @@ type Tool = { key: string; labelKey: string; descriptionKey: string; route: Href
 // them a shortcut back to something they've chosen before. It's appended
 // after Measure, not given equal top billing, so first-time framing (Measure
 // is the way in) stays intact for everyone who hasn't found Spill yet.
+type Zone = 'discover' | 'understand' | 'regulate';
+
 // groupKey is a stable identifier used for render logic (e.g. "only the
 // first group gets the Talk about it / Your arc rows") — labelKey is what
 // actually gets translated for display. These used to be the same string
 // (group.label === 'Find out where you are'), which broke the moment that
-// label needed to render in Russian instead of English.
-function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey: string; tools: Tool[] }[] {
+// label needed to render in Russian instead of English. zone is a separate,
+// additive field (not a replacement for groupKey) that drives which visual
+// treatment a group renders with — see docs/depths-structure-concept.md:
+// the three groups aren't just labeled sections, they're territory at
+// different distances from the ring, and zone is what the render loop
+// below reads to pick discoverGroup/understandGroup/regulateGroup (and
+// their row-style counterparts) rather than one shared `group` style.
+function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey: string; zone: Zone; tools: Tool[] }[] {
   return [
     {
       groupKey: 'findOutWhereYouAre',
       labelKey: 'depths.groupFindOutWhereYouAre',
+      zone: 'discover',
       tools: [
         { key: 'measure', labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
         ...(spillDiscovered
@@ -172,6 +209,7 @@ function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey
     {
       groupKey: 'understandIt',
       labelKey: 'depths.groupUnderstandIt',
+      zone: 'understand',
       tools: [
         { key: 'levels', labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
       ],
@@ -179,6 +217,7 @@ function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey
     {
       groupKey: 'shiftIt',
       labelKey: 'depths.groupShiftIt',
+      zone: 'regulate',
       tools: [
         { key: 'tunein', labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
         { key: 'breathing', labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
@@ -217,9 +256,43 @@ export default function DepthsScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
   const readingLog = useMeasureStore((s) => s.readingLog);
   const isSubscribed = useIsSubscribed();
+  const session = useAuthStore((s) => s.session);
+  // The local readingLog is per-device (SecureStore) — a signed-in,
+  // consented account can have real server-side history the "Your arc"
+  // row's visibility shouldn't miss just because this particular device
+  // hasn't locally taken 2+ Measures yet (a fresh install, a second
+  // device, storage cleared). Best-effort, mirrors the same
+  // session+consent-check pattern your-arc.tsx already uses — never
+  // blocks the row from working via the local count if this fails.
+  const [serverReadingCount, setServerReadingCount] = useState(0);
+  useEffect(() => {
+    if (!session) {
+      setServerReadingCount(0);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const profile = await getMe(session.token);
+        if (cancelled || !profile.consent?.psychologicalData?.given) return;
+        const history = await getMeasureHistory(session.token);
+        if (!cancelled) setServerReadingCount(history.length);
+      } catch {
+        // Best-effort — the local readingLog count still works without this.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+  const hasEnoughReadingsForArc = Math.max(readingLog.length, serverReadingCount) >= 2;
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
   const discovered = useEngagementStore((s) => s.discovered);
+  const toolLastVisitedAt = useEngagementStore((s) => s.toolLastVisitedAt);
+  const markToolVisited = useEngagementStore((s) => s.markToolVisited);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
+  const hasShownFirstRunCarry = useEngagementStore((s) => s.hasShownFirstRunCarry);
+  const markFirstRunCarryShown = useEngagementStore((s) => s.markFirstRunCarryShown);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -246,6 +319,13 @@ export default function DepthsScreen() {
   // stillness from the other side. A normal revisit (isArriving false)
   // never carries this — it stays fully transparent from frame one.
   const entryFade = useSharedValue(isArriving ? 1 : 0);
+  // Understand's one-time first-run "look here next" emphasis — see
+  // showFirstRunCarry above. Purely transform: scale on a wrapping View;
+  // never touches understandGroup/understandRow/understandRowLabel's own
+  // styles, so every other (non-first-run) render of Understand is
+  // byte-for-byte unaffected. Starts at 1 (settled/no-op) — the grow
+  // only starts once AuraArrival's onSettled fires it, not at mount.
+  const understandBloomScale = useSharedValue(1);
   useEffect(() => {
     if (isArriving) useMeasureStore.getState().consumeJustCompleted();
     if (entryFade.value > 0) {
@@ -255,6 +335,27 @@ export default function DepthsScreen() {
     // back to false later (via onSettled) shouldn't re-fire this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // Computed once per mount, not re-derived — otherwise calling
+  // markFirstRunCarryShown() below would flip hasShownFirstRunCarry
+  // mid-session and the snapshot would go stale the instant AuraArrival's
+  // onSettled reads it. Mirrors Guide's own secondVisitSnapshotRef
+  // exactly (see app/(tabs)/guide/index.tsx) — this is the first use of
+  // that pattern in Depths itself. totalMeasureCount === 1 means the
+  // Measure that just completed and carried the user here was their
+  // very first ever; by a real second completion this is structurally 2
+  // (recordMeasure increments it before Depths is ever reached), so this
+  // can't accidentally replay — hasShownFirstRunCarry is the second,
+  // persisted guard regardless.
+  const firstRunCarrySnapshotRef = useRef<boolean | null>(null);
+  if (firstRunCarrySnapshotRef.current === null) {
+    firstRunCarrySnapshotRef.current = Boolean(
+      isArriving && totalMeasureCount === 1 && !hasShownFirstRunCarry
+    );
+  }
+  const showFirstRunCarry = firstRunCarrySnapshotRef.current;
+  useEffect(() => {
+    if (showFirstRunCarry) markFirstRunCarryShown();
+  }, [showFirstRunCarry]);
   // At most one nudge, for the highest-priority thing not yet found — never
   // stacked, never repeated once discovered. Only surfaced for someone who's
   // already established the core habit, not a first-timer still on Measure.
@@ -436,6 +537,9 @@ export default function DepthsScreen() {
   };
 
   const entryFadeStyle = useAnimatedStyle(() => ({ opacity: entryFade.value }));
+  const understandBloomStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: understandBloomScale.value }],
+  }));
 
   return (
     <View style={styles.root}>
@@ -489,6 +593,12 @@ export default function DepthsScreen() {
                 onSettled={() => {
                   setIsArriving(false);
                   setSkipArrival(false);
+                  if (showFirstRunCarry) {
+                    understandBloomScale.value = withSequence(
+                      withTiming(BLOOM_PEAK_SCALE, { duration: BLOOM_GROW_DURATION_MS, easing: SOFT_EASE }),
+                      withTiming(1, { duration: BLOOM_SETTLE_DURATION_MS, easing: SOFT_EASE })
+                    );
+                  }
                 }}
                 ringOnlySlugs={sphereColors}
                 sphereScores={sphereScores}
@@ -610,9 +720,44 @@ export default function DepthsScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.stack}>
-          {toolGroups.map((group) => (
-            <View key={group.groupKey} style={styles.group}>
-              <Text style={styles.groupLabel}>{t(group.labelKey)}</Text>
+          {toolGroups.map((group) => {
+            // Zone drives which visual treatment this group renders with —
+            // see docs/depths-structure-concept.md. Discover keeps the
+            // original shared row/group styles unconditionally (it's
+            // already correctly weighted per aesthetic.md's "full row
+            // weight" rule); Understand and Regulate get their own
+            // variants below.
+            const groupStyle =
+              group.zone === 'regulate' ? styles.regulateGroup
+              : group.zone === 'understand' ? styles.understandGroup
+              : styles.discoverGroup;
+            const groupLabelStyle = group.zone === 'regulate' ? styles.regulateGroupLabel : styles.groupLabel;
+            const rowStyle = group.zone === 'regulate' ? styles.regulateRow : group.zone === 'understand' ? styles.understandRow : styles.row;
+            const rowLabelStyle =
+              group.zone === 'regulate' ? styles.regulateRowLabel
+              : group.zone === 'understand' ? styles.understandRowLabel
+              : styles.rowLabel;
+
+            // Understand's own View becomes an Animated.View so the
+            // once-only first-run bloom (understandBloomStyle) can apply
+            // to it — a true no-op transform on every other render, since
+            // understandBloomScale only ever moves off 1 when
+            // showFirstRunCarry triggered it in AuraArrival's onSettled.
+            const GroupContainer = group.zone === 'understand' ? Animated.View : View;
+            const groupContainerStyle =
+              group.zone === 'understand' ? [groupStyle, understandBloomStyle] : groupStyle;
+
+            return (
+            <GroupContainer key={group.groupKey} style={groupContainerStyle}>
+              {/* The threshold marker before Regulate specifically — reads
+                  as "you are now crossing" before the label text itself,
+                  echoing how luckyDivider already sits above luckyLabel for
+                  the same "something different begins here" reason. A new,
+                  distinct style (not luckyDivider reused) so Feeling
+                  Lucky's own "alternative to the whole thing" meaning stays
+                  uncontaminated. */}
+              {group.zone === 'regulate' && <Text style={styles.regulateDivider}>· · ·</Text>}
+              <Text style={groupLabelStyle}>{t(group.labelKey)}</Text>
               {/* Same weight as "Measure again" below it, not a quieter
                   afterthought — this is the row that lets someone taste what
                   an ongoing conversation feels like. Sits ABOVE Measure
@@ -652,10 +797,14 @@ export default function DepthsScreen() {
                   history you already have, not a new reading to take — so
                   it sits directly beside it rather than in the tool groups
                   below (which are all "do something now" actions: Measure,
-                  Spill, etc). Gated the same way YourArcTeaser is
-                  (readingLog.length >= 2): the line isn't worth pointing at
-                  until there's more than one point to draw it from.
-                  Deliberately ONE label/description regardless of
+                  Spill, etc). Gated on hasEnoughReadingsForArc — the max of
+                  local readingLog and (for a signed-in, consented account)
+                  real server-side history, not local count alone: the line
+                  isn't worth pointing at until there's more than one point
+                  to draw it from, but "enough points" shouldn't miss a real
+                  account's history just because this device hasn't locally
+                  taken 2+ Measures itself (a fresh install, a second
+                  device). Deliberately ONE label/description regardless of
                   isSubscribed — the row itself never tries to preview which
                   version you'll get (that read as one row being "the
                   upsell" and the other being "the plain feature," when
@@ -663,7 +812,7 @@ export default function DepthsScreen() {
                   entirely on the other side of the tap: your-arc-preview
                   for anyone not subscribed, the full your-arc experience
                   for anyone who is. */}
-              {group.groupKey === 'findOutWhereYouAre' && readingLog.length >= 2 && (
+              {group.groupKey === 'findOutWhereYouAre' && hasEnoughReadingsForArc && (
                 <Pressable
                   style={styles.row}
                   onPress={() =>
@@ -674,16 +823,38 @@ export default function DepthsScreen() {
                   <Text style={styles.rowDescription}>{t('depths.yourArcDescription')}</Text>
                 </Pressable>
               )}
-              {group.tools.map((tool) => (
-                <Pressable key={tool.key} style={styles.row} onPress={() => router.push(tool.route)}>
-                  <Text style={styles.rowLabel}>
-                    {tool.key === 'measure' && currentResult ? t('depths.measureAgain') : t(tool.labelKey)}
-                  </Text>
-                  <Text style={styles.rowDescription}>{t(tool.descriptionKey)}</Text>
-                </Pressable>
-              ))}
-            </View>
-          ))}
+              {group.tools.map((tool) => {
+                // "Today's-walk" breadcrumb (see docs/depths-structure-concept.md):
+                // a tool row visited today quietly recedes one step down the
+                // text-opacity ladder, so the space reflects where taps have
+                // already gone today without claiming what that means. Measure
+                // is deliberately exempt — this guard both skips recording its
+                // visit and skips dimming it, keeping it unconditionally at
+                // full prominence per RULES.md's "free core, paid depth."
+                const isBreadcrumbTool = tool.key !== 'measure';
+                const visitedToday =
+                  isBreadcrumbTool && isToolVisitedToday(toolLastVisitedAt, tool.key as BreadcrumbTool);
+                const visitedTodayStyle =
+                  group.zone === 'understand' ? styles.understandRowLabelVisitedToday : styles.rowLabelVisitedToday;
+                return (
+                  <Pressable
+                    key={tool.key}
+                    style={rowStyle}
+                    onPress={() => {
+                      if (isBreadcrumbTool) markToolVisited(tool.key as BreadcrumbTool);
+                      router.push(tool.route);
+                    }}
+                  >
+                    <Text style={[rowLabelStyle, visitedToday && visitedTodayStyle]}>
+                      {tool.key === 'measure' && currentResult ? t('depths.measureAgain') : t(tool.labelKey)}
+                    </Text>
+                    <Text style={styles.rowDescription}>{t(tool.descriptionKey)}</Text>
+                  </Pressable>
+                );
+              })}
+            </GroupContainer>
+            );
+          })}
 
           {discoveryNudge && (
             <Pressable style={styles.discoveryNudge} onPress={() => router.push(discoveryNudge.route)}>
@@ -1417,9 +1588,34 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
   stack: {},
-  group: {
+  // Three zones, one continuous scroll, differentiated by position/size/
+  // weight/space alone — never color beyond the existing ivory-opacity
+  // ladder, never icons or cards (see docs/design/aesthetic.md). See
+  // docs/depths-structure-concept.md for the full reasoning: Discover
+  // stays exactly as it already was (it's already correctly weighted per
+  // the "full row weight" rule below), Understand becomes a near, quiet
+  // margin, Regulate becomes a real destination you visibly travel to.
+  discoverGroup: {
     marginBottom: spacing[8],
     gap: spacing[3],
+  },
+  // Same internal rhythm as Discover — rows within Understand don't need
+  // to feel cramped — but a smaller bottom margin, since Understand
+  // shouldn't itself introduce distance before Regulate. The real gap
+  // lives on regulateGroup's own marginTop, not here.
+  understandGroup: {
+    marginBottom: spacing[6],
+    gap: spacing[3],
+  },
+  // The one real distance move on this screen — REGULATE_ZONE_GAP is
+  // deliberately far beyond anything else on Depths, marking this as a
+  // destination arrived at, not a continuation of the list above it.
+  // marginBottom matches discoverGroup's so only the space ABOVE Regulate
+  // reads as unusual, not the space below it too.
+  regulateGroup: {
+    marginTop: REGULATE_ZONE_GAP,
+    marginBottom: spacing[8],
+    gap: spacing[4],
   },
   groupLabel: {
     color: colors.text.muted,
@@ -1428,11 +1624,47 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.wide,
     textTransform: 'uppercase',
   },
+  // A real size step up from the shared groupLabel — still well short of
+  // a heading (hierarchy is carried by size, not weight, per
+  // aesthetic.md) — so the label itself already signals "you've arrived
+  // somewhere," before a single row underneath it is read.
+  regulateGroupLabel: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    letterSpacing: letterSpacings.wide,
+    textTransform: 'uppercase',
+  },
+  // The "· · ·" glyph idiom already established for Feeling Lucky
+  // (luckyDivider below), reused here for the same "threshold before
+  // something different" meaning — declared as its own style rather than
+  // reusing luckyDivider verbatim, so Feeling Lucky's own "alternative to
+  // the whole thing" meaning stays uncontaminated by a second use.
+  regulateDivider: {
+    color: colors.text.faint,
+    fontSize: fontSizes.sm,
+    letterSpacing: letterSpacings.wide,
+    textAlign: 'center',
+    marginBottom: spacing[4],
+  },
   // No border, no fill — separated from its neighbors by space and by the
   // group label above it, the same way onboarding and the picker never use
   // a bordered box to mean "this is a thing you can tap."
   row: {
     paddingVertical: spacing[3],
+  },
+  // Quieter than a standard row via reduced padding and one step down the
+  // existing ivory-opacity ladder on the label (see understandRowLabel) —
+  // Understand is reference, not a practice, so a visit here shouldn't
+  // carry the same weight as Discover's "do something now" actions.
+  understandRow: {
+    paddingVertical: spacing[2],
+  },
+  // More internal padding than a standard row — rows here should read as
+  // more substantial once you've made the trip to reach them, echoing
+  // "arriving somewhere" rather than "more of the same list."
+  regulateRow: {
+    paddingVertical: spacing[4],
   },
   // Ivory, not the reading's level color — color on this screen means "this
   // is your reading" (the headline, aura, wheel rows); an action you can tap
@@ -1442,6 +1674,29 @@ function makeStyles(colors: Colors) {
   // light weight below it is the tap affordance, the same register the
   // philosopher-picker and Levels wheel use (position/type, never a glyph).
   rowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.md },
+  // One step down the existing ivory-opacity ladder (text.secondary, not a
+  // new hue) — the same lever discoveryNudge/luckyDescription already use
+  // elsewhere on this screen for "notable but quieter," not a departure
+  // from the app's one-accent-color rule.
+  understandRowLabel: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.md },
+  // A real size step up from the standard rowLabel (base=16 vs md=15) —
+  // matches the "bigger reads as more substantial" idiom luckyLabel
+  // already establishes elsewhere on this screen (base against the
+  // standard rows' md).
+  regulateRowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.base },
+  // "Today's-walk" breadcrumb (see docs/depths-structure-concept.md) — the
+  // one visual expression of "you've been here today," a single step down
+  // the existing ivory-opacity ladder, never a new token. Applied as a
+  // style-array override on top of rowLabel/regulateRowLabel (both start at
+  // accent.ivory), so it composes with rather than replaces each zone's own
+  // weight. Never applied to Measure's row — see the tool.key !== 'measure'
+  // guard at the call site — keeping Measure unconditionally at full
+  // prominence per RULES.md's "free core, paid depth."
+  rowLabelVisitedToday: { color: colors.text.secondary },
+  // Same idea, one further step down — understandRowLabel already sits at
+  // text.secondary by default, so reusing rowLabelVisitedToday here would
+  // be an invisible no-op against Levels' own resting color.
+  understandRowLabelVisitedToday: { color: colors.text.muted },
   rowDescription: {
     color: colors.text.secondary,
     fontFamily: fonts.light,

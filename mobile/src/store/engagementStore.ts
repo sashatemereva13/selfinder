@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { getRelativeTimeBucket } from '../utils/relativeTime';
 
 const STORAGE_KEY = 'selfinder_engagement_profile';
 // A rough, always-available signal for tone/copy decisions — distinct from
@@ -13,6 +14,14 @@ const HEAVY_REGISTER_THRESHOLD = 200;
 const SESSION_GAP_MS = 20 * 60 * 1000; // 20 minutes — a real new sitting-down, not a background blip
 
 export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill' | 'breathing';
+
+// Depths' own tool-row keys (see buildToolGroups in depths/index.tsx) that
+// the "today's-walk" breadcrumb tracks — deliberately its own union, not a
+// reuse of DiscoverableFeature (that type's casing, 'tuneIn', doesn't match
+// depths/index.tsx's actual Tool.key literals, e.g. 'tunein'), and
+// deliberately excludes 'measure': Measure must never visually recede, so
+// its visits are never recorded at all — see markToolVisited.
+export type BreadcrumbTool = 'spill' | 'levels' | 'tunein' | 'breathing';
 
 interface RecentReading {
   score: number;
@@ -39,7 +48,21 @@ interface EngagementState {
   recentReadings: RecentReading[];
   discovered: Record<DiscoverableFeature, boolean>;
   hasShownSecondVisit: boolean;
+  // Once-only, first-ever-Measure teaching moment on Depths (see
+  // docs/depths-structure-concept.md) — the Understand zone briefly
+  // "blooms" to point toward it, never again after the first time.
+  hasShownFirstRunCarry: boolean;
   talkAboutItCount: number;
+  // Per-tool "last opened" timestamp, ISO string — used only to derive a
+  // same-calendar-day "visited today" read on Depths (see
+  // getRelativeTimeBucket in relativeTime.ts, isToolVisitedToday below).
+  // Not a "visited ever" flag (that's `discovered`, a different,
+  // permanent-forever signal for a different purpose) and never itself
+  // read as true/false — always re-derived against `new Date()` at render
+  // time so it silently self-resets at local midnight with no reset code
+  // required. Measure is deliberately never a key here — see
+  // markToolVisited.
+  toolLastVisitedAt: Partial<Record<BreadcrumbTool, string>>;
 }
 
 interface EngagementStore extends EngagementState {
@@ -54,7 +77,9 @@ interface EngagementStore extends EngagementState {
   recordMeasure: (score: number, levelName: string, savedAt: string) => Promise<void>;
   markDiscovered: (feature: DiscoverableFeature) => Promise<void>;
   markSecondVisitShown: () => Promise<void>;
+  markFirstRunCarryShown: () => Promise<void>;
   recordTalkAboutIt: () => Promise<void>;
+  markToolVisited: (tool: BreadcrumbTool) => Promise<void>;
   resetAll: () => Promise<void>;
 }
 
@@ -65,7 +90,9 @@ const DEFAULT_STATE: EngagementState = {
   recentReadings: [],
   discovered: { levels: false, tuneIn: false, spill: false, breathing: false },
   hasShownSecondVisit: false,
+  hasShownFirstRunCarry: false,
   talkAboutItCount: 0,
+  toolLastVisitedAt: {},
 };
 
 function readState(raw: string | null): EngagementState {
@@ -84,7 +111,15 @@ function readState(raw: string | null): EngagementState {
         breathing: !!parsed.discovered?.breathing,
       },
       hasShownSecondVisit: !!parsed.hasShownSecondVisit,
+      hasShownFirstRunCarry: !!parsed.hasShownFirstRunCarry,
       talkAboutItCount: typeof parsed.talkAboutItCount === 'number' ? parsed.talkAboutItCount : 0,
+      toolLastVisitedAt: {
+        spill: typeof parsed.toolLastVisitedAt?.spill === 'string' ? parsed.toolLastVisitedAt.spill : undefined,
+        levels: typeof parsed.toolLastVisitedAt?.levels === 'string' ? parsed.toolLastVisitedAt.levels : undefined,
+        tunein: typeof parsed.toolLastVisitedAt?.tunein === 'string' ? parsed.toolLastVisitedAt.tunein : undefined,
+        breathing:
+          typeof parsed.toolLastVisitedAt?.breathing === 'string' ? parsed.toolLastVisitedAt.breathing : undefined,
+      },
     };
   } catch {
     return DEFAULT_STATE;
@@ -163,9 +198,30 @@ export const useEngagementStore = create<EngagementStore>((set, get) => ({
     await persist(next);
   },
 
+  markFirstRunCarryShown: async () => {
+    const current = get();
+    if (current.hasShownFirstRunCarry) return;
+    const next: EngagementState = { ...current, hasShownFirstRunCarry: true };
+    set(next);
+    await persist(next);
+  },
+
   recordTalkAboutIt: async () => {
     const current = get();
     const next: EngagementState = { ...current, talkAboutItCount: current.talkAboutItCount + 1 };
+    set(next);
+    await persist(next);
+  },
+
+  markToolVisited: async (tool) => {
+    // Unlike markDiscovered there's no "already true, skip" early-return —
+    // this value is a timestamp meant to be overwritten on every visit, not
+    // a one-time flag.
+    const current = get();
+    const next: EngagementState = {
+      ...current,
+      toolLastVisitedAt: { ...current.toolLastVisitedAt, [tool]: new Date().toISOString() },
+    };
     set(next);
     await persist(next);
   },
@@ -202,4 +258,15 @@ export function getVibrationalRegister(recentReadings: RecentReading[]): 'heavy'
   if (recentReadings.length === 0) return null;
   const avg = recentReadings.reduce((sum, r) => sum + r.score, 0) / recentReadings.length;
   return avg < HEAVY_REGISTER_THRESHOLD ? 'heavy' : 'light';
+}
+
+// The "today's-walk" breadcrumb's one read: has this tool been opened
+// today (local calendar day)? Derived fresh every call, never persisted as
+// a boolean — see toolLastVisitedAt's own comment for why.
+export function isToolVisitedToday(
+  toolLastVisitedAt: Partial<Record<BreadcrumbTool, string>>,
+  tool: BreadcrumbTool
+): boolean {
+  const ts = toolLastVisitedAt[tool];
+  return ts !== undefined && getRelativeTimeBucket(ts) === 'today';
 }

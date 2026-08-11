@@ -12,8 +12,10 @@ import { spacing, radius } from '../../../src/theme/spacing';
 import { useReadingColumnWidth } from '../../../src/theme/responsive';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../../../src/store/localeStore';
+import { useReminderStore } from '../../../src/store/reminderStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import { useMeasureStore } from '../../../src/store/measureStore';
+import { useEngagementStore } from '../../../src/store/engagementStore';
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
@@ -56,8 +58,10 @@ export default function YouScreen() {
   const resetSelection = usePhilosopherStore((s) => s.resetSelection);
   const resetGuideChats = useGuideChatStore((s) => s.resetAll);
   const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
+  const resetEngagement = useEngagementStore((s) => s.resetAll);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
+  const rescheduleReminderWindow = useReminderStore((s) => s.rescheduleWindow);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
 
@@ -66,6 +70,13 @@ export default function YouScreen() {
     resetGuideChats();
     resetSavedResults();
     resetSelection();
+    // Also resets totalMeasureCount/hasShownSecondVisit/
+    // hasShownFirstRunCarry — without this, both the second-visit special
+    // copy and the first-run Understand bloom stayed permanently
+    // disqualified after a reset, since they gate on totalMeasureCount
+    // === 1 and their own once-only flags, none of which this button
+    // used to touch.
+    resetEngagement();
     setResetDone(true);
     setTimeout(() => setResetDone(false), 2000);
   };
@@ -165,7 +176,15 @@ export default function YouScreen() {
                       styles.languageOption,
                       locale === option && { backgroundColor: colors.accent.buttonFill },
                     ]}
-                    onPress={() => setLocale(option)}
+                    onPress={() => {
+                      setLocale(option);
+                      // Already-scheduled reminder notifications bake their
+                      // body text in at schedule time (see dailyReminder.ts),
+                      // so a language switch needs a real reschedule, not
+                      // just the next cold-start top-up, or pending
+                      // notifications keep firing in the old language.
+                      if (philosopher) rescheduleReminderWindow(philosopher);
+                    }}
                   >
                     <Text
                       style={[

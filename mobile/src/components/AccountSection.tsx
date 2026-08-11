@@ -471,9 +471,26 @@ function LoggedInAccount({
           </Text>
         </Pressable>
       </View>
+      {/* This one toggle actually gates several things (readings, Guide
+          conversations saved via flushPendingSave, kept Spill entries) —
+          previously only the label above named readings specifically,
+          leaving Guide's own silent best-effort save (see
+          guideChatStore.ts) with no explanation anywhere in the app of
+          what turns it on. */}
+      <Text style={styles.consentDescription}>{t('account.saveDataDescription')}</Text>
       {consentTimestamp && (
         <Text style={styles.consentTimestamp}>
           {consentGiven ? t('account.consentGranted') : t('account.consentWithdrawn')} {formatDate(consentTimestamp, locale)}
+        </Text>
+      )}
+
+      {/* The only in-app confirmation a real subscriber has that their
+          entitlement is active — previously subscription.active was
+          checked (useIsSubscribed) but never SHOWN anywhere, so even a
+          real subscriber had no way to confirm it from within the app. */}
+      {!loadingProfile && (
+        <Text style={styles.subscriptionStatus}>
+          {profile?.subscription?.active ? t('account.selfinderPlusActive') : t('account.selfinderPlusInactive')}
         </Text>
       )}
 
@@ -799,6 +816,19 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
   consentTimestamp: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: -spacing[1] },
+  consentDescription: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+    marginTop: -spacing[1],
+  },
+  subscriptionStatus: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    marginTop: spacing[3],
+  },
   dataSection: {
     gap: spacing[3],
     paddingTop: spacing[3],
