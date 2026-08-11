@@ -13,6 +13,7 @@ import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useLocaleStore } from '../../../../src/store/localeStore';
+import { AnimatedNatureSymbol, NatureSymbolId } from '../../../../src/components/NatureSymbol';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
@@ -66,7 +67,8 @@ export default function LevelScreen() {
     );
   }
 
-  const accentColor = `rgb(${levelColors[level.slug] ?? colors.accent.ivoryRgb})`;
+  const accentRgb = levelColors[level.slug] ?? colors.accent.ivoryRgb;
+  const accentColor = `rgb(${accentRgb})`;
 
   return (
     <ScrollView
@@ -83,6 +85,14 @@ export default function LevelScreen() {
       <Text style={[styles.kicker, { color: accentColor }]}>{t('level.levelScore', { score: level.score })}</Text>
       <Text style={styles.title}>{level.title}</Text>
       <Text style={[styles.frame, { borderLeftColor: accentColor }]}>{level.frame}</Text>
+
+      {/* A visual way in for someone who doesn't yet have words for what
+          they feel — a natural-event shape (a storm, still water, a
+          sunrise) to recognize alongside the philosopher's own summary
+          above. See docs/measure-experience-concept.md §4/§5. */}
+      <View style={styles.natureSymbol}>
+        <AnimatedNatureSymbol id={level.slug as NatureSymbolId} rgb={accentRgb} size={160} />
+      </View>
 
       {level.signals && (
         <View style={styles.signals}>
@@ -174,6 +184,7 @@ function makeStyles(colors: Colors) {
     borderLeftWidth: 2,
     marginBottom: spacing[5],
   },
+  natureSymbol: { alignItems: 'center', marginBottom: spacing[5] },
   signals: {
     gap: spacing[3],
     marginBottom: spacing[5],

@@ -119,26 +119,40 @@ export default function CardsScreen() {
         <Text style={styles.kind}>{t(card.kind === 'statement' ? 'cards.receive' : 'cards.notice')}</Text>
         <Text style={[styles.name, { color: `rgb(${cardRgb})` }]}>{name}</Text>
         <Text style={styles.line}>{line}</Text>
-
-        <View style={styles.saveWrap}>
-          <SaveMessageAction message={line} accentRgb={cardRgb} />
-        </View>
       </Animated.View>
 
-      {/* Next steps, outside the card plane — Talk about it / Write about
-          it are real, equally-weighted rows (same register as Depths'
-          own next-step rows); Draw again is a quiet reset, not a peer
-          option, so it drops to Feeling-Lucky's low-weight treatment
-          behind its own divider — see docs/design/aesthetic.md, "rows
-          with different jobs don't share a shelf just because they're
-          nearby." */}
-      <View style={styles.actionsWrap}>
+      {/* Save/share is a meta-action about the card, not part of the card
+          itself — same reasoning as Depths' own headline (see
+          depths/index.tsx), which places SaveMessageAction directly after
+          the content, never inside a bordered plane. Sits right under the
+          card, ahead of the next-step actions below. */}
+      <View style={styles.saveWrap}>
+        <SaveMessageAction message={line} accentRgb={cardRgb} />
+      </View>
+
+      {/* Talk about it / Write about it are the real choice here — two
+          genuine alternatives to each other, so they sit side by side in
+          one row (equal width, equal weight) rather than stacked, which
+          read as an undifferentiated list even though the color/size
+          already implied a tier. Draw again is a quiet reset, not a third
+          peer option, so it drops well below its own divider — see
+          docs/design/aesthetic.md, "rows with different jobs don't share
+          a shelf just because they're nearby." When there's no
+          philosopher set, Write about it centers alone rather than
+          leaving a lopsided half-row. */}
+      <View style={[styles.actionsWrap, !philosopher && styles.actionsWrapSingle]}>
         {philosopher && (
-          <Pressable style={styles.actionRow} onPress={handleTalkAboutIt}>
+          <Pressable style={styles.actionCol} onPress={handleTalkAboutIt}>
             <Text style={styles.actionLabel}>{t('cards.talkAboutIt', { name: philosopher.name })}</Text>
           </Pressable>
         )}
-        <Pressable style={styles.actionRow} onPress={handleSpillAboutIt}>
+        <Pressable
+          style={[
+            philosopher ? styles.actionCol : styles.actionColSingle,
+            philosopher && styles.actionColDivider,
+          ]}
+          onPress={handleSpillAboutIt}
+        >
           <Text style={styles.actionLabel}>{t('cards.spillAboutIt')}</Text>
         </Pressable>
       </View>
@@ -192,8 +206,40 @@ function makeStyles(colors: Colors) {
     maxWidth: 280,
   },
   saveWrap: { alignItems: 'center', marginTop: spacing[6] },
-  actionsWrap: { alignItems: 'center', marginTop: spacing[8], gap: spacing[3] },
-  actionRow: { paddingVertical: spacing[3] },
+  // Two real alternatives, side by side — equal width so neither reads as
+  // the "more correct" option, with a vertical rule between them (same
+  // "quiet, structural, not decorative" divider register as
+  // drawAgainDivider's dots) instead of just a gap, so the pairing itself
+  // is visible, not implied by proximity alone.
+  actionsWrap: {
+    flexDirection: 'row',
+    width: '100%',
+    maxWidth: 380,
+    marginTop: spacing[8],
+  },
+  actionsWrapSingle: { justifyContent: 'center' },
+  actionCol: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  // No philosopher set — Write about it renders alone, so it shouldn't
+  // stretch to fill the row's full width the way a real paired column
+  // would; a plain centered block instead.
+  actionColSingle: {
+    alignItems: 'center',
+    paddingVertical: spacing[3],
+    paddingHorizontal: spacing[3],
+  },
+  // Only applied to the second column, and only when a first column
+  // actually exists (philosopher set) — a leading rule before the very
+  // first action, or a stray rule on a lone centered action, would both
+  // read as a mistake rather than a deliberate pairing.
+  actionColDivider: {
+    borderLeftWidth: 1,
+    borderLeftColor: colors.bg.border,
+  },
   actionLabel: {
     color: colors.text.secondary,
     fontFamily: fonts.medium,

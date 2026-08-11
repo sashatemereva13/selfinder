@@ -8,7 +8,7 @@ import Animated, {
   withDelay,
   Easing,
 } from 'react-native-reanimated';
-import { buildCardSymbolLayers, CardSymbolId } from './CardSymbol';
+import { buildCardSymbolLayers, CardSymbolId, CardSymbolLayers } from './CardSymbol';
 
 // Draw-in animation for a drawn card — the main trace strokes itself into
 // existence (per docs/design/aesthetic.md: "things gather, condense, and
@@ -23,8 +23,11 @@ import { buildCardSymbolLayers, CardSymbolId } from './CardSymbol';
 // each card's path string (~1-2.5 SVG units between points across every
 // generator in CardSymbol.tsx) rather than sampling the `d` string
 // itself — cheap, and accurate enough for a stroke-dashoffset draw where
-// the point is the reveal timing, not pixel-exact length.
-function estimatePathLength(d: string): number {
+// the point is the reveal timing, not pixel-exact length. Exported so
+// DepthsSpiral.tsx (a second `M`/`L`-polyline strokeDashoffset consumer,
+// see docs/depths-structure-concept.md) can reuse the same summation
+// instead of duplicating it.
+export function estimatePathLength(d: string): number {
   if (!d) return 0;
   const points = d
     .replace(/^M/, '')
@@ -51,21 +54,32 @@ const GLOW_FADE_DURATION = 900;
 const EMPHASIS_DELAY = 1550;
 const EMPHASIS_DURATION = 450;
 
-export function AnimatedCardSymbol({
+// Generic draw-in shell for any wireframe symbol set built the way
+// CardSymbol.tsx's are (a `buildLayers(id, color)` factory returning
+// CardSymbolLayers) — Cards was the first consumer, NatureSymbol.tsx (level
+// pages' natural-event imagery) is the second. `gradientKey` namespaces the
+// core-glow SVG <Defs> id so two different symbol families never collide if
+// an `id` string is ever coincidentally shared across them.
+export function AnimatedSymbol<Id extends string>({
   id,
   rgb,
   size = 120,
+  buildLayers,
+  gradientKey,
 }: {
-  id: CardSymbolId;
+  id: Id;
   rgb: string;
   size?: number;
+  buildLayers: (id: Id, color: string) => CardSymbolLayers;
+  gradientKey?: string;
 }) {
   const color = `rgb(${rgb})`;
   const cx = 100;
   const cy = 100;
+  const gradientId = `anim-${gradientKey ?? id}-core`;
 
   const { primaryPath, primaryStrokeWidth, rest, emphasis } = useMemo(
-    () => buildCardSymbolLayers(id, color),
+    () => buildLayers(id, color),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [id, rgb],
   );
@@ -117,12 +131,12 @@ export function AnimatedCardSymbol({
       <Animated.View style={[{ position: 'absolute', width: size, height: size }, glowStyle]}>
         <Svg width={size} height={size} viewBox="0 0 200 200">
           <Defs>
-            <RadialGradient id={`anim-card-core-${id}`} cx="50%" cy="50%" r="50%">
+            <RadialGradient id={gradientId} cx="50%" cy="50%" r="50%">
               <Stop offset="0" stopColor={color} stopOpacity={0.18} />
               <Stop offset="1" stopColor={color} stopOpacity={0} />
             </RadialGradient>
           </Defs>
-          <Circle cx={cx} cy={cy} r={92} fill={`url(#anim-card-core-${id})`} />
+          <Circle cx={cx} cy={cy} r={92} fill={`url(#${gradientId})`} />
         </Svg>
       </Animated.View>
 
@@ -153,4 +167,18 @@ export function AnimatedCardSymbol({
       )}
     </Animated.View>
   );
+}
+
+// Thin, backward-compatible wrapper — every existing Cards call site keeps
+// working unchanged.
+export function AnimatedCardSymbol({
+  id,
+  rgb,
+  size = 120,
+}: {
+  id: CardSymbolId;
+  rgb: string;
+  size?: number;
+}) {
+  return <AnimatedSymbol id={id} rgb={rgb} size={size} buildLayers={buildCardSymbolLayers} gradientKey={`card-${id}`} />;
 }

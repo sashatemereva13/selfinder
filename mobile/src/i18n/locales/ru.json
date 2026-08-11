@@ -135,7 +135,7 @@
     "nudgeBreathing": "Ещё не пробовали Дыхание? Настройте своё состояние с помощью дыхания →",
     "feelingLuckyLabel": "Послание на этот момент",
     "feelingLuckyDescription": "Не ищите ответ — позвольте ему самому найти вас",
-    "cardsLabel": "Вытянуть карту",
+    "cardsLabel": "Вытянуть символ",
     "cardsDescription": "Возможно, за этим кроется что-то ещё"
   },
   "cards": {
@@ -143,7 +143,7 @@
     "receive": "Прими",
     "notice": "Заметь",
     "talkAboutIt": "Обсудить это с {{name}} →",
-    "talkAboutItMessage": "Я только что вытянул(а) карту — «{{name}}»: «{{line}}» Можем это обсудить?",
+    "talkAboutItMessage": "Я только что вытянул(а) символ — «{{name}}»: «{{line}}» Можем это обсудить?",
     "spillAboutIt": "Написать об этом →"
   },
   "moon": {
@@ -247,7 +247,8 @@
     "readingYourField": "{{name}} считывает ваше поле…",
     "tryAgain": "Попробовать ещё раз",
     "inputPlaceholder": "Напишите свой ответ или спросите «почему»…",
-    "startOver": "Начать заново"
+    "startOver": "Начать заново",
+    "tapToContinue": "Коснитесь, чтобы продолжить"
   },
   "measureIntro": {
     "kicker": "Проверка состояния",

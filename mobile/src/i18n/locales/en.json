@@ -135,7 +135,7 @@
     "nudgeBreathing": "Haven't tried Breathing yet? Shift your state through breath →",
     "feelingLuckyLabel": "A message for right now",
     "feelingLuckyDescription": "Skip finding out — let something find you instead",
-    "cardsLabel": "Draw a card",
+    "cardsLabel": "Draw a symbol",
     "cardsDescription": "There may be something underneath this"
   },
   "cards": {
@@ -143,7 +143,7 @@
     "receive": "Receive",
     "notice": "Notice",
     "talkAboutIt": "Talk to {{name}} about it →",
-    "talkAboutItMessage": "I drew a card just now — {{name}}: \"{{line}}\" Can we talk about it?",
+    "talkAboutItMessage": "I drew a symbol just now — {{name}}: \"{{line}}\" Can we talk about it?",
     "spillAboutIt": "Write about it instead →"
   },
   "moon": {
@@ -246,7 +246,8 @@
     "readingYourField": "{{name}} is reading your field…",
     "tryAgain": "Try again",
     "inputPlaceholder": "Type your answer, or ask why…",
-    "startOver": "Start over"
+    "startOver": "Start over",
+    "tapToContinue": "Tap anywhere to continue"
   },
   "measureIntro": {
     "kicker": "Frequency Check-In",

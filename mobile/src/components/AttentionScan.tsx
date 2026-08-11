@@ -1,4 +1,5 @@
 import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Animated, {
   useSharedValue,
@@ -9,6 +10,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { AuraFigure, AURA_NEUTRAL_COLOR, getAuraFigureMetrics, auraBodyToPixel } from './AuraFigure';
 import { useThemeColors } from '../theme/useThemeColors';
+import { useThemeStore } from '../store/themeStore';
 import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, lineHeights } from '../theme/typography';
 import { spacing } from '../theme/spacing';
@@ -68,7 +70,9 @@ interface AttentionScanProps {
 // sequences) where changing that render contract risks side effects
 // elsewhere.
 export function AttentionScan({ sphere, phrase, durationMs, onComplete }: AttentionScanProps) {
+  const { t } = useTranslation();
   const colors = useThemeColors();
+  const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
   const translateX = useSharedValue(0);
@@ -134,8 +138,11 @@ export function AttentionScan({ sphere, phrase, durationMs, onComplete }: Attent
       );
     }
 
-    const timer = setTimeout(onComplete, durationMs);
-    return () => clearTimeout(timer);
+    // No auto-dismiss timer — the scan holds until tapped. A body/mind
+    // beat that vanishes on its own before someone's finished noticing it
+    // defeats the point (docs/measure-experience-concept.md §1); the
+    // motion still settles on its own timeline, but moving on is the
+    // user's own choice, not a countdown.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sphere, durationMs]);
 
@@ -151,7 +158,13 @@ export function AttentionScan({ sphere, phrase, durationMs, onComplete }: Attent
   return (
     <Pressable style={styles.wrap} onPress={onComplete}>
       <View style={{ width: METRICS.width, height: METRICS.height }}>
-        <AuraFigure neutral size={AURA_SIZE} showDots={false} uid="scan" />
+        <AuraFigure
+          neutral
+          size={AURA_SIZE}
+          showDots={false}
+          uid="scan"
+          neutralColor={theme === 'light' ? colors.accent.ivory : AURA_NEUTRAL_COLOR}
+        />
         <Animated.View
           pointerEvents="none"
           style={[
@@ -168,6 +181,7 @@ export function AttentionScan({ sphere, phrase, durationMs, onComplete }: Attent
         />
       </View>
       {phrase && <Text style={styles.phrase}>{phrase}</Text>}
+      <Text style={styles.tapHint}>{t('measure.tapToContinue')}</Text>
     </Pressable>
   );
 }
@@ -188,6 +202,13 @@ function makeStyles(colors: Colors) {
       textAlign: 'center',
       marginTop: spacing[3],
       paddingHorizontal: spacing[6],
+    },
+    tapHint: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      textAlign: 'center',
+      marginTop: spacing[5],
     },
   });
 }

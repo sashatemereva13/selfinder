@@ -61,6 +61,7 @@ import {
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { track } from '../../../src/utils/analytics';
 import { formatRelativeDay } from '../../../src/utils/relativeTime';
+import { DepthsSpiral, PREFIX_WALK_KEYS, type SpiralPoint, type SpiralSlotKey } from '../../../src/components/DepthsSpiral';
 
 // Pre-baked assets, not the live AuraFigure component — react-native-svg's
 // filter engine doesn't reproduce the same result on-device, leaving the
@@ -76,6 +77,13 @@ const AURA_METRICS = getAuraFigureMetrics(AURA_DISPLAY_SIZE);
 // everything below it (the level name, the sphere buttons) started
 // overlapping the rings' own lower half instead of clearing them.
 const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
+// The spiral's own canvas — large enough that its innermost turn clears
+// the aura/ring-field entirely (DepthsSpiral's own INNER_CLEARANCE_RATIO
+// handles the exact clamp) and its outermost point stays inside a real
+// 390px phone's content budget (columnWidth minus horizontal padding).
+// Centered on the same point AuraField/AuraWithDots already center on,
+// via the shared auraSpiralWrap/spiralOverlay styles below.
+const SPIRAL_SIZE = 320;
 
 // Same slow-decelerate easing as onboarding's own "gather, condense,
 // become" motion (see app/onboarding/index.tsx's SOFT_EASE) — reused here
@@ -83,15 +91,6 @@ const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
 // Depths feels like the same hand as the very first bloom-in, not a
 // separate, unrelated animation system.
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
-// The one deliberately-oversized gap on this screen — marks Regulate
-// (Tune In, Breathing) as a real departure from the ring, not more list.
-// Don't reuse this value elsewhere, or it stops reading as unique. See
-// docs/depths-structure-concept.md for why Regulate specifically gets
-// this treatment and Understand doesn't: Regulate is the one real
-// practice among the three zones (time passes, you're meant to be
-// different after), so the distance itself is meant to do honest work —
-// it's farther because arriving there asks more of you, not decoration.
-const REGULATE_ZONE_GAP = 130;
 // PHASE B — the reveal animation for the concentric-rings field (see
 // AuraField.tsx for why this replaced the earlier 17-dot wheel entirely).
 // Two acts, same discipline as the wheel version: suspense before payoff,
@@ -136,18 +135,6 @@ const COLOR_START_MS = ALL_RINGS_GROWN_MS + ANTICIPATION_DURATION_MS;
 const LAST_RING_COLOR_SETTLED_MS = COLOR_START_MS + (RING_COUNT - 1) * RING_COLOR_STAGGER_MS + RING_COLOR_DURATION_MS;
 const CONTENT_DELAY_MS = Math.max(LAST_RING_COLOR_SETTLED_MS, COLOR_START_MS + COLOR_SETTLE_DURATION_MS);
 
-// Understand's one-time first-run bloom (see showFirstRunCarry) — grow
-// beat, then settle beat. Timed off CONTENT_DURATION_MS's own scale
-// rather than an arbitrary new number, since this plays right as that
-// same content is finishing its reveal — it should read as part of the
-// same arrival settling, not a separate, later event with its own pace.
-const BLOOM_GROW_DURATION_MS = CONTENT_DURATION_MS * 0.5;
-const BLOOM_SETTLE_DURATION_MS = CONTENT_DURATION_MS;
-// Emphasis, not a jump-scare — subtle enough to read as "this grew a
-// little," never enough to shift surrounding rows' perceived weight or
-// look like a bug/glitch. TUNE VISUALLY against a real screenshot.
-const BLOOM_PEAK_SCALE = 1.08;
-
 // Order for the four sphere buttons under the ring — mind first, then
 // spirit, heart, body.
 const SPHERE_DISPLAY_ORDER: Sphere[] = ['mind', 'spirit', 'heart', 'body'];
@@ -166,65 +153,22 @@ const DISCOVERY_NUDGES: { feature: DiscoverableFeature; labelKey: string; route:
 
 type Tool = { key: string; labelKey: string; descriptionKey: string; route: Href };
 
-// Grouped (rather than one flat stack) so the sequence reads as three moves —
-// find out, understand, shift — instead of six equally-weighted options.
-// Spill is deliberately absent for a first-time user — as a plain
-// equal-weight alternative to Measure it went unused, since nothing ever
-// signaled *when* to reach for it. It stays discovered only, not offered,
-// through its two specific entry points (a quiet link on Measure's own entry
-// screen — the actual decision point between structured and unstructured —
-// and a rare, philosopher-triggered invitation in Guide when someone's
-// message reads as needing to vent). But once someone has actually tried it
-// (spillDiscovered), the gap that reasoning was protecting against no longer
-// exists — they already know what it's for, so hiding it again only costs
-// them a shortcut back to something they've chosen before. It's appended
-// after Measure, not given equal top billing, so first-time framing (Measure
-// is the way in) stays intact for everyone who hasn't found Spill yet.
-type Zone = 'discover' | 'understand' | 'regulate';
-
-// groupKey is a stable identifier used for render logic (e.g. "only the
-// first group gets the Talk about it / Your arc rows") — labelKey is what
-// actually gets translated for display. These used to be the same string
-// (group.label === 'Find out where you are'), which broke the moment that
-// label needed to render in Russian instead of English. zone is a separate,
-// additive field (not a replacement for groupKey) that drives which visual
-// treatment a group renders with — see docs/depths-structure-concept.md:
-// the three groups aren't just labeled sections, they're territory at
-// different distances from the ring, and zone is what the render loop
-// below reads to pick discoverGroup/understandGroup/regulateGroup (and
-// their row-style counterparts) rather than one shared `group` style.
-function buildToolGroups(spillDiscovered: boolean): { groupKey: string; labelKey: string; zone: Zone; tools: Tool[] }[] {
-  return [
-    {
-      groupKey: 'findOutWhereYouAre',
-      labelKey: 'depths.groupFindOutWhereYouAre',
-      zone: 'discover',
-      tools: [
-        { key: 'measure', labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
-        ...(spillDiscovered
-          ? [{ key: 'spill', labelKey: 'depths.spillLabel', descriptionKey: 'depths.spillDescription', route: '/(tabs)/depths/spill' as Href }]
-          : []),
-      ],
-    },
-    {
-      groupKey: 'understandIt',
-      labelKey: 'depths.groupUnderstandIt',
-      zone: 'understand',
-      tools: [
-        { key: 'levels', labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
-      ],
-    },
-    {
-      groupKey: 'shiftIt',
-      labelKey: 'depths.groupShiftIt',
-      zone: 'regulate',
-      tools: [
-        { key: 'tunein', labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
-        { key: 'breathing', labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
-      ],
-    },
-  ];
-}
+// Depths' journey is now drawn as a spiral (see DepthsSpiral.tsx) rather
+// than a vertical list of zone groups — this maps each of the spiral's 8
+// fixed slots to its own route/copy keys. Order matches
+// DepthsSpiral.tsx's own SLOT_ORDER exactly (measure → spill →
+// talkAboutIt → cards → yourArc → levels → tunein → breathing); keep the
+// two in sync if a slot is ever added or reordered.
+const SLOT_META: Record<SpiralSlotKey, { labelKey: string; descriptionKey: string; route: Href }> = {
+  measure: { labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
+  spill: { labelKey: 'depths.spillLabel', descriptionKey: 'depths.spillDescription', route: '/(tabs)/depths/spill' },
+  talkAboutIt: { labelKey: 'depths.talkAboutIt', descriptionKey: 'depths.continueConversationWith', route: '/(tabs)/guide' },
+  cards: { labelKey: 'depths.cardsLabel', descriptionKey: 'depths.cardsDescription', route: '/(tabs)/depths/cards' },
+  yourArc: { labelKey: 'depths.yourArc', descriptionKey: 'depths.yourArcDescription', route: '/your-arc' },
+  levels: { labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
+  tunein: { labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
+  breathing: { labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
+};
 // Moon ('Understand your timing') is deliberately pulled out of the current
 // flow, not deleted — its actual value (and a possible Sun/planets
 // expansion) needs to be worked through before it earns a place next to
@@ -319,13 +263,11 @@ export default function DepthsScreen() {
   // stillness from the other side. A normal revisit (isArriving false)
   // never carries this — it stays fully transparent from frame one.
   const entryFade = useSharedValue(isArriving ? 1 : 0);
-  // Understand's one-time first-run "look here next" emphasis — see
-  // showFirstRunCarry above. Purely transform: scale on a wrapping View;
-  // never touches understandGroup/understandRow/understandRowLabel's own
-  // styles, so every other (non-first-run) render of Understand is
-  // byte-for-byte unaffected. Starts at 1 (settled/no-op) — the grow
-  // only starts once AuraArrival's onSettled fires it, not at mount.
-  const understandBloomScale = useSharedValue(1);
+  // The spiral's own once-only first-run "look here next" emphasis (a
+  // marker traveling aura → Levels, see DepthsSpiral.tsx) is driven by
+  // showFirstRunCarry directly as a prop — no local shared value needed
+  // here, unlike the old understandBloomScale this replaced.
+  const [firstRunTravelDone, setFirstRunTravelDone] = useState(false);
   useEffect(() => {
     if (isArriving) useMeasureStore.getState().consumeJustCompleted();
     if (entryFade.value > 0) {
@@ -361,7 +303,83 @@ export default function DepthsScreen() {
   // already established the core habit, not a first-timer still on Measure.
   const discoveryNudge =
     totalMeasureCount >= 2 ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature]) : undefined;
-  const toolGroups = useMemo(() => buildToolGroups(discovered.spill), [discovered.spill]);
+  // The spiral's 8 fixed slots, in DepthsSpiral.tsx's own SLOT_ORDER —
+  // presence varies with reading state (spill/talkAboutIt/cards/yourArc
+  // only appear once discovered/a reading exists/2+ readings exist), but
+  // the slot itself is always reserved (see DepthsSpiral.tsx's own
+  // comment on why: unlocking a capability must never reflow the shape).
+  // measure/spill/talkAboutIt/cards/yourArc always render at full
+  // brightness (alwaysFull: true) — only levels/tunein/breathing
+  // participate in the today's-walk dimming/prefix-trace mechanic.
+  const spiralPoints: SpiralPoint[] = useMemo(() => {
+    const spillPresent = discovered.spill;
+    const talkAboutItPresent = Boolean(currentResult && philosopher);
+    const cardsPresent = Boolean(currentResult);
+    const yourArcPresent = hasEnoughReadingsForArc;
+    const measureLabel = currentResult ? t('depths.measureAgain') : t(SLOT_META.measure.labelKey);
+    return [
+      { key: 'measure', label: measureLabel, isPresent: true, alwaysFull: true, visitedToday: false },
+      { key: 'spill', label: t(SLOT_META.spill.labelKey), isPresent: spillPresent, alwaysFull: true, visitedToday: false },
+      { key: 'talkAboutIt', label: t(SLOT_META.talkAboutIt.labelKey), isPresent: talkAboutItPresent, alwaysFull: true, visitedToday: false },
+      { key: 'cards', label: t(SLOT_META.cards.labelKey), isPresent: cardsPresent, alwaysFull: true, visitedToday: false },
+      { key: 'yourArc', label: t(SLOT_META.yourArc.labelKey), isPresent: yourArcPresent, alwaysFull: true, visitedToday: false },
+      {
+        key: 'levels',
+        label: t(SLOT_META.levels.labelKey),
+        isPresent: true,
+        alwaysFull: false,
+        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'levels'),
+      },
+      {
+        key: 'tunein',
+        label: t(SLOT_META.tunein.labelKey),
+        isPresent: true,
+        alwaysFull: false,
+        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'tunein'),
+      },
+      {
+        key: 'breathing',
+        label: t(SLOT_META.breathing.labelKey),
+        isPresent: true,
+        alwaysFull: false,
+        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'breathing'),
+      },
+    ];
+  }, [discovered.spill, currentResult, philosopher, hasEnoughReadingsForArc, toolLastVisitedAt, t]);
+
+  // Strict prefix count along PREFIX_WALK_KEYS (levels → tunein →
+  // breathing) — stops at the first tool not visited today, so an
+  // out-of-order visit (e.g. Tune In before Levels) lights up that one
+  // tool's own dot (via visitedToday above) without extending the solid
+  // trace past the gap. This is the one piece of "today's walk" state
+  // DepthsSpiral itself doesn't compute — it only knows how to draw a
+  // given prefixCount, not derive one.
+  const prefixCount = useMemo(() => {
+    let count = 0;
+    for (const key of PREFIX_WALK_KEYS) {
+      if (isToolVisitedToday(toolLastVisitedAt, key as BreadcrumbTool)) count++;
+      else break;
+    }
+    return count;
+  }, [toolLastVisitedAt]);
+
+  const playFirstRunTravel = showFirstRunCarry && !isArriving && !firstRunTravelDone;
+
+  const handleSpiralPointPress = (key: SpiralSlotKey) => {
+    if (key === 'talkAboutIt') {
+      handleTalkAboutIt();
+      return;
+    }
+    if (key === 'yourArc') {
+      router.push(isSubscribed ? '/your-arc' : '/your-arc-preview');
+      return;
+    }
+    if (key === 'levels' || key === 'tunein' || key === 'breathing' || key === 'spill') {
+      markToolVisited(key as BreadcrumbTool);
+    }
+    router.push(SLOT_META[key].route);
+  };
+
   const rawLastLevel = currentResult ? getLevelBySlug(currentResult.vibrationLevel.slug) : undefined;
   const lastLevel = rawLastLevel ? getLocalizedLevel(rawLastLevel, locale) : undefined;
   // ONE accent color for the whole screen — the current level's, same as
@@ -537,9 +555,6 @@ export default function DepthsScreen() {
   };
 
   const entryFadeStyle = useAnimatedStyle(() => ({ opacity: entryFade.value }));
-  const understandBloomStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: understandBloomScale.value }],
-  }));
 
   return (
     <View style={styles.root}>
@@ -582,6 +597,18 @@ export default function DepthsScreen() {
                 time, without adding a visible "skip" button that would
                 compete with the reveal itself. No-op once settled (the
                 Pressable stops intercepting taps via pointerEvents below). */}
+            <View style={styles.auraSpiralWrap}>
+              <View style={styles.spiralOverlay} pointerEvents="box-none">
+                <DepthsSpiral
+                  size={SPIRAL_SIZE}
+                  points={spiralPoints}
+                  accentRgb={accentRgb}
+                  onPointPress={handleSpiralPointPress}
+                  prefixCount={prefixCount}
+                  playFirstRunTravel={playFirstRunTravel}
+                  onFirstRunTravelSettled={() => setFirstRunTravelDone(true)}
+                />
+              </View>
             <Pressable
               style={styles.arrivalSkipWrap}
               pointerEvents={isArriving ? 'auto' : 'none'}
@@ -593,12 +620,10 @@ export default function DepthsScreen() {
                 onSettled={() => {
                   setIsArriving(false);
                   setSkipArrival(false);
-                  if (showFirstRunCarry) {
-                    understandBloomScale.value = withSequence(
-                      withTiming(BLOOM_PEAK_SCALE, { duration: BLOOM_GROW_DURATION_MS, easing: SOFT_EASE }),
-                      withTiming(1, { duration: BLOOM_SETTLE_DURATION_MS, easing: SOFT_EASE })
-                    );
-                  }
+                  // The spiral's own traveling marker (aura → Levels)
+                  // picks up showFirstRunCarry as a prop directly — see
+                  // the DepthsSpiral render below — nothing to trigger
+                  // here beyond letting arrival settle first.
                 }}
                 ringOnlySlugs={sphereColors}
                 sphereScores={sphereScores}
@@ -618,6 +643,7 @@ export default function DepthsScreen() {
                 }
               />
             </Pressable>
+            </View>
 
             <ArrivalReveal arriving={isArriving} skip={skipArrival}>
               {/* Tappable — the level's own detail page (what this vibration
@@ -710,7 +736,24 @@ export default function DepthsScreen() {
         ) : (
           <>
             <Text style={styles.lastReadingLabel}>{t('depths.beforeFirstReading')}</Text>
-            <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} />
+            {/* Same overlay approach as the reading branch above — the
+                spiral is absolutely positioned inside a wrapper sized/
+                centered identically to how AuraWithDots itself centers,
+                so both branches' spiral coincides with the aura's own
+                center by construction, not by measurement. */}
+            <View style={styles.auraSpiralWrap}>
+              <View style={styles.spiralOverlay} pointerEvents="box-none">
+                <DepthsSpiral
+                  size={SPIRAL_SIZE}
+                  points={spiralPoints}
+                  accentRgb={accentRgb}
+                  onPointPress={handleSpiralPointPress}
+                  prefixCount={prefixCount}
+                  playFirstRunTravel={false}
+                />
+              </View>
+              <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
+            </View>
             <Text style={styles.title}>
               {t('depths.firstReadingCopy')}
             </Text>
@@ -720,142 +763,6 @@ export default function DepthsScreen() {
         <View style={styles.sectionDivider} />
 
         <View style={styles.stack}>
-          {toolGroups.map((group) => {
-            // Zone drives which visual treatment this group renders with —
-            // see docs/depths-structure-concept.md. Discover keeps the
-            // original shared row/group styles unconditionally (it's
-            // already correctly weighted per aesthetic.md's "full row
-            // weight" rule); Understand and Regulate get their own
-            // variants below.
-            const groupStyle =
-              group.zone === 'regulate' ? styles.regulateGroup
-              : group.zone === 'understand' ? styles.understandGroup
-              : styles.discoverGroup;
-            const groupLabelStyle = group.zone === 'regulate' ? styles.regulateGroupLabel : styles.groupLabel;
-            const rowStyle = group.zone === 'regulate' ? styles.regulateRow : group.zone === 'understand' ? styles.understandRow : styles.row;
-            const rowLabelStyle =
-              group.zone === 'regulate' ? styles.regulateRowLabel
-              : group.zone === 'understand' ? styles.understandRowLabel
-              : styles.rowLabel;
-
-            // Understand's own View becomes an Animated.View so the
-            // once-only first-run bloom (understandBloomStyle) can apply
-            // to it — a true no-op transform on every other render, since
-            // understandBloomScale only ever moves off 1 when
-            // showFirstRunCarry triggered it in AuraArrival's onSettled.
-            const GroupContainer = group.zone === 'understand' ? Animated.View : View;
-            const groupContainerStyle =
-              group.zone === 'understand' ? [groupStyle, understandBloomStyle] : groupStyle;
-
-            return (
-            <GroupContainer key={group.groupKey} style={groupContainerStyle}>
-              {/* The threshold marker before Regulate specifically — reads
-                  as "you are now crossing" before the label text itself,
-                  echoing how luckyDivider already sits above luckyLabel for
-                  the same "something different begins here" reason. A new,
-                  distinct style (not luckyDivider reused) so Feeling
-                  Lucky's own "alternative to the whole thing" meaning stays
-                  uncontaminated. */}
-              {group.zone === 'regulate' && <Text style={styles.regulateDivider}>· · ·</Text>}
-              <Text style={groupLabelStyle}>{t(group.labelKey)}</Text>
-              {/* Same weight as "Measure again" below it, not a quieter
-                  afterthought — this is the row that lets someone taste what
-                  an ongoing conversation feels like. Sits ABOVE Measure
-                  again: continuing a conversation about what you already
-                  found is offered before starting over. Always the same
-                  plain action now, regardless of talkAboutItCount — the
-                  past-threshold upsell copy that used to swap in here moved
-                  to the not-subscribed Your Arc preview screen (see
-                  showTalkAboutItUpsell's own comment), so this row never
-                  needs to stop being tappable to make room for a pitch. */}
-              {group.groupKey === 'findOutWhereYouAre' && currentResult && philosopher && (
-                <Pressable style={styles.row} onPress={handleTalkAboutIt}>
-                  <Text style={styles.rowLabel}>{t('depths.talkAboutIt')}</Text>
-                  <Text style={styles.rowDescription}>
-                    {t('depths.continueConversationWith', { name: philosopher.name })}
-                  </Text>
-                </Pressable>
-              )}
-              {/* Standing invitation on every reading, always available
-                  (not occasional/rare like Feeling Lucky) — a real peer to
-                  Talk about it / Measure again, not a quieter aside. The
-                  reading motivates the OFFER to draw, never the card that's
-                  drawn — the draw itself stays fully random regardless of
-                  this reading's sphere scores. See docs/cards-concept.md,
-                  "Cards as a second layer of a reading," for why: letting
-                  the reading select a "relevant" card would be the same
-                  inferential-judgment violation as content-echoing the
-                  wish — the app deciding what's "underneath" instead of
-                  the person discovering it themselves. */}
-              {group.groupKey === 'findOutWhereYouAre' && currentResult && (
-                <Pressable style={styles.row} onPress={() => router.push('/(tabs)/depths/cards')}>
-                  <Text style={styles.rowLabel}>{t('depths.cardsLabel')}</Text>
-                  <Text style={styles.rowDescription}>{t('depths.cardsDescription')}</Text>
-                </Pressable>
-              )}
-              {/* Same job as "Talk about it" above — a reference to the
-                  history you already have, not a new reading to take — so
-                  it sits directly beside it rather than in the tool groups
-                  below (which are all "do something now" actions: Measure,
-                  Spill, etc). Gated on hasEnoughReadingsForArc — the max of
-                  local readingLog and (for a signed-in, consented account)
-                  real server-side history, not local count alone: the line
-                  isn't worth pointing at until there's more than one point
-                  to draw it from, but "enough points" shouldn't miss a real
-                  account's history just because this device hasn't locally
-                  taken 2+ Measures itself (a fresh install, a second
-                  device). Deliberately ONE label/description regardless of
-                  isSubscribed — the row itself never tries to preview which
-                  version you'll get (that read as one row being "the
-                  upsell" and the other being "the plain feature," when
-                  they're the same seed). The subscription split lives
-                  entirely on the other side of the tap: your-arc-preview
-                  for anyone not subscribed, the full your-arc experience
-                  for anyone who is. */}
-              {group.groupKey === 'findOutWhereYouAre' && hasEnoughReadingsForArc && (
-                <Pressable
-                  style={styles.row}
-                  onPress={() =>
-                    router.push(isSubscribed ? '/your-arc' : '/your-arc-preview')
-                  }
-                >
-                  <Text style={styles.rowLabel}>{t('depths.yourArc')}</Text>
-                  <Text style={styles.rowDescription}>{t('depths.yourArcDescription')}</Text>
-                </Pressable>
-              )}
-              {group.tools.map((tool) => {
-                // "Today's-walk" breadcrumb (see docs/depths-structure-concept.md):
-                // a tool row visited today quietly recedes one step down the
-                // text-opacity ladder, so the space reflects where taps have
-                // already gone today without claiming what that means. Measure
-                // is deliberately exempt — this guard both skips recording its
-                // visit and skips dimming it, keeping it unconditionally at
-                // full prominence per RULES.md's "free core, paid depth."
-                const isBreadcrumbTool = tool.key !== 'measure';
-                const visitedToday =
-                  isBreadcrumbTool && isToolVisitedToday(toolLastVisitedAt, tool.key as BreadcrumbTool);
-                const visitedTodayStyle =
-                  group.zone === 'understand' ? styles.understandRowLabelVisitedToday : styles.rowLabelVisitedToday;
-                return (
-                  <Pressable
-                    key={tool.key}
-                    style={rowStyle}
-                    onPress={() => {
-                      if (isBreadcrumbTool) markToolVisited(tool.key as BreadcrumbTool);
-                      router.push(tool.route);
-                    }}
-                  >
-                    <Text style={[rowLabelStyle, visitedToday && visitedTodayStyle]}>
-                      {tool.key === 'measure' && currentResult ? t('depths.measureAgain') : t(tool.labelKey)}
-                    </Text>
-                    <Text style={styles.rowDescription}>{t(tool.descriptionKey)}</Text>
-                  </Pressable>
-                );
-              })}
-            </GroupContainer>
-            );
-          })}
-
           {discoveryNudge && (
             <Pressable style={styles.discoveryNudge} onPress={() => router.push(discoveryNudge.route)}>
               <Text style={styles.discoveryNudgeText}>{t(discoveryNudge.labelKey)}</Text>
@@ -1352,7 +1259,7 @@ function AuraWithDots({
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   return (
-    <View style={[styles.auraWrap, overlay && styles.auraWrapOverlay]}>
+    <View style={[styles.auraWrap, overlay && styles.auraWrapOverlay]} pointerEvents="none">
       <View style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}>
         <Image
           source={source}
@@ -1372,6 +1279,26 @@ function makeStyles(colors: Colors) {
   },
   arrivalSkipWrap: {
     alignItems: 'center',
+  },
+  // Shared positioning parent for both branches' aura + the spiral
+  // overlay — sized to the spiral's own canvas so spiralOverlay (below)
+  // can center within it and land on the exact same point the aura
+  // itself is centered on, by construction rather than measurement.
+  auraSpiralWrap: {
+    width: SPIRAL_SIZE,
+    height: SPIRAL_SIZE,
+    alignSelf: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  spiralOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     paddingHorizontal: spacing[6],
@@ -1587,123 +1514,8 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
+  // Still used by discoveryNudge/luckyWrap below the spiral.
   stack: {},
-  // Three zones, one continuous scroll, differentiated by position/size/
-  // weight/space alone — never color beyond the existing ivory-opacity
-  // ladder, never icons or cards (see docs/design/aesthetic.md). See
-  // docs/depths-structure-concept.md for the full reasoning: Discover
-  // stays exactly as it already was (it's already correctly weighted per
-  // the "full row weight" rule below), Understand becomes a near, quiet
-  // margin, Regulate becomes a real destination you visibly travel to.
-  discoverGroup: {
-    marginBottom: spacing[8],
-    gap: spacing[3],
-  },
-  // Same internal rhythm as Discover — rows within Understand don't need
-  // to feel cramped — but a smaller bottom margin, since Understand
-  // shouldn't itself introduce distance before Regulate. The real gap
-  // lives on regulateGroup's own marginTop, not here.
-  understandGroup: {
-    marginBottom: spacing[6],
-    gap: spacing[3],
-  },
-  // The one real distance move on this screen — REGULATE_ZONE_GAP is
-  // deliberately far beyond anything else on Depths, marking this as a
-  // destination arrived at, not a continuation of the list above it.
-  // marginBottom matches discoverGroup's so only the space ABOVE Regulate
-  // reads as unusual, not the space below it too.
-  regulateGroup: {
-    marginTop: REGULATE_ZONE_GAP,
-    marginBottom: spacing[8],
-    gap: spacing[4],
-  },
-  groupLabel: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.wide,
-    textTransform: 'uppercase',
-  },
-  // A real size step up from the shared groupLabel — still well short of
-  // a heading (hierarchy is carried by size, not weight, per
-  // aesthetic.md) — so the label itself already signals "you've arrived
-  // somewhere," before a single row underneath it is read.
-  regulateGroupLabel: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-    letterSpacing: letterSpacings.wide,
-    textTransform: 'uppercase',
-  },
-  // The "· · ·" glyph idiom already established for Feeling Lucky
-  // (luckyDivider below), reused here for the same "threshold before
-  // something different" meaning — declared as its own style rather than
-  // reusing luckyDivider verbatim, so Feeling Lucky's own "alternative to
-  // the whole thing" meaning stays uncontaminated by a second use.
-  regulateDivider: {
-    color: colors.text.faint,
-    fontSize: fontSizes.sm,
-    letterSpacing: letterSpacings.wide,
-    textAlign: 'center',
-    marginBottom: spacing[4],
-  },
-  // No border, no fill — separated from its neighbors by space and by the
-  // group label above it, the same way onboarding and the picker never use
-  // a bordered box to mean "this is a thing you can tap."
-  row: {
-    paddingVertical: spacing[3],
-  },
-  // Quieter than a standard row via reduced padding and one step down the
-  // existing ivory-opacity ladder on the label (see understandRowLabel) —
-  // Understand is reference, not a practice, so a visit here shouldn't
-  // carry the same weight as Discover's "do something now" actions.
-  understandRow: {
-    paddingVertical: spacing[2],
-  },
-  // More internal padding than a standard row — rows here should read as
-  // more substantial once you've made the trip to reach them, echoing
-  // "arriving somewhere" rather than "more of the same list."
-  regulateRow: {
-    paddingVertical: spacing[4],
-  },
-  // Ivory, not the reading's level color — color on this screen means "this
-  // is your reading" (the headline, aura, wheel rows); an action you can tap
-  // is a different kind of thing and reads more clearly as consistently
-  // interactive when it doesn't shift hue with whatever the current reading
-  // happens to be. No arrow/icon — weight (medium) against rowDescription's
-  // light weight below it is the tap affordance, the same register the
-  // philosopher-picker and Levels wheel use (position/type, never a glyph).
-  rowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.md },
-  // One step down the existing ivory-opacity ladder (text.secondary, not a
-  // new hue) — the same lever discoveryNudge/luckyDescription already use
-  // elsewhere on this screen for "notable but quieter," not a departure
-  // from the app's one-accent-color rule.
-  understandRowLabel: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.md },
-  // A real size step up from the standard rowLabel (base=16 vs md=15) —
-  // matches the "bigger reads as more substantial" idiom luckyLabel
-  // already establishes elsewhere on this screen (base against the
-  // standard rows' md).
-  regulateRowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.base },
-  // "Today's-walk" breadcrumb (see docs/depths-structure-concept.md) — the
-  // one visual expression of "you've been here today," a single step down
-  // the existing ivory-opacity ladder, never a new token. Applied as a
-  // style-array override on top of rowLabel/regulateRowLabel (both start at
-  // accent.ivory), so it composes with rather than replaces each zone's own
-  // weight. Never applied to Measure's row — see the tool.key !== 'measure'
-  // guard at the call site — keeping Measure unconditionally at full
-  // prominence per RULES.md's "free core, paid depth."
-  rowLabelVisitedToday: { color: colors.text.secondary },
-  // Same idea, one further step down — understandRowLabel already sits at
-  // text.secondary by default, so reusing rowLabelVisitedToday here would
-  // be an invisible no-op against Levels' own resting color.
-  understandRowLabelVisitedToday: { color: colors.text.muted },
-  rowDescription: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    marginTop: spacing[1],
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
   discoveryNudge: {
     alignItems: 'center',
     paddingVertical: spacing[3],

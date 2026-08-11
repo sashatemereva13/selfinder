@@ -25,16 +25,20 @@ import Svg, { Defs, RadialGradient, Stop, Circle, Path, Line } from 'react-nativ
 // itself, driven by Reanimated the same way ConsciousnessWheel.tsx
 // animates its marker.
 
-interface Point {
+// Exported so NatureSymbol.tsx (a separate wireframe symbol set, for level
+// pages' natural-event imagery — see docs/measure-experience-concept.md
+// §4/§5) can reuse this pure, id-agnostic construction geometry without
+// duplicating it. Not part of the Cards/physics vocabulary itself.
+export interface Point {
   x: number;
   y: number;
 }
 
-function polylinePath(points: Point[]): string {
+export function polylinePath(points: Point[]): string {
   return `M${points.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L')}`;
 }
 
-function seededRng(seed: number) {
+export function seededRng(seed: number) {
   let s = seed;
   return () => {
     s = (s * 1103515245 + 12345) & 0x7fffffff;
