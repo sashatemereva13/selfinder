@@ -77,13 +77,30 @@ const AURA_METRICS = getAuraFigureMetrics(AURA_DISPLAY_SIZE);
 // everything below it (the level name, the sphere buttons) started
 // overlapping the rings' own lower half instead of clearing them.
 const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
-// The spiral's own canvas — large enough that its innermost turn clears
-// the aura/ring-field entirely (DepthsSpiral's own INNER_CLEARANCE_RATIO
-// handles the exact clamp) and its outermost point stays inside a real
-// 390px phone's content budget (columnWidth minus horizontal padding).
+// The spiral's own canvas — sized to nearly fill a real 390px phone's
+// content budget (columnWidth minus horizontal padding), so the shape
+// itself reads as a real, spacious presence rather than a small diagram.
+// Point labels are allowed to extend slightly past this box (React
+// Native doesn't clip children unless told to) — auraSpiralWrap has no
+// overflow:hidden, so a label near the canvas edge isn't cut off.
 // Centered on the same point AuraField/AuraWithDots already center on,
 // via the shared auraSpiralWrap/spiralOverlay styles below.
-const SPIRAL_SIZE = 320;
+// Fills the full content-column width (columnWidth minus horizontal
+// padding, 342px on a 390px reference phone) rather than sitting smaller
+// than its available space — going any larger would overflow the
+// padded column, which reads as a layout bug, not "spacious."
+const SPIRAL_SIZE = 342;
+// The spiral's inner clearance is an ELLIPSE, not a circle, matching
+// AuraField's real footprint (its four concentric sphere-rings, which
+// only render once a reading exists — the larger, safer case to clear;
+// the plain neutral aura alone is smaller). A flat margin on top so the
+// spiral's own inner turns/dots sit visibly outside the body/rings, not
+// flush against their edge. See DepthsSpiral.tsx's ellipticalClearance
+// for why an ellipse: the aura figure is tall and narrow, so a single
+// scalar radius was either too tight sideways or too loose vertically.
+const AURA_CLEARANCE_MARGIN = 6;
+const SPIRAL_AURA_HALF_WIDTH = AURA_FIELD_GEOMETRY.svgWidth / 2 + AURA_CLEARANCE_MARGIN;
+const SPIRAL_AURA_HALF_HEIGHT = AURA_FIELD_GEOMETRY.svgHeight / 2 + AURA_CLEARANCE_MARGIN;
 
 // Same slow-decelerate easing as onboarding's own "gather, condense,
 // become" motion (see app/onboarding/index.tsx's SOFT_EASE) — reused here
@@ -607,6 +624,8 @@ export default function DepthsScreen() {
                   prefixCount={prefixCount}
                   playFirstRunTravel={playFirstRunTravel}
                   onFirstRunTravelSettled={() => setFirstRunTravelDone(true)}
+                  auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
+                  auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
                 />
               </View>
             <Pressable
@@ -750,6 +769,8 @@ export default function DepthsScreen() {
                   onPointPress={handleSpiralPointPress}
                   prefixCount={prefixCount}
                   playFirstRunTravel={false}
+                  auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
+                  auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
                 />
               </View>
               <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />

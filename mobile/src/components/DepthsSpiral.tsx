@@ -1,4 +1,4 @@
-import { useMemo, useEffect, useState } from 'react';
+import { useMemo, useEffect } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Animated, {
@@ -93,6 +93,23 @@ function radiusForTheta(theta: number, r0: number): number {
   return r0 * Math.exp(-B * (theta - THETA_START));
 }
 
+// The aura figure is tall and narrow (per AuraFigure.tsx's own BODY
+// drawing space, ~200×380), not round — a single scalar minimum radius
+// let the spiral's inner turns clip through the head and legs while
+// clearing the shoulders fine. This returns the minimum safe distance
+// from center at a given angle against an ELLIPSE matching the aura's
+// real aspect ratio, so the spiral genuinely goes around the body's
+// actual silhouette instead of a circle that's wrong in two directions
+// at once (too tight sideways, too loose vertically).
+function ellipticalClearance(theta: number, clearanceX: number, clearanceY: number): number {
+  'worklet';
+  const cos = Math.cos(theta);
+  const sin = Math.sin(theta);
+  // Standard polar-form ellipse radius: r(θ) = 1 / sqrt((cosθ/a)² + (sinθ/b)²)
+  const denom = Math.sqrt((cos * cos) / (clearanceX * clearanceX) + (sin * sin) / (clearanceY * clearanceY));
+  return denom > 0 ? 1 / denom : clearanceX;
+}
+
 interface Point {
   x: number;
   y: number;
@@ -106,12 +123,12 @@ function polarToXY(cx: number, cy: number, r: number, theta: number): Point {
 // future feature) can find the exact point without re-deriving the
 // spiral math — same "one geometry function, many consumers" discipline
 // vibrationSpectrumDotPosition already established.
-export function spiralPointPosition(slotIndex: number, size: number, innerClearance: number): Point {
+export function spiralPointPosition(slotIndex: number, size: number, clearanceX: number, clearanceY: number): Point {
   const cx = size / 2;
   const cy = size / 2;
   const r0 = size / 2 - 4; // small margin so the outermost point doesn't clip
   const theta = thetaForSlot(slotIndex);
-  const r = Math.max(radiusForTheta(theta, r0), innerClearance);
+  const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, clearanceX, clearanceY));
   return polarToXY(cx, cy, r, theta);
 }
 
@@ -130,11 +147,11 @@ interface SpiralGeometry {
   points: Point[]; // one per slot, in SLOT_ORDER order
 }
 
-// Built once per size/innerClearance (memoized by the caller) — samples
-// the spiral finely between slot 0 and the last slot, building both the
-// SVG path string and a lookup table of cumulative length at each slot's
+// Built once per size/clearance (memoized by the caller) — samples the
+// spiral finely between slot 0 and the last slot, building both the SVG
+// path string and a lookup table of cumulative length at each slot's
 // position, in one pass.
-export function buildSpiralGeometry(size: number, innerClearance: number): SpiralGeometry {
+export function buildSpiralGeometry(size: number, clearanceX: number, clearanceY: number): SpiralGeometry {
   const cx = size / 2;
   const cy = size / 2;
   const r0 = size / 2 - 4;
@@ -146,7 +163,7 @@ export function buildSpiralGeometry(size: number, innerClearance: number): Spira
   const cumulativeLengthAtStep: number[] = [0];
   for (let i = 0; i <= totalSteps; i++) {
     const theta = THETA_START + (i / totalSteps) * (thetaMax - THETA_START);
-    const r = Math.max(radiusForTheta(theta, r0), innerClearance);
+    const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, clearanceX, clearanceY));
     const p = polarToXY(cx, cy, r, theta);
     samples.push(p);
     if (i > 0) {
@@ -212,12 +229,18 @@ interface DepthsSpiralProps {
   // calls onFirstRunTravelSettled. Absent/false on every normal render.
   playFirstRunTravel: boolean;
   onFirstRunTravelSettled?: () => void;
+  // The aura image's own half-width/half-height, in this component's own
+  // pixel space (same units as `size`) — the real reason the spiral needs
+  // an ELLIPTICAL clearance, not a circular one: the aura figure is tall
+  // and narrow (see AuraFigure.tsx's BODY, ~200×380), so a single scalar
+  // minimum radius cleared the shoulders fine but let inner turns clip
+  // through the head/legs. depths/index.tsx computes these from the same
+  // AURA_METRICS it already sizes the aura image with, plus a small
+  // margin, so "the spiral goes around the body" holds by construction.
+  auraHalfWidth: number;
+  auraHalfHeight: number;
 }
 
-// Minimum radius any slot is allowed to shrink to — keeps inner slots
-// (Regulate's tools, tightest on the curve) from crowding the aura image
-// itself or from bunching close enough to make adjacent taps ambiguous.
-const INNER_CLEARANCE_RATIO = 0.34;
 const HIT = 44; // iOS/Android minimum recommended touch target
 const DOT_RADIUS = 4.5;
 
@@ -229,10 +252,14 @@ export function DepthsSpiral({
   prefixCount,
   playFirstRunTravel,
   onFirstRunTravelSettled,
+  auraHalfWidth,
+  auraHalfHeight,
 }: DepthsSpiralProps) {
   const colors = useThemeColors();
-  const innerClearance = size * INNER_CLEARANCE_RATIO;
-  const geometry = useMemo(() => buildSpiralGeometry(size, innerClearance), [size, innerClearance]);
+  const geometry = useMemo(
+    () => buildSpiralGeometry(size, auraHalfWidth, auraHalfHeight),
+    [size, auraHalfWidth, auraHalfHeight]
+  );
 
   const dashLength = useMemo(() => estimatePathLength(geometry.pathD) || geometry.totalLength, [geometry]);
 
@@ -298,7 +325,7 @@ export function DepthsSpiral({
     const targetTheta = thetaForSlot(levelsSlotIndex);
     const theta = THETA_START + travelProgress.value * (targetTheta - THETA_START);
     const r0 = size / 2 - 4;
-    const r = Math.max(radiusForTheta(theta, r0), innerClearance);
+    const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, auraHalfWidth, auraHalfHeight));
     const cx = size / 2;
     const cy = size / 2;
     const x = cx + r * Math.cos(theta);
@@ -310,13 +337,6 @@ export function DepthsSpiral({
   });
 
   const strokeColor = `rgb(${accentRgb})`;
-  // Which point is currently pressed-in — reveals its name below the
-  // spiral, same "the shape stays quiet until you're pointing at
-  // something" convention ConsciousnessWheel.tsx already established
-  // (see aesthetic.md's Interaction section) — no labels crowd the curve
-  // itself at rest.
-  const [focusedKey, setFocusedKey] = useState<SpiralSlotKey | null>(null);
-  const focusedPoint = points.find((p) => p.key === focusedKey);
 
   return (
     <View style={styles.outer}>
@@ -342,23 +362,57 @@ export function DepthsSpiral({
           if (!point.isPresent) return null;
           const dotOpacity = point.alwaysFull ? 0.95 : point.visitedToday ? 0.4 : 0.95;
           const { x, y } = geometry.points[i];
+          // Label sits just outside the dot, offset radially away from
+          // center (not just below it) so it reads as "attached to this
+          // point," not floating loose — the same reason a compass rose's
+          // labels sit past the tick, not on top of it. Text alignment
+          // flips by which half of the spiral the point falls in, so a
+          // label on the left side doesn't run back across the curve.
+          const cx = size / 2;
+          const cy = size / 2;
+          const dx = x - cx;
+          const dy = y - cy;
+          const dist = Math.hypot(dx, dy) || 1;
+          const labelOffset = DOT_RADIUS + 6;
+          const labelX = x + (dx / dist) * labelOffset;
+          const labelY = y + (dy / dist) * labelOffset;
+          const isLeftHalf = dx < -4;
+          const isRightHalf = dx > 4;
+          const align: 'left' | 'right' | 'center' = isLeftHalf ? 'right' : isRightHalf ? 'left' : 'center';
+          const labelOpacity = point.alwaysFull ? 1 : point.visitedToday ? 0.55 : 1;
+
           return (
-            <Pressable
-              key={point.key}
-              style={[styles.hitArea, { left: x - HIT / 2, top: y - HIT / 2 }]}
-              onPress={() => onPointPress(point.key)}
-              onPressIn={() => setFocusedKey(point.key)}
-              onPressOut={() => setFocusedKey((k) => (k === point.key ? null : k))}
-              hitSlop={i === 0 ? 10 : 4}
-            >
-              <View style={[styles.dot, { backgroundColor: strokeColor, opacity: dotOpacity }]} />
-            </Pressable>
+            <View key={point.key}>
+              <Pressable
+                style={[styles.hitArea, { left: x - HIT / 2, top: y - HIT / 2 }]}
+                onPress={() => onPointPress(point.key)}
+                hitSlop={i === 0 ? 10 : 4}
+              >
+                <View style={[styles.dot, { backgroundColor: strokeColor, opacity: dotOpacity }]} />
+              </Pressable>
+              <Text
+                pointerEvents="none"
+                style={[
+                  styles.pointLabel,
+                  {
+                    color: colors.text.secondary,
+                    opacity: labelOpacity,
+                    top: labelY - fontSizes.xs * 0.7,
+                    textAlign: align,
+                    ...(align === 'right'
+                      ? { right: size - labelX, left: undefined }
+                      : align === 'left'
+                        ? { left: labelX, right: undefined }
+                        : { left: labelX - 60, width: 120 }),
+                  },
+                ]}
+              >
+                {point.label}
+              </Text>
+            </View>
           );
         })}
       </View>
-      <Text style={[styles.focusLabel, { color: colors.text.secondary, opacity: focusedPoint ? 1 : 0 }]}>
-        {focusedPoint?.label ?? ' '}
-      </Text>
     </View>
   );
 }
@@ -369,10 +423,10 @@ const styles = StyleSheet.create({
   hitArea: { position: 'absolute', width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
   dot: { width: DOT_RADIUS * 2, height: DOT_RADIUS * 2, borderRadius: DOT_RADIUS },
   travelDot: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-  focusLabel: {
+  pointLabel: {
+    position: 'absolute',
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    marginTop: spacing[3],
-    minHeight: fontSizes.sm * 1.3,
+    fontSize: fontSizes.xs,
+    maxWidth: 130,
   },
 });
