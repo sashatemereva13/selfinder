@@ -2,6 +2,11 @@ import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { AuthSession } from '../types';
 import * as authApi from '../api/auth';
+import { usePhilosopherStore } from './philosopherStore';
+import { useGuideChatStore } from './guideChatStore';
+import { useMeasureStore } from './measureStore';
+import { useEngagementStore } from './engagementStore';
+import { useReminderStore } from './reminderStore';
 
 const STORAGE_KEY = 'selfinder_auth_session';
 
@@ -52,10 +57,47 @@ export const useAuthStore = create<AuthStore>((set) => ({
     const session = await authApi.login(username, password);
     await persist(session);
     set({ session });
+    // Best-effort: repopulate local reading state from this account's
+    // own server history, so a returning signed-in user sees their real
+    // Depths instead of the pristine empty state logout's own privacy
+    // fix now correctly leaves behind. Never blocks/fails login itself
+    // — same silent-best-effort contract the existing getMe+
+    // getMeasureHistory call sites already use (your-arc.tsx,
+    // depths/index.tsx, AccountSection.tsx's LoggedInAccount).
+    // register() deliberately does NOT call this — a brand-new account
+    // has no history to fetch.
+    // engagementStore's own totalMeasureCount/recentReadings are NOT
+    // backfilled here — deliberately out of scope (Depths' empty-state
+    // bug is driven by measureStore, not engagementStore). Revisit as a
+    // separate follow-up if that staleness turns out to matter.
+    await useMeasureStore.getState().repopulateFromServer(session.token);
   },
 
   logout: async () => {
     await persist(null);
     set({ session: null });
+    // Personal local data must not survive a logout — whoever uses the
+    // app next (signed out, or signed in as a different account) must
+    // not see the previous session's readings/conversations/philosopher
+    // choice. Same reset sequence as the You tab's "Reset onboarding
+    // state" dev button (app/(tabs)/you/index.tsx's
+    // handleResetOnboarding) — reusing an already-correct combination
+    // rather than a new one. Clearing philosopher/philosopherId means
+    // the root layout's own redirect sends the app back to onboarding
+    // right after this — intended, not a bug: it's the only way to
+    // guarantee the old account's choice doesn't leak forward.
+    usePhilosopherStore.getState().resetMet();
+    useGuideChatStore.getState().resetAll();
+    useMeasureStore.getState().resetInterview();
+    await useMeasureStore.getState().resetSavedResults();
+    await usePhilosopherStore.getState().resetSelection();
+    await useEngagementStore.getState().resetAll();
+    // Not personal reading content, but still wrong-owner state: the
+    // previous account's chosen reminder time/schedule shouldn't carry
+    // over to whoever signs in (or stays signed out) next. Cancels the
+    // actual scheduled native notifications too (see
+    // dailyReminder.ts's disableDailyReminder, called inside
+    // clearReminder), not just the local preference.
+    await useReminderStore.getState().clearReminder();
   },
 }));

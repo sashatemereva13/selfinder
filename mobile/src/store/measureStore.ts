@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
-import { MeasureResult, ChatMessage, QAPair } from '../types';
+import { MeasureResult, ChatMessage, QAPair, SavedMeasureResult } from '../types';
 import { usePhilosopherStore } from './philosopherStore';
+import { getMe, getMeasureHistory } from '../api/user';
 
 const KEY_CURRENT  = 'selfinder_measure_current';
 const KEY_PREVIOUS = 'selfinder_measure_previous';
@@ -46,11 +47,47 @@ interface MeasureStore {
   resetInterview: () => void;
   resetSavedResults: () => Promise<void>;
   consumeJustCompleted: () => boolean;
+  repopulateFromServer: (token: string) => Promise<void>;
 }
 
 function readJSON<T>(raw: string | null): T | null {
   if (!raw) return null;
   try { return JSON.parse(raw) as T; } catch { return null; }
+}
+
+// Maps a server-persisted reading into the client MeasureResult shape
+// Depths renders. Returns null (reject, don't fabricate) if the saved
+// record is missing any field Depths cannot safely render without —
+// lines/dominantAxis/band/scores/rawVibrationScore can all be null on
+// SavedMeasureResult (legacy/corrupt records) but Depths' own render
+// code assumes they're always present, since until now the only source
+// of a MeasureResult was a freshly-completed live Measure interview.
+// Never default/fabricate these.
+function toMeasureResult(saved: SavedMeasureResult): MeasureResult | null {
+  if (
+    saved.lines == null ||
+    saved.dominantAxis == null ||
+    saved.band == null ||
+    saved.scores == null ||
+    saved.rawVibrationScore == null
+  ) {
+    return null;
+  }
+  return {
+    scores: saved.scores,
+    rawVibrationScore: saved.rawVibrationScore,
+    vibrationScore: saved.vibrationScore,
+    vibrationLevel: saved.vibrationLevel,
+    dominantAxis: saved.dominantAxis,
+    band: saved.band,
+    microPractice: saved.microPractice ?? undefined,
+    affirmation: saved.affirmation ?? undefined,
+    combinationMessage: saved.combinationMessage,
+    lines: saved.lines,
+    savedAt: saved.savedAt,
+    qaPairs: saved.qaPairs,
+    measureResultId: saved.id,
+  };
 }
 
 export const useMeasureStore = create<MeasureStore>((set, get) => ({
@@ -145,5 +182,66 @@ export const useMeasureStore = create<MeasureStore>((set, get) => ({
     const value = get().justCompleted;
     if (value) set({ justCompleted: false });
     return value;
+  },
+
+  // Called once, right after a successful login (see authStore.ts) — a
+  // returning signed-in user's local device was likely just wiped by
+  // logout's own privacy fix (or is simply new), so without this Depths
+  // would show the pristine empty state even though their real history
+  // is safe on the server. Best-effort and silent on any failure — same
+  // contract the existing getMe+getMeasureHistory call sites already use
+  // (your-arc.tsx, depths/index.tsx) — login itself must never fail
+  // because this did.
+  repopulateFromServer: async (token) => {
+    try {
+      const profile = await getMe(token);
+      if (!profile.consent?.psychologicalData?.given) return;
+      const saved = await getMeasureHistory(token);
+      if (saved.length === 0) return; // genuinely empty account
+
+      // Order isn't guaranteed by the API — sort explicitly, newest
+      // first, by the same field your-arc.tsx already trusts (never
+      // array position).
+      const sorted = [...saved].sort(
+        (a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime()
+      );
+      const mapped = sorted.map(toMeasureResult).filter((r): r is MeasureResult => r !== null);
+      if (mapped.length === 0) return; // every record missing required fields
+
+      const [current, previous] = mapped; // previous undefined if only 1 valid record — fine
+
+      const log: ReadingLogEntry[] = [...mapped]
+        .reverse() // readingLog convention: chronological, oldest first
+        .map((r) => ({
+          ts: new Date(r.savedAt).getTime(),
+          score: r.vibrationScore,
+          levelSlug: r.vibrationLevel.slug,
+          // philosopherId intentionally omitted — SavedMeasureResult
+          // carries no such field (only the unrelated
+          // recommendedPhilosopher), and ReadingLogEntry.philosopherId
+          // is optional, so this is an honest omission, not a
+          // workaround.
+        }))
+        .slice(-LOG_CAP);
+
+      try {
+        if (previous) await SecureStore.setItemAsync(KEY_PREVIOUS, JSON.stringify(previous));
+        else await SecureStore.deleteItemAsync(KEY_PREVIOUS);
+        await Promise.all([
+          SecureStore.setItemAsync(KEY_CURRENT, JSON.stringify(current)),
+          SecureStore.setItemAsync(KEY_LOG, JSON.stringify(log)),
+        ]);
+      } catch {
+        // SecureStore unavailable — in-memory set below still applies for this run.
+      }
+
+      set({ currentResult: current, previousResult: previous ?? null, readingLog: log });
+      // Deliberately does NOT set justCompleted: true — that flag exists
+      // to trigger Depths' arrival/reveal animation right after a LIVE
+      // Measure finishes; a login-time repopulation isn't that moment
+      // and should render already-settled.
+    } catch {
+      // Best-effort — network/API failure leaves local state as-is.
+    }
   },
 }));
