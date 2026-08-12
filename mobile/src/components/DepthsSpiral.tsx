@@ -332,6 +332,14 @@ interface SpiralGeometry {
   cumulativeLengthAtSlot: number[];
   totalLength: number;
   points: Point[]; // one per slot, in SLOT_ORDER order
+  // The full dense polyline (same points pathD draws from) — exposed so
+  // label placement can check for/avoid the curve's own nearby loops, not
+  // just other labels or the aura's silhouette. 3 full turns of winding
+  // means the curve legitimately passes close to itself at several
+  // points (visible tight loops near "Your Arc"/"Levels" and
+  // "Breathing" — confirmed on-device), which a purely radial per-point
+  // label offset can't anticipate on its own.
+  samples: Point[];
 }
 
 // Built once per width/height/clearance (memoized by the caller) —
@@ -399,6 +407,7 @@ export function buildSpiralGeometry(width: number, height: number, chestY: numbe
     cumulativeLengthAtSlot,
     totalLength: cumulativeLengthAtStep[cumulativeLengthAtStep.length - 1],
     points,
+    samples,
   };
 }
 
@@ -516,6 +525,20 @@ export function DepthsSpiral({
   // overlapping it.
   const AURA_BODY_HALF_W = auraHalfWidth * 0.75;
   const AURA_BODY_TOP = geometry.groundY - auraFigureHeight;
+  // How close a label's own anchor point can sit to any OTHER part of the
+  // curve (not the point's own dot, which is obviously right there) before
+  // treating it as a collision to push away from — 3 full turns of
+  // winding means the curve legitimately loops close to itself at several
+  // points (confirmed on-device: "Your Arc"'s label sitting right where
+  // the curve loops back near "Levels", "Breathing"'s label crossed by
+  // its own loop's return path). A purely radial offset from the dot
+  // can't anticipate this; it needs to check the actual nearby geometry.
+  const CURVE_AVOID_DIST = 16;
+  // Only check samples reasonably far (in curve-length terms) from this
+  // slot's own step — otherwise every label "collides" with the handful
+  // of samples immediately next to its own dot, which is expected and
+  // not a real problem.
+  const CURVE_AVOID_STEP_GAP = 20;
   const labelLayout = useMemo(() => {
     const placed: { x: number; y: number }[] = [];
     return points.map((point, i) => {
@@ -539,6 +562,26 @@ export function DepthsSpiral({
       if (labelY > AURA_BODY_TOP && labelY < geometry.groundY && Math.abs(labelX - geometry.baseCx) < AURA_BODY_HALF_W) {
         const sign = labelX >= geometry.baseCx ? 1 : -1;
         labelX = geometry.baseCx + sign * AURA_BODY_HALF_W;
+      }
+      // Push further out, radially (same direction as the offset above,
+      // not straight down — a loop can approach from any side), while
+      // this label's anchor point sits too close to some OTHER stretch
+      // of the curve — a small, capped number of steps so this can never
+      // loop unboundedly.
+      const ownStep = Math.round((1 - h) * (geometry.samples.length - 1));
+      for (let guard = 0; guard < 8; guard++) {
+        let collides = false;
+        for (let s = 0; s < geometry.samples.length; s += 4) {
+          if (Math.abs(s - ownStep) < CURVE_AVOID_STEP_GAP) continue;
+          const sample = geometry.samples[s];
+          if (Math.hypot(labelX - sample.x, labelY - sample.y) < CURVE_AVOID_DIST) {
+            collides = true;
+            break;
+          }
+        }
+        if (!collides) break;
+        labelX += (dx / dist) * labelOffset * 0.5;
+        labelY += (dy / dist) * labelOffset * 0.5;
       }
       // Push straight down, away from the aura (not sideways), until this
       // label's box no longer overlaps any earlier one — a small, capped

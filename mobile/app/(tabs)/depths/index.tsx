@@ -1362,9 +1362,11 @@ function makeStyles(colors: Colors) {
     height: DEPTHS_COMPOSITION_GEOMETRY.totalHeight,
     alignSelf: 'center',
     // Gives the topmost point's label (Measure, at the apex) real
-    // breathing room from the kicker row above — without this, "Measure
-    // again" and its dot crowded right against "today"/the kicker text.
-    marginTop: spacing[8],
+    // breathing room from the kicker row above — spacing[8] alone still
+    // read as crowded on-device once the composition moved to its current
+    // taller/3-turn form, so this is more generous than the original
+    // single-turn version needed.
+    marginTop: spacing[12],
     // Same reasoning below — the bottom-most content (the level name)
     // previously had only ringLevelName's own small marginTop before it,
     // which read as crowded against the spiral's own lower labels.
