@@ -49,12 +49,15 @@ function makeStyles(colors: Colors) {
   return StyleSheet.create({
   // Absolute, not a sibling in normal flow — sits above the whole app
   // (mounted in app/_layout.tsx) rather than gating one screen's own tree.
+  // Top-anchored, not vertically centered — this is a short notice to
+  // read and dismiss, not a modal; centering it left equal dead space
+  // above and below on every real device, reading as unfinished rather
+  // than deliberate restraint.
   root: {
     ...StyleSheet.absoluteFill,
     zIndex: 100,
     backgroundColor: colors.bg.base,
     paddingBottom: spacing[10],
-    justifyContent: 'center',
   },
   content: { gap: spacing[5] },
   kicker: {

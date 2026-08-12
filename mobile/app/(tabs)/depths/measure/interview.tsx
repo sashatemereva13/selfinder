@@ -253,20 +253,6 @@ export default function InterviewScreen() {
         ))}
       </View>
 
-      {/* First scan (sphereIndex === 0) is slower/more spacious than the
-          rest — see docs/measure-experience-concept.md §1's own "first
-          scan longer, later ones quicker" resolution. Both durations are
-          tune-during-build placeholders, not final. */}
-      {!isScoring && !scoringError && currentQuestion && scanPhase === 'playing' && (
-        <AttentionScan
-          key={sphereIndex}
-          sphere={currentQuestion.sphere}
-          phrase={philosopher?.scanPhrases?.[sphereIndex]?.phrase}
-          durationMs={sphereIndex === 0 ? 2000 : 1000}
-          onComplete={() => setScanPhase('done')}
-        />
-      )}
-
       {sphereIndex > 0 && !isScoring && !scoringError && scanPhase === 'done' && (
         <Pressable style={styles.previousSphereRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
           <Text style={styles.previousSphereText}>{t('measure.previousSphere')}</Text>
@@ -282,6 +268,24 @@ export default function InterviewScreen() {
           isLargeScreen && isBeforeFirstAnswer && styles.scrollContentCenteredEmpty,
         ]}
       >
+        {/* First scan (sphereIndex === 0) is slower/more spacious than the
+            rest — see docs/measure-experience-concept.md §1's own "first
+            scan longer, later ones quicker" resolution. Both durations are
+            tune-during-build placeholders, not final. Lives inside the
+            scroll content (not above it) so it inherits the same
+            flex-end/centered-when-empty anchoring every other beat on this
+            screen already uses, instead of floating in the top third with
+            the rest of the screen sitting empty beneath it. */}
+        {!isScoring && !scoringError && currentQuestion && scanPhase === 'playing' && (
+          <AttentionScan
+            key={sphereIndex}
+            sphere={currentQuestion.sphere}
+            phrase={philosopher?.scanPhrases?.[sphereIndex]?.phrase}
+            durationMs={sphereIndex === 0 ? 2000 : 1000}
+            onComplete={() => setScanPhase('done')}
+          />
+        )}
+
         {qaPairs.map((pair, i) => (
           <View key={pair.sphere} style={styles.exchange}>
             <Turn color={accentColor} styles={styles}>{pair.question}</Turn>
