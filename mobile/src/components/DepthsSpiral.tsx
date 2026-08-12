@@ -14,18 +14,23 @@ import { useThemeColors } from '../theme/useThemeColors';
 import { fonts, fontSizes } from '../theme/typography';
 import { spacing } from '../theme/spacing';
 
-// Depths' journey, drawn as a golden-ratio (logarithmic) spiral rather than
-// a vertical list — see docs/depths-structure-concept.md. r(θ) = r₀ ·
-// φ^(−θ/(π/2)): radius shrinks by φ every quarter turn, the same
-// proportion behind a nautilus shell, not an arbitrary curve. Winds
-// clockwise and inward from Measure (the fixed, always-present outer
-// start) to the aura at center — moving along the spiral toward the
-// center IS the journey. Same construction discipline as
-// VibrationSpectrum.tsx's ring (one pure geometry function, exported dot-
-// position helper so nothing drifts out of sync with the drawing) and
-// AuraField.tsx (a `buildXGeometry(size)` factory returning everything a
-// caller needs, sized once, reused by both the static and animated
-// render).
+// Depths' journey, drawn as a golden-ratio spiral RISING as a cone above
+// the aura figure — a forced 2D-perspective illusion (each successive
+// winding a smaller, flatter ellipse than the one below, per Dürer's own
+// 1525 conical-spiral construction and a modern conical-helix parametric
+// plot) rather than a flat disc. The cone's wide base sits at/around the
+// aura; its narrow apex is Measure, the entry point of a session — the
+// walk descends from there through Spill, Talk about it, Cards, Your
+// Arc, Levels, Tune In, and finally dissolves into the aura's own center
+// at Breathing. This is deliberate, not just a layout choice: it's
+// RULES.md's own deepest product rule ("the answers are already inside
+// the person — Selfinder never supplies them") expressed spatially — the
+// walk ends where it started, inside the person, not in the app. Same
+// construction discipline as VibrationSpectrum.tsx's ring (one pure
+// geometry function, exported dot-position helper so nothing drifts out
+// of sync with the drawing) and AuraField.tsx (a `buildXGeometry(size)`
+// factory returning everything a caller needs, sized once, reused by
+// both the static and animated render).
 const PHI = 1.6180339887498948;
 
 // Fixed angular slots, index 0..7 — always reserved, regardless of how
@@ -70,37 +75,77 @@ const TOTAL_SLOTS = SLOT_ORDER.length;
 // visited today.
 export const PREFIX_WALK_KEYS: SpiralSlotKey[] = ['levels', 'tunein', 'breathing'];
 
-const THETA_START = -Math.PI / 2; // 12 o'clock
-// Just under 3/4 turn to the last slot — tight enough to read as one
-// continuous inward pull within a 342px content column, wide enough that
-// early slots (Measure, Spill) don't crowd the outer rim.
-const THETA_PER_SLOT = (Math.PI * 1.5) / (TOTAL_SLOTS - 1);
-// b tuned so r shrinks by φ every quarter turn (π/2 radians) — the
-// defining property of a golden/logarithmic spiral.
+const THETA_START = -Math.PI / 2; // 12 o'clock, at the apex
+// Just under 3/4 turn across the whole climb — tight enough to read as
+// one continuous pull, wide enough that early windings don't crowd.
+const THETA_SWEEP_TOTAL = Math.PI * 1.5;
+// b tuned so the ellipse-scale shrinks by φ every quarter turn (π/2
+// radians) — the same proportion behind a nautilus shell, kept as the
+// decay rate for ellipseScaleForH below.
 const B = Math.log(PHI) / (Math.PI / 2);
+
+// h=0 is the base (bottom, at/around the aura, slot 7/Breathing); h=1 is
+// the apex (top, slot 0/Measure) — see this file's header comment for
+// why this direction, not the reverse. Linear, same as thetaForH below,
+// so both axes stay in lockstep — just running opposite to slotIndex.
+function hForSlot(slotIndex: number): number {
+  'worklet';
+  return 1 - slotIndex / (TOTAL_SLOTS - 1);
+}
 
 // 'worklet'-annotated: called both from plain JS (building the static
 // path/lookup table) and from inside travelMarkerStyle's useAnimatedStyle
 // worklet on the UI thread — same dual-context precedent as
 // ConsciousnessWheel.tsx's angleFor/polarToXY.
-function thetaForSlot(slotIndex: number): number {
+function thetaForH(h: number): number {
   'worklet';
-  return THETA_START + slotIndex * THETA_PER_SLOT;
+  return THETA_START + h * THETA_SWEEP_TOTAL;
 }
 
-function radiusForTheta(theta: number, r0: number): number {
+// Cubic ease, zero derivative at both t=0 and t=1 — the discipline that
+// fixed a real, measured kink in this spiral's earlier flat taper-to-
+// center curve (three different radius formulas meeting at hard
+// boundaries with matching value but mismatched slope). Reused here for
+// the new height axis: every curve below built from smoothstep() is a
+// single continuous family, never spliced with a second formula at some
+// h threshold.
+function smoothstep(t: number): number {
   'worklet';
-  return r0 * Math.exp(-B * (theta - THETA_START));
+  return t * t * (3 - 2 * t);
+}
+
+// How far the widest, ground-level ellipse's rx/ry shrink by height h —
+// ONE continuous formula for the whole 0..1 range (see smoothstep's own
+// comment for why that matters). Feeds both rx and ry via this shared
+// scale, plus ry gets an extra flatten term below so upper windings read
+// as flatter, not just smaller — matching Dürer's own construction.
+const APEX_SCALE = 0.22; // apex ellipse reads as small but not a vanishing dot
+const SCALE_K = -Math.log(APEX_SCALE);
+function ellipseScaleForH(h: number): number {
+  'worklet';
+  return Math.exp(-SCALE_K * smoothstep(h));
+}
+
+const FLATTEN_FACTOR = 0.45;
+function rxScaleForH(h: number): number {
+  'worklet';
+  return ellipseScaleForH(h);
+}
+function ryScaleForH(h: number): number {
+  'worklet';
+  return ellipseScaleForH(h) * (1 - FLATTEN_FACTOR * smoothstep(h));
 }
 
 // The aura figure is tall and narrow (per AuraFigure.tsx's own BODY
 // drawing space, ~200×380), not round — a single scalar minimum radius
-// let the spiral's inner turns clip through the head and legs while
-// clearing the shoulders fine. This returns the minimum safe distance
-// from center at a given angle against an ELLIPSE matching the aura's
-// real aspect ratio, so the spiral genuinely goes around the body's
-// actual silhouette instead of a circle that's wrong in two directions
-// at once (too tight sideways, too loose vertically).
+// let the spiral's innermost (base) winding clip through the head and
+// legs while clearing the shoulders fine. This returns the minimum safe
+// distance from the base ellipse's own center at a given angle against
+// an ELLIPSE matching the aura's real aspect ratio, so the spiral
+// genuinely goes around the body's actual silhouette instead of a
+// circle that's wrong in two directions at once (too tight sideways,
+// too loose vertically). Only matters near h≈0 — higher windings are
+// already well clear by construction (smaller ellipses higher up).
 function ellipticalClearance(theta: number, clearanceX: number, clearanceY: number): number {
   'worklet';
   const cos = Math.cos(theta);
@@ -115,56 +160,112 @@ interface Point {
   y: number;
 }
 
-function polarToXY(cx: number, cy: number, r: number, theta: number): Point {
-  return { x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta) };
+// Foreshortening ratio for the elliptical offset around each winding's
+// own center — kept less than 1 so a point's vertical displacement from
+// its ring's center reads as sitting ON a foreshortened ellipse, not a
+// full circle, consistent with the ground ellipse's own aspect ratio.
+const FORESHORTEN_Y = 0.85;
+// Small margins so the ground ellipse's outermost point and the apex's
+// topmost point don't clip against the canvas edge.
+const BASE_MARGIN = 4;
+const TOP_MARGIN = 4;
+
+// Produces one point on the conical spiral at a given normalized height
+// h (0=base/aura, 1=apex/Measure) and canvas geometry. 'worklet' so both
+// the static geometry builder (plain JS) and the travel-marker's
+// useAnimatedStyle worklet (UI thread) can call the exact same function
+// — never two independently-maintained copies of this math.
+//
+// The clearance floor is applied via Math.max UNCONDITIONALLY across the
+// whole h domain, not gated by an h threshold — an earlier version only
+// applied it below h<0.15 as an optimization, which produced a real,
+// numerically-confirmed kink exactly at that boundary (the floor snapped
+// off abruptly rather than being naturally exceeded by the unconstrained
+// curve). Math.max against a fixed floor is cheap and, critically, safe:
+// once ellipseScaleForH(h) makes rx/ry exceed the floor on their own, the
+// max is a no-op with zero cost to continuity — same pattern the flat
+// spiral's own (never-buggy) radius-vs-clearance max used.
+function pointForH(
+  h: number,
+  baseCx: number,
+  groundY: number,
+  riseHeight: number,
+  baseRx: number,
+  baseRy: number,
+  clearanceRx: number,
+  clearanceRy: number,
+): Point {
+  'worklet';
+  const theta = thetaForH(h);
+  const scale = ellipseScaleForH(h);
+  const clearance = ellipticalClearance(theta, clearanceRx, clearanceRy);
+  const rx = Math.max(baseRx * rxScaleForH(h), clearance * scale);
+  const ry = Math.max(baseRy * ryScaleForH(h), clearance * scale * FORESHORTEN_Y);
+  const yCenter = groundY - h * riseHeight; // linear rise (option (a) — see file header)
+  const x = baseCx + rx * Math.cos(theta);
+  const y = yCenter + ry * Math.sin(theta) * FORESHORTEN_Y;
+  return { x, y };
 }
 
 // Exported so anything positioning itself relative to a slot (a label, a
 // future feature) can find the exact point without re-deriving the
 // spiral math — same "one geometry function, many consumers" discipline
 // vibrationSpectrumDotPosition already established.
-export function spiralPointPosition(slotIndex: number, size: number, clearanceX: number, clearanceY: number): Point {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r0 = size / 2 - 4; // small margin so the outermost point doesn't clip
-  const theta = thetaForSlot(slotIndex);
-  const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, clearanceX, clearanceY));
-  return polarToXY(cx, cy, r, theta);
+export function spiralPointPosition(
+  slotIndex: number,
+  width: number,
+  height: number,
+  clearanceX: number,
+  clearanceY: number,
+): Point {
+  const baseCx = width / 2;
+  const groundY = height - BASE_MARGIN;
+  const riseHeight = groundY - TOP_MARGIN;
+  const h = hForSlot(slotIndex);
+  return pointForH(h, baseCx, groundY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
 }
 
 interface SpiralGeometry {
-  size: number;
-  cx: number;
-  cy: number;
+  width: number;
+  height: number;
+  baseCx: number;
+  groundY: number;
+  riseHeight: number;
   pathD: string;
   // Cumulative polyline length at each slot's own sample index — lets a
   // caller find exactly how far along the drawn path a given slot sits,
-  // without a closed-form arc-length integral (a log spiral's equal
-  // angular steps do NOT cover equal distance, so index/total would be
-  // visually dishonest — this looks up the real distance instead).
+  // without a closed-form arc-length integral (equal h steps do NOT
+  // cover equal distance, so index/total would be visually dishonest —
+  // this looks up the real distance instead).
   cumulativeLengthAtSlot: number[];
   totalLength: number;
   points: Point[]; // one per slot, in SLOT_ORDER order
 }
 
-// Built once per size/clearance (memoized by the caller) — samples the
-// spiral finely between slot 0 and the last slot, building both the SVG
-// path string and a lookup table of cumulative length at each slot's
-// position, in one pass.
-export function buildSpiralGeometry(size: number, clearanceX: number, clearanceY: number): SpiralGeometry {
-  const cx = size / 2;
-  const cy = size / 2;
-  const r0 = size / 2 - 4;
-  const thetaMax = thetaForSlot(TOTAL_SLOTS - 1);
+// Built once per width/height/clearance (memoized by the caller) —
+// samples the cone finely from base (h=0) to apex (h=1), building both
+// the SVG path string and a lookup table of cumulative length at each
+// slot's position, in one pass. The base ellipse's own rx/ry ARE the
+// clearance ellipse (the ground ring sits exactly at the aura's own
+// footprint) — see depths/index.tsx's DEPTHS_COMPOSITION_GEOMETRY for
+// where clearanceX/clearanceY come from.
+export function buildSpiralGeometry(width: number, height: number, clearanceX: number, clearanceY: number): SpiralGeometry {
+  const baseCx = width / 2;
+  const groundY = height - BASE_MARGIN;
+  const riseHeight = groundY - TOP_MARGIN;
   const stepsPerSlot = 24;
   const totalSteps = (TOTAL_SLOTS - 1) * stepsPerSlot;
 
+  // Sample index i walks in SLOT order (i=0 at slot 0/Measure, i=totalSteps
+  // at the last slot/Breathing) so that cumulativeLengthAtSlot/points below
+  // (indexed by `slot * stepsPerSlot`) line up correctly — but per
+  // hForSlot, slot 0 is h=1 (apex) and the last slot is h=0 (base), so h
+  // must run BACKWARD as i increases: h = 1 - i/totalSteps.
   const samples: Point[] = [];
   const cumulativeLengthAtStep: number[] = [0];
   for (let i = 0; i <= totalSteps; i++) {
-    const theta = THETA_START + (i / totalSteps) * (thetaMax - THETA_START);
-    const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, clearanceX, clearanceY));
-    const p = polarToXY(cx, cy, r, theta);
+    const h = 1 - i / totalSteps;
+    const p = pointForH(h, baseCx, groundY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
     samples.push(p);
     if (i > 0) {
       const prev = samples[i - 1];
@@ -184,9 +285,11 @@ export function buildSpiralGeometry(size: number, clearanceX: number, clearanceY
   }
 
   return {
-    size,
-    cx,
-    cy,
+    width,
+    height,
+    baseCx,
+    groundY,
+    riseHeight,
     pathD,
     cumulativeLengthAtSlot,
     totalLength: cumulativeLengthAtStep[cumulativeLengthAtStep.length - 1],
@@ -215,7 +318,8 @@ const AnimatedPath = Animated.createAnimatedComponent(Path);
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
 interface DepthsSpiralProps {
-  size: number;
+  width: number;
+  height: number;
   points: SpiralPoint[]; // one entry per SLOT_ORDER key, always 8 long
   accentRgb: string;
   onPointPress: (key: SpiralSlotKey) => void;
@@ -229,14 +333,15 @@ interface DepthsSpiralProps {
   // calls onFirstRunTravelSettled. Absent/false on every normal render.
   playFirstRunTravel: boolean;
   onFirstRunTravelSettled?: () => void;
-  // The aura image's own half-width/half-height, in this component's own
-  // pixel space (same units as `size`) — the real reason the spiral needs
-  // an ELLIPTICAL clearance, not a circular one: the aura figure is tall
-  // and narrow (see AuraFigure.tsx's BODY, ~200×380), so a single scalar
-  // minimum radius cleared the shoulders fine but let inner turns clip
-  // through the head/legs. depths/index.tsx computes these from the same
-  // AURA_METRICS it already sizes the aura image with, plus a small
-  // margin, so "the spiral goes around the body" holds by construction.
+  // The aura's own ground-ellipse half-width/half-height, in this
+  // component's own pixel space (same units as width/height) — used both
+  // as the cone's base ellipse dimensions AND its inner clearance floor
+  // near h≈0. The real reason this is ELLIPTICAL, not circular: the aura
+  // figure is tall and narrow (see AuraFigure.tsx's BODY, ~200×380), so a
+  // single scalar radius cleared the shoulders fine but let the base
+  // winding clip through the head/legs. depths/index.tsx computes these
+  // from the same geometry it already sizes AuraField's rings with, so
+  // "the cone's base wraps the body" holds by construction.
   auraHalfWidth: number;
   auraHalfHeight: number;
 }
@@ -245,7 +350,8 @@ const HIT = 44; // iOS/Android minimum recommended touch target
 const DOT_RADIUS = 4.5;
 
 export function DepthsSpiral({
-  size,
+  width,
+  height,
   points,
   accentRgb,
   onPointPress,
@@ -257,9 +363,46 @@ export function DepthsSpiral({
 }: DepthsSpiralProps) {
   const colors = useThemeColors();
   const geometry = useMemo(
-    () => buildSpiralGeometry(size, auraHalfWidth, auraHalfHeight),
-    [size, auraHalfWidth, auraHalfHeight]
+    () => buildSpiralGeometry(width, height, auraHalfWidth, auraHalfHeight),
+    [width, height, auraHalfWidth, auraHalfHeight]
   );
+
+  // Precomputes each point's label position/alignment in one pass (not
+  // inline in the render .map below) so the anti-overlap nudge (see
+  // MIN_LABEL_GAP) can look at the PREVIOUS point's already-resolved
+  // labelY, in slot order — consecutive slots near the base sit on a
+  // wide, flat ellipse where equal angular steps can land two dots (and
+  // their same-side-offset labels) close enough on screen to overlap,
+  // inheriting the same risk the old flat spiral had at its innermost
+  // turns (see this file's own header comment).
+  // A label can wrap to 2 lines (numberOfLines={2}) — sized for that worst
+  // case, not a single line, since two adjacent labels both wrapping is
+  // exactly the case this guards against.
+  const MIN_LABEL_GAP = fontSizes.xs * 3.2;
+  const labelLayout = useMemo(() => {
+    let lastLabelY: number | null = null;
+    return points.map((point, i) => {
+      if (!point.isPresent) return null;
+      const { x, y } = geometry.points[i];
+      const h = hForSlot(i);
+      const windingCenterX = geometry.baseCx;
+      const windingCenterY = geometry.groundY - h * geometry.riseHeight;
+      const dx = x - windingCenterX;
+      const dy = y - windingCenterY;
+      const dist = Math.hypot(dx, dy) || 1;
+      const labelOffset = (DOT_RADIUS + 6) / Math.max(ellipseScaleForH(h), 0.35);
+      const labelX = x + (dx / dist) * labelOffset;
+      let labelY = y + (dy / dist) * labelOffset;
+      if (lastLabelY !== null && Math.abs(labelY - lastLabelY) < MIN_LABEL_GAP) {
+        labelY = lastLabelY + MIN_LABEL_GAP;
+      }
+      lastLabelY = labelY;
+      const isLeftHalf = dx < -4;
+      const isRightHalf = dx > 4;
+      const align: 'left' | 'right' | 'center' = isLeftHalf ? 'right' : isRightHalf ? 'left' : 'center';
+      return { labelX, labelY, align };
+    });
+  }, [points, geometry]);
 
   const dashLength = useMemo(() => estimatePathLength(geometry.pathD) || geometry.totalLength, [geometry]);
 
@@ -318,18 +461,22 @@ export function DepthsSpiral({
   const levelsSlotIndex = SLOT_ORDER.indexOf('levels');
   const travelMarkerStyle = useAnimatedStyle(() => {
     'worklet';
-    // Re-derives the point directly from theta/radius rather than sending
-    // the full sampled-points array across the JS/UI bridge — cheap, and
+    // Re-derives the point directly via pointForH rather than sending the
+    // full sampled-points array across the JS/UI bridge — cheap, and
     // keeps the marker walking the real curve (not a straight chord)
-    // between the aura and Levels' own slot.
-    const targetTheta = thetaForSlot(levelsSlotIndex);
-    const theta = THETA_START + travelProgress.value * (targetTheta - THETA_START);
-    const r0 = size / 2 - 4;
-    const r = Math.max(radiusForTheta(theta, r0), ellipticalClearance(theta, auraHalfWidth, auraHalfHeight));
-    const cx = size / 2;
-    const cy = size / 2;
-    const x = cx + r * Math.cos(theta);
-    const y = cy + r * Math.sin(theta);
+    // between the aura (h=0) and Levels' own winding (h=hForSlot(5)).
+    const targetH = hForSlot(levelsSlotIndex);
+    const h = travelProgress.value * targetH;
+    const { x, y } = pointForH(
+      h,
+      geometry.baseCx,
+      geometry.groundY,
+      geometry.riseHeight,
+      auraHalfWidth,
+      auraHalfHeight,
+      auraHalfWidth,
+      auraHalfHeight,
+    );
     return {
       opacity: travelOpacity.value,
       transform: [{ translateX: x - 5 }, { translateY: y - 5 }, { scale: travelScale.value }],
@@ -340,8 +487,8 @@ export function DepthsSpiral({
 
   return (
     <View style={styles.outer}>
-      <View pointerEvents="box-none" style={[styles.wrap, { width: size, height: size }]}>
-        <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={StyleSheet.absoluteFill}>
+      <View pointerEvents="box-none" style={[styles.wrap, { width, height }]}>
+        <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={StyleSheet.absoluteFill}>
           <Path d={geometry.pathD} fill="none" stroke={strokeColor} strokeOpacity={0.16} strokeWidth={1} strokeLinecap="round" />
           <AnimatedPath
             d={geometry.pathD}
@@ -360,25 +507,11 @@ export function DepthsSpiral({
 
         {points.map((point, i) => {
           if (!point.isPresent) return null;
+          const layout = labelLayout[i];
+          if (!layout) return null;
           const dotOpacity = point.alwaysFull ? 0.95 : point.visitedToday ? 0.4 : 0.95;
           const { x, y } = geometry.points[i];
-          // Label sits just outside the dot, offset radially away from
-          // center (not just below it) so it reads as "attached to this
-          // point," not floating loose — the same reason a compass rose's
-          // labels sit past the tick, not on top of it. Text alignment
-          // flips by which half of the spiral the point falls in, so a
-          // label on the left side doesn't run back across the curve.
-          const cx = size / 2;
-          const cy = size / 2;
-          const dx = x - cx;
-          const dy = y - cy;
-          const dist = Math.hypot(dx, dy) || 1;
-          const labelOffset = DOT_RADIUS + 6;
-          const labelX = x + (dx / dist) * labelOffset;
-          const labelY = y + (dy / dist) * labelOffset;
-          const isLeftHalf = dx < -4;
-          const isRightHalf = dx > 4;
-          const align: 'left' | 'right' | 'center' = isLeftHalf ? 'right' : isRightHalf ? 'left' : 'center';
+          const { labelX, labelY, align } = layout;
           const labelOpacity = point.alwaysFull ? 1 : point.visitedToday ? 0.55 : 1;
 
           return (
@@ -411,7 +544,7 @@ export function DepthsSpiral({
                     // two lines (numberOfLines={2} above) is the actual
                     // fallback for anything still too long at this width.
                     ...(align === 'right'
-                      ? { right: size - labelX, left: undefined, width: 96 }
+                      ? { right: width - labelX, left: undefined, width: 96 }
                       : align === 'left'
                         ? { left: labelX, right: undefined, width: 96 }
                         : { left: labelX - 60, width: 120 }),

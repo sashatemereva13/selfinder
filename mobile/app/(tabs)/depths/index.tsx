@@ -1,5 +1,5 @@
 import { View, Text, Pressable, ScrollView, StyleSheet, Image, Platform } from 'react-native';
-import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, Href } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -77,30 +77,40 @@ const AURA_METRICS = getAuraFigureMetrics(AURA_DISPLAY_SIZE);
 // everything below it (the level name, the sphere buttons) started
 // overlapping the rings' own lower half instead of clearing them.
 const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
-// The spiral's own canvas — sized to nearly fill a real 390px phone's
-// content budget (columnWidth minus horizontal padding), so the shape
-// itself reads as a real, spacious presence rather than a small diagram.
-// Point labels are allowed to extend slightly past this box (React
-// Native doesn't clip children unless told to) — auraSpiralWrap has no
-// overflow:hidden, so a label near the canvas edge isn't cut off.
-// Centered on the same point AuraField/AuraWithDots already center on,
-// via the shared auraSpiralWrap/spiralOverlay styles below.
-// Fills the full content-column width (columnWidth minus horizontal
-// padding, 342px on a 390px reference phone) rather than sitting smaller
-// than its available space — going any larger would overflow the
-// padded column, which reads as a layout bug, not "spacious."
-const SPIRAL_SIZE = 342;
-// The spiral's inner clearance is an ELLIPSE, not a circle, matching
-// AuraField's real footprint (its four concentric sphere-rings, which
-// only render once a reading exists — the larger, safer case to clear;
-// the plain neutral aura alone is smaller). A flat margin on top so the
-// spiral's own inner turns/dots sit visibly outside the body/rings, not
-// flush against their edge. See DepthsSpiral.tsx's ellipticalClearance
+// The composition's own canvas — width fills a real 390px phone's content
+// budget (columnWidth minus horizontal padding) the same way the old flat
+// spiral did, so the shape itself reads as a real, spacious presence
+// rather than a small diagram. Height is now taller than width (the cone
+// rises above the aura's ground plane) — allowed to scroll naturally
+// within Depths' own ScrollView rather than being compressed to fit one
+// screen. Point labels are allowed to extend slightly past this box
+// (React Native doesn't clip children unless told to) — auraSpiralWrap
+// has no overflow:hidden, so a label near the canvas edge isn't cut off.
+const SPIRAL_WIDTH = 342;
+const SPIRAL_TOTAL_HEIGHT = SPIRAL_WIDTH * 1.8;
+// The spiral's inner clearance (and now also the cone's own base-ellipse
+// dimensions — see DepthsSpiral.tsx) is an ELLIPSE, not a circle,
+// matching AuraField's real footprint (its four concentric sphere-rings,
+// which only render once a reading exists — the larger, safer case to
+// clear; the plain neutral aura alone is smaller). A flat margin on top
+// so the spiral's own base winding sits visibly outside the body/rings,
+// not flush against their edge. See DepthsSpiral.tsx's ellipticalClearance
 // for why an ellipse: the aura figure is tall and narrow, so a single
 // scalar radius was either too tight sideways or too loose vertically.
 const AURA_CLEARANCE_MARGIN = 6;
 const SPIRAL_AURA_HALF_WIDTH = AURA_FIELD_GEOMETRY.svgWidth / 2 + AURA_CLEARANCE_MARGIN;
 const SPIRAL_AURA_HALF_HEIGHT = AURA_FIELD_GEOMETRY.svgHeight / 2 + AURA_CLEARANCE_MARGIN;
+// The single shared coordinate system both the spiral's own base ellipse
+// and the aura's positioning read from — replaces two independently
+// flex-centered boxes (the old auraSpiralWrap fixed square + a separately
+// centered ringWrap) that only visually coincided because both centered
+// the same way. groundY sits near the bottom of the tall canvas, leaving
+// riseHeight worth of room above it for the cone to climb through.
+const DEPTHS_COMPOSITION_GEOMETRY = {
+  width: SPIRAL_WIDTH,
+  totalHeight: SPIRAL_TOTAL_HEIGHT,
+  groundY: SPIRAL_TOTAL_HEIGHT - SPIRAL_AURA_HALF_HEIGHT - spacing[8],
+};
 
 // Same slow-decelerate easing as onboarding's own "gather, condense,
 // become" motion (see app/onboarding/index.tsx's SOFT_EASE) — reused here
@@ -617,7 +627,8 @@ export default function DepthsScreen() {
             <View style={styles.auraSpiralWrap}>
               <View style={styles.spiralOverlay} pointerEvents="box-none">
                 <DepthsSpiral
-                  size={SPIRAL_SIZE}
+                  width={DEPTHS_COMPOSITION_GEOMETRY.width}
+                  height={DEPTHS_COMPOSITION_GEOMETRY.totalHeight}
                   points={spiralPoints}
                   accentRgb={accentRgb}
                   onPointPress={handleSpiralPointPress}
@@ -757,13 +768,15 @@ export default function DepthsScreen() {
             <Text style={styles.lastReadingLabel}>{t('depths.beforeFirstReading')}</Text>
             {/* Same overlay approach as the reading branch above — the
                 spiral is absolutely positioned inside a wrapper sized/
-                centered identically to how AuraWithDots itself centers,
-                so both branches' spiral coincides with the aura's own
+                positioned identically to how AuraWithDots itself sits
+                (both pinned to DEPTHS_COMPOSITION_GEOMETRY.groundY), so
+                both branches' spiral coincides with the aura's own
                 center by construction, not by measurement. */}
             <View style={styles.auraSpiralWrap}>
               <View style={styles.spiralOverlay} pointerEvents="box-none">
                 <DepthsSpiral
-                  size={SPIRAL_SIZE}
+                  width={DEPTHS_COMPOSITION_GEOMETRY.width}
+                  height={DEPTHS_COMPOSITION_GEOMETRY.totalHeight}
                   points={spiralPoints}
                   accentRgb={accentRgb}
                   onPointPress={handleSpiralPointPress}
@@ -773,7 +786,9 @@ export default function DepthsScreen() {
                   auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
                 />
               </View>
-              <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
+              <View style={styles.groundWrap}>
+                <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
+              </View>
             </View>
             <Text style={styles.title}>
               {t('depths.firstReadingCopy')}
@@ -1113,28 +1128,17 @@ function AnimatedAuraField({
         const ry = ryFor(i);
         const emphasis = !selectedSphere || selectedSphere === key ? 1 : 0.25;
         return (
-          <Fragment key={key}>
-            <AnimatedFieldLobe
-              cx={svgCenterX - rx}
-              cy={svgCenterY}
-              fullRx={rx}
-              fullRy={ry}
-              color={colors[key]}
-              emphasis={emphasis}
-              grow={growValues[key]}
-              colorSettle={colorValues[key]}
-            />
-            <AnimatedFieldLobe
-              cx={svgCenterX + rx}
-              cy={svgCenterY}
-              fullRx={rx}
-              fullRy={ry}
-              color={colors[key]}
-              emphasis={emphasis}
-              grow={growValues[key]}
-              colorSettle={colorValues[key]}
-            />
-          </Fragment>
+          <AnimatedFieldLobe
+            key={key}
+            cx={svgCenterX}
+            cy={svgCenterY}
+            fullRx={rx}
+            fullRy={ry}
+            color={colors[key]}
+            emphasis={emphasis}
+            grow={growValues[key]}
+            colorSettle={colorValues[key]}
+          />
         );
       })}
     </Svg>
@@ -1298,36 +1302,62 @@ function makeStyles(colors: Colors) {
     flex: 1,
     backgroundColor: colors.bg.base,
   },
+  // Absolutely fills the same area ringWrap occupies (see ringWrap's own
+  // `top` computed from groundY) rather than sizing itself from normal
+  // flow — ringWrap is itself absolutely positioned now (the aura sits at
+  // the base of a much taller composition, not centered in it), so
+  // without this the Pressable's own hit area would collapse to nothing.
   arrivalSkipWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_FIELD_GEOMETRY.svgHeight / 2,
+    height: AURA_FIELD_GEOMETRY.svgHeight,
     alignItems: 'center',
+  },
+  // Pre-reading branch's own equivalent of arrivalSkipWrap/ringWrap — no
+  // AuraArrival/AnimatedAuraField here (nothing to animate in before a
+  // first reading exists), just AuraWithDots pinned to the same groundY
+  // so both branches' aura lands at the identical point the spiral's own
+  // base ellipse is built from.
+  groundWrap: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_FIELD_GEOMETRY.svgHeight / 2,
+    height: AURA_FIELD_GEOMETRY.svgHeight,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   // Shared positioning parent for both branches' aura + the spiral
   // overlay — sized to the spiral's own canvas so spiralOverlay (below)
   // can center within it and land on the exact same point the aura
   // itself is centered on, by construction rather than measurement.
   auraSpiralWrap: {
-    width: SPIRAL_SIZE,
-    height: SPIRAL_SIZE,
+    width: DEPTHS_COMPOSITION_GEOMETRY.width,
+    height: DEPTHS_COMPOSITION_GEOMETRY.totalHeight,
     alignSelf: 'center',
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Gives the topmost point's label (Measure, at 12 o'clock) real
+    // Gives the topmost point's label (Measure, at the apex) real
     // breathing room from the kicker row above — without this, "Measure
     // again" and its dot crowded right against "today"/the kicker text.
     marginTop: spacing[8],
-    // Same reasoning below — the bottom-most label (Levels) previously
-    // had only ringLevelName's own small marginTop before the level name
-    // link, which read as crowded against the spiral's own lower labels.
+    // Same reasoning below — the bottom-most content (the level name)
+    // previously had only ringLevelName's own small marginTop before it,
+    // which read as crowded against the spiral's own lower labels.
     marginBottom: spacing[8],
   },
+  // Fills the whole tall wrapper — DepthsSpiral's own width/height match
+  // this exactly, so its base ellipse lands at
+  // DEPTHS_COMPOSITION_GEOMETRY.groundY by construction, not by measuring
+  // this View. No alignItems/justifyContent centering here (unlike the
+  // old flat/square version): the cone is NOT vertically centered in this
+  // box, it rises from the bottom, so centering would float it wrong.
   spiralOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   content: {
     paddingHorizontal: spacing[6],
@@ -1443,24 +1473,30 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.base * lineHeights.normal,
     marginTop: spacing[6],
   },
-  // The ring (VibrationSpectrum) and the aura share this one center point —
-  // ring renders first so the aura sits visually on top of/inside it.
-  // `position: 'relative'` makes this the positioning context the aura's
-  // `overlay` (position: 'absolute') resolves against — AuraArrival nests
-  // the aura inside two extra Animated.View layers (for the arrival
-  // animation) that carry no positioning of their own, so without this the
-  // "nearest positioned ancestor" search skips straight past ringWrap to
-  // whatever wraps it further up, landing the aura somewhere else on the
-  // page entirely instead of centered on the ring. Explicit height —
-  // see AURA_FIELD_GEOMETRY's own comment for why this can't be left to
-  // size itself from content.
+  // The ring (AuraField's rings) and the aura share this one center
+  // point — ring renders first so the aura sits visually on top of/
+  // inside it. `position: 'relative'` makes this the positioning context
+  // the aura's `overlay` (position: 'absolute') resolves against —
+  // AuraArrival nests the aura inside two extra Animated.View layers (for
+  // the arrival animation) that carry no positioning of their own, so
+  // without this the "nearest positioned ancestor" search skips straight
+  // past ringWrap to whatever wraps it further up, landing the aura
+  // somewhere else on the page entirely instead of centered on the ring.
+  // Fills its parent (arrivalSkipWrap, or the pre-reading branch's own
+  // groundWrap — both already positioned so their own top lands at
+  // DEPTHS_COMPOSITION_GEOMETRY.groundY) rather than centering within the
+  // FULL tall auraSpiralWrap (the old approach, which would float the
+  // aura in the middle of the whole rising-cone composition instead of
+  // at its base). Pinning both this and the spiral's own base ellipse to
+  // the one shared groundY value (see buildSpiralGeometry's own groundY)
+  // unifies them into one coordinate system rather than two
+  // independently-centered boxes that only agreed by construction.
   ringWrap: {
     position: 'relative',
     width: '100%',
     height: AURA_FIELD_GEOMETRY.svgHeight,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: spacing[8],
   },
   // Shown whether or not a sphere button is selected — the overall
   // reading's name by default, that sphere's own name once tapped — so
