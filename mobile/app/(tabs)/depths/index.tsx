@@ -112,6 +112,18 @@ const DEPTHS_COMPOSITION_GEOMETRY = {
   width: SPIRAL_WIDTH,
   totalHeight: SPIRAL_TOTAL_HEIGHT,
   groundY: SPIRAL_TOTAL_HEIGHT - SPIRAL_AURA_HALF_HEIGHT - spacing[8],
+  // The curve's own true destination (h=0) is the aura's glowing CHEST
+  // point, not the ring/feet level — confirmed directly: the ring stays
+  // at the feet (a ground plane), but the spiral itself should visibly
+  // rise up out of that ring and dissolve into the figure's actual bright
+  // focal point. AURA_METRICS.chestY is measured from the TOP of the aura
+  // image; the aura's own bottom (feet) sits at groundY (see
+  // arrivalSkipWrap/groundWrap's own `top` computation, which pins the
+  // aura box's bottom there) — so chestY in this shared coordinate space
+  // is groundY minus the distance from chest to feet.
+  get chestY() {
+    return this.groundY - (AURA_METRICS.height - AURA_METRICS.chestY);
+  },
 };
 
 // Same slow-decelerate easing as onboarding's own "gather, condense,
@@ -639,6 +651,8 @@ export default function DepthsScreen() {
                   onFirstRunTravelSettled={() => setFirstRunTravelDone(true)}
                   auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
                   auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+                  auraFigureHeight={AURA_METRICS.height}
+                  chestY={DEPTHS_COMPOSITION_GEOMETRY.chestY}
                 />
               </View>
             <Pressable
@@ -786,6 +800,8 @@ export default function DepthsScreen() {
                   playFirstRunTravel={false}
                   auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
                   auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+                  auraFigureHeight={AURA_METRICS.height}
+                  chestY={DEPTHS_COMPOSITION_GEOMETRY.chestY}
                 />
               </View>
               <View style={styles.groundWrap}>

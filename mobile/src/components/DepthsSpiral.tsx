@@ -75,31 +75,74 @@ const TOTAL_SLOTS = SLOT_ORDER.length;
 // visited today.
 export const PREFIX_WALK_KEYS: SpiralSlotKey[] = ['levels', 'tunein', 'breathing'];
 
+// The spiral winds three full turns, not one partial sweep — each turn is
+// a theme, not just a shape: "find yourself" (Measure, Spill, Talk about
+// it, Cards — the reflective/expressive tools), "learn" (Your Arc,
+// Levels — the pattern/knowledge tools), "regulate" (Tune In, Breathing —
+// the calming tools). Slot→h is a lookup table, not a formula, because
+// the three winds don't get equal shares of the curve (4 tools in the
+// first wind, 2 each in the other two) — h still runs 0..1 monotonically
+// DECREASING with slot index (h=1 at slot 0/Measure, h→0 toward the
+// curve's own bare endpoint), just not evenly spaced per slot.
+//
+// h=0 is reserved for the curve's own bare terminus at the aura's exact
+// center (no tool sits there) — Breathing sits at H_BREATHING, a little
+// before that, so the line visibly continues past the last labeled point
+// and dissolves into the aura, rather than a tool's own dot being the
+// literal last pixel drawn.
+//
+// Wind boundaries, each a single h value the curve passes through between
+// themes: WIND_1_START=1 (Measure, apex) → WIND_1_END (Cards, end of
+// "find yourself") → WIND_2_END (Levels, end of "learn") →
+// H_BREATHING (just before the bare tail to h=0, end of "regulate").
+// Each slot's own h is placed by simple linear interpolation WITHIN its
+// own wind's [start, end] range — verified numerically to be strictly
+// decreasing slot-over-slot (see collaboration notes; an earlier
+// arithmetic version of this table was NOT monotonic and has been
+// replaced with this explicit, checked one).
+const WIND_1_START = 1;
+const WIND_1_END = 0.66;
+const WIND_2_END = 0.34;
+const H_BREATHING = 0.08;
+const SLOT_H: number[] = [
+  WIND_1_START,                                              // measure — apex
+  WIND_1_START - (WIND_1_START - WIND_1_END) * 0.3,          // spill
+  WIND_1_START - (WIND_1_START - WIND_1_END) * 0.65,         // talkAboutIt
+  WIND_1_END,                                                 // cards — end of wind 1
+  WIND_1_END - (WIND_1_END - WIND_2_END) * 0.5,               // yourArc — mid wind 2
+  WIND_2_END,                                                 // levels — end of wind 2
+  WIND_2_END - (WIND_2_END - H_BREATHING) * 0.5,              // tunein — mid wind 3
+  H_BREATHING,                                                 // breathing — just before the bare terminus
+];
+
+function hForSlot(slotIndex: number): number {
+  'worklet';
+  return SLOT_H[slotIndex];
+}
+
 const THETA_START = -Math.PI / 2; // 12 o'clock, at the apex
-// Just under 3/4 turn across the whole climb — tight enough to read as
-// one continuous pull, wide enough that early windings don't crowd.
-const THETA_SWEEP_TOTAL = Math.PI * 1.5;
 // b tuned so the ellipse-scale shrinks by φ every quarter turn (π/2
 // radians) — the same proportion behind a nautilus shell, kept as the
 // decay rate for ellipseScaleForH below.
 const B = Math.log(PHI) / (Math.PI / 2);
 
-// h=0 is the base (bottom, at/around the aura, slot 7/Breathing); h=1 is
-// the apex (top, slot 0/Measure) — see this file's header comment for
-// why this direction, not the reverse. Linear, same as thetaForH below,
-// so both axes stay in lockstep — just running opposite to slotIndex.
-function hForSlot(slotIndex: number): number {
-  'worklet';
-  return 1 - slotIndex / (TOTAL_SLOTS - 1);
-}
-
-// 'worklet'-annotated: called both from plain JS (building the static
-// path/lookup table) and from inside travelMarkerStyle's useAnimatedStyle
-// worklet on the UI thread — same dual-context precedent as
-// ConsciousnessWheel.tsx's angleFor/polarToXY.
+// Three full turns (2π each) across the whole climb, not one partial
+// sweep — each wind's own h-span (see SLOT_H's wind boundaries above,
+// each spanning roughly a third of the 0..1 range) works out to roughly
+// one full turn per theme, so a viewer can feel "this is a new loop, a
+// new theme" rather than the whole curve reading as one continuous
+// sweep the way the single-wind version did. A single linear formula
+// across the ENTIRE h domain (not three separately-tuned per-wind
+// formulas stitched together) — this is what keeps the curve kink-free
+// by construction, same discipline as ellipseScaleForH's single-formula
+// requirement: a linear function has no discontinuity to introduce in
+// the first place, so wind boundaries are felt only through the theming
+// of WHICH tools cluster on a turn, never through a bend in the curve
+// itself.
+const TOTAL_TURNS = 3;
 function thetaForH(h: number): number {
   'worklet';
-  return THETA_START + h * THETA_SWEEP_TOTAL;
+  return THETA_START + h * Math.PI * 2 * TOTAL_TURNS;
 }
 
 // Cubic ease, zero derivative at both t=0 and t=1 — the discipline that
@@ -114,16 +157,38 @@ function smoothstep(t: number): number {
   return t * t * (3 - 2 * t);
 }
 
-// How far the widest, ground-level ellipse's rx/ry shrink by height h —
-// ONE continuous formula for the whole 0..1 range (see smoothstep's own
-// comment for why that matters). Feeds both rx and ry via this shared
-// scale, plus ry gets an extra flatten term below so upper windings read
-// as flatter, not just smaller — matching Dürer's own construction.
+// How far the widest, ground-level ellipse's rx/ry shrink by height h.
+// Two things taper to a point now, not one: the apex (h=1, Measure) AND
+// the aura's own exact center (h=0) — the curve doesn't stop at the
+// ground ellipse's own radius anymore, it keeps winding inward past it,
+// shrinking the rest of the way to a true zero-radius point exactly at
+// the aura's center (see this file's own header comment on the bare
+// tail past Breathing). H_GROUND is the h value where the ring is at
+// its FULL ground-ellipse size (matching AuraField's own rings) — the
+// curve is widest there, not at h=0. Below H_GROUND (down to h=0) it
+// tapers back down to zero; above it (up to h=1) it tapers to
+// APEX_SCALE. A single smoothstep-shaped "tent" built from two
+// mirrored halves, each continuous and zero-derivative at its own
+// three anchor points (0, H_GROUND, 1) — same discipline as before,
+// just two tapering ends instead of one.
+const H_GROUND = 0.14;
 const APEX_SCALE = 0.22; // apex ellipse reads as small but not a vanishing dot
 const SCALE_K = -Math.log(APEX_SCALE);
 function ellipseScaleForH(h: number): number {
   'worklet';
-  return Math.exp(-SCALE_K * smoothstep(h));
+  if (h >= H_GROUND) {
+    // Upper half: 1 at H_GROUND, APEX_SCALE at h=1 — same exponential
+    // taper the single-ended version always used, just re-based to
+    // start its own t=0 at H_GROUND instead of literal 0.
+    const t = (h - H_GROUND) / (1 - H_GROUND);
+    return Math.exp(-SCALE_K * smoothstep(t));
+  }
+  // Lower half: 1 at H_GROUND, 0 at h=0 — smoothstep itself (already
+  // zero-derivative at both its own ends) taken directly as the scale,
+  // so the ring shrinks smoothly all the way to a true point at the
+  // aura's center rather than stopping at the ground ellipse's radius.
+  const t = h / H_GROUND;
+  return smoothstep(t);
 }
 
 const FLATTEN_FACTOR = 0.45;
@@ -189,6 +254,7 @@ function pointForH(
   h: number,
   baseCx: number,
   groundY: number,
+  chestY: number,
   riseHeight: number,
   baseRx: number,
   baseRy: number,
@@ -201,7 +267,15 @@ function pointForH(
   const clearance = ellipticalClearance(theta, clearanceRx, clearanceRy);
   const rx = Math.max(baseRx * rxScaleForH(h), clearance * scale);
   const ry = Math.max(baseRy * ryScaleForH(h), clearance * scale * FORESHORTEN_Y);
-  const yCenter = groundY - h * riseHeight; // linear rise (option (a) — see file header)
+  // Linear rise from the CHEST (h=0, the curve's true destination — the
+  // aura's glowing focal point, confirmed against the ground/ring level
+  // which sits lower at the feet) up to the apex (h=1). The ring/ground
+  // ellipse itself still sits at groundY (used only for the clearance
+  // floor above, which is about RADIUS not vertical position) — the
+  // curve's own path rises from a higher point than the ring does, so it
+  // visibly climbs up out of the ring toward the chest glow rather than
+  // hugging the ground the whole way, per the confirmed direction.
+  const yCenter = chestY - h * riseHeight;
   const x = baseCx + rx * Math.cos(theta);
   const y = yCenter + ry * Math.sin(theta) * FORESHORTEN_Y;
   return { x, y };
@@ -215,14 +289,15 @@ export function spiralPointPosition(
   slotIndex: number,
   width: number,
   height: number,
+  chestY: number,
   clearanceX: number,
   clearanceY: number,
 ): Point {
   const baseCx = width / 2;
   const groundY = height - BASE_MARGIN;
-  const riseHeight = groundY - TOP_MARGIN;
+  const riseHeight = chestY - TOP_MARGIN;
   const h = hForSlot(slotIndex);
-  return pointForH(h, baseCx, groundY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
+  return pointForH(h, baseCx, groundY, chestY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
 }
 
 interface SpiralGeometry {
@@ -230,6 +305,7 @@ interface SpiralGeometry {
   height: number;
   baseCx: number;
   groundY: number;
+  chestY: number;
   riseHeight: number;
   pathD: string;
   // Cumulative polyline length at each slot's own sample index — lets a
@@ -248,24 +324,33 @@ interface SpiralGeometry {
 // slot's position, in one pass. The base ellipse's own rx/ry ARE the
 // clearance ellipse (the ground ring sits exactly at the aura's own
 // footprint) — see depths/index.tsx's DEPTHS_COMPOSITION_GEOMETRY for
-// where clearanceX/clearanceY come from.
-export function buildSpiralGeometry(width: number, height: number, clearanceX: number, clearanceY: number): SpiralGeometry {
+// where clearanceX/clearanceY come from. `chestY` is the curve's own
+// true destination (h=0) — the aura's glowing chest point, confirmed
+// against the ring/ground level which sits lower at the feet (groundY
+// stays only as the clearance-floor reference, a radius concern, not a
+// vertical-position one — see pointForH's own comment).
+export function buildSpiralGeometry(width: number, height: number, chestY: number, clearanceX: number, clearanceY: number): SpiralGeometry {
   const baseCx = width / 2;
   const groundY = height - BASE_MARGIN;
-  const riseHeight = groundY - TOP_MARGIN;
-  const stepsPerSlot = 24;
-  const totalSteps = (TOTAL_SLOTS - 1) * stepsPerSlot;
+  const riseHeight = chestY - TOP_MARGIN;
+  // Fixed total resolution (not stepsPerSlot × TOTAL_SLOTS) — SLOT_H
+  // isn't evenly spaced anymore (3 turns' worth of curve, non-uniform
+  // wind sizes), so sampling must walk h uniformly across the WHOLE
+  // 0..1 range independent of where slots happen to fall, then look up
+  // each slot's own sample afterward (below) rather than assuming
+  // `slot * stepsPerSlot` lands on the right step.
+  const totalSteps = 400;
 
-  // Sample index i walks in SLOT order (i=0 at slot 0/Measure, i=totalSteps
-  // at the last slot/Breathing) so that cumulativeLengthAtSlot/points below
-  // (indexed by `slot * stepsPerSlot`) line up correctly — but per
-  // hForSlot, slot 0 is h=1 (apex) and the last slot is h=0 (base), so h
-  // must run BACKWARD as i increases: h = 1 - i/totalSteps.
+  // Samples the FULL h range, 1 (apex/Measure) down to 0 (the curve's own
+  // bare terminus at the aura's chest glow) — not just down to the last
+  // slot's own h (H_BREATHING) — so the line visibly continues past
+  // Breathing's dot and dissolves into the aura, per this file's own
+  // header comment.
   const samples: Point[] = [];
   const cumulativeLengthAtStep: number[] = [0];
   for (let i = 0; i <= totalSteps; i++) {
     const h = 1 - i / totalSteps;
-    const p = pointForH(h, baseCx, groundY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
+    const p = pointForH(h, baseCx, groundY, chestY, riseHeight, clearanceX, clearanceY, clearanceX, clearanceY);
     samples.push(p);
     if (i > 0) {
       const prev = samples[i - 1];
@@ -276,10 +361,13 @@ export function buildSpiralGeometry(width: number, height: number, clearanceX: n
 
   const pathD = samples.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
 
+  // Each slot's own sample index is the step nearest its SLOT_H value
+  // (h = 1 - step/totalSteps, solved for step) — a direct lookup, not a
+  // fixed stride, since slots no longer sit at uniform h intervals.
   const cumulativeLengthAtSlot: number[] = [];
   const points: Point[] = [];
   for (let slot = 0; slot < TOTAL_SLOTS; slot++) {
-    const step = slot * stepsPerSlot;
+    const step = Math.round((1 - hForSlot(slot)) * totalSteps);
     cumulativeLengthAtSlot.push(cumulativeLengthAtStep[step]);
     points.push(samples[step]);
   }
@@ -289,6 +377,7 @@ export function buildSpiralGeometry(width: number, height: number, clearanceX: n
     height,
     baseCx,
     groundY,
+    chestY,
     riseHeight,
     pathD,
     cumulativeLengthAtSlot,
@@ -304,12 +393,14 @@ export interface SpiralPoint {
   // so depths/index.tsx resolves the string before passing it down.
   label: string;
   isPresent: boolean;
-  // Full brightness regardless of visited-today state — true for
-  // measure and the three ephemeral/reading-dependent extras (spill,
-  // talkAboutIt, cards, yourArc), false for the three prefix-tracked
-  // tools (levels/tunein/breathing), which dim once their own dot has
-  // been visited today (independent of whether the SOLID LINE has
-  // reached them yet — see visitedToday below).
+  // NOT read by this component's own render anymore (dot/label opacity is
+  // fixed, see the render below) — an earlier version dimmed a tool's dot
+  // once visited today, but that read as discouraging a real, wanted
+  // return visit (e.g. opening Tune In a second time in one day) rather
+  // than offering a path. Kept on the data contract (not deleted) since
+  // depths/index.tsx still computes real visited-state signals for other
+  // purposes (prefixCount, the "today's walk" trace) — this field just
+  // isn't one of the things that changes how a point LOOKS anymore.
   alwaysFull: boolean;
   visitedToday: boolean;
 }
@@ -344,6 +435,24 @@ interface DepthsSpiralProps {
   // "the cone's base wraps the body" holds by construction.
   auraHalfWidth: number;
   auraHalfHeight: number;
+  // The aura FIGURE's own visible height (not the ring's — much taller;
+  // AuraFigure.tsx's real drawn silhouette), used only to keep labels
+  // from landing on top of the body. With 3 turns of winding (see this
+  // file's header), several windings now legitimately pass behind/through
+  // the aura's silhouette at mid-heights — that's the intended "spins
+  // around the person" effect, not a bug — but a LABEL landing there
+  // still reads as a real readability bug (confirmed on-device: "Levels"
+  // clipped by the figure). auraHalfWidth/Height alone aren't enough
+  // here since they describe the flat ground ring, not the tall body.
+  auraFigureHeight: number;
+  // The curve's own true destination (h=0) — the aura's glowing chest
+  // point, in this component's own pixel space (same units as
+  // width/height, measured from the canvas's own top edge, NOT the aura
+  // image's own top). Confirmed directly: the ring/ground ellipse stays
+  // at the feet, but the curve itself should rise up out of the ring and
+  // dissolve into the figure's bright focal point higher up, not stop at
+  // the ring's own level.
+  chestY: number;
 }
 
 const HIT = 44; // iOS/Android minimum recommended touch target
@@ -360,11 +469,13 @@ export function DepthsSpiral({
   onFirstRunTravelSettled,
   auraHalfWidth,
   auraHalfHeight,
+  auraFigureHeight,
+  chestY,
 }: DepthsSpiralProps) {
   const colors = useThemeColors();
   const geometry = useMemo(
-    () => buildSpiralGeometry(width, height, auraHalfWidth, auraHalfHeight),
-    [width, height, auraHalfWidth, auraHalfHeight]
+    () => buildSpiralGeometry(width, height, chestY, auraHalfWidth, auraHalfHeight),
+    [width, height, chestY, auraHalfWidth, auraHalfHeight]
   );
 
   // Precomputes each point's label position/alignment in one pass (not
@@ -382,6 +493,13 @@ export function DepthsSpiral({
   // labels, not just the last one in slot order.
   const LABEL_BOX_W = 90;
   const LABEL_BOX_H = fontSizes.xs * 3.2; // sized for the numberOfLines={2} worst case
+  // The aura figure's own silhouette bounding box, roughly — centered
+  // horizontally on baseCx, standing on groundY, auraFigureHeight tall.
+  // Widened a bit past auraHalfWidth*2 since a label butting right up
+  // against the figure's edge still read as cramped, not just literally
+  // overlapping it.
+  const AURA_BODY_HALF_W = auraHalfWidth * 0.75;
+  const AURA_BODY_TOP = geometry.groundY - auraFigureHeight;
   const labelLayout = useMemo(() => {
     const placed: { x: number; y: number }[] = [];
     return points.map((point, i) => {
@@ -389,13 +507,23 @@ export function DepthsSpiral({
       const { x, y } = geometry.points[i];
       const h = hForSlot(i);
       const windingCenterX = geometry.baseCx;
-      const windingCenterY = geometry.groundY - h * geometry.riseHeight;
+      const windingCenterY = geometry.chestY - h * geometry.riseHeight;
       const dx = x - windingCenterX;
       const dy = y - windingCenterY;
       const dist = Math.hypot(dx, dy) || 1;
       const labelOffset = (DOT_RADIUS + 6) / Math.max(ellipseScaleForH(h), 0.35);
-      const labelX = x + (dx / dist) * labelOffset;
+      let labelX = x + (dx / dist) * labelOffset;
       let labelY = y + (dy / dist) * labelOffset;
+      // If this label would land on/near the aura's own silhouette (only
+      // possible now that 3 turns of winding legitimately pass behind the
+      // body at mid-heights — see this file's header comment), push it
+      // OUTWARD horizontally, away from baseCx, until clear — a label
+      // reads as broken when clipped by the figure even though the curve
+      // itself passing behind the body there is the intended effect.
+      if (labelY > AURA_BODY_TOP && labelY < geometry.groundY && Math.abs(labelX - geometry.baseCx) < AURA_BODY_HALF_W) {
+        const sign = labelX >= geometry.baseCx ? 1 : -1;
+        labelX = geometry.baseCx + sign * AURA_BODY_HALF_W;
+      }
       // Push straight down, away from the aura (not sideways), until this
       // label's box no longer overlaps any earlier one — a small, capped
       // number of steps so this can never loop unboundedly.
@@ -481,6 +609,7 @@ export function DepthsSpiral({
       h,
       geometry.baseCx,
       geometry.groundY,
+      geometry.chestY,
       geometry.riseHeight,
       auraHalfWidth,
       auraHalfHeight,
@@ -519,10 +648,15 @@ export function DepthsSpiral({
           if (!point.isPresent) return null;
           const layout = labelLayout[i];
           if (!layout) return null;
-          const dotOpacity = point.alwaysFull ? 0.95 : point.visitedToday ? 0.4 : 0.95;
+          // Dot/label brightness no longer dims once a tool is visited
+          // today — a returning-today visit to Tune In is exactly as
+          // valid a thing to want as a first one, so treating "already
+          // visited" as a reason to fade it read as discouraging a real
+          // path the user might want, not offering one. The solid/dashed
+          // prefix TRACE (traceAnimatedProps, above) still shows today's
+          // walk — that's informational, not a judgment on any one dot.
           const { x, y } = geometry.points[i];
           const { labelX, labelY, align } = layout;
-          const labelOpacity = point.alwaysFull ? 1 : point.visitedToday ? 0.55 : 1;
 
           return (
             <View key={point.key}>
@@ -531,7 +665,7 @@ export function DepthsSpiral({
                 onPress={() => onPointPress(point.key)}
                 hitSlop={i === 0 ? 10 : 4}
               >
-                <View style={[styles.dot, { backgroundColor: strokeColor, opacity: dotOpacity }]} />
+                <View style={[styles.dot, { backgroundColor: strokeColor, opacity: 0.95 }]} />
               </Pressable>
               <Text
                 pointerEvents="none"
@@ -540,7 +674,6 @@ export function DepthsSpiral({
                   styles.pointLabel,
                   {
                     color: colors.text.secondary,
-                    opacity: labelOpacity,
                     top: labelY - fontSizes.xs * 0.7,
                     textAlign: align,
                     // Width is generous, not tightly clamped to the space
