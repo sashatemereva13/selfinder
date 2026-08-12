@@ -241,15 +241,31 @@ const TOP_MARGIN = 4;
 // useAnimatedStyle worklet (UI thread) can call the exact same function
 // — never two independently-maintained copies of this math.
 //
-// The clearance floor is applied via Math.max UNCONDITIONALLY across the
-// whole h domain, not gated by an h threshold — an earlier version only
-// applied it below h<0.15 as an optimization, which produced a real,
-// numerically-confirmed kink exactly at that boundary (the floor snapped
-// off abruptly rather than being naturally exceeded by the unconstrained
-// curve). Math.max against a fixed floor is cheap and, critically, safe:
-// once ellipseScaleForH(h) makes rx/ry exceed the floor on their own, the
-// max is a no-op with zero cost to continuity — same pattern the flat
-// spiral's own (never-buggy) radius-vs-clearance max used.
+// The clearance floor is applied via Math.max, but SCALED DOWN toward 0
+// as h moves away from the ground — an earlier single-turn version
+// applied the floor unconditionally across the whole h domain with no
+// fade, which was safe there because ellipticalClearance's own theta-
+// dependence only completed a partial turn total, so it never had a
+// chance to independently cross the main taper curve more than once.
+// With 3 full turns (see this file's header), clearance's oscillation
+// (tied to theta, which now cycles 3× per unit h) crosses the main
+// taper curve repeatedly far from the ground, and Math.max between two
+// curves whose VALUES cross but whose SLOPES differ produces a real,
+// confirmed direction-reversal cusp at each crossing (verified on-
+// device — visible sharp corners at h≈0.744 and h≈0.107, matching this
+// exact mechanism). Fading the floor to zero exactly where the main
+// taper's own "ground" reference point is (H_GROUND — clearance is only
+// ever a real, needed constraint right at the ground, nowhere else)
+// removes the extra crossings entirely. Using a SEPARATE fade-end value
+// here (tried first) left a residual smaller cusp right where the two
+// boundaries didn't quite line up — reusing H_GROUND exactly, not a
+// second independently-tuned constant, is what actually closed it.
+function clearanceFadeForH(h: number): number {
+  'worklet';
+  if (h >= H_GROUND) return 0;
+  return 1 - smoothstep(h / H_GROUND);
+}
+
 function pointForH(
   h: number,
   baseCx: number,
@@ -264,7 +280,7 @@ function pointForH(
   'worklet';
   const theta = thetaForH(h);
   const scale = ellipseScaleForH(h);
-  const clearance = ellipticalClearance(theta, clearanceRx, clearanceRy);
+  const clearance = ellipticalClearance(theta, clearanceRx, clearanceRy) * clearanceFadeForH(h);
   const rx = Math.max(baseRx * rxScaleForH(h), clearance * scale);
   const ry = Math.max(baseRy * ryScaleForH(h), clearance * scale * FORESHORTEN_Y);
   // Linear rise from the CHEST (h=0, the curve's true destination — the
@@ -667,25 +683,22 @@ export function DepthsSpiral({
               >
                 <View style={[styles.dot, { backgroundColor: strokeColor, opacity: 0.95 }]} />
               </Pressable>
-              <Text
-                pointerEvents="none"
-                numberOfLines={2}
+              {/* The label itself is its own separate tap target, not just
+                  a caption over the dot's — a dot alone is a small, fiddly
+                  target on a real screen, and the label sits right next to
+                  it doing nothing when tapped, which reads as broken once
+                  you notice it. Same onPointPress, same key, so tapping
+                  either the dot OR its full label text does the same
+                  thing. hitSlop widens the touch area slightly past the
+                  text's own tight bounding box, same reasoning as the
+                  dot's own hitSlop. */}
+              <Pressable
+                onPress={() => onPointPress(point.key)}
+                hitSlop={4}
                 style={[
-                  styles.pointLabel,
+                  styles.pointLabelHit,
                   {
-                    color: colors.text.secondary,
                     top: labelY - fontSizes.xs * 0.7,
-                    textAlign: align,
-                    // Width is generous, not tightly clamped to the space
-                    // between the dot and the spiral canvas's own edge —
-                    // a dot near 9/3 o'clock can sit close enough to that
-                    // edge that the strict remaining space is too narrow
-                    // for a real label ("Breathing" wrapped to two lines
-                    // at ~40px). auraSpiralWrap has no overflow:hidden, so
-                    // a label is safe to extend slightly past the canvas
-                    // into the screen's own padding gutter when needed —
-                    // two lines (numberOfLines={2} above) is the actual
-                    // fallback for anything still too long at this width.
                     ...(align === 'right'
                       ? { right: width - labelX, left: undefined, width: 96 }
                       : align === 'left'
@@ -694,8 +707,19 @@ export function DepthsSpiral({
                   },
                 ]}
               >
-                {point.label}
-              </Text>
+                <Text
+                  numberOfLines={2}
+                  style={[
+                    styles.pointLabel,
+                    {
+                      color: colors.text.secondary,
+                      textAlign: align,
+                    },
+                  ]}
+                >
+                  {point.label}
+                </Text>
+              </Pressable>
             </View>
           );
         })}
@@ -710,8 +734,16 @@ const styles = StyleSheet.create({
   hitArea: { position: 'absolute', width: HIT, height: HIT, alignItems: 'center', justifyContent: 'center' },
   dot: { width: DOT_RADIUS * 2, height: DOT_RADIUS * 2, borderRadius: DOT_RADIUS },
   travelDot: { position: 'absolute', width: 10, height: 10, borderRadius: 5 },
-  pointLabel: {
+  // The tap target — positioned absolutely (same left/right/width/top
+  // logic the old bare Text used), sized to the label's own reserved
+  // width/height rather than the dot's fixed 44×44 hitArea, since a
+  // two-line label reasonably needs a taller target than a single dot.
+  pointLabelHit: {
     position: 'absolute',
+    minHeight: fontSizes.xs * 2.4, // room for numberOfLines={2}
+    justifyContent: 'center',
+  },
+  pointLabel: {
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
     maxWidth: 130,
