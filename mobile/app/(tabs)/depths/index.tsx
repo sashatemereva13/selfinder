@@ -1367,10 +1367,15 @@ function makeStyles(colors: Colors) {
     // taller/3-turn form, so this is more generous than the original
     // single-turn version needed.
     marginTop: spacing[12],
-    // Same reasoning below — the bottom-most content (the level name)
-    // previously had only ringLevelName's own small marginTop before it,
-    // which read as crowded against the spiral's own lower labels.
-    marginBottom: spacing[8],
+    // Negative — auraSpiralWrap's own height reserves the FULL rising-cone
+    // canvas (SPIRAL_TOTAL_HEIGHT), but the aura/rings only occupy the
+    // bottom portion of it (they sit at groundY, well above the box's own
+    // bottom edge) — so a positive margin here stacks on top of dead
+    // space that's already baked into the box, not on top of visible
+    // content. On-device this read as the level name floating far below
+    // the rings rather than sitting near them (see collaboration notes).
+    // Pulls the level name up to sit close to the rings instead.
+    marginBottom: -spacing[10],
   },
   // Fills the whole tall wrapper — DepthsSpiral's own width/height match
   // this exactly, so its base ellipse lands at
