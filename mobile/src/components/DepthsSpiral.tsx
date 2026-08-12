@@ -368,19 +368,22 @@ export function DepthsSpiral({
   );
 
   // Precomputes each point's label position/alignment in one pass (not
-  // inline in the render .map below) so the anti-overlap nudge (see
-  // MIN_LABEL_GAP) can look at the PREVIOUS point's already-resolved
-  // labelY, in slot order — consecutive slots near the base sit on a
-  // wide, flat ellipse where equal angular steps can land two dots (and
-  // their same-side-offset labels) close enough on screen to overlap,
+  // inline in the render .map below) so the anti-overlap nudge below can
+  // check each new label's rough bounding box against every PREVIOUSLY
+  // placed one — consecutive slots near the base sit on a wide, flat
+  // ellipse where equal angular steps can land two dots (and their
+  // same-side-offset labels) close enough on screen to overlap,
   // inheriting the same risk the old flat spiral had at its innermost
-  // turns (see this file's own header comment).
-  // A label can wrap to 2 lines (numberOfLines={2}) — sized for that worst
-  // case, not a single line, since two adjacent labels both wrapping is
-  // exactly the case this guards against.
-  const MIN_LABEL_GAP = fontSizes.xs * 3.2;
+  // turns (see this file's own header comment). An earlier version only
+  // compared Y against the immediately-preceding label, which missed
+  // diagonal near-collisions (e.g. "Your Arc" sitting up-left of "Levels"
+  // rather than directly above it — different Y, overlapping X ranges)
+  // confirmed on-device; this checks a real 2D box against ALL earlier
+  // labels, not just the last one in slot order.
+  const LABEL_BOX_W = 90;
+  const LABEL_BOX_H = fontSizes.xs * 3.2; // sized for the numberOfLines={2} worst case
   const labelLayout = useMemo(() => {
-    let lastLabelY: number | null = null;
+    const placed: { x: number; y: number }[] = [];
     return points.map((point, i) => {
       if (!point.isPresent) return null;
       const { x, y } = geometry.points[i];
@@ -393,10 +396,17 @@ export function DepthsSpiral({
       const labelOffset = (DOT_RADIUS + 6) / Math.max(ellipseScaleForH(h), 0.35);
       const labelX = x + (dx / dist) * labelOffset;
       let labelY = y + (dy / dist) * labelOffset;
-      if (lastLabelY !== null && Math.abs(labelY - lastLabelY) < MIN_LABEL_GAP) {
-        labelY = lastLabelY + MIN_LABEL_GAP;
+      // Push straight down, away from the aura (not sideways), until this
+      // label's box no longer overlaps any earlier one — a small, capped
+      // number of steps so this can never loop unboundedly.
+      for (let guard = 0; guard < 8; guard++) {
+        const collides = placed.some(
+          (p) => Math.abs(labelX - p.x) < LABEL_BOX_W && Math.abs(labelY - p.y) < LABEL_BOX_H
+        );
+        if (!collides) break;
+        labelY += LABEL_BOX_H * 0.6;
       }
-      lastLabelY = labelY;
+      placed.push({ x: labelX, y: labelY });
       const isLeftHalf = dx < -4;
       const isRightHalf = dx > 4;
       const align: 'left' | 'right' | 'center' = isLeftHalf ? 'right' : isRightHalf ? 'left' : 'center';

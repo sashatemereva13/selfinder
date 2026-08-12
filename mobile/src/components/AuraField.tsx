@@ -24,12 +24,20 @@ export const BASE_RADIUS = 8;
 // How far the smallest ring clears the body's own silhouette — as a
 // fraction of the aura's width, same unit radiusFor already scales by.
 export const BODY_CLEARANCE_FACTOR = 0.32;
-// A foreshortened circle viewed from an angle reads as rx close to (but
-// less than) ry — this is a GROUND ellipse now, not a sideways-bulging
-// lobe, so the ratio is much closer to 1 than the old two-lobe silhouette
-// needed (that version's LOBE_RX_RATIO=0.42 would read as a tall narrow
-// lens here, not a plane the cone could plausibly sit on).
-export const GROUND_RX_RATIO = 0.82;
+// A ground-plane circle viewed from above at a steep angle reads as WIDE
+// and FLAT — rx much larger than ry, the opposite ratio direction from
+// the old two-lobe silhouette (which wanted a tall narrow lens). An
+// earlier pass here used 0.82 (rx only slightly smaller than ry), which
+// barely foreshortened at all — on a real device the rings ballooned up
+// past the aura's own head instead of reading as ground beneath its
+// feet (see collaboration notes on IMG_3926). ry is now the SMALL axis.
+// GROUND_RX_RATIO also directly sets SPIRAL_AURA_HALF_WIDTH in
+// depths/index.tsx (the spiral's own base-ellipse width) — an earlier
+// value of 2.2 pushed the ring wider than the spiral's own canvas,
+// clipping the Levels/Tune In labels off the right edge; 1.5 keeps the
+// widest ring comfortably inside a 342px-wide column.
+export const GROUND_RX_RATIO = 1.5;
+export const GROUND_RY_RATIO = 0.4;
 
 export type SphereKey = 'spirit' | 'mind' | 'heart' | 'body';
 
@@ -48,27 +56,29 @@ export const RING_ORDER: SphereKey[] = ['heart', 'mind', 'body', 'spirit'];
 // animation can never silently drift apart on lobe sizing.
 export function buildAuraFieldGeometry(size: number) {
   const metrics = getAuraFigureMetrics(size);
-  const maxRy = BASE_RADIUS + (RING_ORDER.length - 1) * RING_GAP + metrics.width * (BODY_CLEARANCE_FACTOR + 0.2);
-  const maxRx = maxRy * GROUND_RX_RATIO;
-  // A single concentric ellipse's own bounding box — smaller than the old
-  // two-lobes-side-by-side footprint (maxRx * 4), which is expected: a
-  // ground ellipse is meant to look flat/foreshortened, not as wide as
-  // two lobes ever were.
+  // Base radius (before the rx/ry ratios below) scales with the aura's
+  // width — same unit BODY_CLEARANCE_FACTOR already used.
+  const maxBase = BASE_RADIUS + (RING_ORDER.length - 1) * RING_GAP + metrics.width * BODY_CLEARANCE_FACTOR;
+  const maxRx = maxBase * GROUND_RX_RATIO;
+  const maxRy = maxBase * GROUND_RY_RATIO;
   const svgWidth = maxRx * 2;
   const svgHeight = maxRy * 2;
   const svgCenterX = svgWidth / 2;
   const svgCenterY = svgHeight / 2;
-  // The caller centers this the same way it centers the aura image itself
-  // (flex alignItems/justifyContent), which lines up the SVG's own center
-  // with the aura's geometric center, NOT its chest point — this nudges
-  // it down by the difference so the rings' shared center lands on the
-  // chest instead. Kept chest-anchored (not feet/legsBottomY) as the
-  // starting point for the ground-plane framing — revisit only if this
-  // doesn't read as "ground plane" once screenshotted.
-  const chestNudge = metrics.chestY - metrics.height / 2;
-  const ryFor = (index: number) => BASE_RADIUS + index * RING_GAP + metrics.width * BODY_CLEARANCE_FACTOR;
-  const rxFor = (index: number) => ryFor(index) * GROUND_RX_RATIO;
-  return { svgWidth, svgHeight, svgCenterX, svgCenterY, chestNudge, ryFor, rxFor };
+  // Anchored at the FEET (legsBottomY), not the chest — an earlier
+  // chest-anchored pass ballooned the rings up past the aura's own head
+  // on a real device instead of reading as ground beneath it (see
+  // collaboration notes on IMG_3926). The caller (ringWrap) is sized to
+  // the aura's own height with justifyContent:'flex-end', so the aura
+  // image's BOTTOM edge sits flush with the box's own bottom — this ring
+  // SVG is likewise bottom-anchored (see its own `bottom` style below),
+  // so groundUpOffset measures UP from that shared bottom edge to
+  // legsBottomY (not down from a geometric center, which assumed a
+  // different parent layout that no longer applies).
+  const groundUpOffset = metrics.height - metrics.legsBottomY;
+  const ryFor = (index: number) => (BASE_RADIUS + index * RING_GAP + metrics.width * BODY_CLEARANCE_FACTOR) * GROUND_RY_RATIO;
+  const rxFor = (index: number) => (BASE_RADIUS + index * RING_GAP + metrics.width * BODY_CLEARANCE_FACTOR) * GROUND_RX_RATIO;
+  return { svgWidth, svgHeight, svgCenterX, svgCenterY, groundUpOffset, ryFor, rxFor };
 }
 
 export function AuraField({
@@ -89,13 +99,13 @@ export function AuraField({
   // state.
   selectedSphere?: SphereKey | null;
 }) {
-  const { svgWidth, svgHeight, svgCenterX, svgCenterY, chestNudge, ryFor, rxFor } = buildAuraFieldGeometry(size);
+  const { svgWidth, svgHeight, svgCenterX, svgCenterY, groundUpOffset, ryFor, rxFor } = buildAuraFieldGeometry(size);
 
   return (
     <Svg
       width={svgWidth}
       height={svgHeight}
-      style={{ position: 'absolute', marginTop: chestNudge }}
+      style={{ position: 'absolute', bottom: groundUpOffset - svgHeight / 2 }}
       pointerEvents="none"
     >
       {RING_ORDER.map((key, i) => {

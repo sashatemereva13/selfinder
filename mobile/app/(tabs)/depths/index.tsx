@@ -69,13 +69,15 @@ import { DepthsSpiral, PREFIX_WALK_KEYS, type SpiralPoint, type SpiralSlotKey } 
 const AURA_DISPLAY_SIZE = 130;
 const AURA_METRICS = getAuraFigureMetrics(AURA_DISPLAY_SIZE);
 // AuraField's own rings render absolutely-positioned (pulled out of normal
-// layout flow, so they can center on the aura's chest rather than its
-// geometric center — see AuraField's own chestNudge comment), which means
-// ringWrap has nothing left in normal flow to size itself against except
-// the aura image alone — smaller than the full ring set. Without an
-// explicit height here, ringWrap collapsed to the aura's own size and
-// everything below it (the level name, the sphere buttons) started
-// overlapping the rings' own lower half instead of clearing them.
+// layout flow, so they can center on the aura's feet rather than its
+// geometric center — see AuraField's own groundNudge comment: the aura
+// stands inside the rings like a figure standing in a summoning circle,
+// not wrapped waist-high by them), which means ringWrap has nothing left
+// in normal flow to size itself against except the aura image alone —
+// smaller than the full ring set. Without an explicit height here,
+// ringWrap collapsed to the aura's own size and everything below it (the
+// level name, the sphere buttons) started overlapping the rings' own
+// lower half instead of clearing them.
 const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
 // The composition's own canvas — width fills a real 390px phone's content
 // budget (columnWidth minus horizontal padding) the same way the old flat
@@ -1115,12 +1117,12 @@ function AnimatedAuraField({
   growValues: Record<SphereKey, SharedValue<number>>;
   colorValues: Record<SphereKey, SharedValue<number>>;
 }) {
-  const { svgWidth, svgHeight, svgCenterX, svgCenterY, chestNudge, ryFor, rxFor } = buildAuraFieldGeometry(size);
+  const { svgWidth, svgHeight, svgCenterX, svgCenterY, groundUpOffset, ryFor, rxFor } = buildAuraFieldGeometry(size);
   return (
     <Svg
       width={svgWidth}
       height={svgHeight}
-      style={{ position: 'absolute', marginTop: chestNudge }}
+      style={{ position: 'absolute', bottom: groundUpOffset - svgHeight / 2 }}
       pointerEvents="none"
     >
       {RING_ORDER.map((key, i) => {
@@ -1307,12 +1309,18 @@ function makeStyles(colors: Colors) {
   // flow — ringWrap is itself absolutely positioned now (the aura sits at
   // the base of a much taller composition, not centered in it), so
   // without this the Pressable's own hit area would collapse to nothing.
+  // Sized to the AURA IMAGE's own height (not the ring's — the ring is
+  // now a small flat ellipse anchored at the feet, always smaller than
+  // the standing figure it surrounds), with its BOTTOM edge — not its
+  // center — pinned to groundY, so the aura's own feet land on the
+  // ground the ring/cone are also built from, and the figure stands
+  // normally above that line rather than being bisected by it.
   arrivalSkipWrap: {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_FIELD_GEOMETRY.svgHeight / 2,
-    height: AURA_FIELD_GEOMETRY.svgHeight,
+    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_METRICS.height,
+    height: AURA_METRICS.height,
     alignItems: 'center',
   },
   // Pre-reading branch's own equivalent of arrivalSkipWrap/ringWrap — no
@@ -1324,10 +1332,10 @@ function makeStyles(colors: Colors) {
     position: 'absolute',
     left: 0,
     right: 0,
-    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_FIELD_GEOMETRY.svgHeight / 2,
-    height: AURA_FIELD_GEOMETRY.svgHeight,
+    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_METRICS.height,
+    height: AURA_METRICS.height,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   // Shared positioning parent for both branches' aura + the spiral
   // overlay — sized to the spiral's own canvas so spiralOverlay (below)
@@ -1482,21 +1490,21 @@ function makeStyles(colors: Colors) {
   // without this the "nearest positioned ancestor" search skips straight
   // past ringWrap to whatever wraps it further up, landing the aura
   // somewhere else on the page entirely instead of centered on the ring.
-  // Fills its parent (arrivalSkipWrap, or the pre-reading branch's own
-  // groundWrap — both already positioned so their own top lands at
-  // DEPTHS_COMPOSITION_GEOMETRY.groundY) rather than centering within the
-  // FULL tall auraSpiralWrap (the old approach, which would float the
-  // aura in the middle of the whole rising-cone composition instead of
-  // at its base). Pinning both this and the spiral's own base ellipse to
-  // the one shared groundY value (see buildSpiralGeometry's own groundY)
-  // unifies them into one coordinate system rather than two
-  // independently-centered boxes that only agreed by construction.
+  // Fills its parent (arrivalSkipWrap — sized/positioned so its own
+  // BOTTOM edge lands at DEPTHS_COMPOSITION_GEOMETRY.groundY) rather than
+  // centering within the FULL tall auraSpiralWrap (the old approach,
+  // which would float the aura in the middle of the whole rising-cone
+  // composition instead of at its base). justifyContent 'flex-end' (not
+  // 'center') so the aura image's own bottom edge — its feet — lands
+  // exactly on groundY, with the ring/cone's shared ground plane, rather
+  // than the aura's geometric center landing there and bisecting the
+  // figure.
   ringWrap: {
     position: 'relative',
     width: '100%',
-    height: AURA_FIELD_GEOMETRY.svgHeight,
+    height: AURA_METRICS.height,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
   },
   // Shown whether or not a sphere button is selected — the overall
   // reading's name by default, that sphere's own name once tapped — so
