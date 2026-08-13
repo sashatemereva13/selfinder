@@ -21,7 +21,7 @@ import { ChatTurn } from '../src/components/ChatTurn';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
 import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
+import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
 
 // Same loose-match window your-arc.tsx already uses for qaPairs/rich-
@@ -70,6 +70,7 @@ export default function YourArcScreen() {
   const readingLog = useMeasureStore((s) => s.readingLog);
   const session = useAuthStore((s) => s.session);
   const accentRgb = useAppAccentRgb();
+  const levelColors = useLevelColors();
 
   const [richHistory, setRichHistory] = useState<SavedMeasureResult[] | null>(null);
   const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
@@ -171,6 +172,13 @@ export default function YourArcScreen() {
   // Your Arc's value legible on open.
   const facts = useMemo(() => buildArcFacts(readingLog), [readingLog]);
 
+  // readingLog is stored oldest-first (see measureStore.ts) — [0] is the
+  // very first reading ever taken, real information worth surfacing in
+  // the opening line instead of a bare count. Same formatDate used by the
+  // detail section below, so this reads as the same voice, not a second
+  // date convention.
+  const sinceDate = readingLog.length > 0 ? formatDate(readingLog[0].ts) : '';
+
   return (
     <ScrollView
       style={styles.root}
@@ -197,20 +205,37 @@ export default function YourArcScreen() {
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
       <Text style={styles.title}>{t('yourArc.title')}</Text>
       <Text style={styles.introLine}>
-        {t('yourArc.introLine', { count: readingLog.length })}
+        {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
 
+      {/* Set apart from plain paragraph text (per collaboration notes: the
+          facts previously read as an undifferentiated block of prose, no
+          different from introLine above or sphereArcHeading below) — each
+          fact gets its own small marker, same restrained "a dot, colored
+          by what's actually true" language SphereArc's own trace dots
+          already use, rather than a new visual system invented just for
+          this section. steadiest is the one fact with a real level behind
+          it, so its marker takes that level's actual color; the count-
+          based facts (thisMonth/streak/allTime) have no single level to
+          point to, so they take the page's own one accent color instead
+          of inventing a second hue (aesthetic.md's "one color per
+          screen" rule). Facts sit in their own row-group with real gap
+          between them, not stacked as continuous-looking paragraphs. */}
       {facts.length > 0 && (
         <View style={styles.factsSection}>
           {facts.map((fact) => {
             if (fact.key === 'steadiest') {
               const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
+              const dotColor = level ? levelColors[level.slug] : undefined;
               return (
-                <Text key={fact.key} style={styles.factLine}>
-                  {t('yourArc.factSteadiest', {
-                    level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
-                  })}
-                </Text>
+                <View key={fact.key} style={styles.factRow}>
+                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
+                  <Text style={styles.factLine}>
+                    {t('yourArc.factSteadiest', {
+                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
+                    })}
+                  </Text>
+                </View>
               );
             }
             const i18nKey =
@@ -218,9 +243,10 @@ export default function YourArcScreen() {
               : fact.key === 'streak' ? 'yourArc.factStreak'
               : 'yourArc.factAllTime';
             return (
-              <Text key={fact.key} style={styles.factLine}>
-                {t(i18nKey, { count: fact.params.count })}
-              </Text>
+              <View key={fact.key} style={styles.factRow}>
+                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
+              </View>
             );
           })}
         </View>
@@ -228,6 +254,11 @@ export default function YourArcScreen() {
 
       {readingLog.length >= 2 ? (
         <View style={styles.sparklineWrap}>
+          {/* Moved here from the top-of-page intro line — it's an
+              instruction about THIS shape specifically, so it belongs
+              sitting against it, not several elements above it where the
+              thing it's describing isn't even visible yet. */}
+          <Text style={styles.tapPointHint}>{t('yourArc.tapPointHint')}</Text>
           <Svg
             width="100%"
             height={140}
@@ -373,19 +404,41 @@ function makeStyles(colors: Colors) {
     marginTop: spacing[3],
     marginBottom: spacing[8],
   },
-  // Real sentences, same voice as introLine (not a stat-block/badge
-  // register) — these are the immediate answer to "what is this page,"
-  // sitting before the sparkline rather than only surfacing after a tap.
-  // Pulled up slightly to sit closer to introLine than the sparkline
-  // below it (introLine's own marginBottom already provides the gap down
-  // to the sparkline when there are no facts to show).
+  // Still real sentences, same voice as introLine (not a stat-block/badge
+  // register — no bare numbers, no label-colon-value rows) — these are
+  // the immediate answer to "what is this page," sitting before the
+  // sparkline rather than only surfacing after a tap. Pulled up slightly
+  // to sit closer to introLine than the sparkline below it (introLine's
+  // own marginBottom already provides the gap down to the sparkline when
+  // there are no facts to show). Real gap between rows (not factLine's
+  // own line-height alone) is what sets this apart from a paragraph —
+  // each fact now reads as its own noticed thing, not a continuation of
+  // the sentence above it.
   factsSection: {
     marginTop: -spacing[6],
     marginBottom: spacing[3],
-    gap: spacing[1],
+    gap: spacing[3],
+  },
+  factRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing[2],
+  },
+  // Same restrained "a dot, colored by what's actually true" language
+  // SphereArc's own trace dots already use — steadiest takes its real
+  // level's color; the count-based facts take the page's one accent color
+  // (never a second invented hue, per aesthetic.md's "one color per
+  // screen" rule). Sized to sit level with the first line of text, not
+  // vertically centered on a wrapped two-line fact.
+  factDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    marginTop: 6,
+    backgroundColor: colors.text.faint,
   },
   factLine: {
-    alignSelf: 'flex-start',
+    flex: 1,
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
@@ -394,6 +447,13 @@ function makeStyles(colors: Colors) {
   sparklineWrap: {
     width: '100%',
     marginBottom: spacing[6],
+  },
+  tapPointHint: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    marginBottom: spacing[2],
   },
   tapLayer: { ...StyleSheet.absoluteFill },
   tapTarget: {
