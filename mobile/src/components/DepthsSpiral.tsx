@@ -767,11 +767,20 @@ export function DepthsSpiral({
                   dot's own hitSlop. */}
               <Pressable
                 onPress={() => onPointPress(point.key)}
-                hitSlop={4}
+                hitSlop={isYourArc ? 8 : 4}
                 style={[
                   styles.pointLabelHit,
+                  // yourArc's label renders at fontSizes.sm, not the
+                  // shared fontSizes.xs every other point uses (see
+                  // pointLabel below) — this Pressable's own top offset
+                  // and minHeight were still computed from xs, so the
+                  // actual rendered (larger) text could sit partly
+                  // outside its own tap zone. Confirmed on a real device:
+                  // "Your arc"'s dot worked but its label text didn't
+                  // (2026-08-13 collaboration notes) — this is why.
                   {
-                    top: labelY - fontSizes.xs * 0.7,
+                    top: labelY - (isYourArc ? fontSizes.sm : fontSizes.xs) * 0.7,
+                    minHeight: (isYourArc ? fontSizes.sm : fontSizes.xs) * 2.4,
                     ...(align === 'right'
                       ? { right: width - labelX, left: undefined, width: 96 }
                       : align === 'left'
@@ -812,9 +821,11 @@ const styles = StyleSheet.create({
   // logic the old bare Text used), sized to the label's own reserved
   // width/height rather than the dot's fixed 44×44 hitArea, since a
   // two-line label reasonably needs a taller target than a single dot.
+  // minHeight/top are set per-instance above (font-size-aware — see the
+  // isYourArc branch), not here, since yourArc's label renders larger
+  // than every other point's.
   pointLabelHit: {
     position: 'absolute',
-    minHeight: fontSizes.xs * 2.4, // room for numberOfLines={2}
     justifyContent: 'center',
   },
   pointLabel: {

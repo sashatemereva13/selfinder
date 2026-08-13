@@ -119,10 +119,10 @@ export default function YourArcScreen() {
         setSpillEntries(entries);
         setResurfacedWish(selectWishToResurface(wishes));
 
-        const wish = findActiveWish(wishes, currentResult?.measureResultId);
+        const wish = findActiveWish(wishes, currentResult?.savedAt);
         setActiveWish(wish);
-        if (wish) {
-          const existing = findExistingCrossing(crossings, wish.id, wish.measureResultId!);
+        if (wish && currentResult?.measureResultId) {
+          const existing = findExistingCrossing(crossings, wish.id, currentResult.measureResultId);
           if (existing) setCrossing(existing);
         }
       } catch {
@@ -132,7 +132,7 @@ export default function YourArcScreen() {
     return () => {
       cancelled = true;
     };
-  }, [session, currentResult?.measureResultId]);
+  }, [session, currentResult?.savedAt, currentResult?.measureResultId]);
 
   // Generated on demand (tap "Ask [philosopher]"), not automatically on
   // page load — even though eligibility is otherwise met, the Groq call
