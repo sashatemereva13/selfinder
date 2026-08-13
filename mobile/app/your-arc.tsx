@@ -16,6 +16,7 @@ import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { SavedMeasureResult } from '../src/types';
 import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
 import { SphereArc } from '../src/components/SphereArc';
+import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
 import { buildArcFacts } from '../src/utils/arcFacts';
@@ -39,6 +40,10 @@ const PAD_Y = 4;
 // within a few pixels of each other, and a marker too small to reliably
 // tap is worse than no marker at all.
 const MIN_TAP_SPACING = 3;
+// Fills most of the content column's own width without touching its
+// padding — the kaleidoscope reads as a real, spacious presence (same
+// reasoning DepthsSpiral's own canvas sizing uses), not a small diagram.
+const KALEIDOSCOPE_SIZE = 300;
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -179,6 +184,15 @@ export default function YourArcScreen() {
       <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
+
+      {/* The literal first thing on the page, above even the kicker/
+          title — a generated pattern built entirely from this person's
+          own reading-history colors. Not meant to be studied (the real
+          data lives in the facts/sparkline below); its only job is to
+          feel unmistakably theirs the instant the screen opens. */}
+      <View style={styles.kaleidoscopeWrap}>
+        <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
+      </View>
 
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
       <Text style={styles.title}>{t('yourArc.title')}</Text>
@@ -333,6 +347,7 @@ function makeStyles(colors: Colors) {
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
+  kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[8] },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
