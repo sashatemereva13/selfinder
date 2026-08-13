@@ -1,4 +1,4 @@
-import { View, Text, Pressable, ScrollView, StyleSheet, Image, Platform } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Image, Platform, Dimensions } from 'react-native';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter, Href } from 'expo-router';
@@ -89,7 +89,30 @@ const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
 // screen. Point labels are allowed to extend slightly past this box
 // (React Native doesn't clip children unless told to) — auraSpiralWrap
 // has no overflow:hidden, so a label near the canvas edge isn't cut off.
-const SPIRAL_WIDTH = 342;
+// Was a flat 342 — confirmed on a real device (iPhone-class, ~430pt
+// logical width) that the four ground rings (AuraField, paired with this
+// constant via SPIRAL_AURA_HALF_WIDTH below) sat with noticeably less
+// margin from the canvas edge than the spiral's own loops directly above
+// them (see collaboration notes on IMG_3945) — even though nothing was
+// truly clipped by the phone bezel. But 342 flat was ALSO already too
+// wide for the smallest supported phone: iPhone SE is 375pt, minus 48pt
+// of horizontal padding (spacing[6] each side) leaves only a 327pt
+// budget, so the old constant already silently overflowed there by 15pt
+// before this change. Read once at module load via Dimensions.get
+// ('window', matching useReadingColumnWidth's own choice, not 'screen' —
+// see MessageCard.tsx for why 'screen' exists as a different, deliberate
+// choice for a wallpaper-capture target, not a content column) rather
+// than useWindowDimensions — this composition doesn't need to react
+// live to rotation, so a static read avoids converting ~40 downstream
+// geometry constants (AURA_FIELD_GEOMETRY, DEPTHS_COMPOSITION_GEOMETRY,
+// the arrival-animation timing) from module-level to per-render values,
+// a much larger refactor than this fix warrants. Clamped between 327
+// (SE's real safe budget) and 380 (a generous cap for large phones,
+// paired with AuraField's own GROUND_RX_RATIO bump to 1.65) so every
+// device gets a canvas that both fits its own screen AND gives the rings
+// real room, rather than one flat number that was wrong at both ends.
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const SPIRAL_WIDTH = Math.min(Math.max(SCREEN_WIDTH - spacing[6] * 2, 327), 380);
 const SPIRAL_TOTAL_HEIGHT = SPIRAL_WIDTH * 1.8;
 // The spiral's inner clearance (and now also the cone's own base-ellipse
 // dimensions — see DepthsSpiral.tsx) is an ELLIPSE, not a circle,

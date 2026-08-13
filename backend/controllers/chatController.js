@@ -396,7 +396,7 @@ export async function postJourneyLine(req, res) {
 }
 
 export async function postMeasureExchange(req, res) {
-  const { systemPrompt, sphere, question, answer, canGoBack, locale } = req.body;
+  const { systemPrompt, sphere, question, answer, canGoBack, priorAsideCount, locale } = req.body;
 
   if (!systemPrompt || !sphere || !question || typeof answer !== "string") {
     return res
@@ -405,13 +405,19 @@ export async function postMeasureExchange(req, res) {
   }
 
   const goBackPossible = canGoBack === true;
+  // How many times they've already gotten stuck on THIS question (asked back,
+  // deflected, or given a non-answer) before this reply — without this, a
+  // second "I don't know" got the same-size response as the first (another
+  // reworded version of the question), which reads as not having noticed the
+  // first reword already didn't help. 0 on a fresh question.
+  const stuckBefore = Number.isInteger(priorAsideCount) && priorAsideCount > 0 ? priorAsideCount : 0;
 
   const exchangePrompt = `You just asked the person, during a structured self-reflection check-in about their ${sphere}:
 "${question}"
 
 They replied:
 "${answer}"
-
+${stuckBefore > 0 ? `\nThey have already gotten stuck on this exact question ${stuckBefore} time(s) before this reply — you already tried rewording it, and that didn't land. Keep this in mind for the "did not really engage" case below.\n` : ""}
 First, check: are they asking to go back and reconsider or change their answer to an earlier question, rather than answering this one (things like "wait, can I go back", "actually let me redo the last one", "I want to change what I said about my mind")? ${goBackPossible ? "Going back is possible right now — there is a previous answer to revisit." : "Going back is NOT possible right now — this is the very first question, there is nothing before it yet."}
 
 Respond with ONLY valid JSON, no markdown, no explanation, in exactly this shape:
@@ -431,8 +437,8 @@ If they engaged with the question, set "advance" to true and "goBack" to false. 
 
 If they did not really engage (and are not asking to go back), set "advance" to false and "goBack" to false. There is no list of preset answers offered to them anymore — if someone can't find the words, pushing back or asking for help IS the expected way to get unstuck, not a failure state. Two cases:
 - If they asked you a genuine question of their own, answer it honestly and specifically, in your own voice, with real reasoning — not just an acknowledgment that they asked something. Only do this if they actually asked something; never invent or quote back a question they did not ask.
-- If they seem stuck, unsure, or gave a vague non-answer rather than asking something specific, rephrase the original question using genuinely different words and imagery — actually reword it, don't just repeat it back — so they have a fresh way in. This is your actual job here: meet them with a new angle, not a script.
-Either way, stay in character, keep it under 60 words, ground your reply only in what they actually wrote ("${answer}"), and land back on the question without literally restating your first phrasing of it.`;
+- If they seem stuck, unsure, or gave a vague non-answer rather than asking something specific — including saying it again after already having said it once ("I still don't know", "I don't know either", "can you help me answer") — go SMALLER, not the same size again: offer one small, concrete thing to notice or try right now (a place to put their attention, a specific contrast to check, a single word to test against how they feel), worded so it can be answered in a few words. Do not reuse the same rephrasing move twice in a row — if they're stuck a second time, a second reworded version of the same question will not land any better than the first one did.
+Either way, stay in character, keep it under 60 words, ground your reply only in what they actually wrote ("${answer}"), and do not repeat any part of your own original phrasing of the question — "${question}" — word for word.`;
 
   try {
     const response = await groq.chat.completions.create({

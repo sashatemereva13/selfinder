@@ -58,13 +58,19 @@ export interface MeasureExchangeResponse {
 // asked to revisit a previous sphere (goBack), or asked/pushed back/deflected
 // (stay on it, but still respond to what they said). `canGoBack` tells the
 // backend whether there's actually a previous sphere to go back to, so it
-// never honors a goBack request on the very first question.
+// never honors a goBack request on the very first question. `priorAsideCount`
+// tells it how many times the person has already gotten stuck on this exact
+// question — without it, a second "I don't know" got the same size of
+// response as the first (a reworded version of the same question), which
+// read as ignoring that the first reword didn't help either (confirmed on a
+// real device — see interview.tsx's own comment on this).
 export function sendMeasureExchange(
   philosopher: Philosopher,
   sphere: Sphere,
   question: string,
   answer: string,
-  canGoBack: boolean
+  canGoBack: boolean,
+  priorAsideCount = 0
 ): Promise<MeasureExchangeResponse> {
   return request<MeasureExchangeResponse>('/measure/exchange', {
     systemPrompt: philosopher.systemPrompt,
@@ -72,6 +78,7 @@ export function sendMeasureExchange(
     question,
     answer,
     canGoBack,
+    priorAsideCount,
     locale: useLocaleStore.getState().locale,
   });
 }

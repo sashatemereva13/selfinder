@@ -31,7 +31,6 @@ import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
-import { AttentionScan } from '../../../../src/components/AttentionScan';
 import { track } from '../../../../src/utils/analytics';
 import { useWideColumnWidth, useIsLargeScreen } from '../../../../src/theme/responsive';
 
@@ -106,14 +105,18 @@ export default function InterviewScreen() {
   // gap between calling setState and the re-render that disables the button,
   // during which a rapid double-tap can fire handleSend twice concurrently.
   const isSendingRef = useRef(false);
-  // The attention scan before each sphere's question (see
-  // docs/measure-experience-concept.md §1 and AttentionScan.tsx) — starts
-  // 'playing' on mount (the first sphere's scan) and again every time
-  // advanceSphere() fires; both currentQuestion render guards below stay
-  // gated on 'done' so the question/compose bar never appear mid-scan.
-  const [scanPhase, setScanPhase] = useState<'playing' | 'done'>('playing');
 
-  const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
+  // Once the wish stage starts, sphereIndex is deliberately left pointing at
+  // spirit (the last sphere) rather than advanced past it — SPHERE_LABELS'
+  // tab highlighting and the sphere-progress row still need it there. But
+  // that means philosopher.measureQuestions[sphereIndex] stays truthy too,
+  // so a bare `currentQuestion` check alone can't tell "still on spirit" apart
+  // from "spirit's done, now on the wish" — without the wishStage guard here,
+  // both the sphere question's own compose bar AND the wish's compose bar
+  // rendered at once (confirmed on a real device: two stacked input bars
+  // after finishing the last sphere). currentQuestion is only ever "current"
+  // while no wish stage is active.
+  const currentQuestion = wishStage ? undefined : philosopher?.measureQuestions?.[sphereIndex];
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
@@ -180,7 +183,8 @@ export default function InterviewScreen() {
           currentQuestion.sphere,
           currentQuestion.question,
           answer,
-          sphereIndex > 0
+          sphereIndex > 0,
+          asides.length
         );
         advance = exchange.advance !== false;
         goBack = exchange.goBack === true;
@@ -209,7 +213,6 @@ export default function InterviewScreen() {
       setAsides([]);
 
       if (sphereIndex < TOTAL_SPHERES - 1) {
-        setScanPhase('playing');
         advanceSphere();
         return;
       }
@@ -329,7 +332,7 @@ export default function InterviewScreen() {
         ))}
       </View>
 
-      {sphereIndex > 0 && !isScoring && !scoringError && scanPhase === 'done' && (
+      {sphereIndex > 0 && !isScoring && !scoringError && (
         <Pressable style={styles.previousSphereRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
           <Text style={styles.previousSphereText}>{t('measure.previousSphere')}</Text>
         </Pressable>
@@ -344,24 +347,6 @@ export default function InterviewScreen() {
           isLargeScreen && isBeforeFirstAnswer && styles.scrollContentCenteredEmpty,
         ]}
       >
-        {/* First scan (sphereIndex === 0) is slower/more spacious than the
-            rest — see docs/measure-experience-concept.md §1's own "first
-            scan longer, later ones quicker" resolution. Both durations are
-            tune-during-build placeholders, not final. Lives inside the
-            scroll content (not above it) so it inherits the same
-            flex-end/centered-when-empty anchoring every other beat on this
-            screen already uses, instead of floating in the top third with
-            the rest of the screen sitting empty beneath it. */}
-        {!isScoring && !scoringError && currentQuestion && scanPhase === 'playing' && (
-          <AttentionScan
-            key={sphereIndex}
-            sphere={currentQuestion.sphere}
-            phrase={philosopher?.scanPhrases?.[sphereIndex]?.phrase}
-            durationMs={sphereIndex === 0 ? 2000 : 1000}
-            onComplete={() => setScanPhase('done')}
-          />
-        )}
-
         {qaPairs.map((pair, i) => (
           <View key={pair.sphere} style={styles.exchange}>
             <Turn color={accentColor} styles={styles}>{pair.question}</Turn>
@@ -370,7 +355,7 @@ export default function InterviewScreen() {
           </View>
         ))}
 
-        {!isScoring && !scoringError && currentQuestion && scanPhase === 'done' && (
+        {!isScoring && !scoringError && currentQuestion && (
           <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
         )}
 
@@ -425,7 +410,7 @@ export default function InterviewScreen() {
         )}
       </ScrollView>
 
-      {!isScoring && !scoringError && currentQuestion && scanPhase === 'done' && (
+      {!isScoring && !scoringError && currentQuestion && (
         <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
           {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>

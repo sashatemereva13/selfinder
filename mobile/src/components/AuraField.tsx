@@ -34,9 +34,18 @@ export const BODY_CLEARANCE_FACTOR = 0.32;
 // GROUND_RX_RATIO also directly sets SPIRAL_AURA_HALF_WIDTH in
 // depths/index.tsx (the spiral's own base-ellipse width) — an earlier
 // value of 2.2 pushed the ring wider than the spiral's own canvas,
-// clipping the Levels/Tune In labels off the right edge; 1.5 keeps the
-// widest ring comfortably inside a 342px-wide column.
-export const GROUND_RX_RATIO = 1.5;
+// clipping the Levels/Tune In labels off the right edge. Was 1.5 — bumped
+// slightly to 1.55 (the ring itself ~20pt/6.6% wider) after a real device
+// showed the four rings sitting with noticeably tighter margin than the
+// spiral's own loops above them (see collaboration notes on IMG_3945).
+// 1.55 is the most this can safely grow while depths/index.tsx's own
+// SPIRAL_WIDTH is now screen-width-responsive (see its own comment) but
+// still clamped down to 327px on the smallest supported phone (iPhone
+// SE) — 1.6 or higher would overflow that floor. On larger phones,
+// SPIRAL_WIDTH's own responsive growth (up to 380px) gives the whole
+// canvas more room around this same ring, which is the bigger part of
+// the fix; this ratio only needed a small nudge, not a large one.
+export const GROUND_RX_RATIO = 1.55;
 export const GROUND_RY_RATIO = 0.4;
 
 export type SphereKey = 'spirit' | 'mind' | 'heart' | 'body';

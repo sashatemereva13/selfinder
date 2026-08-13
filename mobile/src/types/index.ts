@@ -5,11 +5,15 @@ export interface MeasureQuestion {
   question: string;
 }
 
-// A short, wordless-but-spoken phrase accompanying the attention scan that
-// plays before each sphere's question in Measure (see
-// docs/measure-experience-concept.md §1) — gives the body/mind something
-// to notice before being asked to report on it. Not yet authored for any
-// philosopher; see philosophers.ts's own TODO comments on scanPhrases.
+// A short, wordless-but-spoken phrase — originally one per sphere,
+// accompanying a per-sphere attention scan that used to play before each
+// of Measure's four questions (see docs/measure-experience-concept.md §1).
+// That per-sphere interruption was cut (see measure/index.tsx's own
+// comment): scanPhrases[0] (the body-sphere line) is now the only one
+// still shown, as the companion line under AuraSettle on Measure's single
+// merged intro screen. Indices 1-3 (mind/heart/spirit) are unused but
+// still authored per-philosopher (philosophers.ts) — kept on the type in
+// case a future per-sphere cue returns, rather than deleting real content.
 export interface ScanPhrase {
   sphere: Sphere;
   phrase: string;

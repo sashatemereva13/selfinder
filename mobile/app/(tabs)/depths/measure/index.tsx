@@ -12,6 +12,7 @@ import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { AuraSettle } from '../../../../src/components/AuraSettle';
 import { track } from '../../../../src/utils/analytics';
 import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../../src/store/localeStore';
@@ -56,6 +57,24 @@ export default function TodayScreen() {
         <Text style={styles.title}>
           {t('measureIntro.title')}
         </Text>
+
+        {/* The one arrival beat for the whole walk — previously this
+            screen's own words ("a conversation to read where you are")
+            were followed by a SECOND, separate arrival screen
+            (AttentionScan, before sphere 0) doing the same settling job
+            again with the aura, and then that same beat repeated before
+            EVERY subsequent sphere too — four ritual interruptions in a
+            conversation that's often only 4-8 exchanges long. Merging the
+            aura directly into this screen means there's exactly one
+            arrival, and the conversation itself (interview.tsx) now runs
+            straight through with no per-sphere gate. See scanPhrases[0]
+            below — reuses the philosopher's own hand-written body-sphere
+            line rather than inventing new copy for this merged moment. */}
+        <AuraSettle />
+        {philosopher?.scanPhrases?.[0]?.phrase && (
+          <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
+        )}
+
         {!hasMeasuredBefore && (
           <Text style={styles.copy}>
             {t('measureIntro.copy', { name: philosopher?.name ?? t('measure.yourPhilosopher') })}
@@ -123,6 +142,17 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
+  },
+  // Same register as AttentionScan's own phrase text (interview.tsx no
+  // longer renders that component at all, but this screen inherits its
+  // one surviving job — the philosopher's wordless-arrival line).
+  scanPhrase: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
   },
   title: {
     color: colors.text.primary,

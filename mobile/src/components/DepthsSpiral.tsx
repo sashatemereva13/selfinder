@@ -109,7 +109,16 @@ const SLOT_H: number[] = [
   WIND_1_START - (WIND_1_START - WIND_1_END) * 0.3,          // spill
   WIND_1_START - (WIND_1_START - WIND_1_END) * 0.65,         // talkAboutIt
   WIND_1_END,                                                 // cards — end of wind 1
-  WIND_1_END - (WIND_1_END - WIND_2_END) * 0.5,               // yourArc — mid wind 2
+  // yourArc — was the exact midpoint of wind 2 (0.5 fraction), which put
+  // its dot only ~40px from levels' own dot on a real device (well under
+  // HIT's own 44px minimum touch target, so their tap zones directly
+  // overlapped — confirmed by the direct geometry math, not just eyeballing
+  // the screenshot; see collaboration notes on IMG_3945/3946, "easy to
+  // accidentally press Levels instead of Your Arc"). 0.35 (biased toward
+  // cards instead of dead-center) opens that to ~105px from levels and
+  // ~94px from cards — both comfortably clear, and reasonably balanced
+  // between its two neighbors rather than skewed hard to one side.
+  WIND_1_END - (WIND_1_END - WIND_2_END) * 0.35,              // yourArc — biased toward cards within wind 2
   WIND_2_END,                                                 // levels — end of wind 2
   WIND_2_END - (WIND_2_END - H_BREATHING) * 0.5,              // tunein — mid wind 3
   H_BREATHING,                                                 // breathing — just before the bare terminus
@@ -482,6 +491,14 @@ interface DepthsSpiralProps {
 
 const HIT = 44; // iOS/Android minimum recommended touch target
 const DOT_RADIUS = 4.5;
+// yourArc reads as an extra, not an equal peer to the other seven tools —
+// it's the Selfinder+ seed (RULES.md, Product/positioning: "a next step
+// some users are meant to genuinely adopt... gets full row weight"). Per
+// aesthetic.md's "position and size carry differentiation, not boxes or
+// color" rule, a slightly larger dot (not a new hue) is the right lever —
+// same visual language every other point already uses, just turned up on
+// this one. Modest on purpose: this is a hint, not a badge.
+const YOUR_ARC_DOT_RADIUS = DOT_RADIUS * 1.4;
 
 export function DepthsSpiral({
   width,
@@ -716,6 +733,8 @@ export function DepthsSpiral({
           // walk — that's informational, not a judgment on any one dot.
           const { x, y } = geometry.points[i];
           const { labelX, labelY, align } = layout;
+          const isYourArc = point.key === 'yourArc';
+          const dotRadius = isYourArc ? YOUR_ARC_DOT_RADIUS : DOT_RADIUS;
 
           return (
             <View key={point.key}>
@@ -724,7 +743,18 @@ export function DepthsSpiral({
                 onPress={() => onPointPress(point.key)}
                 hitSlop={i === 0 ? 10 : 4}
               >
-                <View style={[styles.dot, { backgroundColor: strokeColor, opacity: 0.95 }]} />
+                <View
+                  style={[
+                    styles.dot,
+                    {
+                      width: dotRadius * 2,
+                      height: dotRadius * 2,
+                      borderRadius: dotRadius,
+                      backgroundColor: strokeColor,
+                      opacity: 0.95,
+                    },
+                  ]}
+                />
               </Pressable>
               {/* The label itself is its own separate tap target, not just
                   a caption over the dot's — a dot alone is a small, fiddly
@@ -755,7 +785,8 @@ export function DepthsSpiral({
                   style={[
                     styles.pointLabel,
                     {
-                      color: colors.text.secondary,
+                      color: isYourArc ? colors.text.primary : colors.text.secondary,
+                      fontSize: isYourArc ? fontSizes.sm : fontSizes.xs,
                       textAlign: align,
                     },
                   ]}
