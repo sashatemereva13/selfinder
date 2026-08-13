@@ -6,6 +6,11 @@ export interface SavedWish {
   text: string;
   measureResultId: string | null;
   savedAt: string;
+  // Set once this wish has actually been opened via Your Arc's
+  // resurfacing row (see markWishResurfaced) — null until then. Drives
+  // FIFO selection (see selectWishToResurface): oldest not-yet-resurfaced
+  // wish first, no content-based ranking.
+  resurfacedAt: string | null;
 }
 
 export type SaveWishResult =
@@ -54,5 +59,19 @@ export async function listMyWishes(token: string): Promise<SavedWish[]> {
   } catch (err) {
     console.error('Failed to load wishes:', err);
     return [];
+  }
+}
+
+// Marks a wish as resurfaced — call only when the person actually opens
+// it via Your Arc's resurfacing row, never just because it was selected
+// as eligible (see selectWishToResurface). Best-effort: a failure here
+// just means the same wish might resurface again next time, which is a
+// harmless repeat, not a broken feature — never worth surfacing an error
+// to the user over.
+export async function markWishResurfaced(id: string, token: string): Promise<void> {
+  try {
+    await request(`/wish/${id}/resurface`, {}, { token });
+  } catch (err) {
+    console.error('Failed to mark wish resurfaced:', err);
   }
 }

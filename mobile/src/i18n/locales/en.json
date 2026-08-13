@@ -199,7 +199,18 @@
     "sphereArcHeading": "Body, mind, heart, spirit — over time",
     "whatYouSaid": "What you said",
     "whatYouTalkedAbout": "What you talked about",
-    "whatYouWrote": "What you wrote"
+    "whatYouWrote": "What you wrote",
+    "wishResurfaceRow": "A wish from {{date}}",
+    "wishResurfaceHeading": "What you wished for",
+    "wishResurfaceHint": "Your own words, unchanged",
+    "kaleidoscopeCaption": "Built from every color your readings have been",
+    "fullLineNote": "The full line — every reading you've ever taken, not just the last few",
+    "crossingInvite": "Ask {{name}} about this moment",
+    "crossingLoading": "Thinking…",
+    "crossingHeading": "{{name}} asks",
+    "crossingPlaceholder": "What feels true now?",
+    "crossingAnsweredLabel": "What you said",
+    "crossingSendHint": "Kept, in your own words"
   },
   "saveMessage": {
     "keepThisMessage": "Keep this message",

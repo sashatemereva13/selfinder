@@ -38,3 +38,21 @@ export async function listMyWishes(req, res) {
   const wishes = await Wish.find({ userId: req.user.id }).sort({ savedAt: -1 });
   res.json(wishes);
 }
+
+// Marks a wish as resurfaced ONLY when the person actually opens it via
+// Your Arc's resurfacing row — not when it's merely selected as eligible
+// client-side. This is what lets selection be pure FIFO rotation (oldest
+// not-yet-resurfaced first) with no content-based ranking: an eligible
+// wish that was offered but never tapped stays in the backlog for next
+// time, exactly like the same-session "held, not displayed" version never
+// counts as shown until opened.
+export async function markWishResurfaced(req, res) {
+  const wish = await Wish.findOne({ id: req.params.id });
+  if (!wish) return res.status(404).json({ error: "Wish not found" });
+  if (wish.userId !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+  if (!wish.resurfacedAt) {
+    wish.resurfacedAt = new Date().toISOString();
+    await wish.save();
+  }
+  res.json({ id: wish.id, resurfacedAt: wish.resurfacedAt });
+}

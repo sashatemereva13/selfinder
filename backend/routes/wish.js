@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { requireConsent } from "../middleware/requireConsent.js";
-import { saveWish, getWish, listMyWishes } from "../controllers/wishController.js";
+import { saveWish, getWish, listMyWishes, markWishResurfaced } from "../controllers/wishController.js";
 
 const router = Router();
 router.post("/save", requireAuth, requireConsent, saveWish);
@@ -12,5 +12,6 @@ router.post("/save", requireAuth, requireConsent, saveWish);
 // Must come before "/:id" — otherwise Express would match "mine" itself
 // as an :id value.
 router.get("/mine", requireAuth, requireConsent, listMyWishes);
+router.post("/:id/resurface", requireAuth, requireConsent, markWishResurfaced);
 router.get("/:id", requireAuth, requireConsent, getWish);
 export default router;

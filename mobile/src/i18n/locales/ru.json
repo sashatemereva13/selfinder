@@ -203,7 +203,18 @@
     "sphereArcHeading": "Тело, разум, сердце, дух — во времени",
     "whatYouSaid": "Что вы сказали",
     "whatYouTalkedAbout": "О чём вы говорили",
-    "whatYouWrote": "Что вы написали"
+    "whatYouWrote": "Что вы написали",
+    "wishResurfaceRow": "Желание от {{date}}",
+    "wishResurfaceHeading": "Чего вы пожелали",
+    "wishResurfaceHint": "Ваши собственные слова, без изменений",
+    "kaleidoscopeCaption": "Собран из всех цветов, которыми были ваши состояния",
+    "fullLineNote": "Полная линия — все ваши состояния, а не только последние",
+    "crossingInvite": "Спросить {{name}} об этом моменте",
+    "crossingLoading": "Думает…",
+    "crossingHeading": "{{name}} спрашивает",
+    "crossingPlaceholder": "Что кажется правдой сейчас?",
+    "crossingAnsweredLabel": "Что вы сказали",
+    "crossingSendHint": "Сохранено, вашими словами"
   },
   "saveMessage": {
     "keepThisMessage": "Оставить это сообщение себе",

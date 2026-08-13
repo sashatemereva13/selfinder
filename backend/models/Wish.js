@@ -14,6 +14,13 @@ const wishSchema = new mongoose.Schema({
   text: { type: String, required: true },
   measureResultId: { type: String, default: null },
   savedAt: { type: String, required: true },
+  // Set once this wish has actually been opened via Your Arc's resurfacing
+  // row (not merely selected as eligible) — see docs/session-result-
+  // concept.md's Phase 4 "pure resurfacing" mechanism. Lets selection
+  // rotate through the backlog (oldest not-yet-resurfaced first) instead
+  // of ever re-showing the same wish indefinitely or needing any
+  // content-based ranking.
+  resurfacedAt: { type: String, default: null },
 });
 
 export default mongoose.model("Wish", wishSchema);

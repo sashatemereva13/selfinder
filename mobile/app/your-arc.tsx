@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,6 +13,11 @@ import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
 import { getConversationForMeasureResult, SavedConversation } from '../src/api/conversation';
 import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
+import { listMyWishes, markWishResurfaced, SavedWish } from '../src/api/wish';
+import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
+import { selectWishToResurface } from '../src/utils/wishResurfacing';
+import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
+import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { SavedMeasureResult } from '../src/types';
 import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
 import { SphereArc } from '../src/components/SphereArc';
@@ -68,6 +73,8 @@ export default function YourArcScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const readingLog = useMeasureStore((s) => s.readingLog);
+  const currentResult = useMeasureStore((s) => s.currentResult);
+  const philosopher = usePhilosopherStore((s) => s.philosopher);
   const session = useAuthStore((s) => s.session);
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
@@ -77,6 +84,22 @@ export default function YourArcScreen() {
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
   const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
+  // The one wish eligible for "pure resurfacing" this visit (see
+  // wishResurfacing.ts) — chosen once when the screen's data loads, not
+  // re-picked on every render, so it stays stable while the person is
+  // looking at the page even if they linger past the 30-day threshold.
+  const [resurfacedWish, setResurfacedWish] = useState<SavedWish | null>(null);
+  const [wishRevealed, setWishRevealed] = useState(false);
+  // The Crossing (see docs/session-result-concept.md's Phase 4 / the
+  // 2026-08-13 "Crossing" design) — one philosopher-voiced question built
+  // from the CURRENT reading's own wish, offered only when that wish
+  // exists and hasn't already been crossed (see crossingEligibility.ts).
+  // null throughout means "not eligible this visit," not "loading."
+  const [activeWish, setActiveWish] = useState<SavedWish | null>(null);
+  const [crossing, setCrossing] = useState<SavedCrossing | null>(null);
+  const [crossingLoading, setCrossingLoading] = useState(false);
+  const [crossingAnswerInput, setCrossingAnswerInput] = useState('');
+  const [crossingSubmitting, setCrossingSubmitting] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -85,13 +108,22 @@ export default function YourArcScreen() {
       try {
         const profile = await getMe(session.token);
         if (cancelled || !profile.consent?.psychologicalData?.given) return;
-        const [history, entries] = await Promise.all([
+        const [history, entries, wishes, crossings] = await Promise.all([
           getMeasureHistory(session.token),
           listMySpillEntries(session.token),
+          listMyWishes(session.token),
+          listMyCrossings(session.token),
         ]);
-        if (!cancelled) {
-          setRichHistory(history);
-          setSpillEntries(entries);
+        if (cancelled) return;
+        setRichHistory(history);
+        setSpillEntries(entries);
+        setResurfacedWish(selectWishToResurface(wishes));
+
+        const wish = findActiveWish(wishes, currentResult?.measureResultId);
+        setActiveWish(wish);
+        if (wish) {
+          const existing = findExistingCrossing(crossings, wish.id, wish.measureResultId!);
+          if (existing) setCrossing(existing);
         }
       } catch {
         // Best-effort — the local-only readingLog view still works without this.
@@ -100,7 +132,69 @@ export default function YourArcScreen() {
     return () => {
       cancelled = true;
     };
-  }, [session]);
+  }, [session, currentResult?.measureResultId]);
+
+  // Generated on demand (tap "Ask [philosopher]"), not automatically on
+  // page load — even though eligibility is otherwise met, the Groq call
+  // itself is real cost/latency that shouldn't fire just from opening
+  // Your Arc. See crossingController.js's own idempotency: calling this
+  // again for the same wish+reading is safe, always returns the same
+  // question.
+  const handleGenerateCrossing = async () => {
+    if (!activeWish || !currentResult?.measureResultId || !philosopher || !session || crossingLoading) return;
+    setCrossingLoading(true);
+    try {
+      const result = await generateCrossing(
+        activeWish.id,
+        currentResult.measureResultId,
+        getLocalizedLevelName(currentResult.vibrationLevel, locale),
+        philosopher,
+        null,
+        session.token
+      );
+      if (result) {
+        setCrossing({
+          id: result.id,
+          wishId: activeWish.id,
+          measureResultId: currentResult.measureResultId,
+          pastWishId: null,
+          philosopherId: philosopher.id,
+          question: result.question,
+          answer: null,
+          createdAt: new Date().toISOString(),
+          answeredAt: null,
+        });
+      }
+    } finally {
+      setCrossingLoading(false);
+    }
+  };
+
+  const handleSubmitCrossingAnswer = async () => {
+    const answer = crossingAnswerInput.trim();
+    if (!answer || !crossing || !session || crossingSubmitting) return;
+    setCrossingSubmitting(true);
+    try {
+      const ok = await answerCrossing(crossing.id, answer, session.token);
+      if (ok) {
+        setCrossing({ ...crossing, answer, answeredAt: new Date().toISOString() });
+        setCrossingAnswerInput('');
+      }
+    } finally {
+      setCrossingSubmitting(false);
+    }
+  };
+
+  // Marks the wish resurfaced only once actually opened — see
+  // markWishResurfaced's own comment on why this can't happen just from
+  // being selected/offered (the same "held, not displayed until tapped"
+  // rule the same-session version already follows).
+  const handleRevealWish = () => {
+    setWishRevealed(true);
+    if (resurfacedWish && session) {
+      markWishResurfaced(resurfacedWish.id, session.token);
+    }
+  };
 
   const points = readingLog.map((e) => e.score);
   const min = Math.min(...points, 0);
@@ -197,9 +291,15 @@ export default function YourArcScreen() {
           title — a generated pattern built entirely from this person's
           own reading-history colors. Not meant to be studied (the real
           data lives in the facts/sparkline below); its only job is to
-          feel unmistakably theirs the instant the screen opens. */}
+          feel unmistakably theirs the instant the screen opens. Without
+          any label, though, it read as ambiguous — pretty, but nothing
+          on the page confirmed it was actually built from THEIR data
+          rather than a generic loading animation (see collaboration
+          notes on the paid-value critique). One small caption underneath
+          is enough to turn it from decoration into legible proof. */}
       <View style={styles.kaleidoscopeWrap}>
         <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
+        <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
       </View>
 
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
@@ -252,8 +352,106 @@ export default function YourArcScreen() {
         </View>
       )}
 
+      {/* Pure resurfacing (docs/session-result-concept.md, Phase 4) — the
+          one wish selected in the effect above, offered here quietly, not
+          pushed. Held behind a tap until opened (same "held, not
+          displayed" rule the same-session version follows): the row
+          states plainly what it is and roughly when, but the wish's own
+          text never appears until tapped. No comparison to the current
+          reading is ever drawn here — showing the wish's own words is
+          the whole mechanism; anything more would be the app
+          interpreting what the gap between then and now means. */}
+      {resurfacedWish && (
+        <View style={styles.wishSection}>
+          {wishRevealed ? (
+            <>
+              <Text style={styles.wishHeading}>{t('yourArc.wishResurfaceHeading')}</Text>
+              <Text style={styles.wishDate}>{formatDate(new Date(resurfacedWish.savedAt).getTime())}</Text>
+              <Text style={styles.wishText}>{resurfacedWish.text}</Text>
+              <Text style={styles.wishHint}>{t('yourArc.wishResurfaceHint')}</Text>
+            </>
+          ) : (
+            <Pressable style={styles.wishRow} onPress={handleRevealWish}>
+              <Text style={styles.wishRowText}>
+                {t('yourArc.wishResurfaceRow', { date: formatDate(new Date(resurfacedWish.savedAt).getTime()) })}
+              </Text>
+            </Pressable>
+          )}
+        </View>
+      )}
+
+      {/* The Crossing (docs/session-result-concept.md Phase 4 / the
+          2026-08-13 "Crossing" design) — one philosopher-voiced question
+          built from the CURRENT reading's own wish, offered only when
+          that wish exists (activeWish) and nothing was generated for it
+          yet. Not auto-fired on page load (see handleGenerateCrossing's
+          own comment) — a quiet, named invitation, matching "offered, not
+          pushed." Once a Crossing exists, the philosopher's QUESTION is
+          shown, but the user's own ANSWER — not the question — is the
+          thing that gets kept; see crossingController's own comment on
+          why generation is idempotent per wish+reading pair (visiting
+          again never regenerates a new question). */}
+      {activeWish && !crossing && (
+        <View style={styles.crossingSection}>
+          <Pressable style={styles.crossingInviteRow} onPress={handleGenerateCrossing} disabled={crossingLoading}>
+            <Text style={styles.crossingInviteText}>
+              {crossingLoading
+                ? t('yourArc.crossingLoading')
+                : t('yourArc.crossingInvite', { name: philosopher?.name ?? '' })}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {crossing && (
+        <View style={styles.crossingSection}>
+          <Text style={styles.crossingHeading}>
+            {t('yourArc.crossingHeading', { name: philosopher?.name ?? '' })}
+          </Text>
+          <Text style={styles.crossingQuestion}>{crossing.question}</Text>
+
+          {crossing.answer ? (
+            <>
+              <Text style={styles.crossingAnsweredLabel}>{t('yourArc.crossingAnsweredLabel')}</Text>
+              <Text style={styles.crossingAnswerText}>{crossing.answer}</Text>
+              <Text style={styles.crossingSendHint}>{t('yourArc.crossingSendHint')}</Text>
+            </>
+          ) : (
+            <View style={styles.crossingInputRow}>
+              <TextInput
+                style={styles.crossingInput}
+                value={crossingAnswerInput}
+                onChangeText={setCrossingAnswerInput}
+                placeholder={t('yourArc.crossingPlaceholder')}
+                placeholderTextColor={colors.text.muted}
+                multiline
+                editable={!crossingSubmitting}
+              />
+              <Pressable
+                style={[
+                  styles.crossingSendButton,
+                  { backgroundColor: `rgb(${accentRgb})`, opacity: crossingAnswerInput.trim() && !crossingSubmitting ? 1 : 0.4 },
+                ]}
+                onPress={handleSubmitCrossingAnswer}
+                disabled={!crossingAnswerInput.trim() || crossingSubmitting}
+              >
+                <Text style={styles.crossingSendButtonText}>↑</Text>
+              </Pressable>
+            </View>
+          )}
+        </View>
+      )}
+
       {readingLog.length >= 2 ? (
         <View style={styles.sparklineWrap}>
+          {/* Stated once, quietly, on the paid screen itself — not just
+              at the paywall (your-arc-preview.tsx). Without this, nothing
+              on THIS screen ever confirms what's actually different from
+              the free preview once you're already looking at it (see
+              collaboration notes on the paid-value critique) — the value
+              was only ever argued for before buying, never felt while
+              using. One plain sentence, not a badge or upsell tone. */}
+          <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
           {/* Moved here from the top-of-page intro line — it's an
               instruction about THIS shape specifically, so it belongs
               sitting against it, not several elements above it where the
@@ -379,6 +577,14 @@ function makeStyles(colors: Colors) {
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[8] },
+  kaleidoscopeCaption: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+    marginTop: spacing[3],
+  },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
@@ -444,9 +650,137 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
+  // "Held, not displayed" — the row itself is a plain sentence, same
+  // register as tapPointHint below (an instruction/label, not a card),
+  // no border/box per aesthetic.md's "no cards" rule. Sits between the
+  // facts and the sparkline: it's its own kind of true, real information
+  // about the record, same tier as the facts above it, but distinct
+  // enough (a private, held thing rather than a public count) to get its
+  // own quiet section instead of joining the factsSection list.
+  wishSection: {
+    marginBottom: spacing[6],
+  },
+  wishRow: { paddingVertical: spacing[1] },
+  wishRowText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  // Revealed state — same visual register as momentHeading/momentSpillText
+  // below (the wish is the person's own written words, same kind of
+  // material as a kept Spill entry), not a new visual language invented
+  // just for this one row.
+  wishHeading: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+  wishDate: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginTop: spacing[1],
+  },
+  wishText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[2],
+  },
+  wishHint: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginTop: spacing[2],
+  },
+  // The Crossing — same "no cards" register as the wish section above
+  // (a plain sentence/row, not a bordered box), until it's answered, at
+  // which point it reads as its own small moment (heading, question,
+  // saved answer) matching momentSection's own visual language.
+  crossingSection: { marginBottom: spacing[6] },
+  crossingInviteRow: { paddingVertical: spacing[1] },
+  crossingInviteText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  crossingHeading: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+  crossingQuestion: {
+    color: colors.text.primary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * lineHeights.normal,
+    marginTop: spacing[2],
+    marginBottom: spacing[3],
+  },
+  crossingAnsweredLabel: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+    marginTop: spacing[2],
+  },
+  crossingAnswerText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[1],
+  },
+  crossingSendHint: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginTop: spacing[2],
+  },
+  crossingInputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
+  crossingInput: {
+    flex: 1,
+    minHeight: 44,
+    maxHeight: 120,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.elevated,
+    color: colors.text.primary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    paddingHorizontal: spacing[4],
+    paddingVertical: spacing[3],
+  },
+  crossingSendButton: {
+    width: 44,
+    height: 44,
+    borderRadius: radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  crossingSendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
   sparklineWrap: {
     width: '100%',
     marginBottom: spacing[6],
+  },
+  fullLineNote: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginBottom: spacing[1],
   },
   tapPointHint: {
     color: colors.text.faint,
