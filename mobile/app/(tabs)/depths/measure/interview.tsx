@@ -25,6 +25,8 @@ import { useAuthStore } from '../../../../src/store/authStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
+import { saveWishIfConsented } from '../../../../src/api/wish';
+import { routeToCrisisSupport } from '../../../../src/utils/routeToCrisisSupport';
 import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/TypingDots';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
@@ -79,6 +81,23 @@ export default function InterviewScreen() {
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [isScoring, setIsScoring] = useState(false);
   const [scoringError, setScoringError] = useState<string | null>(null);
+  // A fifth, distinct beat after the four sphere questions — free-write,
+  // never scored, never interpreted (see docs/session-result-concept.md).
+  // Deliberately NOT stored in qaPairs/measureStore (wrong type, and
+  // would flow into MeasureResult.qaPairs, which Depths' existing
+  // collapsed-transcript UI already displays in full) — kept as its own
+  // local state, which naturally resets when this screen unmounts
+  // (handleRestart's router.replace), same as everything else here.
+  // null = not in the wish stage (normal sphere flow, or already past
+  // it and scoring). Optional — skippable, never blocks the reading.
+  const [wishStage, setWishStage] = useState<'asking' | 'blocked' | null>(null);
+  const [wishInput, setWishInput] = useState('');
+  const [wishSubmitting, setWishSubmitting] = useState(false);
+  const [wishRetryOffered, setWishRetryOffered] = useState(false);
+  // Stashed once the 4th sphere answer completes, so the wish stage (and
+  // its own possible retry) can call submitForScoring with the exact same
+  // pairs regardless of how long someone spends on the wish itself.
+  const pendingPairsRef = useRef<QAPair[] | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   // Drives the fade-to-black exit — 0 (transparent) until the score comes
   // back, then animated to 1 to cover the screen before navigating away.
@@ -196,10 +215,63 @@ export default function InterviewScreen() {
       }
 
       const allPairs = [...qaPairs, { sphere: currentQuestion.sphere, question: currentQuestion.question, answer }];
-      await submitForScoring(allPairs);
+      // Scoring is now triggered by the wish stage completing (submitted,
+      // blocked-then-skipped, or skipped outright), not directly by the
+      // 4th sphere answer — submitForScoring's own qaPairs argument stays
+      // exactly this same 4-sphere array either way (see handleWishSubmit/
+      // handleWishSkip below), so the AI scoring request's shape is
+      // completely unaffected by this new beat.
+      pendingPairsRef.current = allPairs;
+      setWishStage('asking');
     } finally {
       isSendingRef.current = false;
     }
+  };
+
+  // Moderates + saves BEFORE scoring — a self-harm-flagged wish needs to
+  // redirect immediately, not after sitting through the scoring wait. The
+  // wish is saved with measureResultId: null (that id only exists once
+  // scoring returns it, per submitInterview's response shape) — Phase 4's
+  // later resurfacing work can match a wish to its reading by timestamp
+  // proximity instead, the same "loose match, not a hard link" pattern
+  // your-arc.tsx already uses for Spill entries.
+  const handleWishSubmit = async () => {
+    const text = wishInput.trim();
+    if (!text || wishSubmitting) return;
+    setWishSubmitting(true);
+    setWishRetryOffered(false);
+    try {
+      const result = await saveWishIfConsented(text, null);
+      if (!result.ok && result.blocked && result.category === 'self-harm') {
+        routeToCrisisSupport();
+        return;
+      }
+      if (!result.ok && result.blocked) {
+        // Concerning, not self-harm — a gentle redirect, one retry offered
+        // (see docs/session-result-concept.md's own moderation copy).
+        setWishRetryOffered(true);
+        return;
+      }
+      // Saved, or silently not-saved (not signed in / not consented / a
+      // network failure) — either way the wish beat is done; the reading
+      // itself must never be blocked by this optional addition.
+      setWishStage(null);
+      setWishInput('');
+      const pairs = pendingPairsRef.current;
+      pendingPairsRef.current = null;
+      if (pairs) await submitForScoring(pairs);
+    } finally {
+      setWishSubmitting(false);
+    }
+  };
+
+  const handleWishSkip = async () => {
+    setWishStage(null);
+    setWishInput('');
+    setWishRetryOffered(false);
+    const pairs = pendingPairsRef.current;
+    pendingPairsRef.current = null;
+    if (pairs) await submitForScoring(pairs);
   };
 
   const handleRestart = () => {
@@ -207,6 +279,10 @@ export default function InterviewScreen() {
     setAcknowledgments([]);
     setAsides([]);
     setGoBackNote(null);
+    setWishStage(null);
+    setWishInput('');
+    setWishRetryOffered(false);
+    pendingPairsRef.current = null;
     router.replace('/(tabs)/depths/measure');
   };
 
@@ -298,6 +374,22 @@ export default function InterviewScreen() {
           <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
         )}
 
+        {/* The wish — a fifth, distinct beat after the four sphere
+            questions, free-write, never scored or interpreted (see
+            docs/session-result-concept.md). Only shown once all four
+            spheres are answered (currentQuestion is undefined by then,
+            since philosopher.measureQuestions has exactly 4 entries) and
+            before scoring begins. */}
+        {wishStage === 'asking' && (
+          <View style={styles.exchange}>
+            <Turn color={accentColor} styles={styles}>{t('measure.wishQuestion')}</Turn>
+            <Text style={styles.wishGroundRule}>{t('measure.wishGroundRule')}</Text>
+            {wishRetryOffered && (
+              <Text style={styles.wishRetryNote}>{t('measure.wishRetryNote')}</Text>
+            )}
+          </View>
+        )}
+
         {asides.map((aside, i) => (
           <View key={i} style={styles.exchange}>
             <Turn isUser styles={styles}>{aside.answer}</Turn>
@@ -357,6 +449,36 @@ export default function InterviewScreen() {
               <Text style={styles.sendButtonText}>↑</Text>
             </Pressable>
           </View>
+        </View>
+      )}
+
+      {wishStage === 'asking' && (
+        <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
+          <View style={styles.inputRow}>
+            <TextInput
+              style={styles.input}
+              value={wishInput}
+              onChangeText={setWishInput}
+              placeholder={t('measure.wishPlaceholder')}
+              placeholderTextColor={colors.text.muted}
+              multiline
+              editable={!wishSubmitting}
+            />
+            <Pressable
+              style={[styles.sendButton, { backgroundColor: accentButtonColor, opacity: wishInput.trim() && !wishSubmitting ? 1 : 0.4 }]}
+              onPress={handleWishSubmit}
+              disabled={!wishInput.trim() || wishSubmitting}
+            >
+              <Text style={styles.sendButtonText}>↑</Text>
+            </Pressable>
+          </View>
+          {/* The wish is an invitation, not a required step — Measure's own
+              four sphere questions must never be gated behind this new
+              beat, so skipping is always available, not just an empty
+              submit. */}
+          <Pressable style={styles.wishSkipRow} onPress={handleWishSkip} disabled={wishSubmitting}>
+            <Text style={styles.wishSkipText}>{t('measure.wishSkip')}</Text>
+          </Pressable>
         </View>
       )}
 
@@ -441,6 +563,23 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     marginBottom: spacing[2],
   },
+  // Small, always-present, attached directly to the question — same "plain
+  // clarifying line under the voice" pattern used elsewhere (RULES.md),
+  // condensed to its shortest form rather than a separate explainer block.
+  wishGroundRule: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+  },
+  wishRetryNote: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+  },
+  wishSkipRow: { alignItems: 'center', paddingTop: spacing[2] },
+  wishSkipText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,

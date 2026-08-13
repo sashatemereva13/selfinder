@@ -98,7 +98,7 @@ export default function RootLayout() {
     // screens (moved out of app/(tabs)/you/ so their back link/gesture
     // isn't tied to the you tab regardless of which tab they were opened
     // from — see your-arc.tsx's comment).
-    const inStandaloneRoute = ['sources', 'your-arc', 'your-arc-preview'].includes(segments[0] as string);
+    const inStandaloneRoute = ['sources', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
     } else if (philosopher && !inTabs && !inStandaloneRoute) {
@@ -127,6 +127,7 @@ export default function RootLayout() {
           <Stack.Screen name="sources"    />
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-preview" />
+          <Stack.Screen name="crisis-support" />
         </Stack>
         {showAIDisclosure && <AIDisclosureOverlay />}
       </GestureHandlerRootView>

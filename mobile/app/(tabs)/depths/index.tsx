@@ -29,6 +29,7 @@ import { useMeasureStore } from '../../../src/store/measureStore';
 import { useIsSubscribed } from '../../../src/utils/useIsSubscribed';
 import { useAuthStore } from '../../../src/store/authStore';
 import { getMe, getMeasureHistory } from '../../../src/api/user';
+import { listMyWishes, SavedWish } from '../../../src/api/wish';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
 import {
@@ -271,6 +272,35 @@ export default function DepthsScreen() {
     };
   }, [session]);
   const hasEnoughReadingsForArc = Math.max(readingLog.length, serverReadingCount) >= 2;
+
+  // The wish this reading's own — held, not displayed by default, per
+  // docs/session-result-concept.md ("tucked behind a tap... never pushed
+  // back in front of them uninvited"). A wish is saved with
+  // measureResultId: null (that id only exists once scoring itself
+  // returns it — see interview.tsx's handleWishSubmit), so it's matched
+  // to currentResult by loose timestamp proximity instead, same "loose
+  // match, not a hard link" pattern your-arc.tsx already uses for Spill
+  // entries (SPILL_MATCH_WINDOW_MS).
+  const [linkedWish, setLinkedWish] = useState<SavedWish | null>(null);
+  useEffect(() => {
+    if (!session || !currentResult) {
+      setLinkedWish(null);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const wishes = await listMyWishes(session.token);
+      if (cancelled) return;
+      const resultTs = new Date(currentResult.savedAt).getTime();
+      const WISH_MATCH_WINDOW_MS = 30 * 60 * 1000;
+      const match = wishes.find((w) => Math.abs(new Date(w.savedAt).getTime() - resultTs) < WISH_MATCH_WINDOW_MS);
+      setLinkedWish(match ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, currentResult]);
+  const [showWish, setShowWish] = useState(false);
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
   const discovered = useEngagementStore((s) => s.discovered);
   const toolLastVisitedAt = useEngagementStore((s) => s.toolLastVisitedAt);
@@ -531,6 +561,12 @@ export default function DepthsScreen() {
     if (next) track('history_transcript_viewed');
   };
 
+  const toggleWish = () => {
+    const next = !showWish;
+    setShowWish(next);
+    if (next) track('wish_viewed');
+  };
+
   // Was reveal's own action, keyed to the reading that had just finished;
   // here it just reads off currentResult directly, since that's always the
   // most recent reading regardless of how someone arrived at this screen.
@@ -768,6 +804,30 @@ export default function DepthsScreen() {
                         <Text style={styles.conversationAnswer}>{pair.answer}</Text>
                       </View>
                     ))}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* The wish's own disclosure — structurally its own row, NOT
+                merged into conversationDetail's qaPairs loop above, since
+                the wish must stay held/hidden even from that already-
+                opened transcript (see docs/session-result-concept.md's
+                "held, not displayed" rule). Same tap-to-reveal mechanism
+                as the transcript toggle above it — same "what was said"
+                material grouping, just a separate disclosure. */}
+            {linkedWish && (
+              <View style={styles.conversationSection}>
+                <Pressable style={styles.conversationToggle} onPress={toggleWish}>
+                  <Text style={styles.conversationToggleText}>
+                    {showWish ? t('depths.hideWish') : t('depths.showWish')}
+                  </Text>
+                  <Text style={styles.conversationChevron}>{showWish ? '↑' : '↓'}</Text>
+                </Pressable>
+
+                {showWish && (
+                  <View style={styles.conversationDetail}>
+                    <Text style={styles.conversationAnswer}>{linkedWish.text}</Text>
                   </View>
                 )}
               </View>

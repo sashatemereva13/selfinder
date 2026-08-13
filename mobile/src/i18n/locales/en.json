@@ -110,6 +110,8 @@
     "mySphereJustReadAs": "My {{sphere}} just read as {{level}}. Can we talk about it?",
     "hideConversation": "Hide conversation",
     "showConversation": "Show conversation",
+    "hideWish": "Hide wish",
+    "showWish": "Show what you wished for",
     "beforeFirstReading": "Before your first reading",
     "firstReadingCopy": "Whatever you're feeling right now is information, not a problem to fix. Measure is where you find out what it is.",
     "groupFindOutWhereYouAre": "Find out where you are",
@@ -254,7 +256,12 @@
     "tryAgain": "Try again",
     "inputPlaceholder": "Type your answer, or ask why…",
     "startOver": "Start over",
-    "tapToContinue": "Tap anywhere to continue"
+    "tapToContinue": "Tap anywhere to continue",
+    "wishQuestion": "If this could feel like anything you wanted, what would that be?",
+    "wishGroundRule": "A wish can't harm or take from anyone.",
+    "wishPlaceholder": "Say what you'd want, if you had it…",
+    "wishSkip": "Skip this",
+    "wishRetryNote": "That doesn't sound like a wish for yourself — want to try again?"
   },
   "measureIntro": {
     "kicker": "Frequency Check-In",
@@ -290,6 +297,16 @@
   "feelingLucky": {
     "talkAboutIt": "Talk to {{name}} about it →",
     "talkAboutItMessage": "This found me just now: \"{{message}}\" Can we talk about it?"
+  },
+  "crisisSupport": {
+    "kicker": "Right now",
+    "title": "If it's more than a wish",
+    "body": "What you wrote sounds like it might be more than Selfinder can hold. There are people trained for this, ready right now — reaching out isn't a step down from anything.",
+    "call988": "Call 988",
+    "call988Sublabel": "Suicide & Crisis Lifeline — free, 24/7, in the US",
+    "findHelpline": "Find a helpline near you",
+    "findHelplineSublabel": "findahelpline.com — a directory of local crisis lines",
+    "footnote": "You can come back to Selfinder whenever you're ready. Nothing here was saved."
   },
   "onboarding": {
     "what": "what",
