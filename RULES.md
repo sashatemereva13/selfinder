@@ -212,15 +212,34 @@ Selfinder is or why it costs money.
   instead of a preview slice, and richer ways back into an old moment.
   The core loop being free is load-bearing for the pitch ("a gym, not a
   hospital," never gated like therapy) — don't let a growth idea erode it.
-- **No live purchase/subscribe flow exists yet.** `YourArcTeaser.tsx` (a
-  passive, non-pressable card shown once someone has 2+ readings) and the
-  Depths "Talk about it" → "Keep the conversation going" copy-swap (after
-  `TALK_ABOUT_IT_UPSELL_THRESHOLD` uses, see `engagementStore.ts`) are both
-  *seeds*, not a checkout. Never build a tap target that looks like it
-  leads to a purchase and doesn't — a soft, honest copy-swap that names
-  Selfinder+ and stops there is the standing pattern until a real
-  subscribe screen is built. When that screen exists, this rule should be
-  rewritten, not left stale.
+- **No live purchase/subscribe flow exists yet — but real entitlement-
+  gated depth does.** As of the 2026-08-10 "history features and real
+  entitlement system" rewrite, `useIsSubscribed.ts` is a live `GET /user/
+  me` check against `User.subscription.active` (`backend/models/User.js`)
+  — no client-side dev toggle exists anymore. The only way that field
+  becomes `true` today is a manual admin grant
+  (`backend/scripts/grantSubscription.js <username>`); nothing writes
+  `source: "apple"/"google"` yet, so there is still no real checkout.
+  `YourArcTeaser.tsx` no longer exists — the "Your arc" entry point now
+  lives as a permanent, pressable row directly in Depths' spiral
+  (`SLOT_META.yourArc`, `depths/index.tsx`), routing to `/your-arc` if
+  subscribed or `/your-arc-preview` if not. Depths' own "Talk about it"
+  row is now permanently static (always "Talk about it," never swaps
+  copy, always opens Guide) — the upsell copy-swap
+  (`TALK_ABOUT_IT_UPSELL_THRESHOLD`, `engagementStore.ts`) moved to a
+  separate, conditionally-rendered row on `your-arc-preview.tsx` itself
+  ("Keep the conversation going"), shown only to non-subscribers past the
+  threshold. Beyond these seeds, real subscriber-only depth already
+  ships: server-linked Guide-conversation persistence, Spill's "keep this
+  moment" affordance, per-sphere history on Your Arc, and richer
+  same-day re-entry into a past reading (transcript + matched Spill
+  entry) — all entitlement-gated via the same live check, not additional
+  UI seeds. Never build a tap target that looks like it leads to a
+  purchase and doesn't — that discipline still stands even though real
+  depth now sits behind the entitlement check. When a real IAP/checkout
+  flow is built, this rule should be rewritten again, not left stale —
+  the same fate that already happened to it once (see collaboration
+  history around commit `5753a0d7`).
 - **Every change should lean toward "what makes this a paid app?"** — not
   by adding friction to the free core, but by asking whether a change adds
   polish, a funnel-analytics touchpoint, or a Selfinder+ seed. A change
