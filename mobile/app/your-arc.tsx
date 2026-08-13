@@ -18,8 +18,9 @@ import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkli
 import { SphereArc } from '../src/components/SphereArc';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
+import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { getLocalizedLevelName } from '../src/content/measureConfig';
+import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
 
 // Same loose-match window your-arc.tsx already uses for qaPairs/rich-
@@ -157,6 +158,14 @@ export default function YourArcScreen() {
     [richHistory]
   );
 
+  // Real, true facts about this person's OWN record — never an
+  // interpretation of what a pattern means (see arcFacts.ts's own header
+  // comment). Sits right after introLine, before the sparkline, so it's
+  // the immediate answer to "what is this page" rather than something you
+  // only get to after tapping around — see collaboration notes on making
+  // Your Arc's value legible on open.
+  const facts = useMemo(() => buildArcFacts(readingLog), [readingLog]);
+
   return (
     <ScrollView
       style={styles.root}
@@ -176,6 +185,32 @@ export default function YourArcScreen() {
       <Text style={styles.introLine}>
         {t('yourArc.introLine', { count: readingLog.length })}
       </Text>
+
+      {facts.length > 0 && (
+        <View style={styles.factsSection}>
+          {facts.map((fact) => {
+            if (fact.key === 'steadiest') {
+              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
+              return (
+                <Text key={fact.key} style={styles.factLine}>
+                  {t('yourArc.factSteadiest', {
+                    level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
+                  })}
+                </Text>
+              );
+            }
+            const i18nKey =
+              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
+              : fact.key === 'streak' ? 'yourArc.factStreak'
+              : 'yourArc.factAllTime';
+            return (
+              <Text key={fact.key} style={styles.factLine}>
+                {t(i18nKey, { count: fact.params.count })}
+              </Text>
+            );
+          })}
+        </View>
+      )}
 
       {readingLog.length >= 2 ? (
         <View style={styles.sparklineWrap}>
@@ -322,6 +357,24 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.sm * lineHeights.normal,
     marginTop: spacing[3],
     marginBottom: spacing[8],
+  },
+  // Real sentences, same voice as introLine (not a stat-block/badge
+  // register) — these are the immediate answer to "what is this page,"
+  // sitting before the sparkline rather than only surfacing after a tap.
+  // Pulled up slightly to sit closer to introLine than the sparkline
+  // below it (introLine's own marginBottom already provides the gap down
+  // to the sparkline when there are no facts to show).
+  factsSection: {
+    marginTop: -spacing[6],
+    marginBottom: spacing[3],
+    gap: spacing[1],
+  },
+  factLine: {
+    alignSelf: 'flex-start',
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
   },
   sparklineWrap: {
     width: '100%',

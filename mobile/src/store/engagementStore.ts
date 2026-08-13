@@ -10,7 +10,10 @@ const RECENT_READINGS_CAP = 5;
 // Hawkins' own model draws the line at 200 — states below are generally the
 // "heavier" ones (fear, anger, shame...), 200+ the more constructive ones
 // (courage and above). Used to soften reminder tone, not to label anyone.
-const HEAVY_REGISTER_THRESHOLD = 200;
+// Exported so arcFacts.ts can reuse the exact same boundary for its own
+// "is this state genuinely good to lead with" gate, rather than a second,
+// independently-tuned threshold drifting from this one over time.
+export const HEAVY_REGISTER_THRESHOLD = 200;
 const SESSION_GAP_MS = 20 * 60 * 1000; // 20 minutes — a real new sitting-down, not a background blip
 
 export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill' | 'breathing';
