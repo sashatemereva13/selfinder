@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -135,43 +135,59 @@ export default function YourArcScreen() {
     if (!session) return;
     let cancelled = false;
     setRichDataLoading(true);
-    (async () => {
-      try {
-        // All 5 requests fire together — getMe's own result is only used
-        // to decide whether to APPLY the others (consent gate), not to
-        // decide whether to START them. This used to await getMe first,
-        // then Promise.all the rest — a real serial waterfall (2+ round
-        // trips stacked before anything richer than the bare local
-        // readingLog appeared), confirmed as the actual cause of "Your
-        // Arc takes a long time to load" on a real device (2026-08-14
-        // collaboration notes), not a tap-target issue as first assumed.
-        const [profile, history, entries, wishes, crossings] = await Promise.all([
-          getMe(session.token),
-          getMeasureHistory(session.token),
-          listMySpillEntries(session.token),
-          listMyWishes(session.token),
-          listMyCrossings(session.token),
-        ]);
-        if (cancelled || !profile.consent?.psychologicalData?.given) return;
-        setRichHistory(history);
-        setSpillEntries(entries);
-        setResurfacedWish(selectWishToResurface(wishes));
-        setAllWishes(wishes);
+    // Deferred until the screen-transition animation actually finishes,
+    // not fired the instant this effect runs — confirmed on a real device
+    // (2026-08-14: Console.app showed "Hang detected: 4.52s" right as the
+    // network connection for this fetch started setting up) that kicking
+    // off 5 requests' worth of native connection/TLS setup DURING the
+    // navigation transition can compete with it for the main thread and
+    // visibly freeze the transition itself — Depths stayed on screen,
+    // frozen, for several seconds before Your Arc ever appeared, rather
+    // than Your Arc appearing immediately and its own content loading in
+    // (which is what richDataLoading's own loading note was built for).
+    // InteractionManager guarantees the transition/any other queued
+    // interaction completes first, so navigation always paints instantly
+    // regardless of how slow the network is that day.
+    const task = InteractionManager.runAfterInteractions(() => {
+      (async () => {
+        try {
+          // All 5 requests fire together — getMe's own result is only used
+          // to decide whether to APPLY the others (consent gate), not to
+          // decide whether to START them. This used to await getMe first,
+          // then Promise.all the rest — a real serial waterfall (2+ round
+          // trips stacked before anything richer than the bare local
+          // readingLog appeared), confirmed as the actual cause of "Your
+          // Arc takes a long time to load" on a real device (2026-08-14
+          // collaboration notes), not a tap-target issue as first assumed.
+          const [profile, history, entries, wishes, crossings] = await Promise.all([
+            getMe(session.token),
+            getMeasureHistory(session.token),
+            listMySpillEntries(session.token),
+            listMyWishes(session.token),
+            listMyCrossings(session.token),
+          ]);
+          if (cancelled || !profile.consent?.psychologicalData?.given) return;
+          setRichHistory(history);
+          setSpillEntries(entries);
+          setResurfacedWish(selectWishToResurface(wishes));
+          setAllWishes(wishes);
 
-        const wish = findActiveWish(wishes);
-        setActiveWish(wish);
-        if (wish && currentResult?.measureResultId) {
-          const existing = findExistingCrossing(crossings, wish.id, currentResult.measureResultId);
-          if (existing) setCrossing(existing);
+          const wish = findActiveWish(wishes);
+          setActiveWish(wish);
+          if (wish && currentResult?.measureResultId) {
+            const existing = findExistingCrossing(crossings, wish.id, currentResult.measureResultId);
+            if (existing) setCrossing(existing);
+          }
+        } catch {
+          // Best-effort — the local-only readingLog view still works without this.
+        } finally {
+          if (!cancelled) setRichDataLoading(false);
         }
-      } catch {
-        // Best-effort — the local-only readingLog view still works without this.
-      } finally {
-        if (!cancelled) setRichDataLoading(false);
-      }
-    })();
+      })();
+    });
     return () => {
       cancelled = true;
+      task.cancel();
     };
   }, [session, currentResult?.savedAt, currentResult?.measureResultId]);
 
