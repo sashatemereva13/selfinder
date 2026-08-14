@@ -128,19 +128,24 @@ additional authorization/documentation applies.
   in this build: no purchase UI, no StoreKit/IAP integration, and no
   pricing shown anywhere in the app. A real entitlement flag already
   exists server-side (`User.subscription.active`) as groundwork for that
-  future tier, and the demo account (`test`) has been granted it
-  manually so the reviewer can see the complete experience Selfinder+
-  will eventually unlock — this is a developer-side-only script
-  (`backend/scripts/grantSubscription.js`), not a feature any real user
-  can reach; no other account has or can currently obtain this access.
-  Every core feature (Measure, Guide, Spill, Tune In, Breathing) is fully
-  free and complete in itself — nothing in the free tier is gated or
-  teased. A signed-out user, or any signed-in user other than the demo
-  account, sees an honest free preview of "Your Arc" (a partial history,
-  no wish/Crossing) rather than a locked/broken screen. We'll submit the
-  real paid tier separately, with full subscription details (title,
-  length, price, and links to Terms of Use and Privacy Policy), once it's
-  finished and ready to launch.
+  future tier.
+
+  We're deliberately giving the reviewer full visibility into what
+  Selfinder+ will unlock, ahead of it being purchasable by anyone: the
+  demo account (`test`) has been granted the entitlement manually
+  (`backend/scripts/grantSubscription.js`, a developer-side-only script —
+  not a feature any real user can reach; no other account has or can
+  currently obtain this access), so the reviewer can see the complete "Your
+  Arc" experience — the full reading history, the private "wish," and the
+  philosopher-voiced "Crossing" reflection — rather than reviewing a paid
+  feature blind. Every core feature (Measure, Guide, Spill, Tune In,
+  Breathing) is fully free and complete in itself — nothing in the free
+  tier is gated or teased. A signed-out user, or any signed-in user other
+  than the demo account, sees an honest free preview of "Your Arc" (a
+  partial history, no wish/Crossing) rather than a locked/broken screen.
+  We'll submit the real paid tier separately, with full subscription
+  details (title, length, price, and links to Terms of Use and Privacy
+  Policy), once it's finished and ready to launch.
 - **User-generated content:** Guide conversations, Spill journal
   entries, and Your Arc's private "wish" are visible only to the account
   that created them — there is no sharing, feed, or social visibility
