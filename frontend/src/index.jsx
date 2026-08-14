@@ -20,6 +20,7 @@ import { appendPathStep } from "./tracking/userPathTracker";
 import { ChatProvider } from "./guide/ChatContext";
 import { AuthProvider } from "./auth/AuthContext";
 import PrivacyPolicyPage from "./legal/PrivacyPolicyPage";
+import TermsOfUsePage from "./legal/TermsOfUsePage";
 import SupportPage from "./legal/SupportPage";
 import DeleteAccountPage from "./legal/DeleteAccountPage";
 
@@ -145,18 +146,23 @@ function App() {
   // anyone else need this to load directly, not after clicking through the
   // philosopher-selection landing screen.
   const isPrivacyRoute = window.location.pathname === "/privacy";
+  const isTermsRoute = window.location.pathname === "/terms";
   const isSupportRoute = window.location.pathname === "/support";
   const isDeleteAccountRoute = window.location.pathname === "/delete-account";
 
   useEffect(() => {
-    if (isPrivacyRoute || isSupportRoute || isDeleteAccountRoute) return;
+    if (isPrivacyRoute || isTermsRoute || isSupportRoute || isDeleteAccountRoute) return;
     if (!hasEntered) {
       appendPathStep({ path: "/entry-gate", source: "gate", navType: null });
     }
-  }, [hasEntered, isPrivacyRoute, isSupportRoute, isDeleteAccountRoute]);
+  }, [hasEntered, isPrivacyRoute, isTermsRoute, isSupportRoute, isDeleteAccountRoute]);
 
   if (isPrivacyRoute) {
     return <PrivacyPolicyPage />;
+  }
+
+  if (isTermsRoute) {
+    return <TermsOfUsePage />;
   }
 
   if (isSupportRoute) {
