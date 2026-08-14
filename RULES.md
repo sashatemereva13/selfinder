@@ -205,6 +205,30 @@ Selfinder is or why it costs money.
   to your own record* vs. richer *content the app supplies* — is the whole
   rewrite; treat "more philosophers" or "more sound/breathing content" as
   explicitly off-brief for Selfinder+ until this file says otherwise.
+- **The sharpest one-line description of Selfinder+ (2026-08-14):**
+  Selfinder+ adds *dimensionality* — it lets someone look at the present
+  moment in light of their own past and their own future, not alone.
+  **Selfinder+ doesn't tell you who you are. It helps you notice where
+  you are — between what has shaped you and what is calling you
+  forward.** This is "History is the product" restated at its sharpest,
+  not a new rule — the same anti-diagnosis constraint above still fully
+  applies. Visual/copy metaphor: a light cone (fixed past below, open
+  future above, meeting at "here and now") — borrowed deliberately as a
+  *shape*, never a physics claim, same "structural metaphor, no attached
+  belief system" test `docs/measure-experience-concept.md` already
+  applies to the cultural-symbol boundary. Two things this framing must
+  never become: the past cone is *the user's own account* of what
+  happened (a Measure answer, a wish, a kept Spill entry), never
+  asserted as raw objective fact — Selfinder never had access to
+  anything but someone's own telling of it. The future cone is never a
+  projection, forecast, or "expected trajectory" (already forbidden
+  elsewhere in this file) — it holds only the active wish, the one real,
+  stated thing reaching forward. Say "you are shaping your future," never
+  "the future is calling/pulling you" — the present moment is the
+  source, not the effect of something ahead of it; agency stays with the
+  person, matching "the answers are already inside the person" above.
+  Price, decided the same day: €7.99/month, €49.99/year (not yet live —
+  see the no-live-purchase-flow note below).
 - **Free core, paid depth — never free features, paid access.** Measure,
   Guide, Spill, Tune In, Breathing are free for everyone, unconditionally,
   and stay exactly as rich as they are today — free is never made to feel

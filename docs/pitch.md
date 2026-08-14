@@ -109,12 +109,43 @@ the record of it.
 > with yourself. You'll probably want it anyway, the same way you'd want to
 > watch anything you're building take shape.
 
+**The sharper version (2026-08-14), and the one to lead with going forward:**
+Selfinder+ adds *dimensionality* — it lets you look at the present moment in
+light of your own past and your own future, instead of alone. There's a
+path that brought you to right now; there's what's calling you forward
+(your own stated wish, never the app's guess); Selfinder+ is what makes
+that whole shape visible at once, not just the single point you're standing
+on. The metaphor worth using in copy and visuals: a light cone — a fixed
+past below, an open future above, meeting at "here and now." Borrowed
+deliberately as a *shape*, not a physics claim (see the cultural-symbol
+boundary already established in `docs/measure-experience-concept.md` — a
+structural metaphor with no attached belief system is fair game the way an
+astrology reference wouldn't be). Concretely: the past is honestly *your own
+account* of what happened — a Measure answer, a wish, a kept Spill entry —
+never asserted as raw objective fact, since that's all Selfinder was ever
+able to capture in the first place. The future is never a projection or a
+forecast (RULES.md already forbids fabricating a trajectory) — it's just
+the active wish, the one real, stated thing reaching forward. **You are
+shaping your future, not being pulled by it** — the present moment is the
+source, never the effect of something ahead of it.
+
+This is the same anti-diagnosis rule the whole product already lives by,
+just given its sharpest possible sentence: **Selfinder+ doesn't tell you
+who you are. It helps you notice where you are — between what has shaped
+you and what is calling you forward.** There is no fixed model of "who you
+are" at the end of the record; you're continually re-finding yourself at
+the point where memory, present experience, and possibility meet.
+
 You said you feel slightly shy asking for money. The reframe: **you're not
 selling the solution to a problem — you're selling a game people play with
 their own becoming, and games are allowed to be fun to pay for.** A doctor
 who works free is a hobby; a doctor with a fee gets their advice followed —
 but that logic is for the free core's problem, not this one. Here, the
 better analogy is a save file: nobody feels bad paying for cloud saves.
+
+**Price: €7.99/month, €49.99/year** (decided 2026-08-14 — not yet live;
+no StoreKit/IAP integration exists as of this writing, see
+`mobile/docs/shipping.md`).
 
 ---
 
