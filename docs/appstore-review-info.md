@@ -52,7 +52,7 @@ only the draft's text with the combined reply below.
 
 ## Reply message (paste into App Store Connect's "Reply" box)
 
-Confirmed character count as drafted: 3,100 (limit 4,000, per the live
+Confirmed character count as drafted: 3,431 (limit 4,000, per the live
 counter visible under the reply field).
 
 ```
@@ -60,13 +60,13 @@ Hello,
 
 Reply covering both outstanding items on this submission — Guideline 2.1 (Information Needed) and the follow-up on Guideline 5.1.1(i)/5.1.2(i) (third-party AI data sharing).
 
-1. Screen recording: attached, captured on a physical iPhone 15 Pro Max running the latest iOS. It starts at launch, walks through onboarding, account registration/login, and the core features (Measure, Guide, Spill, Tune In, Breathing, Your Arc), and shows account deletion in Account settings. Selfinder has no purchase/subscription flow in this build (see item on paid content below) and requests no sensitive device data beyond photo-library access (only when explicitly saving an image) and local notification permission for optional reminders — both shown in the recording.
+1. Screen recording: attached, captured on a physical iPhone 15 Pro Max running the latest iOS. It starts at launch, walks through onboarding, account registration/login, and the free core features (Measure, Guide, Spill, Tune In, Breathing), and shows account deletion in Account settings. It shows Your Arc's free preview only — Selfinder+, the planned paid tier, isn't finished yet, so there's no finished paid experience to demo (see item 4). Selfinder has no purchase/subscription flow in this build and requests no sensitive device data beyond photo-library access (only when explicitly saving an image) and local notification permission for optional reminders — both shown in the recording.
 
 2. Devices/OS tested: physical iPhone 15 Pro Max (iOS 18) and iPhone 11 Pro (iOS 17), plus iPhone simulators on the latest iOS SDK.
 
 3. App description/audience: Selfinder is a private self-reflection app, not therapy. Its core loop, "Measure," asks four short questions (body/mind/heart/spirit) and returns a reading — a position on a visual map, never a score or diagnosis. Around that: "Guide," open conversation with one of five philosopher personas; "Spill," free-writing; "Tune In" and "Breathing" for calming the body. Over time, readings form "Your Arc," a personal history. Audience: adults who think of themselves as reflective "overthinkers" wanting a structured tool, not advice or diagnosis — the app never tells the user what they should do.
 
-4. Setup: launch, then onboarding, then register or sign in. Demo account (in Sign-In Information): username test, password test-selfinder — logs into an account with data already present. Main features are reachable from the home/Depths screen after login. No sample files needed.
+4. Setup: launch, then onboarding, then register or sign in. Demo account (in Sign-In Information): username test, password test-selfinder — logs into an account with data already present. Main features are reachable from the home/Depths screen after login. The demo account also has the (still-unfinished) Selfinder+ entitlement flag granted, purely so a reviewer can optionally inspect that work-in-progress tier via Your Arc — not a live purchase or finished feature. No sample files needed.
 
 5. External services: our own backend REST API; Groq (LLM inference, server-side only, powering Guide, Measure, and Your Arc's reflection); Expo's on-device local notification scheduling (no push/remote service). No analytics SDK, no payment processor, no third-party auth provider.
 
@@ -139,16 +139,18 @@ their own thinking, not supply an answer for them.
 - Launch the app → onboarding screens introduce the concept → user
   registers an account (email/username + password) or signs in.
 - Demo account above logs straight into an existing account with data
-  already present and Selfinder+ access already granted.
+  already present and the (still-unfinished) Selfinder+ entitlement flag
+  already granted — not a finished paid experience, just visibility into
+  work in progress (see "Paid content / subscriptions" below).
 - After login, the main features are reachable from the home/Depths
   screen: "Measure" (start a new reading), "Guide" (talk to a
   philosopher), "Spill" (free write), "Tune In" (ambient sound),
   "Breathing," and "Your Arc" (history of past readings, reachable via
   the labeled point on Depths' own spiral).
-- To see Your Arc's full subscriber content specifically: after logging
-  in as the demo account, go to Account settings and enable "Save my
-  readings to my account" (the psychological-data consent toggle), then
-  open Your Arc from Depths.
+- To see Your Arc's richer (but still incomplete) content specifically:
+  after logging in as the demo account, go to Account settings and
+  enable "Save my readings to my account" (the psychological-data
+  consent toggle), then open Your Arc from Depths.
 - No sample files or other special setup are required beyond the above.
 
 **5. External services used:**
