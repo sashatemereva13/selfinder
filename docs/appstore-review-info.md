@@ -5,21 +5,26 @@ Update this file, not just App Store Connect directly, so a future
 submission's notes don't have to be reconstructed from scratch — this is
 the durable source, App Store Connect is where it gets pasted.
 
-Status: updated 2026-08-14 for the reply to Apple's 5.1.1(i)/5.1.2(i)
-rejection on submission 8bb00557-98ef-40ef-8204-8871f11542da (reviewed
-2026-08-13 on an iPad Air 11-inch M3, version 1.0 (10)). Apple's stated
-issue: the app "appears to share the user's personal data with a
+Status: updated 2026-08-14. This submission
+(8bb00557-98ef-40ef-8204-8871f11542da, iPad Air 11-inch M3, version 1.0
+(10)) has received two separate rejection messages that both need
+answering in the same reply: a Guideline 2.1 "Information Needed"
+request (the standard 7-item checklist — screen recording, devices
+tested, app description, setup instructions, external services, regional
+differences, regulated-industry documentation) and a Guideline
+5.1.1(i)/5.1.2(i) rejection specifically about third-party AI data
+sharing ("the app appears to share the user's personal data with a
 third-party AI service but the app does not clearly explain what data is
 sent, identify who the data is sent to, and ask the user's permission
-before sharing the data." The reply below (see "Third-party AI data
-sharing") confirms this is accurate — Selfinder does send user-entered
-text to Groq — and documents the existing disclosure/consent mechanism
-and privacy-policy language that were already in place but apparently
-not obvious enough to the reviewer; nothing about the mechanism itself
-changed as a result of this rejection. Re-verify the "additional
-context" section (esp. what Your Arc shows) before reusing this for a
-later submission — that section is the part most likely to go stale as
-Selfinder+ features ship.
+before sharing the data"). The combined reply below answers both in one
+message. It confirms the AI-sharing claim is accurate — Selfinder does
+send user-entered text to Groq — and documents the existing
+disclosure/consent mechanism and privacy-policy language that were
+already in place but apparently not obvious enough to the reviewer;
+nothing about the mechanism itself changed as a result of either
+rejection. Re-verify the "additional context" section (esp. what Your
+Arc shows) before reusing this for a later submission — that section is
+the part most likely to go stale as Selfinder+ features ship.
 
 ---
 
@@ -27,24 +32,33 @@ Selfinder+ features ship.
 
 Apple's reply box has its own hard 4000-character limit, separate from
 the longer App Review Information Notes field below — this section is
-sized to fit inside it. Character count as drafted: keep this section
-itself under ~3800 to leave margin.
+sized to fit inside it. Answers both open rejections (Guideline 2.1's
+7-item checklist and the 5.1.1(i)/5.1.2(i) AI-disclosure follow-up) in
+one message, since they're both outstanding on the same submission.
+Confirmed character count as drafted: 3,156 (limit 4,000).
 
 ```
 Hello,
 
-Yes — Selfinder does send user-entered text to a third-party AI provider (Groq, which hosts the language models the app uses). This happens in two features:
+Reply covering both outstanding items on this submission — Guideline 2.1 (Information Needed) and the follow-up on Guideline 5.1.1(i)/5.1.2(i) (third-party AI data sharing).
 
-- Guide — when the user sends a message to their chosen philosopher, that message is sent to Groq to generate the reply.
-- Measure — when the user answers a guided reflection question, their answer is sent to Groq to generate the response and the resulting reading.
+1. Screen recording: attached, captured on a physical iPhone 15 Pro Max running the latest iOS. It starts at launch, walks through onboarding, account registration/login, and the core features (Measure, Guide, Spill, Tune In, Breathing, Your Arc), and shows account deletion in Account settings. Selfinder has no purchase/subscription flow in this build (see item on paid content below) and requests no sensitive device data beyond photo-library access (only when explicitly saving an image) and local notification permission for optional reminders — both shown in the recording.
 
-How this is disclosed and consented to in-app: Before either feature can be used for the first time on a given install — regardless of whether the user is signed in or has an account — the app shows a mandatory one-time notice ("Before you begin") stating plainly that messages/answers are sent to a third-party AI provider to generate the reply or reading, and pointing to the full privacy policy. The user must tap "Continue" to acknowledge this before the feature becomes usable; there is no way to reach Guide or Measure without seeing it first on a fresh install.
+2. Devices/OS tested: physical iPhone 15 Pro Max (iOS 18) and iPhone 11 Pro (iOS 17), plus iPhone simulators on the latest iOS SDK.
 
-Privacy policy: https://selfinder.online/privacy discloses this explicitly under "A disclosed limitation," naming Groq by name, describing what is sent, confirming this happens on every use regardless of sign-in or consent status, and noting the provider may process data outside the user's country.
+3. App description/audience: Selfinder is a private self-reflection app, not therapy. Its core loop, "Measure," asks four short questions (body/mind/heart/spirit) and returns a reading — a position on a visual map, never a score or diagnosis. Around that: "Guide," open conversation with one of five philosopher personas; "Spill," free-writing; "Tune In" and "Breathing" for calming the body. Over time, readings form "Your Arc," a personal history. Audience: adults who think of themselves as reflective "overthinkers" wanting a structured tool, not advice or diagnosis — the app never tells the user what they should do.
 
-We believe this already satisfies the four requirements in your guidance (disclose what is sent, identify who it's sent to, obtain permission before sending, and document this in the privacy policy), but if any part of the existing notice or policy language isn't clear enough, please let us know specifically what to add and we'll revise it right away.
+4. Setup: launch, then onboarding, then register or sign in. Demo account (in Sign-In Information): username test, password test-selfinder — logs into an account with data already present. Main features are reachable from the home/Depths screen after login. No sample files needed.
 
-Thank you.
+5. External services: our own backend REST API; Groq (LLM inference, server-side only, powering Guide, Measure, and Your Arc's reflection); Expo's on-device local notification scheduling (no push/remote service). No analytics SDK, no payment processor, no third-party auth provider.
+
+6. Regional differences: none — the app behaves identically in every region. The only locale variation is UI language (English/Russian). No App Tracking Transparency prompt; the app doesn't track users across apps or sites.
+
+7. Regulated industry: not applicable. Selfinder isn't a medical, health, or financial app and avoids clinical/diagnostic language throughout. The five philosopher personas are original dialogue inspired by public-domain historical figures, not licensed material.
+
+Third-party AI data sharing (5.1.1(i)/5.1.2(i)): confirmed — Selfinder sends user-entered text to Groq in Guide (a message, to generate the philosopher's reply) and Measure (an answer, to generate the reply and reading). Before either feature's first use on an install, regardless of sign-in state, a mandatory notice ("Before you begin") discloses this and links the privacy policy; the user must tap Continue to proceed. https://selfinder.online/privacy names Groq explicitly under "A disclosed limitation."
+
+Full details for each item are also in the Notes field. Thank you.
 ```
 
 ---
