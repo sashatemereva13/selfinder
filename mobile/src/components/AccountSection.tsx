@@ -610,9 +610,14 @@ function LoggedInAccount({
             {t('account.exportCopy')}
           </Text>
           <Pressable style={styles.dataButton} onPress={handleExport} disabled={exporting}>
-            <Text style={styles.dataButtonText}>{exporting ? '…' : t('account.export')}</Text>
+            <Text style={styles.dataButtonText}>{exporting ? t('account.exportPreparing') : t('account.export')}</Text>
           </Pressable>
         </View>
+        {/* Without this, a slow export (client.ts's own 15s timeout) left
+            the button on a bare '…' with nothing telling the person
+            whether it was working or stuck — same complaint that led to
+            client.ts's timeout fix in the first place. */}
+        {exporting && <Text style={styles.dataRowText}>{t('account.exportLoadingNote')}</Text>}
         {exportError && <Text style={styles.errorText}>{exportError}</Text>}
 
         <View style={styles.dangerRow}>

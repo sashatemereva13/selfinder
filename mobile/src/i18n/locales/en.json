@@ -93,6 +93,8 @@
     "dataAndPrivacy": "Your data & privacy",
     "exportCopy": "Export everything Selfinder holds about you as JSON — profile, consent records, saved readings and conversations.",
     "export": "Export",
+    "exportPreparing": "Preparing…",
+    "exportLoadingNote": "Gathering your data — this can take a moment.",
     "exportFailed": "Export failed. Please try again.",
     "deleteCopy": "Permanently delete your account and all associated data. This cannot be undone.",
     "delete": "Delete",
