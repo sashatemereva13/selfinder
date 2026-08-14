@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager, ActivityIndicator } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -96,6 +96,19 @@ export default function YourArcScreen() {
   // collaboration notes). The bare kaleidoscope/local-readingLog sparkline
   // render immediately regardless — this only covers the richer sections.
   const [richDataLoading, setRichDataLoading] = useState(false);
+  // Gates the pager itself, not just the richer server-fed sections below.
+  // The cover kaleidoscope (ArcKaleidoscope — dozens of blurred SVG paths,
+  // mirrored eightfold) and the time-cone page (one SvgCircle per past
+  // reading, unbounded up to readingLog's own cap) are both expensive
+  // enough to mount synchronously that they were freezing the Depths→Your
+  // Arc transition itself for several seconds with nothing on screen to
+  // show it was working (2026-08-14 device logs: "Hang detected: 13.03s"
+  // on the main thread, well after the network side had already finished).
+  // Starts false so the spinner below gets an actual paint frame before
+  // the heavy pages mount; flips true on the next tick via
+  // InteractionManager so the route transition itself is never competing
+  // with this mount, same reasoning as the richDataLoading effect above.
+  const [firstPaintReady, setFirstPaintReady] = useState(false);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
   const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
@@ -191,6 +204,11 @@ export default function YourArcScreen() {
       task.cancel();
     };
   }, [session, currentResult?.savedAt, currentResult?.measureResultId]);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => setFirstPaintReady(true));
+    return () => task.cancel();
+  }, []);
 
   // Generated on demand (tap "Ask [philosopher]"), not automatically on
   // page load — even though eligibility is otherwise met, the Groq call
@@ -786,7 +804,13 @@ export default function YourArcScreen() {
           being slow/stuck rather than loading. No spinner-heavy UI,
           matching the app's own restrained register. */}
       {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
-      <PagedScrollView>{pages}</PagedScrollView>
+      {firstPaintReady ? (
+        <PagedScrollView>{pages}</PagedScrollView>
+      ) : (
+        <View style={styles.firstPaintLoading}>
+          <ActivityIndicator color={`rgb(${accentRgb})`} />
+        </View>
+      )}
     </View>
   );
 }
@@ -877,6 +901,14 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     paddingHorizontal: spacing[6],
     marginBottom: spacing[2],
+  },
+  // Placeholder for the pager's own first, expensive mount (kaleidoscope +
+  // time cone) — fills the same space the pager will occupy once it
+  // mounts, so nothing jumps when it swaps in.
+  firstPaintLoading: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   // Still real sentences, same voice as introLine (not a stat-block/badge
   // register — no bare numbers, no label-colon-value rows) — these are
