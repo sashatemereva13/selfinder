@@ -210,6 +210,8 @@
     "wishResurfaceHeading": "Чего вы пожелали",
     "wishResurfaceHint": "Ваши собственные слова, без изменений",
     "kaleidoscopeCaption": "Собран из всех цветов, которыми были ваши состояния",
+    "everyWalkHeading": "Каждый путь",
+    "coneFramingLine": "Вот где вы сейчас. Вот как вы это рассказали. Вот что зовёт вас вперёд.",
     "fullLineNote": "Полная линия — все ваши состояния, а не только последние",
     "crossingInvite": "Спросить {{name}} об этом моменте",
     "crossingLoading": "Думает…",

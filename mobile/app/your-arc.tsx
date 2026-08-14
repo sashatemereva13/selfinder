@@ -22,6 +22,7 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { SavedMeasureResult } from '../src/types';
 import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
 import { SphereArc } from '../src/components/SphereArc';
+import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
@@ -50,6 +51,10 @@ const MIN_TAP_SPACING = 3;
 // padding — the kaleidoscope reads as a real, spacious presence (same
 // reasoning DepthsSpiral's own canvas sizing uses), not a small diagram.
 const KALEIDOSCOPE_SIZE = 300;
+// Taller than wide — TimeCone's own two-cone-plus-vertex shape needs
+// vertical room (see TimeCone.tsx's CONE_HEIGHT_RATIO) more than it
+// needs width, unlike the kaleidoscope's square footprint.
+const CONE_SIZE = 260;
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -99,6 +104,11 @@ export default function YourArcScreen() {
   // looking at the page even if they linger past the 30-day threshold.
   const [resurfacedWish, setResurfacedWish] = useState<SavedWish | null>(null);
   const [wishRevealed, setWishRevealed] = useState(false);
+  // All wishes, kept for the past cone (see TimeCone.tsx) — every wish
+  // OTHER than the current active one is a real past moment worth
+  // showing on the cone's own past side, the same "your own account of
+  // what happened" material the resurfacing row already draws from.
+  const [allWishes, setAllWishes] = useState<SavedWish[]>([]);
   // The Crossing (see docs/session-result-concept.md's Phase 4 / the
   // 2026-08-13 "Crossing" design) — one philosopher-voiced question built
   // from the CURRENT reading's own wish, offered only when that wish
@@ -146,6 +156,7 @@ export default function YourArcScreen() {
         setRichHistory(history);
         setSpillEntries(entries);
         setResurfacedWish(selectWishToResurface(wishes));
+        setAllWishes(wishes);
 
         const wish = findActiveWish(wishes);
         setActiveWish(wish);
@@ -340,6 +351,40 @@ export default function YourArcScreen() {
   // date convention.
   const sinceDate = readingLog.length > 0 ? formatDate(readingLog[0].ts) : '';
 
+  // The time cone's own points (see TimeCone.tsx) — past cone gets every
+  // reading plus every wish OTHER than the current active one, spread by
+  // AGE alone (oldest = furthest from the vertex), never by anything
+  // about what a reading/wish says. Future cone gets only the active
+  // wish, per RULES.md's existing "no fabricated trajectory" rule — this
+  // is never a forecast, only the one real, stated thing reaching
+  // forward. `angle` uses a cheap deterministic hash of each id so a
+  // given point's angular position is stable across re-renders instead
+  // of jumping around, but carries no real information itself (see
+  // TimeConePoint's own comment).
+  const timeConeGeometry = useMemo(() => {
+    const now = Date.now();
+    const oldestTs = readingLog.length > 0 ? readingLog[0].ts : now;
+    const span = Math.max(now - oldestTs, 1);
+    const hashAngle = (id: string) => {
+      let hash = 0;
+      for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 1000;
+      return hash / 1000;
+    };
+    const pastFromReadings: TimeConePoint[] = readingLog.map((entry) => ({
+      id: `reading-${entry.ts}`,
+      depth: Math.min(1, (now - entry.ts) / span),
+      angle: hashAngle(`reading-${entry.ts}`),
+    }));
+    const pastFromWishes: TimeConePoint[] = allWishes
+      .filter((w) => w.id !== activeWish?.id)
+      .map((w) => {
+        const ts = new Date(w.savedAt).getTime();
+        return { id: `wish-${w.id}`, depth: Math.min(1, (now - ts) / span), angle: hashAngle(`wish-${w.id}`) };
+      });
+    const futurePoints: TimeConePoint[] = activeWish ? [{ id: `active-wish-${activeWish.id}`, depth: 1, angle: 0.25 }] : [];
+    return { pastPoints: [...pastFromReadings, ...pastFromWishes], futurePoints };
+  }, [readingLog, allWishes, activeWish]);
+
   return (
     <ScrollView
       style={styles.root}
@@ -371,6 +416,14 @@ export default function YourArcScreen() {
 
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
       <Text style={styles.title}>{t('yourArc.title')}</Text>
+      {/* The persistent framing line (RULES.md, Product/positioning,
+          2026-08-14) — repositions Your Arc around orientation, not
+          remembrance: not "a graph of your past" but the living
+          relationship between where you've been, what you want, and how
+          you meet this moment. Always present, not just on first visit —
+          the page's own thesis statement, not an onboarding tip that
+          disappears. */}
+      <Text style={styles.coneFramingLine}>{t('yourArc.coneFramingLine')}</Text>
       <Text style={styles.introLine}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
@@ -563,6 +616,31 @@ export default function YourArcScreen() {
         </View>
       )}
 
+      {/* The time cone — Selfinder+'s own centerpiece visual (RULES.md,
+          Product/positioning, 2026-08-14): the present moment in light of
+          the person's own past and their own future, not alone. Past
+          cone: real readings/wishes, spread by age alone, never by
+          content. Future cone: only the active wish, never a fabricated
+          trajectory. Replaces the sparkline as the PRIMARY visual — the
+          line chart moves below as "Every walk" detail, one navigation
+          method into the record rather than the record's own headline
+          (per the earlier structure discussion: "the graph becomes one
+          navigation method, rather than the definition of Your Arc").
+          Static for now, deliberately — see TimeCone.tsx's own comment
+          on why motion/interaction is a later pass, not this one. */}
+      {(timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) && (
+        <View style={styles.timeConeWrap}>
+          <TimeCone
+            width={CONE_SIZE}
+            height={CONE_SIZE * 1.3}
+            pastPoints={timeConeGeometry.pastPoints}
+            futurePoints={timeConeGeometry.futurePoints}
+          />
+        </View>
+      )}
+
+      <Text style={styles.everyWalkHeading}>{t('yourArc.everyWalkHeading')}</Text>
+
       {readingLog.length >= 2 ? (
         <View style={styles.sparklineWrap}>
           {/* Stated once, quietly, on the paid screen itself — not just
@@ -706,6 +784,16 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     marginTop: spacing[3],
   },
+  timeConeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
+  everyWalkHeading: {
+    alignSelf: 'flex-start',
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+    marginBottom: spacing[3],
+  },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
@@ -721,6 +809,15 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.lg,
     lineHeight: fontSizes.lg * lineHeights.tight,
     marginTop: spacing[2],
+  },
+  coneFramingLine: {
+    alignSelf: 'flex-start',
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[3],
   },
   introLine: {
     alignSelf: 'flex-start',
