@@ -635,6 +635,28 @@ export function DepthsSpiral({
 
   const dashLength = useMemo(() => estimatePathLength(geometry.pathD) || geometry.totalLength, [geometry]);
 
+  // The curve's own final stretch — Breathing's dot down to h=0, the
+  // aura's exact chest center — mathematically already part of
+  // geometry.pathD (buildSpiralGeometry samples the FULL 0..1 range, see
+  // its own comment), but the base path it belongs to is drawn at a flat
+  // 0.16 opacity everywhere, same as the rest of the un-walked curve.
+  // Against the aura's own bright chest glow, that reads as invisible in
+  // practice — confirmed directly (2026-08-14 collaboration: "the part of
+  // the spiral after the Breathing dot isn't visible, but it is important
+  // that this spiral ends at the heart of the aura-body"). Rather than
+  // fold this into the prefixCount trace (which would make the ending
+  // only vivid on days someone actually walked Levels→TuneIn→Breathing),
+  // this is its own always-visible segment — the destination is a fixed,
+  // structural fact about the spiral, not something that should depend on
+  // today's specific walk.
+  const tailPathD = useMemo(() => {
+    const breathingSlot = SLOT_ORDER.indexOf('breathing');
+    const totalSteps = geometry.samples.length - 1;
+    const startStep = Math.round((1 - hForSlot(breathingSlot)) * totalSteps);
+    const tailSamples = geometry.samples.slice(startStep);
+    return tailSamples.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+  }, [geometry]);
+
   // Prefix tools sit at slots 5/6/7 (levels/tunein/breathing) — prefixCount
   // 0..3 maps to "traced up through slot 4 (nothing)/5/6/7."
   const targetLength = useMemo(() => {
@@ -720,6 +742,13 @@ export function DepthsSpiral({
       <View pointerEvents="box-none" style={[styles.wrap, { width, height }]}>
         <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`} style={StyleSheet.absoluteFill}>
           <Path d={geometry.pathD} fill="none" stroke={strokeColor} strokeOpacity={0.16} strokeWidth={1} strokeLinecap="round" />
+          {/* Always visible, independent of today's walked trace — see
+              tailPathD's own comment. Brighter than the dim base path
+              (0.16) so the "ends at the heart" destination reads clearly
+              on every visit, but quieter than the bright walked-trace
+              stroke (1.6 width) so it doesn't compete with dots/labels
+              or look like part of today's specific walk. */}
+          <Path d={tailPathD} fill="none" stroke={strokeColor} strokeOpacity={0.45} strokeWidth={1} strokeLinecap="round" />
           <AnimatedPath
             d={geometry.pathD}
             fill="none"
