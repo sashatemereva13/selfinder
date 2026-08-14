@@ -431,8 +431,13 @@ function LoggedInAccount({
         title: `selfinder-data-${session.username}.json`,
         message: JSON.stringify(data, null, 2),
       });
-    } catch {
-      setExportError(t('account.exportFailed'));
+    } catch (err) {
+      // Was a fixed generic string regardless of what actually failed —
+      // every other handler in this file already surfaces err.message
+      // directly (client.ts now throws specific, actionable messages for
+      // a timeout vs. a connection failure vs. a real server error; see
+      // its own REQUEST_TIMEOUT_MS comment). This was the one outlier.
+      setExportError(err instanceof Error ? err.message : t('account.exportFailed'));
     } finally {
       setExporting(false);
     }

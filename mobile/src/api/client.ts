@@ -19,6 +19,23 @@ const CONNECTION_ERROR_MESSAGE = {
   ru: 'Не удалось подключиться. Если вы используете VPN, попробуйте его отключить — НАЙТИСЬ работает в любой стране.',
 };
 
+// fetch() on React Native has NO default timeout — confirmed as a real,
+// systemic gap (2026-08-14: the account-export button got stuck on "…"
+// forever on a real device; the device's own system log showed a
+// connection starting to set up and then nothing further — no success,
+// no error, no follow-up log line at all). Without an explicit timeout, a
+// genuinely stalled connection (a slow DNS resolver, exactly what that
+// log showed) means the request's own await never settles either way, so
+// try/catch/finally around it never completes and a caller's "loading"
+// state is stuck permanently. 15s is generous enough for a normal slow
+// connection, short enough that a real stall doesn't read as the app
+// being frozen for an unbounded amount of time.
+const REQUEST_TIMEOUT_MS = 15000;
+const TIMEOUT_ERROR_MESSAGE = {
+  en: "That's taking too long. Check your connection and try again.",
+  ru: 'Это занимает слишком много времени. Проверьте соединение и попробуйте снова.',
+};
+
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'DELETE';
   token?: string | null;
@@ -29,20 +46,30 @@ async function request<T>(path: string, body?: unknown, options: RequestOptions 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
   let res: Response;
   try {
     res = await fetch(`${BASE}/api${path}`, {
       method,
       headers,
       body: body !== undefined ? JSON.stringify(body) : undefined,
+      signal: controller.signal,
     });
-  } catch {
-    // fetch() itself threw — the request never got a response at all, so
-    // there's no res.status/res.text() to inspect. See the comment on
-    // CONNECTION_ERROR_MESSAGE above for why this needs its own message
-    // rather than letting the raw thrown error propagate.
+  } catch (err) {
     const locale = useLocaleStore.getState().locale;
+    if (err instanceof Error && err.name === 'AbortError') {
+      throw new Error(TIMEOUT_ERROR_MESSAGE[locale] ?? TIMEOUT_ERROR_MESSAGE.en);
+    }
+    // fetch() itself threw for some other reason — the request never got
+    // a response at all, so there's no res.status/res.text() to inspect.
+    // See the comment on CONNECTION_ERROR_MESSAGE above for why this
+    // needs its own message rather than letting the raw thrown error
+    // propagate.
     throw new Error(CONNECTION_ERROR_MESSAGE[locale] ?? CONNECTION_ERROR_MESSAGE.en);
+  } finally {
+    clearTimeout(timeoutId);
   }
   if (!res.ok) {
     // The backend's error responses are already human-readable ({"error":
