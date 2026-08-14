@@ -122,25 +122,25 @@ additional authorization/documentation applies.
   Account deletion is available in-app under Account settings and
   permanently deletes the user's data (GDPR Art. 17).
 - **Paid content / subscriptions:** this submission does not include a
-  purchasable offer. We are actively developing a paid tier
-  ("Selfinder+") — a real entitlement system already exists server-side
-  (`User.subscription.active`), but there is no purchase UI, no
-  StoreKit/IAP integration, and no pricing shown anywhere in this build.
-  The demo account (`test`) has been granted the entitlement manually,
-  the only way it can currently be granted to anyone — this is a
-  developer-side-only toggle (`backend/scripts/grantSubscription.js`),
-  not a feature any real user can reach, and it exists solely so the
-  reviewer can see the complete experience during this review. No other
-  account has or can currently obtain this access. Every core feature
-  (Measure, Guide, Spill, Tune In, Breathing) is fully free and complete
-  in itself — nothing in the free tier is gated or teased. A signed-out
-  user, or any signed-in user other than the demo account, sees an
-  honest free preview of "Your Arc" (a partial history, no wish/Crossing)
-  rather than a locked/broken screen. We'll submit the real paid tier
-  separately, with full subscription details (title, length, price, and
-  links to Terms of Use and Privacy Policy), once StoreKit integration
-  and the required Paid Apps Agreement / tax and banking setup are
-  complete.
+  purchasable offer. Selfinder isn't a paid app yet — the planned paid
+  tier ("Selfinder+", ~€7.99/month or ~€49.99/year) is still being
+  designed and isn't finished, so there's nothing to purchase or price
+  in this build: no purchase UI, no StoreKit/IAP integration, and no
+  pricing shown anywhere in the app. A real entitlement flag already
+  exists server-side (`User.subscription.active`) as groundwork for that
+  future tier, and the demo account (`test`) has been granted it
+  manually so the reviewer can see the complete experience Selfinder+
+  will eventually unlock — this is a developer-side-only script
+  (`backend/scripts/grantSubscription.js`), not a feature any real user
+  can reach; no other account has or can currently obtain this access.
+  Every core feature (Measure, Guide, Spill, Tune In, Breathing) is fully
+  free and complete in itself — nothing in the free tier is gated or
+  teased. A signed-out user, or any signed-in user other than the demo
+  account, sees an honest free preview of "Your Arc" (a partial history,
+  no wish/Crossing) rather than a locked/broken screen. We'll submit the
+  real paid tier separately, with full subscription details (title,
+  length, price, and links to Terms of Use and Privacy Policy), once it's
+  finished and ready to launch.
 - **User-generated content:** Guide conversations, Spill journal
   entries, and Your Arc's private "wish" are visible only to the account
   that created them — there is no sharing, feed, or social visibility
