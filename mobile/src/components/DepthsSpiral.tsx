@@ -570,6 +570,21 @@ export function DepthsSpiral({
       const labelOffset = (DOT_RADIUS + 6) / Math.max(ellipseScaleForH(h), 0.35);
       let labelX = x + (dx / dist) * labelOffset;
       let labelY = y + (dy / dist) * labelOffset;
+      // Breathing sits at H_BREATHING, right where the curve dissolves
+      // into the aura's own chest/center by design (see this file's own
+      // header comment) — its label was landing partly behind the aura's
+      // silhouette because the generic radial offset above places it only
+      // a few px from a dot that's already almost on top of the figure.
+      // Confirmed on a real device (2026-08-14 collaboration notes):
+      // "the 'Breathing' gets covered by the spiral, partially." A
+      // straight-up nudge (not radial, not the generic horizontal-only
+      // aura-avoidance below) is the direct fix — Breathing's dot is close
+      // enough to center that "outward" and "upward" are nearly the same
+      // direction anyway, so this doesn't fight the radial placement,
+      // it's just a stronger version of it for this one label.
+      if (point.key === 'breathing') {
+        labelY -= 14;
+      }
       // If this label would land on/near the aura's own silhouette (only
       // possible now that 3 turns of winding legitimately pass behind the
       // body at mid-heights — see this file's header comment), push it
