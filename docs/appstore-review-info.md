@@ -1,16 +1,25 @@
 # App Store Connect — App Review Information notes
 
-Working copy of what goes in the Notes field of App Review Information,
-for the Guideline 2.1 "Information Needed" response (submission
-8bb00557-98ef-40ef-8204-8871f11542da, 2026-08-13). Update this file, not
-just App Store Connect directly, so a future submission's notes don't
-have to be reconstructed from scratch — this is the durable source, App
-Store Connect is where it gets pasted.
+Working copy of what goes in the Notes field of App Review Information.
+Update this file, not just App Store Connect directly, so a future
+submission's notes don't have to be reconstructed from scratch — this is
+the durable source, App Store Connect is where it gets pasted.
 
-Status: drafted 2026-08-14, verified against the codebase as of that
-date. Re-verify the "additional context" section (esp. what Your Arc
-shows) before reusing this for a later submission — that section is the
-part most likely to go stale as Selfinder+ features ship.
+Status: updated 2026-08-14 for the reply to Apple's 5.1.1(i)/5.1.2(i)
+rejection on submission 8bb00557-98ef-40ef-8204-8871f11542da (reviewed
+2026-08-13 on an iPad Air 11-inch M3, version 1.0 (10)). Apple's stated
+issue: the app "appears to share the user's personal data with a
+third-party AI service but the app does not clearly explain what data is
+sent, identify who the data is sent to, and ask the user's permission
+before sharing the data." The reply below (see "Third-party AI data
+sharing") confirms this is accurate — Selfinder does send user-entered
+text to Groq — and documents the existing disclosure/consent mechanism
+and privacy-policy language that were already in place but apparently
+not obvious enough to the reviewer; nothing about the mechanism itself
+changed as a result of this rejection. Re-verify the "additional
+context" section (esp. what Your Arc shows) before reusing this for a
+later submission — that section is the part most likely to go stale as
+Selfinder+ features ship.
 
 ---
 
@@ -32,11 +41,13 @@ shows its thinner, ungated state.
 
 ---
 
-**1. Screen recording:** [ATTACH — see note below]
+**1. Screen recording:** recorded on a physical iPhone 15 Pro Max —
+[ATTACH to App Review Information].
 
 **2. Devices and OS tested on before submission:**
 - Physical devices: iPhone 15 Pro Max (iOS 18, latest available at time
-  of testing), iPhone 11 Pro (iOS 17)
+  of testing — also the device the attached screen recording was made
+  on), iPhone 11 Pro (iOS 17)
 - Simulator: additional coverage across iPhone simulators on the latest
   iOS SDK
 
@@ -161,15 +172,31 @@ additional authorization/documentation applies.
   an image, and local notification permission for optional daily
   reminders. It does not request camera, microphone, location, or
   contacts access, and does not use App Tracking Transparency.
-- **Third-party AI data sharing (Guideline 5.1.1(i)/5.1.2(i), also
-  raised on this same submission):** Selfinder sends user-entered text
-  to Groq (a third-party AI provider) in two features — Guide (a
-  message sent to generate the philosopher's reply) and Measure (an
-  answer sent to generate the reply and the resulting reading). Before
-  either feature can be used for the first time on a given install —
-  regardless of sign-in state — the app shows a mandatory one-time
-  notice ("Before you begin") naming this plainly and pointing to the
-  full privacy policy; the person must tap "Continue" to acknowledge it
-  before the feature becomes usable. The privacy policy
-  (https://selfinder.online/privacy) discloses this explicitly under "A
-  disclosed limitation," naming Groq by name.
+- **Third-party AI data sharing — confirmed and disclosed (reply to
+  Guideline 5.1.1(i)/5.1.2(i), raised on submission
+  8bb00557-98ef-40ef-8204-8871f11542da):**
+
+  Selfinder does send user-entered text to a third-party AI provider
+  (Groq, which hosts the language models the app uses). This happens in
+  two features:
+  - **Guide** — when the user sends a message to their chosen
+    philosopher, that message is sent to Groq to generate the reply.
+  - **Measure** — when the user answers a guided reflection question,
+    their answer is sent to Groq to generate the response and the
+    resulting reading.
+
+  **How this is disclosed and consented to in-app:** Before either
+  feature can be used for the first time on a given install — regardless
+  of whether the user is signed in or has an account — the app shows a
+  mandatory one-time notice ("Before you begin") stating plainly that
+  messages/answers are sent to a third-party AI provider to generate the
+  reply or reading, and pointing to the full privacy policy. The user
+  must tap "Continue" to acknowledge this before the feature becomes
+  usable; there is no way to reach Guide or Measure without seeing it
+  first on a fresh install.
+
+  **Privacy policy:** https://selfinder.online/privacy discloses this
+  explicitly under "A disclosed limitation," naming Groq by name,
+  describing what is sent, confirming this happens on every use
+  regardless of sign-in or consent status, and noting the provider may
+  process data outside the user's country.
