@@ -1,41 +1,59 @@
-# App Store Connect — App Review Information notes
+# App Store Connect — App Review reply
 
-Working copy of what goes in the Notes field of App Review Information.
-Update this file, not just App Store Connect directly, so a future
-submission's notes don't have to be reconstructed from scratch — this is
-the durable source, App Store Connect is where it gets pasted.
+Working copy of the reply to paste into App Store Connect's own "Reply
+to App Review" box (Distribution → the rejected submission → a message
+in the thread → Reply). Confirmed via screenshot 2026-08-14: this flow
+has exactly one free-text field (labeled "Reply", with its own live
+character counter and a 4000-char cap shown directly under the box) plus
+an "Attach File" control — there is no separate "Notes field" elsewhere
+in this screen. (An earlier version of this doc assumed a distinct App
+Review Information "Notes" field with a longer, separate limit — that
+was wrong for this flow and has been corrected below. A genuinely
+separate Notes field does exist elsewhere in App Store Connect, under
+the version's own "App Review Information" section on the version-detail
+page, not in this rejection-reply thread — if notes are ever needed
+there too, draft them separately; don't assume this same text applies.)
 
 Status: updated 2026-08-14. This submission
 (8bb00557-98ef-40ef-8204-8871f11542da, iPad Air 11-inch M3, version 1.0
-(10)) has received two separate rejection messages that both need
-answering in the same reply: a Guideline 2.1 "Information Needed"
+(10)) has a 6-message back-and-forth thread since 2026-08-07; the two
+most recent Apple messages are a Guideline 2.1 "Information Needed"
 request (the standard 7-item checklist — screen recording, devices
 tested, app description, setup instructions, external services, regional
-differences, regulated-industry documentation) and a Guideline
-5.1.1(i)/5.1.2(i) rejection specifically about third-party AI data
-sharing ("the app appears to share the user's personal data with a
+differences, regulated-industry documentation) and, before that, a
+Guideline 5.1.1(i)/5.1.2(i) rejection specifically about third-party AI
+data sharing ("the app appears to share the user's personal data with a
 third-party AI service but the app does not clearly explain what data is
 sent, identify who the data is sent to, and ask the user's permission
 before sharing the data"). The combined reply below answers both in one
-message. It confirms the AI-sharing claim is accurate — Selfinder does
-send user-entered text to Groq — and documents the existing
-disclosure/consent mechanism and privacy-policy language that were
-already in place but apparently not obvious enough to the reviewer;
-nothing about the mechanism itself changed as a result of either
-rejection. Re-verify the "additional context" section (esp. what Your
-Arc shows) before reusing this for a later submission — that section is
-the part most likely to go stale as Selfinder+ features ship.
+message, since only one reply box exists for the whole thread. It
+confirms the AI-sharing claim is accurate — Selfinder does send
+user-entered text to Groq — and documents the existing disclosure/
+consent mechanism and privacy-policy language that were already in place
+but apparently not obvious enough to the reviewer; nothing about the
+mechanism itself changed as a result of either rejection. Earlier
+messages in the thread (2026-08-07 through 2026-08-10) haven't been
+re-read for this reply — if a future round references something from
+that earlier back-and-forth specifically, check those messages before
+assuming this reply's framing still covers it. Re-verify the "additional
+context" section (esp. what Your Arc shows) before reusing this for a
+later submission — that section is the part most likely to go stale as
+Selfinder+ features ship.
+
+A draft reply already existed in App Store Connect before this update
+(2,331 characters, the older AI-disclosure-only text) with three files
+already attached: two screen recordings
+(`ScreenRecording_08-14-2026 15-00-55_1.MP4`,
+`ScreenRecording_08-14-2026 14-54-39_1.MP4`) and one screenshot
+(`IMG_3957.PNG`). Decision: keep those three attachments as-is, replace
+only the draft's text with the combined reply below.
 
 ---
 
-## Reply message (paste into App Store Connect's reply box)
+## Reply message (paste into App Store Connect's "Reply" box)
 
-Apple's reply box has its own hard 4000-character limit, separate from
-the longer App Review Information Notes field below — this section is
-sized to fit inside it. Answers both open rejections (Guideline 2.1's
-7-item checklist and the 5.1.1(i)/5.1.2(i) AI-disclosure follow-up) in
-one message, since they're both outstanding on the same submission.
-Confirmed character count as drafted: 3,156 (limit 4,000).
+Confirmed character count as drafted: 3,100 (limit 4,000, per the live
+counter visible under the reply field).
 
 ```
 Hello,
@@ -58,7 +76,7 @@ Reply covering both outstanding items on this submission — Guideline 2.1 (Info
 
 Third-party AI data sharing (5.1.1(i)/5.1.2(i)): confirmed — Selfinder sends user-entered text to Groq in Guide (a message, to generate the philosopher's reply) and Measure (an answer, to generate the reply and reading). Before either feature's first use on an install, regardless of sign-in state, a mandatory notice ("Before you begin") discloses this and links the privacy policy; the user must tap Continue to proceed. https://selfinder.online/privacy names Groq explicitly under "A disclosed limitation."
 
-Full details for each item are also in the Notes field. Thank you.
+Thank you.
 ```
 
 ---
