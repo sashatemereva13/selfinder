@@ -23,6 +23,32 @@ Selfinder+ features ship.
 
 ---
 
+## Reply message (paste into App Store Connect's reply box)
+
+Apple's reply box has its own hard 4000-character limit, separate from
+the longer App Review Information Notes field below — this section is
+sized to fit inside it. Character count as drafted: keep this section
+itself under ~3800 to leave margin.
+
+```
+Hello,
+
+Yes — Selfinder does send user-entered text to a third-party AI provider (Groq, which hosts the language models the app uses). This happens in two features:
+
+- Guide — when the user sends a message to their chosen philosopher, that message is sent to Groq to generate the reply.
+- Measure — when the user answers a guided reflection question, their answer is sent to Groq to generate the response and the resulting reading.
+
+How this is disclosed and consented to in-app: Before either feature can be used for the first time on a given install — regardless of whether the user is signed in or has an account — the app shows a mandatory one-time notice ("Before you begin") stating plainly that messages/answers are sent to a third-party AI provider to generate the reply or reading, and pointing to the full privacy policy. The user must tap "Continue" to acknowledge this before the feature becomes usable; there is no way to reach Guide or Measure without seeing it first on a fresh install.
+
+Privacy policy: https://selfinder.online/privacy discloses this explicitly under "A disclosed limitation," naming Groq by name, describing what is sent, confirming this happens on every use regardless of sign-in or consent status, and noting the provider may process data outside the user's country.
+
+We believe this already satisfies the four requirements in your guidance (disclose what is sent, identify who it's sent to, obtain permission before sending, and document this in the privacy policy), but if any part of the existing notice or policy language isn't clear enough, please let us know specifically what to add and we'll revise it right away.
+
+Thank you.
+```
+
+---
+
 **Demo account:** username `test`, password `test-selfinder`
 (enter in the Sign-In Information section of App Review Information, not
 just here — Apple's own guidance treats that as the primary place for
@@ -42,7 +68,7 @@ shows its thinner, ungated state.
 ---
 
 **1. Screen recording:** recorded on a physical iPhone 15 Pro Max —
-[ATTACH to App Review Information].
+attached.
 
 **2. Devices and OS tested on before submission:**
 - Physical devices: iPhone 15 Pro Max (iOS 18, latest available at time
