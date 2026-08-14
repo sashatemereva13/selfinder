@@ -200,6 +200,8 @@
     "whatYouSaid": "What you said",
     "whatYouTalkedAbout": "What you talked about",
     "whatYouWrote": "What you wrote",
+    "whatCallsYou": "What calls you",
+    "changeWish": "Wish for something else",
     "wishResurfaceRow": "A wish from {{date}}",
     "wishResurfaceHeading": "What you wished for",
     "wishResurfaceHint": "Your own words, unchanged",
@@ -271,7 +273,7 @@
     "startOver": "Start over",
     "tapToContinue": "Tap anywhere to continue",
     "wishQuestion": "If this could feel like anything you wanted, what would that be?",
-    "wishGroundRule": "A wish can't harm or take from anyone.",
+    "wishGroundRule": "A feeling that's yours alone.",
     "wishPlaceholder": "Say what you'd want, if you had it…",
     "wishSkip": "Skip this",
     "wishRetryNote": "That doesn't sound like a wish for yourself — want to try again?"

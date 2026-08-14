@@ -13,7 +13,8 @@ import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
 import { getConversationForMeasureResult, SavedConversation } from '../src/api/conversation';
 import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
-import { listMyWishes, markWishResurfaced, SavedWish } from '../src/api/wish';
+import { listMyWishes, markWishResurfaced, saveWishIfConsented, SavedWish } from '../src/api/wish';
+import { routeToCrisisSupport } from '../src/utils/routeToCrisisSupport';
 import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
 import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
@@ -108,6 +109,17 @@ export default function YourArcScreen() {
   const [crossingLoading, setCrossingLoading] = useState(false);
   const [crossingAnswerInput, setCrossingAnswerInput] = useState('');
   const [crossingSubmitting, setCrossingSubmitting] = useState(false);
+  // Creating a new wish, directly on Your Arc's own future section — moved
+  // off Measure entirely on 2026-08-14 (see interview.tsx's own comment:
+  // "the wish technically depends on the user's current feeling, not on
+  // their reading"). Same moderation/safety infrastructure as before
+  // (moderateWish.js on the backend, self-harm routing to crisis-support),
+  // just relocated — nothing about the safety design changed, only where
+  // the question is asked.
+  const [wishComposerOpen, setWishComposerOpen] = useState(false);
+  const [newWishInput, setNewWishInput] = useState('');
+  const [newWishSubmitting, setNewWishSubmitting] = useState(false);
+  const [newWishRetryOffered, setNewWishRetryOffered] = useState(false);
 
   useEffect(() => {
     if (!session) return;
@@ -135,7 +147,7 @@ export default function YourArcScreen() {
         setSpillEntries(entries);
         setResurfacedWish(selectWishToResurface(wishes));
 
-        const wish = findActiveWish(wishes, currentResult?.savedAt);
+        const wish = findActiveWish(wishes);
         setActiveWish(wish);
         if (wish && currentResult?.measureResultId) {
           const existing = findExistingCrossing(crossings, wish.id, currentResult.measureResultId);
@@ -211,6 +223,43 @@ export default function YourArcScreen() {
     setWishRevealed(true);
     if (resurfacedWish && session) {
       markWishResurfaced(resurfacedWish.id, session.token);
+    }
+  };
+
+  // The wish's own capture flow, relocated from Measure's interview.tsx
+  // (2026-08-14) — same moderation-before-save discipline, same self-harm
+  // routing, same "optional, never blocks anything" stance, just standing
+  // on its own here instead of gated behind finishing four sphere
+  // questions first. measureResultId stays null — the wish was never
+  // really reading-scoped in the first place (see findActiveWish's own
+  // comment); this makes that explicit rather than a leftover artifact.
+  const handleSubmitNewWish = async () => {
+    const text = newWishInput.trim();
+    if (!text || newWishSubmitting) return;
+    setNewWishSubmitting(true);
+    setNewWishRetryOffered(false);
+    try {
+      const result = await saveWishIfConsented(text, null);
+      if (!result.ok && result.blocked && result.category === 'self-harm') {
+        routeToCrisisSupport();
+        return;
+      }
+      if (!result.ok && result.blocked) {
+        setNewWishRetryOffered(true);
+        return;
+      }
+      setWishComposerOpen(false);
+      setNewWishInput('');
+      if (result.ok && session) {
+        // Reflect the new wish immediately as the active one, rather than
+        // waiting for a full page refetch — the Crossing invite (which
+        // depends on activeWish) should be able to use it right away.
+        const fresh: SavedWish = { id: result.id, text, measureResultId: null, savedAt: new Date().toISOString(), resurfacedAt: null };
+        setActiveWish(fresh);
+        setCrossing(null);
+      }
+    } finally {
+      setNewWishSubmitting(false);
     }
   };
 
@@ -378,6 +427,51 @@ export default function YourArcScreen() {
           })}
         </View>
       )}
+
+      {/* What calls you — the ACTIVE wish, standing on its own now (moved
+          off Measure, 2026-08-14). Unlike the resurfaced one below (a past
+          moment, held until tapped), this is the current one, shown
+          plainly — there's nothing to protect it from since it's not a
+          memory being revisited, it's what's live right now. Always
+          offers a way to add a new one; a new wish simply becomes the
+          active one (findActiveWish is "most recent," full stop). */}
+      <View style={styles.wishSection}>
+        <Text style={styles.wishHeading}>{t('yourArc.whatCallsYou')}</Text>
+        {activeWish && !wishComposerOpen && (
+          <Text style={styles.wishText}>{activeWish.text}</Text>
+        )}
+        {wishComposerOpen ? (
+          <View style={styles.crossingInputRow}>
+            <TextInput
+              style={styles.crossingInput}
+              value={newWishInput}
+              onChangeText={setNewWishInput}
+              placeholder={t('measure.wishPlaceholder')}
+              placeholderTextColor={colors.text.muted}
+              multiline
+              editable={!newWishSubmitting}
+            />
+            <Pressable
+              style={[
+                styles.crossingSendButton,
+                { backgroundColor: `rgb(${accentRgb})`, opacity: newWishInput.trim() && !newWishSubmitting ? 1 : 0.4 },
+              ]}
+              onPress={handleSubmitNewWish}
+              disabled={!newWishInput.trim() || newWishSubmitting}
+            >
+              <Text style={styles.crossingSendButtonText}>↑</Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable style={styles.wishRow} onPress={() => setWishComposerOpen(true)}>
+            <Text style={styles.wishRowText}>
+              {activeWish ? t('yourArc.changeWish') : t('measure.wishQuestion')}
+            </Text>
+          </Pressable>
+        )}
+        <Text style={styles.wishGroundRuleNote}>{t('measure.wishGroundRule')}</Text>
+        {newWishRetryOffered && <Text style={styles.wishHint}>{t('measure.wishRetryNote')}</Text>}
+      </View>
 
       {/* Pure resurfacing (docs/session-result-concept.md, Phase 4) — the
           one wish selected in the effect above, offered here quietly, not
@@ -732,6 +826,13 @@ function makeStyles(colors: Colors) {
   wishHint: {
     color: colors.text.faint,
     fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginTop: spacing[2],
+  },
+  wishGroundRuleNote: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
     fontSize: fontSizes.xs,
     marginTop: spacing[2],
   },

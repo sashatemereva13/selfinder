@@ -4,35 +4,25 @@ import { SavedCrossing } from '../api/crossing';
 // A Crossing is offered only when genuinely new material exists — not on
 // every visit to Your Arc (see collaboration notes, 2026-08-13: "only
 // when genuinely new material exists" was the explicit choice over
-// "available anytime"). Concretely: the current reading has a wish tied
-// to it (the wish captured right after that Measure — see
-// docs/session-result-concept.md, "captured once per reading"), AND no
-// Crossing already exists for that exact wish+reading pair. Once
-// answered or not, an existing Crossing for this pair is never
-// regenerated — see crossingController.js's own idempotency.
+// "available anytime"). Concretely: an active wish exists AND no Crossing
+// already exists for that exact wish+reading pair. Once answered or not,
+// an existing Crossing for this pair is never regenerated — see
+// crossingController.js's own idempotency.
 //
-// Matched by timestamp proximity, NOT wish.measureResultId — every wish
-// is saved with measureResultId: null (interview.tsx's own
-// handleWishSubmit: the real id doesn't exist client-side until scoring
-// returns it, well after the wish itself was already saved), so a strict
-// equality check here can never match anything. Confirmed as a real bug
-// on a real device (2026-08-13 collaboration notes: "how to find the
-// Crossing" — it was never reachable at all, for anyone). Same loose-
-// match pattern your-arc.tsx already uses for linking a Spill entry to a
-// reading (SPILL_MATCH_WINDOW_MS), just a tighter window here — the wish
-// is saved seconds after the reading completes (same interview flow,
-// not a separate later action), not up to 30 minutes later.
-const WISH_MATCH_WINDOW_MS = 5 * 60 * 1000;
-
-export function findActiveWish(
-  wishes: SavedWish[],
-  currentReadingSavedAt: string | null | undefined
-): SavedWish | null {
-  if (!currentReadingSavedAt) return null;
-  const readingTs = new Date(currentReadingSavedAt).getTime();
-  return (
-    wishes.find((w) => Math.abs(new Date(w.savedAt).getTime() - readingTs) < WISH_MATCH_WINDOW_MS) ?? null
-  );
+// "Active wish" = the most recent wish, full stop — NOT one tied to any
+// particular reading. The wish moved off Measure entirely on 2026-08-14
+// ("the wish technically depends on the user's current feeling, not on
+// their reading... in measure this wish question is a bit out of scope")
+// and now lives as its own standalone prompt on Your Arc's future
+// section — so there's no reading to match it against anymore, by
+// design, not as a fallback. (An earlier version of this function tried
+// to match a wish to the CURRENT reading by timestamp proximity, which
+// was itself a fix for an even earlier bug where it tried an exact
+// measureResultId match that could never succeed — both approaches are
+// obsolete now that a wish isn't reading-scoped at all.)
+export function findActiveWish(wishes: SavedWish[]): SavedWish | null {
+  if (wishes.length === 0) return null;
+  return [...wishes].sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())[0];
 }
 
 export function findExistingCrossing(

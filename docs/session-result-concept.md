@@ -111,7 +111,16 @@ response about the content):
 1. **A stated ground rule as a footnote on the question itself**, not a
    separate explainer block — e.g.:
    > How do you wish it was?
-   > *A wish can't harm or take from anyone.*
+   > *A feeling that's yours alone.*
+
+   Reworded 2026-08-14 from "A wish can't harm or take from anyone" —
+   the question itself is feeling-framed ("if this could feel like
+   anything you wanted"), which already makes most harmful/other-
+   directed answers hard to produce by construction; the footnote now
+   matches that register (a felt-sense boundary) instead of reading like
+   a behavioral warning. The backend moderation classifier
+   (moderateWish.js) is unchanged — this is a copy/tone fix, not a
+   safety-scope change.
 
    Small, asterisked, always present (not just first-time) since it's
    short enough to not intrude — same "plain clarifying line under the
