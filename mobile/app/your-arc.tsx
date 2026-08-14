@@ -81,6 +81,14 @@ export default function YourArcScreen() {
 
   const [richHistory, setRichHistory] = useState<SavedMeasureResult[] | null>(null);
   const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
+  // True while the 5-call server fetch (getMe, history, spill, wishes,
+  // crossings) is in flight — the facts row, sphere-arc trace, wish
+  // resurfacing, and Crossing sections all depend on it and previously
+  // just popped in silently with no indication more was coming, which
+  // read as the page sitting there rather than loading (2026-08-14
+  // collaboration notes). The bare kaleidoscope/local-readingLog sparkline
+  // render immediately regardless — this only covers the richer sections.
+  const [richDataLoading, setRichDataLoading] = useState(false);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
   const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
@@ -104,17 +112,25 @@ export default function YourArcScreen() {
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
+    setRichDataLoading(true);
     (async () => {
       try {
-        const profile = await getMe(session.token);
-        if (cancelled || !profile.consent?.psychologicalData?.given) return;
-        const [history, entries, wishes, crossings] = await Promise.all([
+        // All 5 requests fire together — getMe's own result is only used
+        // to decide whether to APPLY the others (consent gate), not to
+        // decide whether to START them. This used to await getMe first,
+        // then Promise.all the rest — a real serial waterfall (2+ round
+        // trips stacked before anything richer than the bare local
+        // readingLog appeared), confirmed as the actual cause of "Your
+        // Arc takes a long time to load" on a real device (2026-08-14
+        // collaboration notes), not a tap-target issue as first assumed.
+        const [profile, history, entries, wishes, crossings] = await Promise.all([
+          getMe(session.token),
           getMeasureHistory(session.token),
           listMySpillEntries(session.token),
           listMyWishes(session.token),
           listMyCrossings(session.token),
         ]);
-        if (cancelled) return;
+        if (cancelled || !profile.consent?.psychologicalData?.given) return;
         setRichHistory(history);
         setSpillEntries(entries);
         setResurfacedWish(selectWishToResurface(wishes));
@@ -127,6 +143,8 @@ export default function YourArcScreen() {
         }
       } catch {
         // Best-effort — the local-only readingLog view still works without this.
+      } finally {
+        if (!cancelled) setRichDataLoading(false);
       }
     })();
     return () => {
@@ -307,6 +325,15 @@ export default function YourArcScreen() {
       <Text style={styles.introLine}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
+
+      {/* Quiet signal that the facts/sphere-history/wish/Crossing sections
+          below are still coming, not just absent — previously this gap
+          was silent (nothing rendered until the whole 5-call fetch
+          resolved, then everything popped in at once), which read as the
+          page being slow/stuck rather than loading. No spinner-heavy UI,
+          matching the app's own restrained register — a plain line, same
+          register as the facts it's standing in for. */}
+      {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
 
       {/* Set apart from plain paragraph text (per collaboration notes: the
           facts previously read as an undifferentiated block of prose, no
@@ -609,6 +636,15 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.sm * lineHeights.normal,
     marginTop: spacing[3],
     marginBottom: spacing[8],
+  },
+  loadingNote: {
+    alignSelf: 'flex-start',
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.xs,
+    marginTop: -spacing[6],
+    marginBottom: spacing[6],
   },
   // Still real sentences, same voice as introLine (not a stat-block/badge
   // register — no bare numbers, no label-colon-value rows) — these are

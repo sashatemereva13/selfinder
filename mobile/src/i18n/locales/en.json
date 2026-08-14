@@ -210,7 +210,8 @@
     "crossingHeading": "{{name}} asks",
     "crossingPlaceholder": "What feels true now?",
     "crossingAnsweredLabel": "What you said",
-    "crossingSendHint": "Kept, in your own words"
+    "crossingSendHint": "Kept, in your own words",
+    "loadingMore": "Still gathering the rest of your record…"
   },
   "saveMessage": {
     "keepThisMessage": "Keep this message",

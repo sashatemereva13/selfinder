@@ -214,7 +214,8 @@
     "crossingHeading": "{{name}} спрашивает",
     "crossingPlaceholder": "Что кажется правдой сейчас?",
     "crossingAnsweredLabel": "Что вы сказали",
-    "crossingSendHint": "Сохранено, вашими словами"
+    "crossingSendHint": "Сохранено, вашими словами",
+    "loadingMore": "Собираем остальную часть вашей истории…"
   },
   "saveMessage": {
     "keepThisMessage": "Оставить это сообщение себе",
