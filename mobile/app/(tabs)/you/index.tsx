@@ -126,6 +126,17 @@ export default function YouScreen() {
           styles.content,
           { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
         ]}
+        // Without this, ScrollView's default ('never') means a tap on any
+        // Pressable below a focused TextInput (e.g. "Confirm delete" right
+        // under the delete-confirmation input) only dismisses the keyboard
+        // on its first tap instead of firing onPress — the button LOOKS
+        // unresponsive since nothing visible happens, and it takes a
+        // second tap to actually register. Confirmed via device logs
+        // 2026-08-14: repeated keyboard-focus churn (stealKeyboard/
+        // focusApplication cycling) right as the user tried to tap
+        // Confirm delete, with no corresponding app-level event ever
+        // firing — consistent with taps being eaten by keyboard dismissal.
+        keyboardShouldPersistTaps="handled"
       >
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →

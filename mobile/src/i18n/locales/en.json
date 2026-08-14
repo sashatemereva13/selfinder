@@ -99,6 +99,7 @@
     "deleteCopy": "Permanently delete your account and all associated data. This cannot be undone.",
     "delete": "Delete",
     "typeUsernameToConfirm": "Type your username <1>{{username}}</1> to confirm.",
+    "typeUsernamePlaceholder": "Type your username here",
     "confirmDelete": "Confirm delete",
     "cancel": "Cancel",
     "deletionFailed": "Deletion failed. Please try again.",

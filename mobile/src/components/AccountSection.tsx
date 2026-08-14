@@ -644,7 +644,15 @@ function LoggedInAccount({
               style={styles.input}
               value={deleteConfirmText}
               onChangeText={(value) => { setDeleteConfirmText(value); setDeleteError(null); }}
-              placeholder={session.username}
+              // Was session.username — showed the real username in grey,
+              // indistinguishable at a glance from it already being typed
+              // in (2026-08-14: user reported "Confirm delete" not
+              // responding to any number of taps; root cause was the
+              // field looking pre-filled while deleteConfirmText was
+              // actually still '', so the disabled check below was
+              // correctly blocking every tap with no visible sign why).
+              // A generic instruction can't be mistaken for real content.
+              placeholder={t('account.typeUsernamePlaceholder')}
               placeholderTextColor={colors.text.muted}
               autoCapitalize="none"
               autoCorrect={false}
@@ -652,7 +660,7 @@ function LoggedInAccount({
             {deleteError && <Text style={styles.errorText}>{deleteError}</Text>}
             <View style={styles.deleteConfirmRow}>
               <Pressable
-                style={styles.dangerButton}
+                style={[styles.dangerButton, !deleteConfirmText && styles.dangerButtonDisabled]}
                 onPress={handleDelete}
                 disabled={!deleteConfirmText || deleting}
               >
@@ -872,6 +880,12 @@ function makeStyles(colors: Colors) {
     borderRadius: radius.full,
     backgroundColor: colors.danger,
   },
+  // Without this, a disabled Pressable renders pixel-identical to an
+  // enabled one (RN's disabled prop blocks onPress but changes nothing
+  // visually by default) — the confirm-delete button looked fully
+  // pressable while actually inert, with no way to tell why taps did
+  // nothing (2026-08-14 bug report).
+  dangerButtonDisabled: { opacity: 0.4 },
   dangerButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   deleteConfirmBlock: { gap: spacing[3] },
   deleteConfirmRow: { flexDirection: 'row', gap: spacing[3] },
