@@ -25,6 +25,7 @@ import { SphereArc } from '../src/components/SphereArc';
 import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { ChatTurn } from '../src/components/ChatTurn';
+import { PagedScrollView } from '../src/components/PagedScrollView';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
 import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
@@ -401,111 +402,62 @@ export default function YourArcScreen() {
     return { pastPoints: [...pastFromReadings, ...pastFromWishes], futurePoints };
   }, [readingLog, allWishes, activeWish]);
 
-  return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
-      {/* Explicit destination, not router.back() — Your Arc's only real
-          entry point is Depths' "Your arc" row, but this is now a
-          top-level route (see app/_layout.tsx), so router.back()'s actual
-          target depends on navigation-stack internals rather than where
-          the user thinks they came from. Same fix as /sources. */}
-      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+  // Building the page list explicitly (not conditionally spread inline in
+  // JSX) so PagedScrollView's dot count and the pages actually shown never
+  // drift apart — a resurfaced wish or a tapped detail page changes how
+  // many pages exist, and both need to agree on that number.
+  const pages: React.ReactNode[] = [];
 
-      {/* The literal first thing on the page, above even the kicker/
-          title — a generated pattern built entirely from this person's
-          own reading-history colors. Not meant to be studied (the real
-          data lives in the facts/sparkline below); its only job is to
-          feel unmistakably theirs the instant the screen opens. Without
-          any label, though, it read as ambiguous — pretty, but nothing
-          on the page confirmed it was actually built from THEIR data
-          rather than a generic loading animation (see collaboration
-          notes on the paid-value critique). One small caption underneath
-          is enough to turn it from decoration into legible proof. */}
+  // Page 1 — Cover. Kaleidoscope first, title/framing line BELOW it (per
+  // collaboration notes, 2026-08-14: "they see the kaleidoscope in the
+  // middle of the screen and header 'Your Arc' at the bottom with a brief
+  // description") — the pattern is the first thing anyone sees, not a
+  // heading above a picture.
+  pages.push(
+    <ScrollView key="cover" contentContainerStyle={styles.pageCentered}>
       <View style={styles.kaleidoscopeWrap}>
         <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
         <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
       </View>
-
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
       <Text style={styles.title}>{t('yourArc.title')}</Text>
-      {/* The persistent framing line (RULES.md, Product/positioning,
-          2026-08-14) — repositions Your Arc around orientation, not
-          remembrance: not "a graph of your past" but the living
-          relationship between where you've been, what you want, and how
-          you meet this moment. Always present, not just on first visit —
-          the page's own thesis statement, not an onboarding tip that
-          disappears. */}
       <Text style={styles.coneFramingLine}>{t('yourArc.coneFramingLine')}</Text>
-      <Text style={styles.introLine}>
-        {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
-      </Text>
+    </ScrollView>
+  );
 
-      {/* Quiet signal that the facts/sphere-history/wish/Crossing sections
-          below are still coming, not just absent — previously this gap
-          was silent (nothing rendered until the whole 5-call fetch
-          resolved, then everything popped in at once), which read as the
-          page being slow/stuck rather than loading. No spinner-heavy UI,
-          matching the app's own restrained register — a plain line, same
-          register as the facts it's standing in for. */}
-      {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
-
-      {/* Set apart from plain paragraph text (per collaboration notes: the
-          facts previously read as an undifferentiated block of prose, no
-          different from introLine above or sphereArcHeading below) — each
-          fact gets its own small marker, same restrained "a dot, colored
-          by what's actually true" language SphereArc's own trace dots
-          already use, rather than a new visual system invented just for
-          this section. steadiest is the one fact with a real level behind
-          it, so its marker takes that level's actual color; the count-
-          based facts (thisMonth/streak/allTime) have no single level to
-          point to, so they take the page's own one accent color instead
-          of inventing a second hue (aesthetic.md's "one color per
-          screen" rule). Facts sit in their own row-group with real gap
-          between them, not stacked as continuous-looking paragraphs. */}
-      {facts.length > 0 && (
-        <View style={styles.factsSection}>
-          {facts.map((fact) => {
-            if (fact.key === 'steadiest') {
-              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
-              const dotColor = level ? levelColors[level.slug] : undefined;
-              return (
-                <View key={fact.key} style={styles.factRow}>
-                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
-                  <Text style={styles.factLine}>
-                    {t('yourArc.factSteadiest', {
-                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
-                    })}
-                  </Text>
-                </View>
-              );
-            }
-            const i18nKey =
-              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
-              : fact.key === 'streak' ? 'yourArc.factStreak'
-              : 'yourArc.factAllTime';
-            return (
-              <View key={fact.key} style={styles.factRow}>
-                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
-                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
-              </View>
-            );
-          })}
+  // Page 2 — Now. The time cone alone, given real room — the present
+  // moment in light of the person's own past and future (RULES.md,
+  // Product/positioning, 2026-08-14). Static for now, deliberately — see
+  // TimeCone.tsx's own comment on why motion/interaction is a later pass.
+  if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
+    pages.push(
+      <ScrollView key="cone" contentContainerStyle={styles.pageCentered}>
+        <Text style={styles.kicker}>{t('yourArc.nowKicker')}</Text>
+        <View style={styles.timeConeWrap}>
+          <TimeCone
+            width={CONE_SIZE}
+            height={CONE_SIZE * 1.3}
+            pastPoints={timeConeGeometry.pastPoints}
+            futurePoints={timeConeGeometry.futurePoints}
+          />
         </View>
-      )}
+        <Text style={styles.introLine}>
+          {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
+        </Text>
+      </ScrollView>
+    );
+  }
 
-      {/* What calls you — the ACTIVE wish, standing on its own now (moved
-          off Measure, 2026-08-14). Unlike the resurfaced one below (a past
-          moment, held until tapped), this is the current one, shown
-          plainly — there's nothing to protect it from since it's not a
-          memory being revisited, it's what's live right now. Always
-          offers a way to add a new one; a new wish simply becomes the
-          active one (findActiveWish is "most recent," full stop). */}
+  // Page 3 — What calls you. The ACTIVE wish, standing on its own (moved
+  // off Measure, 2026-08-14), plus the Crossing that builds from it —
+  // both "present reaching toward future" material, so they share a page.
+  // Unlike the resurfaced wish (a past moment, held until tapped), the
+  // active wish is shown plainly — nothing to protect it from, it's what's
+  // live right now.
+  pages.push(
+    <ScrollView key="wish-crossing" contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>{t('yourArc.whatCallsYou')}</Text>
       <View style={styles.wishSection}>
-        <Text style={styles.wishHeading}>{t('yourArc.whatCallsYou')}</Text>
         {activeWish && !wishComposerOpen && (
           <Text style={styles.wishText}>{activeWish.text}</Text>
         )}
@@ -542,44 +494,14 @@ export default function YourArcScreen() {
         {newWishRetryOffered && <Text style={styles.wishHint}>{t('measure.wishRetryNote')}</Text>}
       </View>
 
-      {/* Pure resurfacing (docs/session-result-concept.md, Phase 4) — the
-          one wish selected in the effect above, offered here quietly, not
-          pushed. Held behind a tap until opened (same "held, not
-          displayed" rule the same-session version follows): the row
-          states plainly what it is and roughly when, but the wish's own
-          text never appears until tapped. No comparison to the current
-          reading is ever drawn here — showing the wish's own words is
-          the whole mechanism; anything more would be the app
-          interpreting what the gap between then and now means. */}
-      {resurfacedWish && (
-        <View style={styles.wishSection}>
-          {wishRevealed ? (
-            <>
-              <Text style={styles.wishHeading}>{t('yourArc.wishResurfaceHeading')}</Text>
-              <Text style={styles.wishDate}>{formatDate(new Date(resurfacedWish.savedAt).getTime())}</Text>
-              <Text style={styles.wishText}>{resurfacedWish.text}</Text>
-              <Text style={styles.wishHint}>{t('yourArc.wishResurfaceHint')}</Text>
-            </>
-          ) : (
-            <Pressable style={styles.wishRow} onPress={handleRevealWish}>
-              <Text style={styles.wishRowText}>
-                {t('yourArc.wishResurfaceRow', { date: formatDate(new Date(resurfacedWish.savedAt).getTime()) })}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      )}
-
       {/* The Crossing (docs/session-result-concept.md Phase 4 / the
           2026-08-13 "Crossing" design) — one philosopher-voiced question
-          built from the CURRENT reading's own wish, offered only when
-          that wish exists (activeWish) and nothing was generated for it
-          yet. Not auto-fired on page load (see handleGenerateCrossing's
-          own comment) — a quiet, named invitation, matching "offered, not
-          pushed." Once a Crossing exists, the philosopher's QUESTION is
-          shown, but the user's own ANSWER — not the question — is the
-          thing that gets kept; see crossingController's own comment on
-          why generation is idempotent per wish+reading pair (visiting
+          built from the active wish, offered only once it exists and
+          nothing was generated for it yet. Not auto-fired on page load —
+          a quiet, named invitation, matching "offered, not pushed." Once
+          a Crossing exists, the philosopher's QUESTION is shown, but the
+          user's own ANSWER — not the question — is the thing that gets
+          kept; generation is idempotent per wish+reading pair (visiting
           again never regenerates a new question). */}
       {activeWish && !crossing && (
         <View style={styles.crossingSection}>
@@ -631,46 +553,93 @@ export default function YourArcScreen() {
           )}
         </View>
       )}
+    </ScrollView>
+  );
 
-      {/* The time cone — Selfinder+'s own centerpiece visual (RULES.md,
-          Product/positioning, 2026-08-14): the present moment in light of
-          the person's own past and their own future, not alone. Past
-          cone: real readings/wishes, spread by age alone, never by
-          content. Future cone: only the active wish, never a fabricated
-          trajectory. Replaces the sparkline as the PRIMARY visual — the
-          line chart moves below as "Every walk" detail, one navigation
-          method into the record rather than the record's own headline
-          (per the earlier structure discussion: "the graph becomes one
-          navigation method, rather than the definition of Your Arc").
-          Static for now, deliberately — see TimeCone.tsx's own comment
-          on why motion/interaction is a later pass, not this one. */}
-      {(timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) && (
-        <View style={styles.timeConeWrap}>
-          <TimeCone
-            width={CONE_SIZE}
-            height={CONE_SIZE * 1.3}
-            pastPoints={timeConeGeometry.pastPoints}
-            futurePoints={timeConeGeometry.futurePoints}
-          />
+  // Page 4 — A wish from before. Pure resurfacing (docs/session-result-
+  // concept.md, Phase 4), offered quietly, not pushed — only exists as its
+  // own page when there's actually one eligible this visit. Held behind a
+  // tap until opened (same "held, not displayed" rule the same-session
+  // version follows): no comparison to the current reading is ever drawn
+  // here — showing the wish's own words is the whole mechanism.
+  if (resurfacedWish) {
+    pages.push(
+      <ScrollView key="resurfaced-wish" contentContainerStyle={styles.pageContent}>
+        <View style={styles.wishSection}>
+          {wishRevealed ? (
+            <>
+              <Text style={styles.wishHeading}>{t('yourArc.wishResurfaceHeading')}</Text>
+              <Text style={styles.wishDate}>{formatDate(new Date(resurfacedWish.savedAt).getTime())}</Text>
+              <Text style={styles.wishText}>{resurfacedWish.text}</Text>
+              <Text style={styles.wishHint}>{t('yourArc.wishResurfaceHint')}</Text>
+            </>
+          ) : (
+            <Pressable style={styles.wishRow} onPress={handleRevealWish}>
+              <Text style={styles.wishRowText}>
+                {t('yourArc.wishResurfaceRow', { date: formatDate(new Date(resurfacedWish.savedAt).getTime()) })}
+              </Text>
+            </Pressable>
+          )}
         </View>
-      )}
+      </ScrollView>
+    );
+  }
 
-      <Text style={styles.everyWalkHeading}>{t('yourArc.everyWalkHeading')}</Text>
+  // Page 5 — This month. Real, true facts about this person's OWN record
+  // — never an interpretation of what a pattern means. Each fact gets its
+  // own small marker, same restrained "a dot, colored by what's actually
+  // true" language SphereArc's own trace dots already use.
+  if (facts.length > 0) {
+    pages.push(
+      <ScrollView key="facts" contentContainerStyle={styles.pageContent}>
+        <Text style={styles.kicker}>{t('yourArc.factsKicker')}</Text>
+        <View style={styles.factsSection}>
+          {facts.map((fact) => {
+            if (fact.key === 'steadiest') {
+              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
+              const dotColor = level ? levelColors[level.slug] : undefined;
+              return (
+                <View key={fact.key} style={styles.factRow}>
+                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
+                  <Text style={styles.factLine}>
+                    {t('yourArc.factSteadiest', {
+                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
+                    })}
+                  </Text>
+                </View>
+              );
+            }
+            const i18nKey =
+              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
+              : fact.key === 'streak' ? 'yourArc.factStreak'
+              : 'yourArc.factAllTime';
+            return (
+              <View key={fact.key} style={styles.factRow}>
+                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
+  }
 
+  // Page 6 — Every walk. The archive: the full sparkline, tap any point to
+  // open a dedicated detail page (page 7, inserted only once something's
+  // selected) — "the graph becomes one navigation method, rather than the
+  // definition of Your Arc," not the page's own headline anymore.
+  pages.push(
+    <ScrollView key="every-walk" contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>{t('yourArc.everyWalkHeading')}</Text>
       {readingLog.length >= 2 ? (
         <View style={styles.sparklineWrap}>
           {/* Stated once, quietly, on the paid screen itself — not just
               at the paywall (your-arc-preview.tsx). Without this, nothing
               on THIS screen ever confirms what's actually different from
-              the free preview once you're already looking at it (see
-              collaboration notes on the paid-value critique) — the value
-              was only ever argued for before buying, never felt while
-              using. One plain sentence, not a badge or upsell tone. */}
+              the free preview once you're already looking at it. One
+              plain sentence, not a badge or upsell tone. */}
           <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
-          {/* Moved here from the top-of-page intro line — it's an
-              instruction about THIS shape specifically, so it belongs
-              sitting against it, not several elements above it where the
-              thing it's describing isn't even visible yet. */}
           <Text style={styles.tapPointHint}>{t('yourArc.tapPointHint')}</Text>
           <Svg
             width="100%"
@@ -712,84 +681,140 @@ export default function YourArcScreen() {
           {t('yourArc.notEnoughReadings')}
         </Text>
       )}
-
-      {sphereHistory && <SphereArc history={sphereHistory} />}
-
-      {selected && (
-        <View style={styles.detailSection}>
-          <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
-          {selectedRich ? (
-            <>
-              <Text style={styles.detailLevel}>
-                {getLocalizedLevelName(selectedRich.vibrationLevel, locale)}
-              </Text>
-              {selectedRich.combinationMessage && (
-                <Text style={styles.detailReflection}>{selectedRich.combinationMessage}</Text>
-              )}
-
-              {/* What you said — grouped by sphere, reusing AccountSection's
-                  own question/answer rendering pattern rather than
-                  inventing a second one. Purely descriptive, same as
-                  everywhere else on this screen — never captioned with
-                  what any of it means. */}
-              {selectedRich.qaPairs.length > 0 && (
-                <View style={styles.momentSection}>
-                  <Text style={styles.momentHeading}>{t('yourArc.whatYouSaid')}</Text>
-                  {selectedRich.qaPairs.map((pair, i) => (
-                    <View key={i} style={styles.momentQA}>
-                      <Text style={styles.momentQuestion}>{pair.question}</Text>
-                      <Text style={styles.momentAnswer}>{pair.answer}</Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-
-              {/* The conversation that followed, if one was saved (Selfinder+). */}
-              {loadingConversation ? null : linkedConversation && (
-                <View style={styles.momentSection}>
-                  <Text style={styles.momentHeading}>{t('yourArc.whatYouTalkedAbout')}</Text>
-                  {linkedConversation.messages.map((msg, i) => (
-                    <ChatTurn key={i} role={msg.role}>{msg.content}</ChatTurn>
-                  ))}
-                </View>
-              )}
-
-              {/* A Spill entry kept close in time to this reading, if any —
-                  see SPILL_MATCH_WINDOW_MS's own comment for why this is a
-                  loose match, not a hard link. */}
-              {linkedSpillEntry && (
-                <View style={styles.momentSection}>
-                  <Text style={styles.momentHeading}>{t('yourArc.whatYouWrote')}</Text>
-                  <Text style={styles.momentSpillText}>{linkedSpillEntry.text}</Text>
-                </View>
-              )}
-            </>
-          ) : (
-            <>
-              <Text style={styles.detailLevel}>{selected.levelSlug}</Text>
-              {session && !richHistory && (
-                <Text style={styles.detailNote}>
-                  {t('yourArc.turnOnSavingNote')}
-                </Text>
-              )}
-              {!session && (
-                <Text style={styles.detailNote}>
-                  {t('yourArc.signInToSaveNote')}
-                </Text>
-              )}
-            </>
-          )}
-        </View>
-      )}
     </ScrollView>
+  );
+
+  // Page 7 — Body, mind, heart, spirit. The sphere history, its own page
+  // rather than tacked onto the sparkline's — a genuinely separate kind
+  // of record (four traces, not one).
+  if (sphereHistory) {
+    pages.push(
+      <ScrollView key="sphere-history" contentContainerStyle={styles.pageContent}>
+        <SphereArc history={sphereHistory} />
+      </ScrollView>
+    );
+  }
+
+  // Page 8 — the tapped point's own detail, inserted dynamically only once
+  // something's selected on page 6's sparkline (2026-08-14 decision: "its
+  // own dedicated page, inserted after Every Walk," not a modal/overlay).
+  if (selected) {
+    pages.push(
+      <ScrollView key="detail" contentContainerStyle={styles.pageContent}>
+        <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
+        {selectedRich ? (
+          <>
+            <Text style={styles.detailLevel}>
+              {getLocalizedLevelName(selectedRich.vibrationLevel, locale)}
+            </Text>
+            {selectedRich.combinationMessage && (
+              <Text style={styles.detailReflection}>{selectedRich.combinationMessage}</Text>
+            )}
+
+            {/* What you said — grouped by sphere, reusing AccountSection's
+                own question/answer rendering pattern rather than
+                inventing a second one. Purely descriptive, same as
+                everywhere else on this screen — never captioned with
+                what any of it means. */}
+            {selectedRich.qaPairs.length > 0 && (
+              <View style={styles.momentSection}>
+                <Text style={styles.momentHeading}>{t('yourArc.whatYouSaid')}</Text>
+                {selectedRich.qaPairs.map((pair, i) => (
+                  <View key={i} style={styles.momentQA}>
+                    <Text style={styles.momentQuestion}>{pair.question}</Text>
+                    <Text style={styles.momentAnswer}>{pair.answer}</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
+            {/* The conversation that followed, if one was saved (Selfinder+). */}
+            {loadingConversation ? null : linkedConversation && (
+              <View style={styles.momentSection}>
+                <Text style={styles.momentHeading}>{t('yourArc.whatYouTalkedAbout')}</Text>
+                {linkedConversation.messages.map((msg, i) => (
+                  <ChatTurn key={i} role={msg.role}>{msg.content}</ChatTurn>
+                ))}
+              </View>
+            )}
+
+            {/* A Spill entry kept close in time to this reading, if any —
+                see SPILL_MATCH_WINDOW_MS's own comment for why this is a
+                loose match, not a hard link. */}
+            {linkedSpillEntry && (
+              <View style={styles.momentSection}>
+                <Text style={styles.momentHeading}>{t('yourArc.whatYouWrote')}</Text>
+                <Text style={styles.momentSpillText}>{linkedSpillEntry.text}</Text>
+              </View>
+            )}
+          </>
+        ) : (
+          <>
+            <Text style={styles.detailLevel}>{selected.levelSlug}</Text>
+            {session && !richHistory && (
+              <Text style={styles.detailNote}>
+                {t('yourArc.turnOnSavingNote')}
+              </Text>
+            )}
+            {!session && (
+              <Text style={styles.detailNote}>
+                {t('yourArc.signInToSaveNote')}
+              </Text>
+            )}
+          </>
+        )}
+      </ScrollView>
+    );
+  }
+
+  return (
+    <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
+      {/* Explicit destination, not router.back() — Your Arc's only real
+          entry point is Depths' "Your arc" row, but this is now a
+          top-level route (see app/_layout.tsx), so router.back()'s actual
+          target depends on navigation-stack internals rather than where
+          the user thinks they came from. Same fix as /sources. Sits above
+          the pager, fixed, so it stays reachable from every page rather
+          than only the first one. */}
+      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
+        <Text style={styles.backLink}>{t('common.back')}</Text>
+      </Pressable>
+      {/* Quiet signal that the facts/sphere-history/wish/Crossing pages
+          are still coming, not just absent — previously this gap was
+          silent (nothing rendered until the whole 5-call fetch resolved,
+          then everything popped in at once), which read as the page
+          being slow/stuck rather than loading. No spinner-heavy UI,
+          matching the app's own restrained register. */}
+      {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
+      <PagedScrollView>{pages}</PagedScrollView>
+    </View>
   );
 }
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingBottom: spacing[12] },
-  backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
+  // Each swipeable page is its own ScrollView (per PagedScrollView's own
+  // contract — a child that needs vertical scroll wraps its own content),
+  // so there are two content-container shapes rather than one shared
+  // `content`: pageCentered vertically centers short, hero-like pages
+  // (Cover, Now) so they don't read as a tall page with content stranded
+  // at the top; pageContent is a plain top-anchored padded column for
+  // pages with more to read (What calls you, facts, Every walk, sphere
+  // history, detail).
+  pageCentered: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing[6],
+    paddingBottom: spacing[12],
+  },
+  pageContent: {
+    flexGrow: 1,
+    padding: spacing[6],
+    paddingBottom: spacing[16],
+  },
+  backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[8] },
   kaleidoscopeCaption: {
@@ -850,8 +875,8 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontStyle: 'italic',
     fontSize: fontSizes.xs,
-    marginTop: -spacing[6],
-    marginBottom: spacing[6],
+    paddingHorizontal: spacing[6],
+    marginBottom: spacing[2],
   },
   // Still real sentences, same voice as introLine (not a stat-block/badge
   // register — no bare numbers, no label-colon-value rows) — these are
@@ -864,7 +889,7 @@ function makeStyles(colors: Colors) {
   // each fact now reads as its own noticed thing, not a continuation of
   // the sentence above it.
   factsSection: {
-    marginTop: -spacing[6],
+    marginTop: spacing[3],
     marginBottom: spacing[3],
     gap: spacing[3],
   },
