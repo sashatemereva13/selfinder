@@ -21,7 +21,12 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // Qwen, gpt-oss-120b does NOT support reasoning_format: its hidden
 // reasoning is returned in a separate response field by default (not
 // prepended to message.content), so none of resolveModelParams' Qwen-style
-// reasoning_format/max_tokens headroom applies here.
+// reasoning_format/max_tokens headroom applies here. It DOES need its own
+// reasoning_effort: "low" (see GPT_OSS_REASONING_EFFORT below) — left at
+// its implicit default, gpt-oss-120b burned its whole max_tokens budget on
+// hidden reasoning and returned empty content with finish_reason: "length"
+// on every call, confirmed live 2026-08-17 (this silently broke every
+// Measure reading and Crossing reflection after the model swap above).
 const models = [
   "openai/gpt-oss-120b",
   "llama-3.1-8b-instant",
@@ -50,6 +55,16 @@ const QWEN_MODEL = "qwen/qwen3.6-27b";
 // replacing it, so raising a call site's reply-length budget later doesn't
 // also require remembering to re-tune this constant.
 const QWEN_REASONING_TOKEN_HEADROOM = 2800;
+
+// gpt-oss-120b's default reasoning_effort ("medium") routinely consumed an
+// entire small max_tokens budget (90-400 across this file's call sites)
+// on hidden reasoning alone, leaving nothing for the visible reply —
+// confirmed live: identical prompts returned empty content with
+// finish_reason: "length" at the default effort, and completed cleanly
+// every time at "low". Unlike Qwen's headroom approach above, gpt-oss-120b
+// doesn't expose reasoning tokens in the same countable way, so shrinking
+// the reasoning itself (not enlarging max_tokens further) is the fix.
+const GPT_OSS_REASONING_EFFORT = "low";
 
 // Picks the model (and any model-specific request params, including
 // max_tokens) for a given call: Qwen when the request came from the
@@ -86,7 +101,11 @@ function resolveModelParams(locale, fallbackModel, fallbackMaxTokens) {
       max_tokens: fallbackMaxTokens + QWEN_REASONING_TOKEN_HEADROOM,
     };
   }
-  return { model: fallbackModel, max_tokens: fallbackMaxTokens };
+  return {
+    model: fallbackModel,
+    max_tokens: fallbackMaxTokens,
+    ...(fallbackModel === "openai/gpt-oss-120b" ? { reasoning_effort: GPT_OSS_REASONING_EFFORT } : {}),
+  };
 }
 
 // Appended to the system prompt only for Russian-locale requests — every
@@ -569,6 +588,7 @@ async function requestRawInterviewScores(scoringPrompt) {
     model: models[0],
     max_tokens: 400,
     temperature: 0.1,
+    reasoning_effort: GPT_OSS_REASONING_EFFORT,
     messages: [
       { role: "system", content: "You are a precise scoring system. Return only valid JSON, nothing else." },
       { role: "user", content: scoringPrompt },

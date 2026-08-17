@@ -9,6 +9,12 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // this backend too (see chatController.js's `models[0]`).
 const CROSSING_MODEL = "openai/gpt-oss-120b";
 
+// gpt-oss-120b's default reasoning_effort burns the whole max_tokens
+// budget (120 here) on hidden reasoning, returning empty content —
+// confirmed live 2026-08-17; see chatController.js's
+// GPT_OSS_REASONING_EFFORT for the full story.
+const CROSSING_REASONING_EFFORT = "low";
+
 // Same locale handling pattern as chatController.js (RUSSIAN_REPLY_INSTRUCTION)
 // — kept as its own narrow copy rather than importing chatController's
 // module-private helpers, same reasoning moderateWish.js already uses for
@@ -102,6 +108,7 @@ export async function generateCrossing(req, res) {
       model: CROSSING_MODEL,
       max_tokens: 120,
       temperature: 0.7,
+      reasoning_effort: CROSSING_REASONING_EFFORT,
       messages: [
         { role: "system", content: localizedSystemPrompt(UNIVERSAL_RULES + "\n\n" + systemPrompt, locale) },
         { role: "user", content: prompt },
