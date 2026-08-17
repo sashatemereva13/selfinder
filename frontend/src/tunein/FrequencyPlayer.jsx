@@ -8,16 +8,23 @@ import "./frequencyPlayer.css";
 // brainstem as a single "beat" at the difference frequency. Requires stereo
 // headphones — through speakers the tones just mix acoustically and the
 // beat never forms. carrierHz is the pitch in the left ear; the right ear
-// gets carrierHz + beatHz. Carrier pitch itself barely matters scientifically
-// (mainly comfort/audibility) — the beat frequency is what's meant to matter,
-// so these three map onto the standard calming EEG bands: alpha (8-13Hz),
-// theta (4-8Hz), delta (0.5-4Hz).
+// gets carrierHz + beatHz. The beat frequency is what's meant to matter —
+// these three map onto the standard calming EEG bands: alpha (8-13Hz),
+// theta (4-8Hz), delta (0.5-4Hz). carrierHz was moved to 432 across all
+// three (previously 200/200/150) to match mobile's rendered tracks — see
+// mobile/src/content/tuneInStates.ts. This mobile-side pass also added a
+// soft pink-noise bed under the tone (a bare binaural tone alone reads as
+// clinical/tinnitus-adjacent rather than calming, per binaural-beat sound
+// design research) — that part hasn't been ported here since this player
+// synthesizes tones live via Web Audio rather than playing a pre-rendered
+// file; adding a noise bed here would mean building it into the oscillator
+// graph below, not just changing a number.
 const states = [
   {
     name: "Calm",
     band: "Alpha",
     beatHz: 10,
-    carrierHz: 200,
+    carrierHz: 432,
     color: "#9fffd0",
     intent: "Relaxed, alert stillness — good for settling before or after something stressful.",
   },
@@ -25,7 +32,7 @@ const states = [
     name: "Deep Rest",
     band: "Theta",
     beatHz: 6,
-    carrierHz: 200,
+    carrierHz: 432,
     color: "#c39fff",
     intent: "Meditation-depth stillness. Best with eyes closed, not mid-task.",
   },
@@ -33,7 +40,7 @@ const states = [
     name: "Sleep",
     band: "Delta",
     beatHz: 2,
-    carrierHz: 150,
+    carrierHz: 432,
     color: "#7ea6ff",
     intent: "The slowest band, associated with deep sleep. Lie down and let it run.",
   },

@@ -1,5 +1,66 @@
 # App Store Connect — App Review reply
 
+## 2026-08-17 round — Guideline 2.1(a) crash + 2.5.4 background audio
+
+New rejection on the same submission thread (8bb00557-98ef-40ef-8204-8871f11542da),
+now version 1.0 (32), reviewed on an iPad Air 11-inch (M3) / iPadOS 26.6.
+Two items, both addressed below — draft reply text to paste into the same
+"Reply" box described above (4000-char free-text field).
+
+**2.1(a) — root cause and fix:** Groq (our LLM provider) decommissioned
+`llama-3.3-70b-versatile`, the model powering Measure's reading/scoring
+calls, on 2026-08-16 — one day before this review — so every attempt to
+create a reading failed with a live error. Fixed in two parts, both
+deployed and verified against production:
+1. Swapped to Groq's recommended replacement, `openai/gpt-oss-120b`
+   (`backend/controllers/chatController.js`, `crossingController.js`).
+2. That model handles internal "reasoning" tokens differently — left at
+   its default settings it was spending its entire response budget on
+   hidden reasoning and returning empty output (`finish_reason: "length"`),
+   which surfaced as the same user-facing error. Fixed by setting
+   `reasoning_effort: "low"` and raising `max_tokens` per call site
+   (400→1200 for scoring, 90/120→500 for the two short-reply call sites).
+
+Verified: 5 consecutive live `POST /measure/interview` calls against
+production (`selfinder.online`) after deploy, all HTTP 200 with a real
+scored reading and a real philosopher-voiced combination message returned
+each time. The Crossing endpoint shares the same fix and was verified
+locally against the same model/prompt shape (6/6 clean calls) — not
+re-tested live since it requires an authenticated, consented account.
+
+**2.5.4 — background audio is intentional, not stray:** "Tune In" offers
+ambient/calming sound states; several (Sleep, Deep Rest) are explicitly
+built to help someone fall asleep, so playback is designed to continue
+after the screen locks — a sleep sound that stops the instant the screen
+locks doesn't do its job, same as any white-noise/meditation app. This is
+`shouldPlayInBackground: true` set deliberately in
+`app/(tabs)/depths/tunein/index.tsx`, available to every user (not gated
+behind Selfinder+). Next step: record a screen capture on a physical
+device showing Tune In playing, then locking the screen/going to the Home
+Screen, with audio still audible, and attach it per Apple's instructions
+— not yet recorded as of this writing.
+
+Draft reply text:
+
+```
+Hello,
+
+Thank you for the detailed follow-up — both issues below have been fixed and verified.
+
+Guideline 2.1(a): The reading-creation bug is fixed. Root cause: our AI provider (Groq) decommissioned the language model powering Measure's scoring on August 16, one day before this review, so every attempt to create a reading failed. We migrated to Groq's recommended replacement model and corrected its request parameters (the new model was silently truncating its own output before returning a result). We've tested reading creation repeatedly against our live production backend since deploying the fix and it completes reliably every time. Apologies for the disruption.
+
+Guideline 2.5.4: The background audio mode is intentional, not left over. Our "Tune In" feature offers ambient/calming sound states, several of which (Sleep, Deep Rest) are explicitly designed to help someone fall asleep — playback is meant to continue after the screen locks, the same way a white-noise or meditation app works; stopping the moment the screen locks would defeat the point of those specific sounds. A screen recording demonstrating this — starting playback, then locking the screen/going to the Home Screen with audio still audible — is attached to this submission.
+
+Thank you.
+```
+
+Character count: paste into App Store Connect's reply box to confirm
+against its live counter before sending (comfortably under 4000 based on
+length here). Attach the Tune In background-audio screen recording before
+submitting this reply — the text above states it's attached, so don't
+send without it.
+
+
 Working copy of the reply to paste into App Store Connect's own "Reply
 to App Review" box (Distribution → the rejected submission → a message
 in the thread → Reply). Confirmed via screenshot 2026-08-14: this flow
