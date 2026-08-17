@@ -53,6 +53,16 @@ const TIMER_OPTIONS = [5, 15, 30, 45, 60];
 // already half asleep; a fade reads as the sound settling, not stopping.
 const FADE_SECONDS = 15;
 
+// Tells the lock screen not to show a scrub bar/duration for Tune In's
+// Now Playing entry. The underlying .m4a is a fixed-length loop (60s) with
+// no relationship to how long a session actually runs — that's decided by
+// the sleep timer in this screen, not the file — so a real progress bar
+// would show the file looping every 60s regardless of the chosen timer,
+// which reads as "the timer isn't doing anything." Seek is disabled for
+// the same reason: skipping around inside one loop of an ambient tone has
+// no meaningful destination.
+const LOCK_SCREEN_OPTIONS = { isLiveStream: true, showSeekForward: false, showSeekBackward: false };
+
 const PULSE_REST_SCALE = 1;
 
 // The transparent ring runs its own slow, independent wave — several
@@ -248,11 +258,23 @@ export default function TuneInScreen() {
       track('tune_in_stopped', { state: activeState.name, reason: 'manual' });
     } else {
       players[selected].play();
-      players[selected].setActiveForLockScreen(true, {
-        title: getLocalizedTuneInState(activeState, locale).name,
-        artist: t('tuneIn.lockScreenArtist'),
-        ...(artworkUri ? { artworkUrl: artworkUri } : null),
-      });
+      players[selected].setActiveForLockScreen(
+        true,
+        {
+          title: getLocalizedTuneInState(activeState, locale).name,
+          artist: t('tuneIn.lockScreenArtist'),
+          ...(artworkUri ? { artworkUrl: artworkUri } : null),
+        },
+        // The track itself loops on its own fixed length (60s), which has
+        // nothing to do with how long this session actually plays — that's
+        // governed entirely by the sleep timer above. Without isLiveStream,
+        // iOS shows a scrub bar/progress tied to the 60s file and loops it,
+        // which reads as "the timer isn't working" (reported: lock screen
+        // duration didn't match the chosen timer) even though the timer's
+        // own setTimeout loop is stopping playback correctly the whole
+        // time — the lock screen was just never told the real semantics.
+        LOCK_SCREEN_OPTIONS
+      );
       setIsPlaying(true);
       // Seeds the countdown from whichever timer is currently selected —
       // handleSelectTimer only sets it live while already playing, so
@@ -268,11 +290,15 @@ export default function TuneInScreen() {
       players[selected].pause();
       players[selected].setActiveForLockScreen(false);
       players[index].play();
-      players[index].setActiveForLockScreen(true, {
-        title: getLocalizedTuneInState(TUNE_IN_STATES[index], locale).name,
-        artist: t('tuneIn.lockScreenArtist'),
-        ...(artworkUri ? { artworkUrl: artworkUri } : null),
-      });
+      players[index].setActiveForLockScreen(
+        true,
+        {
+          title: getLocalizedTuneInState(TUNE_IN_STATES[index], locale).name,
+          artist: t('tuneIn.lockScreenArtist'),
+          ...(artworkUri ? { artworkUrl: artworkUri } : null),
+        },
+        LOCK_SCREEN_OPTIONS
+      );
       track('tune_in_switched', { from: activeState.name, to: TUNE_IN_STATES[index].name });
     }
     setSelected(index);
