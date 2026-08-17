@@ -57,13 +57,16 @@ const QWEN_MODEL = "qwen/qwen3.6-27b";
 const QWEN_REASONING_TOKEN_HEADROOM = 2800;
 
 // gpt-oss-120b's default reasoning_effort ("medium") routinely consumed an
-// entire small max_tokens budget (90-400 across this file's call sites)
-// on hidden reasoning alone, leaving nothing for the visible reply —
-// confirmed live: identical prompts returned empty content with
-// finish_reason: "length" at the default effort, and completed cleanly
-// every time at "low". Unlike Qwen's headroom approach above, gpt-oss-120b
-// doesn't expose reasoning tokens in the same countable way, so shrinking
-// the reasoning itself (not enlarging max_tokens further) is the fix.
+// entire small max_tokens budget (90-400 across this file's call sites) on
+// hidden reasoning alone, leaving nothing for the visible reply — confirmed
+// live: identical prompts returned empty content with finish_reason:
+// "length" at the default effort. "low" cuts that down a lot, but is NOT
+// sufficient by itself with this file's real (long) prompts — the scoring
+// prompt (with the full VIBRATION_SCALE_REFERENCE embedded) still hit
+// finish_reason: "length" 10/10 times at max_tokens: 400 even at "low"
+// effort; only raising each call site's own max_tokens (see the values
+// next to GPT_OSS_REASONING_EFFORT's call sites) made it reliable — this
+// constant alone does not guarantee non-empty output.
 const GPT_OSS_REASONING_EFFORT = "low";
 
 // Picks the model (and any model-specific request params, including
@@ -586,7 +589,7 @@ function buildInterviewInterpretation(rawScores) {
 async function requestRawInterviewScores(scoringPrompt) {
   const response = await groq.chat.completions.create({
     model: models[0],
-    max_tokens: 400,
+    max_tokens: 1200,
     temperature: 0.1,
     reasoning_effort: GPT_OSS_REASONING_EFFORT,
     messages: [
@@ -675,7 +678,7 @@ quotation marks.`;
 
   try {
     const response = await groq.chat.completions.create({
-      ...resolveModelParams(locale, models[0], 90),
+      ...resolveModelParams(locale, models[0], 500),
       temperature: 0.6,
       messages: [
         { role: "system", content: localizedSystemPrompt(UNIVERSAL_RULES + "\n\n" + systemPrompt, locale) },

@@ -10,9 +10,11 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const CROSSING_MODEL = "openai/gpt-oss-120b";
 
 // gpt-oss-120b's default reasoning_effort burns the whole max_tokens
-// budget (120 here) on hidden reasoning, returning empty content —
-// confirmed live 2026-08-17; see chatController.js's
-// GPT_OSS_REASONING_EFFORT for the full story.
+// budget on hidden reasoning, returning empty content — confirmed live
+// 2026-08-17; see chatController.js's GPT_OSS_REASONING_EFFORT for the
+// full story. "low" effort plus max_tokens: 500 (up from 120) was the
+// combination that came back reliably non-empty across repeated live
+// test calls with this file's actual Crossing prompt shape.
 const CROSSING_REASONING_EFFORT = "low";
 
 // Same locale handling pattern as chatController.js (RUSSIAN_REPLY_INSTRUCTION)
@@ -106,7 +108,7 @@ export async function generateCrossing(req, res) {
   try {
     const response = await groq.chat.completions.create({
       model: CROSSING_MODEL,
-      max_tokens: 120,
+      max_tokens: 500,
       temperature: 0.7,
       reasoning_effort: CROSSING_REASONING_EFFORT,
       messages: [
