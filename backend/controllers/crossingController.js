@@ -4,7 +4,10 @@ import Crossing from "../models/Crossing.js";
 import Wish from "../models/Wish.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const CROSSING_MODEL = "llama-3.3-70b-versatile";
+// llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16;
+// openai/gpt-oss-120b is Groq's recommended replacement used elsewhere in
+// this backend too (see chatController.js's `models[0]`).
+const CROSSING_MODEL = "openai/gpt-oss-120b";
 
 // Same locale handling pattern as chatController.js (RUSSIAN_REPLY_INSTRUCTION)
 // — kept as its own narrow copy rather than importing chatController's

@@ -14,8 +14,16 @@ import {
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
+// llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16; the
+// call sites that used models[0] now run on openai/gpt-oss-120b, one of
+// Groq's two recommended replacements (the other, Qwen3.6 27B, stays
+// reserved for the Russian locale only — see QWEN_MODEL below). Unlike
+// Qwen, gpt-oss-120b does NOT support reasoning_format: its hidden
+// reasoning is returned in a separate response field by default (not
+// prepended to message.content), so none of resolveModelParams' Qwen-style
+// reasoning_format/max_tokens headroom applies here.
 const models = [
-  "llama-3.3-70b-versatile",
+  "openai/gpt-oss-120b",
   "llama-3.1-8b-instant",
   "mixtral-8x7b-32768",
 ];
