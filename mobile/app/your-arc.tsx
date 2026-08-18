@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,6 +16,7 @@ import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { listMyWishes, markWishResurfaced, saveWishIfConsented, SavedWish } from '../src/api/wish';
 import { routeToCrisisSupport } from '../src/utils/routeToCrisisSupport';
 import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
+import { getArcLine } from '../src/api/arcLine';
 import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
@@ -24,6 +25,7 @@ import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkli
 import { SphereArc } from '../src/components/SphereArc';
 import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
+import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { PagedScrollView } from '../src/components/PagedScrollView';
 import { buildSphereHistory } from '../src/utils/sphereHistory';
@@ -144,6 +146,12 @@ export default function YourArcScreen() {
   const [newWishInput, setNewWishInput] = useState('');
   const [newWishSubmitting, setNewWishSubmitting] = useState(false);
   const [newWishRetryOffered, setNewWishRetryOffered] = useState(false);
+  // The Cover page's own line — real per-user content (reading count/
+  // streak/latest level/active wish, see arcLineController.js) instead of
+  // the same static framing line on every visit. null means "not loaded
+  // yet or unavailable," in which case the Cover page falls back to the
+  // original static copy rather than showing nothing.
+  const [arcLine, setArcLine] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -204,6 +212,24 @@ export default function YourArcScreen() {
       task.cancel();
     };
   }, [session, currentResult?.savedAt, currentResult?.measureResultId]);
+
+  // The Cover page's own line, fetched independently of the 5-call rich-
+  // data batch above (it has its own single endpoint, cached server-side
+  // per calendar day, so there's no cost to calling it every visit).
+  // Requires a chosen philosopher (the line is generated in their voice)
+  // and at least one reading server-side, or the backend 404s and this
+  // stays null — the Cover page's static fallback line covers that case.
+  useEffect(() => {
+    if (!session || !philosopher) return;
+    let cancelled = false;
+    (async () => {
+      const line = await getArcLine(philosopher, session.token);
+      if (!cancelled) setArcLine(line);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session, philosopher]);
 
   useEffect(() => {
     const task = InteractionManager.runAfterInteractions(() => setFirstPaintReady(true));
@@ -430,7 +456,15 @@ export default function YourArcScreen() {
   // collaboration notes, 2026-08-14: "they see the kaleidoscope in the
   // middle of the screen and header 'Your Arc' at the bottom with a brief
   // description") — the pattern is the first thing anyone sees, not a
-  // heading above a picture.
+  // heading above a picture. The framing line itself is real per-user
+  // content when arcLine has loaded (see getArcLine's own comment) —
+  // previously this was the same static sentence on every visit
+  // regardless of what was actually in the person's record, which is
+  // exactly the "wallpaper" problem raised in review (2026-08-18): the
+  // one dynamic thing on this page was the kaleidoscope alone. Falls back
+  // to the original static line if arcLine hasn't loaded (no session, no
+  // philosopher yet, still in flight, or the backend had nothing to
+  // generate from) — never renders a gap.
   pages.push(
     <ScrollView key="cover" contentContainerStyle={styles.pageCentered}>
       <View style={styles.kaleidoscopeWrap}>
@@ -439,7 +473,7 @@ export default function YourArcScreen() {
       </View>
       <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
       <Text style={styles.title}>{t('yourArc.title')}</Text>
-      <Text style={styles.coneFramingLine}>{t('yourArc.coneFramingLine')}</Text>
+      <Text style={styles.coneFramingLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
     </ScrollView>
   );
 
@@ -807,8 +841,16 @@ export default function YourArcScreen() {
       {firstPaintReady ? (
         <PagedScrollView>{pages}</PagedScrollView>
       ) : (
+        // A cheap echo of the real ArcKaleidoscope cover page (same 8-fold
+        // radial language, same accent color) rather than a bare
+        // ActivityIndicator spinner — this is the first thing anyone sees
+        // after tapping "Your arc," and a generic spinner didn't feel like
+        // Your Arc at all (aesthetic.md's "cosy fireplace, not a UI" test).
+        // Deliberately NOT the real ArcKaleidoscope — see
+        // ArcKaleidoscopeLoading's own comment for why that would
+        // reintroduce the exact freeze firstPaintReady exists to avoid.
         <View style={styles.firstPaintLoading}>
-          <ActivityIndicator color={`rgb(${accentRgb})`} />
+          <ArcKaleidoscopeLoading size={KALEIDOSCOPE_SIZE * 0.6} accentRgb={accentRgb} />
         </View>
       )}
     </View>

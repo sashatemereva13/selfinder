@@ -12,6 +12,7 @@ import conversationRouter from "./routes/conversation.js";
 import spillRouter        from "./routes/spill.js";
 import wishRouter         from "./routes/wish.js";
 import crossingRouter     from "./routes/crossing.js";
+import arcLineRouter      from "./routes/arcLine.js";
 import feedbackRouter     from "./routes/feedback.js";
 import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
@@ -57,6 +58,7 @@ app.use("/api/conversation",  conversationRouter);
 app.use("/api/spill",         spillRouter);
 app.use("/api/wish",          wishRouter);
 app.use("/api/crossing",      crossingRouter);
+app.use("/api/arc-line",      arcLineRouter);
 app.use("/api/feedback",      feedbackRouter);
 app.use("/api/events",        eventsRouter);
 
