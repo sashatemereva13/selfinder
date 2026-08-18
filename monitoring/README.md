@@ -1,12 +1,12 @@
-# Monitoring — Prometheus + Grafana
+# Monitoring — Prometheus, Grafana, Loki
 
 Observability for the whole VPS (`srv1229561.hstgr.cloud`), not just
-Selfinder — Phase 2 of the DevOps upgrade plan in `docs/roadmap.md`. The
-VPS is fully owned/maintained by one person and hosts several projects
-(Selfinder, Amber, and others); this stack is scoped to cover all of
-them at the infrastructure level from the start, with rich app-level
-metrics starting with Selfinder specifically (see "What's instrumented"
-below).
+Selfinder — Phases 2 (metrics) and 3 (logs) of the DevOps upgrade plan in
+`docs/roadmap.md`. The VPS is fully owned/maintained by one person and
+hosts several projects (Selfinder, Amber, and others); this stack is
+scoped to cover all of them at the infrastructure level from the start,
+with rich app-level metrics starting with Selfinder specifically (see
+"What's instrumented" below).
 
 ## What's instrumented
 
@@ -22,12 +22,21 @@ below).
   Amber's stack, everything else), without needing to add instrumentation
   code to any of those other projects individually.
 
+- **Logs, every container on the VPS** (`loki` + `promtail`) — Promtail
+  discovers every running container via the Docker socket (read-only
+  mount) and tails its stdout/stderr directly from Docker's own JSON log
+  files, no per-app code changes needed. Loki stores and indexes them,
+  labeled by container name, queryable from the same Grafana instance as
+  the metrics dashboards (Explore → Loki datasource, or
+  `{container="selfinder-backend"}` as a starting query).
+
 **Not yet instrumented:** app-level metrics (request rate/latency/error
 rate) for Amber or other projects — those would need `prom-client` (or
 an equivalent for their stack) added to their own source code, the same
 way `backend/metrics.js` was added here. Deliberately out of scope for
-this pass; cadvisor's container-level metrics cover them in the
-meantime. See `docs/roadmap.md`.
+this pass; cadvisor's container-level metrics and Loki's logs both
+already cover them in the meantime, since neither requires touching
+those other projects' code. See `docs/roadmap.md`.
 
 ## Networking
 

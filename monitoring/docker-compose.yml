@@ -54,6 +54,38 @@ services:
     networks:
       - monitoring
 
+  loki:
+    image: grafana/loki:latest
+    container_name: monitoring-loki
+    restart: unless-stopped
+    volumes:
+      - ./loki.yml:/etc/loki/loki.yml:ro
+      - loki-data:/loki
+    command:
+      - "-config.file=/etc/loki/loki.yml"
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: monitoring-promtail
+    restart: unless-stopped
+    volumes:
+      - ./promtail.yml:/etc/promtail/promtail.yml:ro
+      # Read-only access to every container's logs on this VPS (not just
+      # Selfinder's) — same whole-box scope as cadvisor above. Docker
+      # writes each container's stdout/stderr as JSON files under here;
+      # Promtail tails them directly rather than going through the
+      # Docker API, so no socket access is needed.
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    command:
+      - "-config.file=/etc/promtail/promtail.yml"
+    networks:
+      - monitoring
+    depends_on:
+      - loki
+
   grafana:
     image: grafana/grafana:latest
     container_name: monitoring-grafana
@@ -73,6 +105,7 @@ services:
       - monitoring
     depends_on:
       - prometheus
+      - loki
 
 secrets:
   grafana_admin_password:
@@ -86,3 +119,4 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  loki-data:
