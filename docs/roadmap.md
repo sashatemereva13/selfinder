@@ -379,10 +379,50 @@ go well.
 
 ## Production-grade DevOps upgrade (Terraform, observability)
 
-**Status:** scoped, not started. Motivation: using this repo's real,
-already-working deploy pipeline as a DevOps-internship portfolio piece —
-the goal is to close the specific gaps that separate "I can deploy an
-app" from "I run infrastructure," not to add tooling for its own sake.
+**Status:** Phase 1 (Terraform) done as of 2026-08-18. Phases 2–4
+(Prometheus/Grafana, logging, alerting) still scoped, not started.
+Motivation: using this repo's real, already-working deploy pipeline as a
+DevOps-internship portfolio piece — the goal is to close the specific
+gaps that separate "I can deploy an app" from "I run infrastructure,"
+not to add tooling for its own sake.
+
+**Phase 1 complete (2026-08-18):** `terraform/` now manages the real
+Hostinger VPS (`srv1229561.hstgr.cloud`, id `1229561`) via `terraform
+import` — `terraform plan` confirms zero drift against the live server.
+`.github/workflows/terraform.yml` runs plan on every push/PR touching
+`terraform/**` and apply on merge to `main`, gated behind a GitHub
+environment required-reviewer approval (tested live — confirmed it
+actually blocks unattended apply). `terraform/nginx/` captures the real
+nginx vhost config and `ufw` firewall ruleset, both of which previously
+existed only on the box itself, invisible to version control. Also
+surfaced, during the SSH walkthrough that produced those captures, that
+`srv1229561.hstgr.cloud` is a shared, multi-tenant VPS (Selfinder
+alongside unrelated projects — Amber's full stack, SpotifyVisualiser,
+several other sites) — Phase 2's monitoring scope was deliberately
+widened to cover the whole host, not just Selfinder, once this became
+clear.
+
+**Real incident hit and fixed during Phase 1, worth keeping as part of
+the story:** the first working version left Terraform state purely
+local (`terraform.tfstate`, correctly `.gitignore`'d). That state was
+never shared with CI, so when `.github/workflows/terraform.yml`'s apply
+job ran on GitHub's runners, it had no record of the local `terraform
+import` and planned to *create a second VPS* instead of recognizing the
+existing one — caught by Hostinger's API rejecting `"KVM 2"` as an
+invalid plan ID for a fresh create, before any real provisioning
+happened. Root cause: local state only ever describes infrastructure to
+whichever single machine holds that file; once more than one runner
+(human or CI) applies against the same infrastructure, state has to live
+somewhere both can reach. Fixed by moving state to Terraform Cloud's free
+tier (org `amber_composition`, workspace `selfinder`) — `providers.tf`'s
+`cloud` block, `terraform login` locally, a `TFC_API_TOKEN` GitHub secret
+for CI. Confirmed fixed by re-running the same push through CI twice
+(including an accidental duplicate run) — both came back "No changes,"
+correctly recognizing the already-imported VPS instead of trying to
+recreate it. See `terraform/README.md` for the full writeup — this is
+exactly the kind of finding worth walking through in an interview, since
+"local state diverging from CI" is a real, common Terraform failure mode
+in actual teams, not a contrived exercise.
 
 **What already exists (2026-08-17 audit) and should NOT be re-built:**
 GitHub Actions CI/CD is real and working — `.github/workflows/
@@ -420,22 +460,19 @@ provisioned. Standing it up *through* Terraform is one coherent story
 installing Prometheus/Grafana first and only writing Terraform for the
 app server afterward repeats the exact gap this plan exists to close.
 
-**Phase 1 — Terraform for the VPS.** Scope kept deliberately small
-rather than exhaustive: the compute resource (droplet/instance) itself, a
-firewall/security-group resource matching whatever ports are actually
-open today (22, 80/443, the backend's `PORT`), the DNS A record, and a
-`cloud-init`/provisioner block that installs Docker + nginx and lays down
-the directory structure `deploy-backend.yml` already assumes
-(`/opt/selfinder/backend/`). Whichever provider hosts the current VPS
-determines the Terraform provider — confirm this before starting, it
-isn't recorded anywhere in-repo (see the deployment audit: no hosting
-provider name appears in any committed file, only "VPS" generically in
-`README.md`'s Deployment section). Existing nginx config is not in the
-repo either (§9 of the audit) — this phase should also commit that config
-under version control (e.g. `infra/nginx/selfinder.conf`) rather than
-leaving it as undocumented state on the box, since Terraform provisioning
-a server whose actual running config is invisible would only be a partial
-fix.
+**Phase 1 — Terraform for the VPS. DONE (2026-08-18).** Actual scope
+ended up matching the original plan closely, with two changes driven by
+what was actually found on the box: (1) the VPS is **imported**, not
+newly provisioned — it's a year-long prepaid Hostinger rental, no
+from-scratch create; (2) DNS and a Hostinger-level cloud firewall
+resource are **not yet added** — the live VPS reports
+`firewall_group_id: null`, meaning access control today is captured only
+as a checked-in `ufw` script (`terraform/nginx/apply-ufw-rules.sh`), not
+as a Terraform resource. Provider is `hostinger/hostinger` (official,
+confirmed to exist and work — this was genuinely uncertain going in,
+since Hostinger isn't one of the big three IaC-supported clouds). See
+`terraform/README.md` for the full setup/import procedure and the
+Terraform Cloud remote-state incident writeup above.
 
 **Phase 2 — Prometheus + Grafana.** Add `prom-client` to
 `backend/package.json`, expose `GET /metrics` next to the existing
