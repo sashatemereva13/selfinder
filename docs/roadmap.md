@@ -379,12 +379,12 @@ go well.
 
 ## Production-grade DevOps upgrade (Terraform, observability)
 
-**Status:** Phase 1 (Terraform) done as of 2026-08-18. Phases 2–4
-(Prometheus/Grafana, logging, alerting) still scoped, not started.
-Motivation: using this repo's real, already-working deploy pipeline as a
-DevOps-internship portfolio piece — the goal is to close the specific
-gaps that separate "I can deploy an app" from "I run infrastructure,"
-not to add tooling for its own sake.
+**Status:** Phases 1 (Terraform) and 2 (Prometheus/Grafana) done as of
+2026-08-18. Phases 3–4 (centralized logging, alerting) still scoped, not
+started. Motivation: using this repo's real, already-working deploy
+pipeline as a DevOps-internship portfolio piece — the goal is to close
+the specific gaps that separate "I can deploy an app" from "I run
+infrastructure," not to add tooling for its own sake.
 
 **Phase 1 complete (2026-08-18):** `terraform/` now manages the real
 Hostinger VPS (`srv1229561.hstgr.cloud`, id `1229561`) via `terraform
@@ -474,15 +474,48 @@ since Hostinger isn't one of the big three IaC-supported clouds). See
 `terraform/README.md` for the full setup/import procedure and the
 Terraform Cloud remote-state incident writeup above.
 
-**Phase 2 — Prometheus + Grafana.** Add `prom-client` to
-`backend/package.json`, expose `GET /metrics` next to the existing
-`GET /api/health` (same `backend/routes/health.js` area is the natural
-home, or a sibling route file). Run Prometheus + Grafana as additional
-containers on the same VPS (provisioned via Phase 1's Terraform/cloud-init,
-not hand-installed) scraping that endpoint. Minimum useful dashboard:
-request rate, p50/p95 latency, error rate by route, container
-up/restart count. This is the layer with the highest generic "DevOps
-interview" signal — expect to be asked to demo it live.
+**Phase 2 — Prometheus + Grafana. DONE (2026-08-18).** `backend/
+metrics.js` adds `prom-client` instrumentation (`GET /metrics`, request
+rate/latency histogram/error rate labeled by method/route/status_code),
+wired into `server.js` as Express middleware. New `monitoring/` directory
+(docker-compose) runs Prometheus, Grafana, `node-exporter`, and `cadvisor`
+— deliberately scoped to the **whole VPS**, not just Selfinder, since the
+box turned out (discovered mid-Phase-1) to be a single person's shared
+infrastructure across several projects (Selfinder, Amber, others), all
+owned/maintained by the same person. `node-exporter` covers host-level
+metrics, `cadvisor` covers every container's CPU/memory/restarts
+(including non-Selfinder projects) without needing source changes to
+those other projects — only Selfinder got real app-level instrumentation
+in this pass; the other projects' own `prom-client`-equivalent
+instrumentation is explicitly future work, one project at a time. Grafana
+auto-provisions both the Prometheus datasource and a "Selfinder Backend"
+dashboard (request rate, p50/p95 latency, error rate by route, container
+CPU across the VPS, host CPU/memory, restart counts) — confirmed live
+with real production data after deploy, no manual dashboard-building
+needed. See `monitoring/README.md` for the full setup and networking
+notes.
+
+**Real incident during Phase 2 rollout, found and fixed within minutes:**
+`deploy-backend.yml` was updated to attach the backend container to a new
+`monitoring` Docker network (so Prometheus can reach `/metrics` by
+container name), but the push that shipped this change also triggered an
+immediate backend redeploy — before the `monitoring` network had been
+created on the VPS (that only happens when `monitoring/docker-compose.yml`
+is brought up for the first time). The deploy's `docker run` correctly
+stopped/removed the old container, then failed to start the new one
+(`network monitoring not found`), leaving the backend briefly down.
+Root cause: the network's existence was an implicit dependency the
+deploy workflow assumed rather than one that was actually guaranteed —
+almost the same shape of mistake as the Phase 1 local-state incident
+(work correct in isolation, wrong about what the *other* system already
+has in place). Fixed by bringing up `monitoring/docker-compose.yml` on
+the VPS (which creates the network) and re-triggering the deploy via
+`workflow_dispatch`; verified via `docker ps`, a direct `/api/health`
+curl, and Prometheus's own `/api/v1/targets` reporting `selfinder-backend`
+as `"health":"up"`. Worth naming explicitly in the portfolio writeup: a
+real, short production incident, root-caused correctly, distinct from
+the Phase 1 incident even though both rhyme ("assumed shared state
+existed when it didn't yet").
 
 **Phase 3 — Centralized logging.** Loki + Promtail, paired naturally
 with the Grafana instance from Phase 2 (same UI, one pane of glass).
