@@ -379,11 +379,11 @@ go well.
 
 ## Production-grade DevOps upgrade (Terraform, observability)
 
-**Status:** Phases 1 (Terraform) and 2 (Prometheus/Grafana) done as of
-2026-08-18. Phases 3–4 (centralized logging, alerting) still scoped, not
-started. Motivation: using this repo's real, already-working deploy
-pipeline as a DevOps-internship portfolio piece — the goal is to close
-the specific gaps that separate "I can deploy an app" from "I run
+**Status:** Phases 1 (Terraform), 2 (Prometheus/Grafana), and 3
+(Loki/Promtail logging) done as of 2026-08-18. Phase 4 (alerting) still
+scoped, not started. Motivation: using this repo's real, already-working
+deploy pipeline as a DevOps-internship portfolio piece — the goal is to
+close the specific gaps that separate "I can deploy an app" from "I run
 infrastructure," not to add tooling for its own sake.
 
 **Phase 1 complete (2026-08-18):** `terraform/` now manages the real
@@ -517,14 +517,36 @@ real, short production incident, root-caused correctly, distinct from
 the Phase 1 incident even though both rhyme ("assumed shared state
 existed when it didn't yet").
 
-**Phase 3 — Centralized logging.** Loki + Promtail, paired naturally
-with the Grafana instance from Phase 2 (same UI, one pane of glass).
-Promtail tails the Docker container logs already being written by the
-existing `console.log`/`console.error` calls — no application code change
-required to get basic log aggregation working, though moving to a
-structured logger (pino/winston) would make the Loki queries meaningfully
-better and is worth doing as part of this phase rather than deferring
-again.
+**Phase 3 — Centralized logging. DONE (2026-08-18).** Loki + Promtail
+added to `monitoring/docker-compose.yml`, same whole-VPS scope as
+Phase 2's metrics — Promtail discovers every container via a read-only
+Docker socket mount and tails Docker's own JSON log files directly, no
+application code changes needed. Confirmed live in production: Loki has
+logs indexed and labeled by container name for all of Amber's stack
+(`amber-api-1`, `amber-coturn-1`, `amber-mongo-1`, `amber-redis-1`,
+`amber-socket-1`), the monitoring stack's own containers, and
+`selfinder-backend` — queried directly via `/loki/api/v1/label/
+container/values`. Deliberately no application code change in this
+phase (still plain `console.log`/`console.error`) — moving to a
+structured logger (pino/winston) would make Loki queries meaningfully
+better and is worth doing later, but wasn't required to get real,
+working log aggregation shipped now.
+
+One real bug found and fixed **before** touching the VPS, entirely
+during local `docker compose up` testing: a newer Loki version requires
+`compactor.delete_request_store` to be set whenever
+`compactor.retention_enabled: true` is set — without it Loki fails
+config validation and crash-loops on every start (`CONFIG ERROR: invalid
+compactor config`). Caught immediately via `docker compose ps` showing
+`Restarting (1)` and `docker logs monitoring-loki`, fixed in
+`monitoring/loki.yml`, re-verified locally, only then deployed to the
+real VPS — this is close to the opposite of the Phase 2 incident
+(there, an assumption went untested until production; here, the same
+kind of local-first testing habit caught a real config bug before it
+ever reached the shared VPS). Worth naming both incidents together in
+the portfolio writeup: same root discipline ("test locally before
+touching shared infra"), one time it was skipped and cost a brief
+outage, one time it was followed and prevented one.
 
 **Phase 4 — Alerting.** Alertmanager (or, cheaper: a Grafana alert rule
 posting to a Slack/Discord webhook) firing on the same class of signal
