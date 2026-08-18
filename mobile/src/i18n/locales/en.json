@@ -220,7 +220,16 @@
     "crossingPlaceholder": "What feels true now?",
     "crossingAnsweredLabel": "What you said",
     "crossingSendHint": "Kept, in your own words",
-    "loadingMore": "Still gathering the rest of your record…"
+    "loadingMore": "Still gathering the rest of your record…",
+    "tryAsTrueInvite": "Try it as if it's already true",
+    "tryAsTrueExplain": "An exercise, not a claim: write your wish again, as the feeling itself, present tense — not what you want, but what it would feel like if it were already so.",
+    "tryAsTruePlaceholder": "I feel…",
+    "tryAsTrueSave": "Set this",
+    "repeatWritingLabel": "Write it again",
+    "repeatWritingHint_one": "{{count}} of 5 — in your own hand each time, not copied.",
+    "repeatWritingHint_other": "{{count}} of 5 — in your own hand each time, not copied.",
+    "repeatWritingDone": "That's five. However it felt to write, it's yours.",
+    "repeatWritingRestart": "Do it again"
   },
   "saveMessage": {
     "keepThisMessage": "Keep this message",

@@ -224,7 +224,17 @@
     "crossingPlaceholder": "Что кажется правдой сейчас?",
     "crossingAnsweredLabel": "Что вы сказали",
     "crossingSendHint": "Сохранено, вашими словами",
-    "loadingMore": "Собираем остальную часть вашей истории…"
+    "loadingMore": "Собираем остальную часть вашей истории…",
+    "tryAsTrueInvite": "Попробовать так, будто это уже правда",
+    "tryAsTrueExplain": "Это упражнение, не утверждение: напишите своё желание заново — как само ощущение, в настоящем времени. Не то, чего вы хотите, а каково было бы, если бы это уже случилось.",
+    "tryAsTruePlaceholder": "Я чувствую…",
+    "tryAsTrueSave": "Сохранить это",
+    "repeatWritingLabel": "Напишите это ещё раз",
+    "repeatWritingHint_one": "{{count}} из 5 — каждый раз своей рукой, не копируя.",
+    "repeatWritingHint_few": "{{count}} из 5 — каждый раз своей рукой, не копируя.",
+    "repeatWritingHint_many": "{{count}} из 5 — каждый раз своей рукой, не копируя.",
+    "repeatWritingDone": "Вот и пять раз. Как бы это ни ощущалось — это ваше.",
+    "repeatWritingRestart": "Сделать ещё раз"
   },
   "saveMessage": {
     "keepThisMessage": "Оставить это сообщение себе",

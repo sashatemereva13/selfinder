@@ -9,11 +9,17 @@ import { useThemeColors } from '../theme/useThemeColors';
 // never a physics claim (same "structural metaphor, no attached belief
 // system" test docs/measure-experience-concept.md already applies to the
 // cultural-symbol boundary) — this is positioning language rendered, not
-// a scientific diagram. Thin single-stroke wireframe, no fill, no
-// gradient — matches AuraField.tsx/VibrationSpectrum.tsx's own
-// standing convention (strokeWidth: 1, no fill) exactly, so this reads
-// as the same family of shape as everything else Selfinder already
-// draws, not a new visual language.
+// a scientific diagram. The cone's own lines/rims stay thin single-stroke
+// wireframe, no fill, no gradient — matches AuraField.tsx/
+// VibrationSpectrum.tsx's own standing convention (strokeWidth: 1, no
+// fill). The past cone's individual DOTS are the one deliberate
+// exception (2026-08-18): each reading point takes that reading's own
+// real level color, the same "many real colors on one screen because
+// it's showing many readings' worth of history, not one moment" license
+// ArcKaleidoscope already has (see docs/design/aesthetic.md) — not a
+// regression of the "one color per screen" rule, the same exception
+// class as the kaleidoscope, now extended to this page since it merged
+// with the facts page and inherited its "about the whole record" job.
 //
 // Deliberately DIFFERENT from DepthsSpiral's own single, one-directional
 // cone (wide base at the aura, narrow apex at Measure — the walk through
@@ -35,6 +41,14 @@ export interface TimeConePoint {
   // jump position across re-renders.
   angle: number;
   label?: string;
+  // "rgb(r,g,b)" for a reading point (its own real level color, same
+  // useLevelColors() map ArcKaleidoscope/SphereArc/VibrationSpectrum all
+  // draw from) or a wish point (the neutral accent — a wish has no
+  // vibration level, so it never gets a level color; see colors.accent.
+  // ivoryRgb). Falls back to colors.text.secondary (the past cone's
+  // original fixed color) if omitted, so an older caller that hasn't been
+  // updated to pass color still renders correctly.
+  colorRgb?: string;
 }
 
 // Two cones, mirrored — TOP cone is the future (open, sparse, honest —
@@ -165,7 +179,8 @@ export function TimeCone({ width, height, pastPoints, futurePoints }: TimeConePr
 
         {pastPoints.map((p) => {
           const pos = timeConePointPosition(p, geometry, 'past');
-          return <SvgCircle key={p.id} cx={pos.x} cy={pos.y} r={2.2} fill={colors.text.secondary} />;
+          const fill = p.colorRgb ? `rgb(${p.colorRgb})` : colors.text.secondary;
+          return <SvgCircle key={p.id} cx={pos.x} cy={pos.y} r={2.2} fill={fill} />;
         })}
         {futurePoints.map((p) => {
           const pos = timeConePointPosition(p, geometry, 'future');

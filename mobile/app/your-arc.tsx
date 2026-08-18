@@ -152,6 +152,24 @@ export default function YourArcScreen() {
   // yet or unavailable," in which case the Cover page falls back to the
   // original static copy rather than showing nothing.
   const [arcLine, setArcLine] = useState<string | null>(null);
+  // "Try it as if it's already true" (2026-08-18) — an explicitly-named
+  // EXERCISE, not the app asserting anything as fact: the user writes
+  // their OWN present-tense, feeling-based version of their wish (e.g.
+  // "I feel calm and present with my family," never generated or
+  // rephrased by the app — see the copy in tryAsTrueExplain for the
+  // "trying it on, not claiming it" framing this whole feature depends
+  // on to stay compatible with RULES.md's anti-cosmology rule). Fully
+  // ephemeral by design (2026-08-18 decision): none of this — the
+  // present-tense line, the repeat count, anything written — is sent to
+  // the server or persisted across a visit. Resets whenever the active
+  // wish itself changes, since the practice is scoped to whichever wish
+  // is live right now.
+  const [tryAsTrueOpen, setTryAsTrueOpen] = useState(false);
+  const [presentTenseInput, setPresentTenseInput] = useState('');
+  const [presentTenseLine, setPresentTenseLine] = useState<string | null>(null);
+  const REPEAT_WRITING_TARGET = 5;
+  const [repeatWritingCount, setRepeatWritingCount] = useState(0);
+  const [repeatWritingInput, setRepeatWritingInput] = useState('');
 
   useEffect(() => {
     if (!session) return;
@@ -235,6 +253,18 @@ export default function YourArcScreen() {
     const task = InteractionManager.runAfterInteractions(() => setFirstPaintReady(true));
     return () => task.cancel();
   }, []);
+
+  // "Try it as if it's already true" is scoped to whichever wish is
+  // currently active — changing the wish (handleSubmitNewWish) should
+  // never leave a stale present-tense line or repeat count sitting around
+  // for a wish that's no longer live.
+  useEffect(() => {
+    setTryAsTrueOpen(false);
+    setPresentTenseInput('');
+    setPresentTenseLine(null);
+    setRepeatWritingCount(0);
+    setRepeatWritingInput('');
+  }, [activeWish?.id]);
 
   // Generated on demand (tap "Ask [philosopher]"), not automatically on
   // page load — even though eligibility is otherwise met, the Groq call
@@ -333,6 +363,28 @@ export default function YourArcScreen() {
     } finally {
       setNewWishSubmitting(false);
     }
+  };
+
+  // Locks in the user's own present-tense line — no moderation call here
+  // (unlike the wish itself), since this text is never sent to the
+  // server or stored anywhere; it only ever lives in this screen's own
+  // state for as long as the person is looking at it. Purely their own
+  // words, exactly as they typed them — the app never rephrases this.
+  const handleSetPresentTenseLine = () => {
+    const text = presentTenseInput.trim();
+    if (!text) return;
+    setPresentTenseLine(text);
+    setPresentTenseInput('');
+  };
+
+  // Each submission just advances the count and clears the input for the
+  // next pass — nothing about WHAT was typed is inspected, compared, or
+  // kept; only that five separate, real keystroke-by-keystroke passes
+  // happened. No fail state, no timer, nothing that could read as a test.
+  const handleSubmitRepeatWriting = () => {
+    if (!repeatWritingInput.trim()) return;
+    setRepeatWritingCount((c) => Math.min(REPEAT_WRITING_TARGET, c + 1));
+    setRepeatWritingInput('');
   };
 
   const points = readingLog.map((e) => e.score);
@@ -435,16 +487,26 @@ export default function YourArcScreen() {
       id: `reading-${entry.ts}`,
       depth: Math.min(1, (now - entry.ts) / span),
       angle: hashAngle(`reading-${entry.ts}`),
+      colorRgb: levelColors[entry.levelSlug],
     }));
+    // Wishes have no vibration level, so they never get a level color —
+    // the neutral accent (ivoryRgb, the same pre-reading fallback used
+    // everywhere else) marks them as a different KIND of past point from
+    // a reading, not a missing/default color.
     const pastFromWishes: TimeConePoint[] = allWishes
       .filter((w) => w.id !== activeWish?.id)
       .map((w) => {
         const ts = new Date(w.savedAt).getTime();
-        return { id: `wish-${w.id}`, depth: Math.min(1, (now - ts) / span), angle: hashAngle(`wish-${w.id}`) };
+        return {
+          id: `wish-${w.id}`,
+          depth: Math.min(1, (now - ts) / span),
+          angle: hashAngle(`wish-${w.id}`),
+          colorRgb: colors.accent.ivoryRgb,
+        };
       });
     const futurePoints: TimeConePoint[] = activeWish ? [{ id: `active-wish-${activeWish.id}`, depth: 1, angle: 0.25 }] : [];
     return { pastPoints: [...pastFromReadings, ...pastFromWishes], futurePoints };
-  }, [readingLog, allWishes, activeWish]);
+  }, [readingLog, allWishes, activeWish, levelColors, colors.accent.ivoryRgb]);
 
   // Building the page list explicitly (not conditionally spread inline in
   // JSX) so PagedScrollView's dot count and the pages actually shown never
@@ -477,10 +539,18 @@ export default function YourArcScreen() {
     </ScrollView>
   );
 
-  // Page 2 — Now. The time cone alone, given real room — the present
-  // moment in light of the person's own past and future (RULES.md,
-  // Product/positioning, 2026-08-14). Static for now, deliberately — see
+  // Page 2 — Now. The time cone, given real room — the present moment in
+  // light of the person's own past and future (RULES.md, Product/
+  // positioning, 2026-08-14). Static for now, deliberately — see
   // TimeCone.tsx's own comment on why motion/interaction is a later pass.
+  // Merged with the former standalone "This month" facts page (2026-08-18
+  // review: "let's move this page, combine it with 'this month'... every
+  // dot in the cone can be colored in the reading's color") — the cone's
+  // own past-point dots now carry each reading's real level color (see
+  // timeConeGeometry above), so this page and the facts page were both
+  // "about the shape of the whole record," not two separate ideas
+  // sharing a swipe slot by convenience. Facts sit below the cone, in
+  // place of the old static introLine.
   if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
     pages.push(
       <ScrollView key="cone" contentContainerStyle={styles.pageCentered}>
@@ -496,6 +566,36 @@ export default function YourArcScreen() {
         <Text style={styles.introLine}>
           {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
         </Text>
+        {facts.length > 0 && (
+          <View style={styles.factsSection}>
+            {facts.map((fact) => {
+              if (fact.key === 'steadiest') {
+                const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
+                const dotColor = level ? levelColors[level.slug] : undefined;
+                return (
+                  <View key={fact.key} style={styles.factRow}>
+                    <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
+                    <Text style={styles.factLine}>
+                      {t('yourArc.factSteadiest', {
+                        level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
+                      })}
+                    </Text>
+                  </View>
+                );
+              }
+              const i18nKey =
+                fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
+                : fact.key === 'streak' ? 'yourArc.factStreak'
+                : 'yourArc.factAllTime';
+              return (
+                <View key={fact.key} style={styles.factRow}>
+                  <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                  <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
+                </View>
+              );
+            })}
+          </View>
+        )}
       </ScrollView>
     );
   }
@@ -545,6 +645,95 @@ export default function YourArcScreen() {
         <Text style={styles.wishGroundRuleNote}>{t('measure.wishGroundRule')}</Text>
         {newWishRetryOffered && <Text style={styles.wishHint}>{t('measure.wishRetryNote')}</Text>}
       </View>
+
+      {/* "Try it as if it's already true" (2026-08-18) — an explicitly-
+          named EXERCISE (see tryAsTrueExplain's copy), not the app
+          asserting anything as fact. Three states: closed (a quiet
+          invite, same row register as the Crossing invite below),
+          setting the present-tense line (the user's own words, once),
+          then the repeat-writing pass itself (5 fresh, typed passes,
+          no score/streak/judgment on how it went — see
+          handleSubmitRepeatWriting's own comment). Only offered once a
+          wish exists — this is explicitly about THIS wish, not a
+          generic affirmation tool. */}
+      {activeWish && !wishComposerOpen && (
+        <View style={styles.crossingSection}>
+          {!tryAsTrueOpen ? (
+            <Pressable style={styles.crossingInviteRow} onPress={() => setTryAsTrueOpen(true)}>
+              <Text style={styles.crossingInviteText}>{t('yourArc.tryAsTrueInvite')}</Text>
+            </Pressable>
+          ) : !presentTenseLine ? (
+            <>
+              <Text style={styles.wishHint}>{t('yourArc.tryAsTrueExplain')}</Text>
+              <View style={styles.crossingInputRow}>
+                <TextInput
+                  style={styles.crossingInput}
+                  value={presentTenseInput}
+                  onChangeText={setPresentTenseInput}
+                  placeholder={t('yourArc.tryAsTruePlaceholder')}
+                  placeholderTextColor={colors.text.muted}
+                  multiline
+                />
+                <Pressable
+                  style={[
+                    styles.crossingSendButton,
+                    { backgroundColor: `rgb(${accentRgb})`, opacity: presentTenseInput.trim() ? 1 : 0.4 },
+                  ]}
+                  onPress={handleSetPresentTenseLine}
+                  disabled={!presentTenseInput.trim()}
+                >
+                  <Text style={styles.crossingSendButtonText}>↑</Text>
+                </Pressable>
+              </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.crossingHeading}>{t('yourArc.repeatWritingLabel')}</Text>
+              <Text style={styles.crossingQuestion}>{presentTenseLine}</Text>
+              {repeatWritingCount >= REPEAT_WRITING_TARGET ? (
+                <>
+                  <Text style={styles.wishHint}>{t('yourArc.repeatWritingDone')}</Text>
+                  <Pressable
+                    style={styles.wishRow}
+                    onPress={() => {
+                      setRepeatWritingCount(0);
+                      setPresentTenseLine(null);
+                    }}
+                  >
+                    <Text style={styles.wishRowText}>{t('yourArc.repeatWritingRestart')}</Text>
+                  </Pressable>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.wishHint}>
+                    {t('yourArc.repeatWritingHint', { count: repeatWritingCount })}
+                  </Text>
+                  <View style={styles.crossingInputRow}>
+                    <TextInput
+                      style={styles.crossingInput}
+                      value={repeatWritingInput}
+                      onChangeText={setRepeatWritingInput}
+                      placeholder={presentTenseLine}
+                      placeholderTextColor={colors.text.muted}
+                      multiline
+                    />
+                    <Pressable
+                      style={[
+                        styles.crossingSendButton,
+                        { backgroundColor: `rgb(${accentRgb})`, opacity: repeatWritingInput.trim() ? 1 : 0.4 },
+                      ]}
+                      onPress={handleSubmitRepeatWriting}
+                      disabled={!repeatWritingInput.trim()}
+                    >
+                      <Text style={styles.crossingSendButtonText}>↑</Text>
+                    </Pressable>
+                  </View>
+                </>
+              )}
+            </>
+          )}
+        </View>
+      )}
 
       {/* The Crossing (docs/session-result-concept.md Phase 4 / the
           2026-08-13 "Crossing" design) — one philosopher-voiced question
@@ -637,48 +826,11 @@ export default function YourArcScreen() {
     );
   }
 
-  // Page 5 — This month. Real, true facts about this person's OWN record
-  // — never an interpretation of what a pattern means. Each fact gets its
-  // own small marker, same restrained "a dot, colored by what's actually
-  // true" language SphereArc's own trace dots already use.
-  if (facts.length > 0) {
-    pages.push(
-      <ScrollView key="facts" contentContainerStyle={styles.pageContent}>
-        <Text style={styles.kicker}>{t('yourArc.factsKicker')}</Text>
-        <View style={styles.factsSection}>
-          {facts.map((fact) => {
-            if (fact.key === 'steadiest') {
-              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
-              const dotColor = level ? levelColors[level.slug] : undefined;
-              return (
-                <View key={fact.key} style={styles.factRow}>
-                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
-                  <Text style={styles.factLine}>
-                    {t('yourArc.factSteadiest', {
-                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
-                    })}
-                  </Text>
-                </View>
-              );
-            }
-            const i18nKey =
-              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
-              : fact.key === 'streak' ? 'yourArc.factStreak'
-              : 'yourArc.factAllTime';
-            return (
-              <View key={fact.key} style={styles.factRow}>
-                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
-                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
-              </View>
-            );
-          })}
-        </View>
-      </ScrollView>
-    );
-  }
+  // (Former Page 5 — "This month" facts page — merged into the Now/Cone
+  // page above, 2026-08-18. See that page's own comment.)
 
-  // Page 6 — Every walk. The archive: the full sparkline, tap any point to
-  // open a dedicated detail page (page 7, inserted only once something's
+  // Page 5 — Every walk. The archive: the full sparkline, tap any point to
+  // open a dedicated detail page (page 6, inserted only once something's
   // selected) — "the graph becomes one navigation method, rather than the
   // definition of Your Arc," not the page's own headline anymore.
   pages.push(
@@ -736,7 +888,7 @@ export default function YourArcScreen() {
     </ScrollView>
   );
 
-  // Page 7 — Body, mind, heart, spirit. The sphere history, its own page
+  // Page 6 — Body, mind, heart, spirit. The sphere history, its own page
   // rather than tacked onto the sparkline's — a genuinely separate kind
   // of record (four traces, not one).
   if (sphereHistory) {
@@ -747,9 +899,10 @@ export default function YourArcScreen() {
     );
   }
 
-  // Page 8 — the tapped point's own detail, inserted dynamically only once
-  // something's selected on page 6's sparkline (2026-08-14 decision: "its
-  // own dedicated page, inserted after Every Walk," not a modal/overlay).
+  // Page 7 — the tapped point's own detail, inserted dynamically only once
+  // something's selected on the Every Walk sparkline (2026-08-14 decision:
+  // "its own dedicated page, inserted after Every Walk," not a modal/
+  // overlay).
   if (selected) {
     pages.push(
       <ScrollView key="detail" contentContainerStyle={styles.pageContent}>
@@ -962,7 +1115,15 @@ function makeStyles(colors: Colors) {
   // own line-height alone) is what sets this apart from a paragraph —
   // each fact now reads as its own noticed thing, not a continuation of
   // the sentence above it.
+  // alignSelf: 'flex-start' — needed once this section moved onto the Now
+  // page (2026-08-18 merge), whose pageCentered container horizontally
+  // centers its children by default; without this the facts block (and
+  // each left-aligned row inside it) would float centered instead of
+  // reading as a continuation of introLine's own left-aligned column
+  // directly above it. The original standalone facts page used
+  // pageContent (already left-anchored), so this wasn't needed there.
   factsSection: {
+    alignSelf: 'flex-start',
     marginTop: spacing[3],
     marginBottom: spacing[3],
     gap: spacing[3],
