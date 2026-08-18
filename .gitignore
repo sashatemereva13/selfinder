@@ -73,3 +73,8 @@ terraform/*.tfvars
 terraform/*.tfvars.json
 terraform/crash.log
 terraform/crash.*.log
+
+# --------------------
+# Monitoring (Prometheus/Grafana)
+# --------------------
+monitoring/secrets/

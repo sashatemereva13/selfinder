@@ -1,0 +1,36 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Selfinder backend's own app-level metrics (request rate, latency,
+  # error rate by route) — see backend/metrics.js. Uses the Docker
+  # network alias `selfinder-backend`, not localhost/an IP, so this
+  # keeps working across container restarts/redeploys.
+  - job_name: "selfinder-backend"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["selfinder-backend:3002"]
+        labels:
+          project: selfinder
+
+  # Whole-VPS host metrics (CPU, memory, disk, network) — covers every
+  # project on this box, not just Selfinder, since the host is shared.
+  - job_name: "node-exporter"
+    static_configs:
+      - targets: ["node-exporter:9100"]
+        labels:
+          project: infra
+
+  # Per-container metrics (CPU/mem/restart count) for every container
+  # on the VPS, including Amber's stack and other projects — cAdvisor
+  # reads the Docker daemon directly, no per-app code changes needed.
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+        labels:
+          project: infra
+
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
