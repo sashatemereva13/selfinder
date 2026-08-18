@@ -374,3 +374,98 @@ palette pass only, kept structurally as-is per the decision above. Don't
 attempt this as a single big-bang PR — the surface area (12+ routed
 pages, 3D scenes, no existing shared primitives) is too large for that to
 go well.
+
+---
+
+## Production-grade DevOps upgrade (Terraform, observability)
+
+**Status:** scoped, not started. Motivation: using this repo's real,
+already-working deploy pipeline as a DevOps-internship portfolio piece —
+the goal is to close the specific gaps that separate "I can deploy an
+app" from "I run infrastructure," not to add tooling for its own sake.
+
+**What already exists (2026-08-17 audit) and should NOT be re-built:**
+GitHub Actions CI/CD is real and working — `.github/workflows/
+deploy-backend.yml` (test gate → Docker build → push to GHCR → SSH to VPS
+→ container swap → `/api/health` smoke check that fails the deploy on a
+bad health response) and `deploy-backend.yml`'s frontend counterpart,
+`deploy-frontend.yml` (test → build → rsync to the same VPS's nginx).
+`backend/routes/health.js` already exposes `GET /api/health`. Renovate is
+already wired for dependency updates (`.github/workflows/renovate.yml`).
+This layer is the strong part of the story already — the plan below is
+additive, not a rewrite of the pipeline.
+
+**The three gaps that actually matter, in priority order:**
+
+1. **No infrastructure as code.** The VPS itself — droplet/instance,
+   firewall rules, DNS record, Docker + nginx installed on it, the
+   standing `/opt/selfinder/backend/.env` the deploy workflow assumes
+   exists — lives nowhere in version control. If the box died, nobody
+   could reproducibly rebuild it from this repo alone. This is the
+   single highest-signal gap for a DevOps application specifically,
+   since IaC is often the literal subject of the role.
+2. **No observability beyond one deploy-time health check.** No metrics,
+   no dashboards, no error tracking, no alerting, no aggregated logs — an
+   outage would surface via a user complaint, not a page. `console.log`/
+   `console.error` (18 call sites in `backend/`) go nowhere durable.
+3. **No redundancy in the deploy itself.** `deploy-backend.yml` stops and
+   removes the running container before starting the new one — every
+   backend deploy has a real (if brief) downtime window. Lower priority
+   than 1–2, but worth naming as a known limitation.
+
+**Recommended sequencing — Terraform before Prometheus/Grafana/Loki, not
+the reverse:** the monitoring stack itself needs to run somewhere
+provisioned. Standing it up *through* Terraform is one coherent story
+("infrastructure, including its own observability, is code"); hand-
+installing Prometheus/Grafana first and only writing Terraform for the
+app server afterward repeats the exact gap this plan exists to close.
+
+**Phase 1 — Terraform for the VPS.** Scope kept deliberately small
+rather than exhaustive: the compute resource (droplet/instance) itself, a
+firewall/security-group resource matching whatever ports are actually
+open today (22, 80/443, the backend's `PORT`), the DNS A record, and a
+`cloud-init`/provisioner block that installs Docker + nginx and lays down
+the directory structure `deploy-backend.yml` already assumes
+(`/opt/selfinder/backend/`). Whichever provider hosts the current VPS
+determines the Terraform provider — confirm this before starting, it
+isn't recorded anywhere in-repo (see the deployment audit: no hosting
+provider name appears in any committed file, only "VPS" generically in
+`README.md`'s Deployment section). Existing nginx config is not in the
+repo either (§9 of the audit) — this phase should also commit that config
+under version control (e.g. `infra/nginx/selfinder.conf`) rather than
+leaving it as undocumented state on the box, since Terraform provisioning
+a server whose actual running config is invisible would only be a partial
+fix.
+
+**Phase 2 — Prometheus + Grafana.** Add `prom-client` to
+`backend/package.json`, expose `GET /metrics` next to the existing
+`GET /api/health` (same `backend/routes/health.js` area is the natural
+home, or a sibling route file). Run Prometheus + Grafana as additional
+containers on the same VPS (provisioned via Phase 1's Terraform/cloud-init,
+not hand-installed) scraping that endpoint. Minimum useful dashboard:
+request rate, p50/p95 latency, error rate by route, container
+up/restart count. This is the layer with the highest generic "DevOps
+interview" signal — expect to be asked to demo it live.
+
+**Phase 3 — Centralized logging.** Loki + Promtail, paired naturally
+with the Grafana instance from Phase 2 (same UI, one pane of glass).
+Promtail tails the Docker container logs already being written by the
+existing `console.log`/`console.error` calls — no application code change
+required to get basic log aggregation working, though moving to a
+structured logger (pino/winston) would make the Loki queries meaningfully
+better and is worth doing as part of this phase rather than deferring
+again.
+
+**Phase 4 — Alerting.** Alertmanager (or, cheaper: a Grafana alert rule
+posting to a Slack/Discord webhook) firing on the same class of signal
+`deploy-backend.yml` already checks once at deploy time — except
+continuously. This is the step that turns "I have dashboards" into "I'd
+actually know about an incident before a user tells me," which is the
+real point of layers 2–3 existing at all.
+
+**Deliberately out of scope for this plan:** Kubernetes — a single VPS
+running two Docker containers doesn't need an orchestrator, and adding
+one here would read as resume-driven rather than solving a real problem
+(a distinction interviewers tend to probe for directly). Blue/green or
+rolling deploys to close gap 3 above are a reasonable stretch addition
+once phases 1–2 are done, not before.
