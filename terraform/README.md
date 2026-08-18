@@ -10,15 +10,40 @@ Provider: [`hostinger/hostinger`](https://registry.terraform.io/providers/hostin
 (official, first-party, pre-1.0 as of writing — see the caveats section
 in the root `docs/roadmap.md` DevOps plan entry).
 
+## State: remote, in Terraform Cloud
+
+State is **not local**. `providers.tf` declares a `cloud` block
+(organization `amber_composition`, workspace `selfinder`) — both your
+laptop and CI read/write the same real state via Terraform Cloud's free
+tier. This was a real gotcha hit in practice: a first pass left state
+purely local (`.gitignore`'d, correctly never committed), which meant
+GitHub Actions' `terraform apply` had no record of the `terraform
+import` done locally and attempted to *create a second VPS* on push —
+caught by an "Invalid plan ID" error from Hostinger before anything was
+actually provisioned, but a real near-miss worth knowing about if this
+pattern is reused elsewhere. Never let Terraform state exist only on one
+machine once more than one runner (human or CI) applies against the same
+infrastructure.
+
 ## Setup
 
-1. Generate an API token at `hpanel.hostinger.com/profile/api`.
-2. Export it — **never** put it in a `.tfvars` file that could be
-   committed, and never paste it anywhere outside your own shell:
-   ```bash
-   export TF_VAR_hostinger_api_token="<your token>"
-   ```
-3. `terraform init`
+1. Generate a Hostinger API token at `hpanel.hostinger.com/profile/api`.
+2. `terraform login` (stores a Terraform Cloud token in
+   `~/.terraform.d/credentials.tfrc.json`, outside the repo).
+3. In the Terraform Cloud workspace (`amber_composition` org →
+   `selfinder` workspace → Variables), add `hostinger_api_token` as a
+   **Terraform variable**, marked **Sensitive**. Remote plan/apply runs
+   happen on Terraform Cloud's own runners, which never see your local
+   shell — a local `export TF_VAR_hostinger_api_token=...` only matters
+   if you deliberately switch the workspace to local execution mode,
+   which this setup does not use.
+4. `terraform init`
+
+GitHub Actions authenticates to Terraform Cloud via a separate
+`TFC_API_TOKEN` repo secret (passed to `hashicorp/setup-terraform`'s
+`cli_config_credentials_token`) — this is a Terraform Cloud token, not
+the Hostinger one, and is what lets CI trigger runs against the same
+cloud workspace your laptop uses.
 
 ## Importing the existing VPS
 

@@ -1,6 +1,14 @@
 terraform {
   required_version = ">= 1.5.0"
 
+  cloud {
+    organization = "amber_composition"
+
+    workspaces {
+      name = "selfinder"
+    }
+  }
+
   required_providers {
     hostinger = {
       source  = "hostinger/hostinger"

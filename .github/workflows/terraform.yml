@@ -21,9 +21,6 @@ concurrency:
   group: terraform-production
   cancel-in-progress: false
 
-env:
-  TF_VAR_hostinger_api_token: ${{ secrets.HOSTINGER_API_TOKEN }}
-
 defaults:
   run:
     working-directory: terraform
@@ -42,6 +39,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.15.8"
+          cli_config_credentials_token: ${{ secrets.TFC_API_TOKEN }}
 
       - name: terraform init
         run: terraform init
@@ -89,6 +87,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.15.8"
+          cli_config_credentials_token: ${{ secrets.TFC_API_TOKEN }}
 
       - name: terraform init
         run: terraform init
