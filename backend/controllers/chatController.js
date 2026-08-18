@@ -27,10 +27,19 @@ const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // hidden reasoning and returned empty content with finish_reason: "length"
 // on every call, confirmed live 2026-08-17 (this silently broke every
 // Measure reading and Crossing reflection after the model swap above).
+// llama-3.1-8b-instant and mixtral-8x7b-32768 (formerly models[1]/[2]) were
+// also removed from Groq at some point after 2026-08-04 (confirmed via
+// groq.models.list() on 2026-08-17: both 404 as model_not_found, and
+// neither appears in the current model list at all) — a second, separate
+// decommission from llama-3.3-70b-versatile above, discovered because
+// Guide (postChat, models[1]) kept failing live even after the models[0]
+// fix, while Measure (models[0]) worked. models[1] is now
+// openai/gpt-oss-20b, the lighter sibling of models[0]'s gpt-oss-120b;
+// models[2] (mixtral) was never actually referenced by any call site in
+// this file, so it's dropped rather than replaced.
 const models = [
   "openai/gpt-oss-120b",
-  "llama-3.1-8b-instant",
-  "mixtral-8x7b-32768",
+  "openai/gpt-oss-20b",
 ];
 
 // Qwen (Alibaba Cloud), hosted on Groq alongside the Llama models above —
@@ -107,7 +116,7 @@ function resolveModelParams(locale, fallbackModel, fallbackMaxTokens) {
   return {
     model: fallbackModel,
     max_tokens: fallbackMaxTokens,
-    ...(fallbackModel === "openai/gpt-oss-120b" ? { reasoning_effort: GPT_OSS_REASONING_EFFORT } : {}),
+    ...(fallbackModel.startsWith("openai/gpt-oss-") ? { reasoning_effort: GPT_OSS_REASONING_EFFORT } : {}),
   };
 }
 
@@ -327,8 +336,9 @@ export async function postBadgeComment(req, res) {
   try {
     const response = await groq.chat.completions.create({
       model: models[1],
-      max_tokens: 80,
+      max_tokens: 150,
       temperature: 0.9,
+      reasoning_effort: GPT_OSS_REASONING_EFFORT,
       messages: [
         { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
         { role: "user", content: prompt },
@@ -406,6 +416,7 @@ export async function postJourneyLine(req, res) {
       model: models[1],
       max_tokens: 220,
       temperature: 0.85,
+      reasoning_effort: GPT_OSS_REASONING_EFFORT,
       messages: [
         { role: "system", content: UNIVERSAL_RULES + "\n\n" + systemPrompt },
         { role: "user", content: prompt },
@@ -472,7 +483,7 @@ Either way, stay in character, keep it under 60 words, ground your reply only in
 
   try {
     const response = await groq.chat.completions.create({
-      ...resolveModelParams(locale, models[1], 200),
+      ...resolveModelParams(locale, models[1], 350),
       temperature: 0.5,
       messages: [
         { role: "system", content: localizedSystemPrompt(UNIVERSAL_RULES + "\n\n" + systemPrompt, locale) },

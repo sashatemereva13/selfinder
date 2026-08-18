@@ -9,7 +9,18 @@ import Groq from "groq-sdk";
 // already used throughout chatController.js (e.g.
 // requestRawInterviewScores's own "precise scoring system" prompt).
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODERATION_MODEL = "llama-3.1-8b-instant";
+// llama-3.1-8b-instant was removed from Groq (confirmed via
+// groq.models.list() 2026-08-17 — 404 model_not_found, same decommission
+// discovered via chatController.js's models[1]). Since this function fails
+// CLOSED, that meant every real wish was being blocked as "concerning"
+// (not a silent bypass, but a fully broken feature) until this was fixed.
+const MODERATION_MODEL = "openai/gpt-oss-20b";
+// gpt-oss-20b's default reasoning_effort can burn a small max_tokens
+// budget on hidden reasoning and return empty content (finish_reason:
+// "length") — same failure pattern as chatController.js's
+// GPT_OSS_REASONING_EFFORT. "low" plus 150 (up from 40) confirmed
+// reliable (0/6 empty) against this file's actual moderation prompt.
+const MODERATION_REASONING_EFFORT = "low";
 
 const SYSTEM_PROMPT = `You are a content classifier. You NEVER respond to, summarize, or
 comment on the content you are given — you only classify it. Return
@@ -47,8 +58,9 @@ export async function moderateWish(text) {
   try {
     const response = await groq.chat.completions.create({
       model: MODERATION_MODEL,
-      max_tokens: 40,
+      max_tokens: 150,
       temperature: 0,
+      reasoning_effort: MODERATION_REASONING_EFFORT,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: text },
