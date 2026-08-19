@@ -13,7 +13,7 @@ import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
 import { getConversationForMeasureResult, SavedConversation } from '../src/api/conversation';
 import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
-import { listMyWishes, markWishResurfaced, saveWishIfConsented, SavedWish } from '../src/api/wish';
+import { listMyWishes, markWishResurfaced, saveWishIfConsented, markWishFulfilled, unmarkWishFulfilled, SavedWish } from '../src/api/wish';
 import { routeToCrisisSupport } from '../src/utils/routeToCrisisSupport';
 import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
 import { getArcLine } from '../src/api/arcLine';
@@ -58,6 +58,13 @@ const KALEIDOSCOPE_SIZE = 300;
 // vertical room (see TimeCone.tsx's CONE_HEIGHT_RATIO) more than it
 // needs width, unlike the kaleidoscope's square footprint.
 const CONE_SIZE = 260;
+// Upper bound on how long the first-paint loading state can show before
+// firstPaintReady flips on its own — see that effect's own comment for
+// why this exists (InteractionManager.runAfterInteractions has no timeout
+// of its own). 900ms is well past the "clears in a frame or two" this
+// was designed for, so it should never actually fire under normal
+// conditions — it's a backstop, not the primary mechanism.
+const FIRST_PAINT_FALLBACK_MS = 900;
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -112,6 +119,12 @@ export default function YourArcScreen() {
   // with this mount, same reasoning as the richDataLoading effect above.
   const [firstPaintReady, setFirstPaintReady] = useState(false);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
+  // Set by handleConePointPress — see PagedScrollView's own jumpTo prop
+  // for why this is a token (a value that changes per tap), not a plain
+  // boolean/index: the detail page always lands in the same page slot,
+  // so two separate cone taps can resolve to an identical target index,
+  // and only a per-request token reliably tells them apart.
+  const [coneJumpToken, setConeJumpToken] = useState<number | null>(null);
   const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
   // The one wish eligible for "pure resurfacing" this visit (see
@@ -131,6 +144,10 @@ export default function YourArcScreen() {
   // exists and hasn't already been crossed (see crossingEligibility.ts).
   // null throughout means "not eligible this visit," not "loading."
   const [activeWish, setActiveWish] = useState<SavedWish | null>(null);
+  // Which wish is mid-tick right now (fulfilling or un-fulfilling) —
+  // disables that row's own button while the request is in flight,
+  // without blocking every other row on the page.
+  const [wishFulfillPending, setWishFulfillPending] = useState<string | null>(null);
   const [crossing, setCrossing] = useState<SavedCrossing | null>(null);
   const [crossingLoading, setCrossingLoading] = useState(false);
   const [crossingAnswerInput, setCrossingAnswerInput] = useState('');
@@ -249,9 +266,32 @@ export default function YourArcScreen() {
     };
   }, [session, philosopher]);
 
+  // FIRST_PAINT_FALLBACK_MS guards against InteractionManager's own
+  // interaction queue taking far longer than expected to clear — reported
+  // live (2026-08-19): the loading state (ArcKaleidoscopeLoading) stayed
+  // on screen long enough to screenshot, well past the "flips almost
+  // immediately" this was designed for, on a device where the page
+  // eventually did load correctly afterward. runAfterInteractions has no
+  // own timeout — if some OTHER interaction handle (e.g. from the
+  // navigation transition itself) doesn't clear promptly, this callback
+  // can be delayed indefinitely with nothing in this file to blame it on.
+  // A plain setTimeout fallback bounds the wait so a person is never
+  // stuck looking at the loading state for an unbounded amount of time
+  // regardless of the actual root cause.
   useEffect(() => {
-    const task = InteractionManager.runAfterInteractions(() => setFirstPaintReady(true));
-    return () => task.cancel();
+    let done = false;
+    const finish = () => {
+      if (!done) {
+        done = true;
+        setFirstPaintReady(true);
+      }
+    };
+    const task = InteractionManager.runAfterInteractions(finish);
+    const fallback = setTimeout(finish, FIRST_PAINT_FALLBACK_MS);
+    return () => {
+      task.cancel();
+      clearTimeout(fallback);
+    };
   }, []);
 
   // "Try it as if it's already true" is scoped to whichever wish is
@@ -356,12 +396,49 @@ export default function YourArcScreen() {
         // Reflect the new wish immediately as the active one, rather than
         // waiting for a full page refetch — the Crossing invite (which
         // depends on activeWish) should be able to use it right away.
-        const fresh: SavedWish = { id: result.id, text, measureResultId: null, savedAt: new Date().toISOString(), resurfacedAt: null };
+        const fresh: SavedWish = { id: result.id, text, measureResultId: null, savedAt: new Date().toISOString(), resurfacedAt: null, fulfilledAt: null };
         setActiveWish(fresh);
+        setAllWishes((prev) => [fresh, ...prev]);
         setCrossing(null);
       }
     } finally {
       setNewWishSubmitting(false);
+    }
+  };
+
+  // Ticking a wish fulfilled (2026-08-19) — or reversing that tick.
+  // Optimistic: updates allWishes locally first (the fulfilled-wishes
+  // list and the tick affordance both read straight from allWishes, no
+  // separate tracked list), then confirms with the server; on failure it
+  // reverts. Works on ANY wish in allWishes, not just the active one —
+  // an older, superseded wish can still be ticked fulfilled later.
+  const handleToggleWishFulfilled = async (wish: SavedWish) => {
+    if (!session || wishFulfillPending) return;
+    const wasFulfilled = !!wish.fulfilledAt;
+    setWishFulfillPending(wish.id);
+    const optimisticTimestamp = wasFulfilled ? null : new Date().toISOString();
+    setAllWishes((prev) =>
+      prev.map((w) => (w.id === wish.id ? { ...w, fulfilledAt: optimisticTimestamp } : w))
+    );
+    if (activeWish?.id === wish.id) {
+      setActiveWish((prev) => (prev ? { ...prev, fulfilledAt: optimisticTimestamp } : prev));
+    }
+    try {
+      const ok = wasFulfilled
+        ? await unmarkWishFulfilled(wish.id, session.token)
+        : await markWishFulfilled(wish.id, session.token);
+      if (!ok) {
+        // Revert on failure — the request functions already log the error;
+        // this just keeps the UI honest about what's actually saved.
+        setAllWishes((prev) =>
+          prev.map((w) => (w.id === wish.id ? { ...w, fulfilledAt: wish.fulfilledAt } : w))
+        );
+        if (activeWish?.id === wish.id) {
+          setActiveWish((prev) => (prev ? { ...prev, fulfilledAt: wish.fulfilledAt } : prev));
+        }
+      }
+    } finally {
+      setWishFulfillPending(null);
     }
   };
 
@@ -385,6 +462,30 @@ export default function YourArcScreen() {
     if (!repeatWritingInput.trim()) return;
     setRepeatWritingCount((c) => Math.min(REPEAT_WRITING_TARGET, c + 1));
     setRepeatWritingInput('');
+  };
+
+  // Opens a reading's own detail page from a tap on the cone (2026-08-19
+  // review: "the deeper information about every reading in particular
+  // should be available after pressing one of the dots"). Reuses the same
+  // `selected` state and detail page the Every Walk sparkline already
+  // drives — the cone is a second entry point into the exact same detail,
+  // not a separate mechanism. Point ids are built as `reading-${entry.ts}`
+  // in timeConeGeometry above; wish points (`wish-...`) are a different
+  // kind of point with no reading-detail equivalent, so they're a no-op
+  // here rather than silently opening the wrong thing.
+  const handleConePointPress = (pointId: string) => {
+    if (!pointId.startsWith('reading-')) return;
+    const ts = Number(pointId.slice('reading-'.length));
+    const entry = readingLog.find((e) => e.ts === ts);
+    if (entry) {
+      setSelected(entry);
+      // A fresh token per tap (Date.now() is unique enough here — this
+      // fires from a discrete user tap, never in a tight loop) — see
+      // PagedScrollView's own jumpTo prop comment for why a plain
+      // boolean/index isn't enough to guarantee a second, distinct tap
+      // still triggers a fresh jump.
+      setConeJumpToken(Date.now());
+    }
   };
 
   const points = readingLog.map((e) => e.score);
@@ -456,6 +557,16 @@ export default function YourArcScreen() {
   // only get to after tapping around — see collaboration notes on making
   // Your Arc's value legible on open.
   const facts = useMemo(() => buildArcFacts(readingLog), [readingLog]);
+
+  // Every ticked wish, oldest-savedAt-first — see the render site's own
+  // comment for why savedAt (not fulfilledAt) orders this list.
+  const fulfilledWishes = useMemo(
+    () =>
+      allWishes
+        .filter((w) => w.fulfilledAt)
+        .sort((a, b) => new Date(a.savedAt).getTime() - new Date(b.savedAt).getTime()),
+    [allWishes]
+  );
 
   // readingLog is stored oldest-first (see measureStore.ts) — [0] is the
   // very first reading ever taken, real information worth surfacing in
@@ -553,52 +664,143 @@ export default function YourArcScreen() {
   // place of the old static introLine.
   if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
     pages.push(
-      <ScrollView key="cone" contentContainerStyle={styles.pageCentered}>
-        <Text style={styles.kicker}>{t('yourArc.nowKicker')}</Text>
+      <ScrollView key="cone" contentContainerStyle={styles.conePageContent}>
+        {/* Top framing line — the future cone, named explicitly as the
+            user's OWN envisioned future, never a forecast/prediction
+            (review, 2026-08-19: "not some random future - the future in
+            the way user envisions it for themselves"). This is the same
+            "no fabricated trajectory" rule RULES.md already states for
+            the future cone, just made legible in the copy itself rather
+            than only true in how the geometry happens to be built
+            (futurePoints only ever holding the active wish). */}
+        <Text style={styles.coneFramingTop}>{t('yourArc.coneFutureFraming')}</Text>
         <View style={styles.timeConeWrap}>
           <TimeCone
             width={CONE_SIZE}
             height={CONE_SIZE * 1.3}
             pastPoints={timeConeGeometry.pastPoints}
             futurePoints={timeConeGeometry.futurePoints}
+            onPointPress={handleConePointPress}
           />
         </View>
-        <Text style={styles.introLine}>
-          {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
-        </Text>
-        {facts.length > 0 && (
-          <View style={styles.factsSection}>
-            {facts.map((fact) => {
-              if (fact.key === 'steadiest') {
-                const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
-                const dotColor = level ? levelColors[level.slug] : undefined;
-                return (
-                  <View key={fact.key} style={styles.factRow}>
-                    <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
-                    <Text style={styles.factLine}>
-                      {t('yourArc.factSteadiest', {
-                        level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
-                      })}
-                    </Text>
-                  </View>
-                );
-              }
-              const i18nKey =
-                fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
-                : fact.key === 'streak' ? 'yourArc.factStreak'
-                : 'yourArc.factAllTime';
-              return (
-                <View key={fact.key} style={styles.factRow}>
-                  <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
-                  <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
-                </View>
-              );
-            })}
-          </View>
-        )}
+        {/* Bottom framing line — same move for the past cone: the past
+            shown here is the user's OWN account of it (their reading, in
+            their own words if they tap in), never asserted as objective
+            record. Matches RULES.md's existing "the past cone is the
+            user's own account... never asserted as raw objective fact." */}
+        <Text style={styles.coneFramingBottom}>{t('yourArc.conePastFraming')}</Text>
+        <Text style={styles.tapPointHint}>{t('yourArc.coneTapHint')}</Text>
       </ScrollView>
     );
   }
+
+  // Facts (2026-08-19: un-merged from the cone page — the top/bottom
+  // framing lines above claim the space facts previously sat in, and a
+  // full-cone moment reads better as its own uncluttered page). Real,
+  // true facts about this person's OWN record — never an interpretation
+  // of what a pattern means (see arcFacts.ts's own header comment).
+  if (facts.length > 0) {
+    pages.push(
+      <ScrollView key="facts" contentContainerStyle={styles.pageContent}>
+        <Text style={styles.kicker}>{t('yourArc.factsKicker')}</Text>
+        <Text style={styles.introLine}>
+          {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
+        </Text>
+        <View style={styles.factsSection}>
+          {facts.map((fact) => {
+            if (fact.key === 'steadiest') {
+              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
+              const dotColor = level ? levelColors[level.slug] : undefined;
+              return (
+                <View key={fact.key} style={styles.factRow}>
+                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
+                  <Text style={styles.factLine}>
+                    {t('yourArc.factSteadiest', {
+                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
+                    })}
+                  </Text>
+                </View>
+              );
+            }
+            const i18nKey =
+              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
+              : fact.key === 'streak' ? 'yourArc.factStreak'
+              : 'yourArc.factAllTime';
+            return (
+              <View key={fact.key} style={styles.factRow}>
+                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
+              </View>
+            );
+          })}
+        </View>
+      </ScrollView>
+    );
+  }
+
+  // Every walk — moved up to sit directly after the cone/facts pages
+  // (2026-08-19 review: "the information about the past readings should
+  // be available on the next screen" — Every Walk already IS that,
+  // tap-any-point-for-detail, so this reorders an existing page rather
+  // than building a second, duplicate past-readings page). The archive:
+  // the full sparkline, tap any point to open the dedicated detail page
+  // (still inserted later, only once something's selected) — "the graph
+  // becomes one navigation method, rather than the definition of Your
+  // Arc," not the page's own headline anymore.
+  pages.push(
+    <ScrollView key="every-walk" contentContainerStyle={styles.pageContent}>
+      <Text style={styles.kicker}>{t('yourArc.everyWalkHeading')}</Text>
+      {readingLog.length >= 2 ? (
+        <View style={styles.sparklineWrap}>
+          {/* Stated once, quietly, on the paid screen itself — not just
+              at the paywall (your-arc-preview.tsx). Without this, nothing
+              on THIS screen ever confirms what's actually different from
+              the free preview once you're already looking at it. One
+              plain sentence, not a badge or upsell tone. */}
+          <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
+          <Text style={styles.tapPointHint}>{t('yourArc.tapPointHint')}</Text>
+          <Svg
+            width="100%"
+            height={140}
+            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+            preserveAspectRatio="none"
+          >
+            <Path
+              d={d}
+              fill="none"
+              stroke={`rgb(${accentRgb})`}
+              strokeOpacity={0.7}
+              strokeWidth={1}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+          {/* A separate absolutely-positioned tap layer, not SVG onPress per
+              point — react-native-svg shapes don't reliably take touch
+              events at this marker size across platforms, plain Views do. */}
+          <View style={styles.tapLayer} pointerEvents="box-none">
+            {tappablePoints.map((entry) => {
+              const i = readingLog.indexOf(entry);
+              const leftPct = (xAt(i) / VIEW_W) * 100;
+              const topPct = (yAt(entry.score) / VIEW_H) * 100;
+              return (
+                <Pressable
+                  key={entry.ts}
+                  style={[styles.tapTarget, { left: `${leftPct}%`, top: `${topPct}%` }]}
+                  onPress={() => setSelected(entry)}
+                  hitSlop={10}
+                />
+              );
+            })}
+          </View>
+        </View>
+      ) : (
+        <Text style={styles.emptyText}>
+          {t('yourArc.notEnoughReadings')}
+        </Text>
+      )}
+    </ScrollView>
+  );
 
   // Page 3 — What calls you. The ACTIVE wish, standing on its own (moved
   // off Measure, 2026-08-14), plus the Crossing that builds from it —
@@ -611,7 +813,24 @@ export default function YourArcScreen() {
       <Text style={styles.kicker}>{t('yourArc.whatCallsYou')}</Text>
       <View style={styles.wishSection}>
         {activeWish && !wishComposerOpen && (
-          <Text style={styles.wishText}>{activeWish.text}</Text>
+          <>
+            <Text style={styles.wishText}>{activeWish.text}</Text>
+            {/* Ticking fulfilled (2026-08-19) — a real, positive claim
+                the user makes about their own wish, separate from just
+                writing a new one (see Wish.js's own comment on why this
+                isn't the same as being superseded). Reversible — tapping
+                again un-ticks, matching the app's "never a one-way,
+                high-stakes commitment" posture elsewhere. */}
+            <Pressable
+              style={styles.wishFulfillRow}
+              onPress={() => handleToggleWishFulfilled(activeWish)}
+              disabled={wishFulfillPending === activeWish.id}
+            >
+              <Text style={styles.wishFulfillText}>
+                {activeWish.fulfilledAt ? t('yourArc.wishFulfilledMark') : t('yourArc.markWishFulfilled')}
+              </Text>
+            </Pressable>
+          </>
         )}
         {wishComposerOpen ? (
           <View style={styles.crossingInputRow}>
@@ -794,6 +1013,32 @@ export default function YourArcScreen() {
           )}
         </View>
       )}
+
+      {/* Fulfilled wishes (2026-08-19) — every wish in allWishes the user
+          has ticked, oldest first (savedAt order, not fulfilledAt — this
+          reads as "wishes that came true," a record of what was WISHED,
+          not a log of ticking activity). Only rendered once at least one
+          exists; a person with none ticked yet sees no empty-state
+          placeholder here, matching the rest of this screen's "a
+          section that has nothing to show just doesn't render" pattern
+          (e.g. the resurfaced-wish page). Each row can be un-ticked the
+          same way it was ticked. */}
+      {fulfilledWishes.length > 0 && (
+        <View style={styles.fulfilledWishesSection}>
+          <Text style={styles.wishHeading}>{t('yourArc.fulfilledWishesHeading')}</Text>
+          {fulfilledWishes.map((wish) => (
+            <View key={wish.id} style={styles.fulfilledWishRow}>
+              <Text style={styles.fulfilledWishText}>{wish.text}</Text>
+              <Pressable
+                onPress={() => handleToggleWishFulfilled(wish)}
+                disabled={wishFulfillPending === wish.id}
+              >
+                <Text style={styles.fulfilledWishUnmark}>{t('yourArc.wishFulfilledMark')}</Text>
+              </Pressable>
+            </View>
+          ))}
+        </View>
+      )}
     </ScrollView>
   );
 
@@ -828,65 +1073,6 @@ export default function YourArcScreen() {
 
   // (Former Page 5 — "This month" facts page — merged into the Now/Cone
   // page above, 2026-08-18. See that page's own comment.)
-
-  // Page 5 — Every walk. The archive: the full sparkline, tap any point to
-  // open a dedicated detail page (page 6, inserted only once something's
-  // selected) — "the graph becomes one navigation method, rather than the
-  // definition of Your Arc," not the page's own headline anymore.
-  pages.push(
-    <ScrollView key="every-walk" contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>{t('yourArc.everyWalkHeading')}</Text>
-      {readingLog.length >= 2 ? (
-        <View style={styles.sparklineWrap}>
-          {/* Stated once, quietly, on the paid screen itself — not just
-              at the paywall (your-arc-preview.tsx). Without this, nothing
-              on THIS screen ever confirms what's actually different from
-              the free preview once you're already looking at it. One
-              plain sentence, not a badge or upsell tone. */}
-          <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
-          <Text style={styles.tapPointHint}>{t('yourArc.tapPointHint')}</Text>
-          <Svg
-            width="100%"
-            height={140}
-            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-            preserveAspectRatio="none"
-          >
-            <Path
-              d={d}
-              fill="none"
-              stroke={`rgb(${accentRgb})`}
-              strokeOpacity={0.7}
-              strokeWidth={1}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
-          {/* A separate absolutely-positioned tap layer, not SVG onPress per
-              point — react-native-svg shapes don't reliably take touch
-              events at this marker size across platforms, plain Views do. */}
-          <View style={styles.tapLayer} pointerEvents="box-none">
-            {tappablePoints.map((entry) => {
-              const i = readingLog.indexOf(entry);
-              const leftPct = (xAt(i) / VIEW_W) * 100;
-              const topPct = (yAt(entry.score) / VIEW_H) * 100;
-              return (
-                <Pressable
-                  key={entry.ts}
-                  style={[styles.tapTarget, { left: `${leftPct}%`, top: `${topPct}%` }]}
-                  onPress={() => setSelected(entry)}
-                  hitSlop={10}
-                />
-              );
-            })}
-          </View>
-        </View>
-      ) : (
-        <Text style={styles.emptyText}>
-          {t('yourArc.notEnoughReadings')}
-        </Text>
-      )}
-    </ScrollView>
-  );
 
   // Page 6 — Body, mind, heart, spirit. The sphere history, its own page
   // rather than tacked onto the sparkline's — a genuinely separate kind
@@ -972,6 +1158,15 @@ export default function YourArcScreen() {
     );
   }
 
+  // Resolves handleConePointPress's request into a real { index, token }
+  // for PagedScrollView, now that `pages` is fully built — the detail
+  // page pushed just above is always the LAST page when `selected` is
+  // set, so its index is simply pages.length - 1.
+  const coneJumpTo = useMemo(
+    () => (coneJumpToken !== null && selected ? { index: pages.length - 1, token: coneJumpToken } : null),
+    [coneJumpToken, selected, pages.length]
+  );
+
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       {/* Explicit destination, not router.back() — Your Arc's only real
@@ -992,7 +1187,7 @@ export default function YourArcScreen() {
           matching the app's own restrained register. */}
       {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
       {firstPaintReady ? (
-        <PagedScrollView>{pages}</PagedScrollView>
+        <PagedScrollView jumpTo={coneJumpTo}>{pages}</PagedScrollView>
       ) : (
         // A cheap echo of the real ArcKaleidoscope cover page (same 8-fold
         // radial language, same accent color) rather than a bare
@@ -1032,6 +1227,21 @@ function makeStyles(colors: Colors) {
     flexGrow: 1,
     padding: spacing[6],
     paddingBottom: spacing[16],
+  },
+  // The cone page's own layout (2026-08-19) — space-between spreads the
+  // top framing line, the cone itself, and the bottom framing line across
+  // the full page height, rather than clustering everything at vertical
+  // center the way pageCentered does. This is what makes "top says
+  // future, bottom says past, cone fills the big space between them"
+  // actually read as three deliberately-placed zones instead of one
+  // centered stack.
+  conePageContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[8],
+    paddingBottom: spacing[12],
   },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
@@ -1079,6 +1289,26 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.sm * lineHeights.normal,
     marginTop: spacing[3],
   },
+  // The cone page's own top/bottom framing (2026-08-19) — centered, not
+  // left-aligned like coneFramingLine above, since these sit directly
+  // above/below the cone itself (a centered shape) rather than under a
+  // left-aligned title block the way the Cover page's framing line does.
+  coneFramingTop: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
+  },
+  coneFramingBottom: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
+  },
   introLine: {
     alignSelf: 'flex-start',
     color: colors.text.secondary,
@@ -1122,8 +1352,17 @@ function makeStyles(colors: Colors) {
   // reading as a continuation of introLine's own left-aligned column
   // directly above it. The original standalone facts page used
   // pageContent (already left-anchored), so this wasn't needed there.
+  // width: '100%' (not just alignSelf: 'flex-start') is load-bearing: a
+  // flex column with no explicit width shrinks to fit its content in
+  // React Native, and factLine below (flex: 1, meant to let long fact
+  // text wrap) computes to zero width inside a shrink-to-fit parent with
+  // nothing to flex against — confirmed live (2026-08-19): the dots
+  // rendered but every fact's text was invisible, collapsed to nothing,
+  // on a real device. width: '100%' gives factRow's flex: 1 children a
+  // real container width to divide.
   factsSection: {
     alignSelf: 'flex-start',
+    width: '100%',
     marginTop: spacing[3],
     marginBottom: spacing[3],
     gap: spacing[3],
@@ -1208,6 +1447,41 @@ function makeStyles(colors: Colors) {
     fontStyle: 'italic',
     fontSize: fontSizes.xs,
     marginTop: spacing[2],
+  },
+  // Ticking fulfilled (2026-08-19) — deliberately quiet, same weight as
+  // wishHint/wishGroundRuleNote rather than a prominent button; this is
+  // an optional, low-ceremony action, not the page's main call to action.
+  wishFulfillRow: { paddingVertical: spacing[1], marginTop: spacing[2] },
+  wishFulfillText: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+  },
+  // The fulfilled-wishes list — same "no cards" register as everything
+  // else on this page. Each row pairs the wish's own words (italic, same
+  // register as wishText — it's the same kind of material) with a small
+  // trailing un-tick control, not a checkbox/badge icon (per aesthetic.md,
+  // no new iconography for something a plain word already says).
+  fulfilledWishesSection: { marginBottom: spacing[6], gap: spacing[3] },
+  fulfilledWishRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing[3],
+    marginTop: spacing[2],
+  },
+  fulfilledWishText: {
+    flex: 1,
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  fulfilledWishUnmark: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
   },
   // The Crossing — same "no cards" register as the wish section above
   // (a plain sentence/row, not a bordered box), until it's answered, at

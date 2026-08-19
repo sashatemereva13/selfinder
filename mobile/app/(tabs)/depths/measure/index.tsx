@@ -166,10 +166,17 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.normal,
   },
+  // textAlign: 'center' — matches scanPhrase directly above it (review,
+  // 2026-08-19: the two sat right on top of each other with different
+  // alignment, reading as visually off). lastReading continues that same
+  // spoken-aloud moment (scanPhrase is the philosopher's own line), not a
+  // return to the left-aligned kicker/title/copy block further up, so it
+  // takes scanPhrase's centered register rather than the title block's.
   lastReading: {
     color: colors.text.muted,
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
+    textAlign: 'center',
   },
   button: {
     paddingVertical: spacing[4],

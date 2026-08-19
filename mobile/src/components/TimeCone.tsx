@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Ellipse as SvgEllipse, Line, Circle as SvgCircle } from 'react-native-svg';
 import { useThemeColors } from '../theme/useThemeColors';
+import { fonts, fontSizes, letterSpacings } from '../theme/typography';
 
 // Selfinder+'s own visual metaphor (see RULES.md, Product/positioning,
 // 2026-08-14) — a light cone: a fixed past below, an open future above,
@@ -55,15 +56,24 @@ export interface TimeConePoint {
 // never fabricated/projected, see RULES.md's existing "no expected
 // trajectory" rule), BOTTOM cone is the past (dense, real, one point per
 // remembered moment). The vertex where they meet is "here and now."
-const CONE_HEIGHT_RATIO = 1.15; // each cone's own height, relative to its base radius
 const RIM_RY_RATIO = 0.32; // ellipse foreshortening — matches AuraField's own "wide and flat, viewed from an angle" ratio family
 
+// coneHeight used to be derived purely from baseRx (width/2 * 1.15),
+// entirely independent of the `height` prop actually given to the SVG —
+// confirmed live on a real device (2026-08-19) that this clipped both rim
+// ellipses' tops/bottoms against the SVG's own viewBox boundary (viewBox
+// is exactly `0 0 width height`, no margin), since futureRimY - baseRy
+// and pastRimY + baseRy landed outside [0, height] for the width/height
+// combination your-arc.tsx actually passes (260 × 338). Now coneHeight is
+// derived from the real available vertical space (half the box, minus
+// room for the rim ellipse's own vertical radius) so the whole shape —
+// rims included — always fits inside the box it's given.
 export function buildTimeConeGeometry(width: number, height: number) {
   const centerX = width / 2;
   const vertexY = height / 2;
   const baseRx = width / 2 - 4;
   const baseRy = baseRx * RIM_RY_RATIO;
-  const coneHeight = baseRx * CONE_HEIGHT_RATIO;
+  const coneHeight = Math.max(0, height / 2 - baseRy - 4);
   const futureRimY = vertexY - coneHeight;
   const pastRimY = vertexY + coneHeight;
 
@@ -99,12 +109,16 @@ interface TimeConeProps {
   onPointPress?: (id: string) => void;
 }
 
-// onPointPress is accepted but not wired to a tap target yet — this pass
-// is deliberately static (see collaboration notes, 2026-08-14: "static
-// first... get the shape right before investing in animation/
-// interaction"). Kept on the prop contract now so a later interactive
-// pass doesn't need to change every call site's signature.
-export function TimeCone({ width, height, pastPoints, futurePoints }: TimeConeProps) {
+// onPointPress went unwired for a first static-only pass (2026-08-14:
+// "static first... get the shape right before investing in animation/
+// interaction"). Wired now (2026-08-19, review: "deeper information about
+// every reading in particular should be available after pressing one of
+// the dots") — a separate absolutely-positioned Pressable layer over the
+// SVG, not onPress on the SVG circles themselves, same reasoning
+// your-arc.tsx's own sparkline tapLayer already uses: react-native-svg
+// shapes don't reliably take touch events at this marker size across
+// platforms, plain Views/Pressables do.
+export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
@@ -187,6 +201,63 @@ export function TimeCone({ width, height, pastPoints, futurePoints }: TimeConePr
           return <SvgCircle key={p.id} cx={pos.x} cy={pos.y} r={2.6} fill={colors.text.primary} />;
         })}
       </Svg>
+      {/* "now" labels the vertex directly, not the page as a whole — this
+          used to be a page-level "NOW" kicker sitting at the top of the
+          screen, well above the actual vertex in the middle, which read
+          as a mismatch between what the label named and where the thing
+          it named actually was (review, 2026-08-19: "it's not clear why
+          'now' is at the top while 'now' is represented by the center of
+          the cone"). Positioned in plain RN Text (not SVG text — no
+          existing pattern for that in this file) absolutely placed just
+          below the vertex dot, so the label points at the one point it's
+          actually about. */}
+      <Text
+        style={[
+          styles.nowLabel,
+          { color: colors.text.faint, left: geometry.centerX, top: geometry.vertexY + 8 },
+        ]}
+      >
+        now
+      </Text>
+      {/* Tap targets for the past cone's own points only — pastPoints are
+          real, distinct moments (a specific reading or wish) each worth
+          opening into their own detail; futurePoints is always just the
+          one active wish, already shown in full on "What calls you," so
+          it has nothing further to reveal by tapping it here. */}
+      {onPointPress && (
+        <View style={{ position: 'absolute', width, height }} pointerEvents="box-none">
+          {pastPoints.map((p) => {
+            const pos = timeConePointPosition(p, geometry, 'past');
+            return (
+              <Pressable
+                key={p.id}
+                onPress={() => onPointPress(p.id)}
+                hitSlop={10}
+                style={{
+                  position: 'absolute',
+                  left: pos.x - 11,
+                  top: pos.y - 11,
+                  width: 22,
+                  height: 22,
+                }}
+              />
+            );
+          })}
+        </View>
+      )}
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  nowLabel: {
+    position: 'absolute',
+    marginLeft: -20,
+    width: 40,
+    textAlign: 'center',
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+  },
+});

@@ -28,7 +28,12 @@ export const fontSizes = {
 
 export const lineHeights = {
   tight: 1.15,
-  chat: 1.32,
+  // Loosened from 1.32 (review, 2026-08-19: a long philosopher reply in
+  // Guide read as dense/hard to follow on a real device). Moved most of
+  // the way toward `normal` (1.55) rather than all the way — chat text
+  // still benefits from reading a little tighter than a long-form page
+  // like Measure's own copy, just not as tight as the original value.
+  chat: 1.48,
   normal: 1.55,
   loose: 1.72,
 } as const;
@@ -37,4 +42,11 @@ export const letterSpacings = {
   kicker: 2.8,
   wide: 1.2,
   normal: 0,
+  // A small positive value for body/chat text specifically (2026-08-19,
+  // same readability review as lineHeights.chat above) — the Medium
+  // weight file body text is set in (see fonts.light's own comment) reads
+  // slightly cramped at its default tracking, especially in a long Guide
+  // reply. Deliberately much smaller than `wide`/`kicker`, which are
+  // meant to read as a label's own distinct register, not body prose.
+  body: 0.15,
 } as const;

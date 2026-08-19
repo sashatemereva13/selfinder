@@ -213,6 +213,9 @@
     "kaleidoscopeCaption": "Built from every color your readings have been",
     "everyWalkHeading": "Every walk, in order",
     "coneFramingLine": "Here is where you are. Here is how you've told it. Here is what's calling you forward.",
+    "coneFutureFraming": "Above: the future — not a forecast, but the one you're reaching toward yourself.",
+    "conePastFraming": "Below: the past, as you've told it — tap a point to open what that day actually was.",
+    "coneTapHint": "Tap a point to open that reading",
     "fullLineNote": "The full line — every reading you've ever taken, not just the last few",
     "crossingInvite": "Ask {{name}} about this moment",
     "crossingLoading": "Thinking…",
@@ -229,7 +232,10 @@
     "repeatWritingHint_one": "{{count}} of 5 — in your own hand each time, not copied.",
     "repeatWritingHint_other": "{{count}} of 5 — in your own hand each time, not copied.",
     "repeatWritingDone": "That's five. However it felt to write, it's yours.",
-    "repeatWritingRestart": "Do it again"
+    "repeatWritingRestart": "Do it again",
+    "markWishFulfilled": "Mark this wish fulfilled",
+    "wishFulfilledMark": "Fulfilled ✓",
+    "fulfilledWishesHeading": "Wishes that came true"
   },
   "saveMessage": {
     "keepThisMessage": "Keep this message",
@@ -277,7 +283,9 @@
     "title": "Change your state through breath",
     "begin": "Begin",
     "readyWhenYouAre": "Ready when you are",
-    "roundOf": "Round {{round}} of {{total}}"
+    "roundOf": "Round {{round}} of {{total}}",
+    "bodyFocusPrompt": "Feel where {{level}} lives in your body right now. Rest your attention there for a moment, then breathe.",
+    "directionPrompt": "What direction does it give you now? Where does it pull you?"
   },
   "measure": {
     "previousSphere": "← Previous sphere",

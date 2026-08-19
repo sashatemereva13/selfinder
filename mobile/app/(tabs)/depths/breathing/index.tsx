@@ -21,6 +21,8 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
+import { useMeasureStore } from '../../../../src/store/measureStore';
+import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
 
 const BASE_SCALE = 0.85;
 const PEAK_SCALE = 1.25;
@@ -88,9 +90,21 @@ export default function BreathingScreen() {
   const [round, setRound] = useState(1);
   const [completionLine, setCompletionLine] = useState<string | null>(null);
   const scale = useSharedValue(BASE_SCALE);
+  const currentResult = useMeasureStore((s) => s.currentResult);
+  // The direction question ("what direction does it give you? where does
+  // it pull you?" — review, 2026-08-19) is offered once completion
+  // settles, not folded into completionLine itself — it's a genuinely
+  // different kind of line (a question to sit with, not a closing
+  // remark), so it gets its own beat rather than crowding a single line
+  // with two jobs. Reset whenever a new session starts (handleToggle),
+  // same as completionLine.
+  const [showDirectionPrompt, setShowDirectionPrompt] = useState(false);
 
   const pattern = getLocalizedBreathingPattern(BREATHING_PATTERNS[patternIndex], locale);
   const phase: BreathingPhase = pattern.phases[phaseIndex];
+  const latestLevelName = currentResult
+    ? getLocalizedLevelName(currentResult.vibrationLevel, locale)
+    : null;
 
   useEffect(() => {
     markDiscovered('breathing');
@@ -118,6 +132,7 @@ export default function BreathingScreen() {
           setRound(1);
           scale.value = withTiming(BASE_SCALE, { duration: SETTLE_MS });
           setCompletionLine(getRandomCompletionLine(locale));
+          setShowDirectionPrompt(true);
           track('breathing_completed', { patternId: pattern.id });
         } else {
           setRound((r) => r + 1);
@@ -140,6 +155,7 @@ export default function BreathingScreen() {
     } else {
       setActive(true);
       setCompletionLine(null);
+      setShowDirectionPrompt(false);
       track('breathing_started', { patternId: pattern.id });
     }
   };
@@ -150,6 +166,7 @@ export default function BreathingScreen() {
     setPhaseIndex(0);
     setRound(1);
     setCompletionLine(null);
+    setShowDirectionPrompt(false);
     scale.value = withTiming(BASE_SCALE, { duration: 400 });
     setPatternIndex(index);
   };
@@ -190,6 +207,21 @@ export default function BreathingScreen() {
           <Text style={styles.subtitle}>{pattern.subtitle}</Text>
           <Text style={styles.useFor}>{pattern.useFor}</Text>
 
+          {/* Body-focus prompt (review, 2026-08-19) — shown only before a
+              session starts, only once a reading actually exists to name
+              (currentResult, same source measureIntro.lastReading already
+              reads). Grounds the practice in something real and specific
+              rather than a generic "notice your breath" line — names the
+              person's own most recent reading and asks them to locate it
+              somatically before beginning, the same "structure, never
+              supplied content" posture as the rest of the app: it asks
+              WHERE, never tells them what they'll find there. */}
+          {!active && !completionLine && latestLevelName && (
+            <Text style={styles.bodyFocusPrompt}>
+              {t('breathing.bodyFocusPrompt', { level: latestLevelName.toLowerCase() })}
+            </Text>
+          )}
+
           <BreathingOrb scale={scale} onPress={handleToggle} label={active ? t('common.stop') : t('breathing.begin')} />
 
           <Text style={styles.phaseLabel}>
@@ -199,6 +231,17 @@ export default function BreathingScreen() {
             <Text style={styles.roundCounter}>
               {t('breathing.roundOf', { round, total: pattern.rounds })}
             </Text>
+          )}
+
+          {/* The direction question (review, 2026-08-19) — offered once,
+              right after a completion line, as its own beat rather than
+              folded into that line. A genuine open question the person
+              answers only to themselves (nothing here captures or saves
+              an answer — same "offer the conditions, never supply the
+              content" rule as the rest of the app); it's about where the
+              settled body wants to move now, not what it means. */}
+          {showDirectionPrompt && (
+            <Text style={styles.directionPrompt}>{t('breathing.directionPrompt')}</Text>
           )}
 
           <Text style={styles.howToNote}>{pattern.howTo}</Text>
@@ -272,6 +315,29 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     paddingHorizontal: spacing[4],
     marginTop: spacing[4],
+  },
+  // Same italic/secondary register as a philosopher's own spoken line
+  // elsewhere (e.g. Measure's scanPhrase) — this is an invitation to
+  // notice, not an instruction or a label.
+  bodyFocusPrompt: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[5],
+  },
+  directionPrompt: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    textAlign: 'center',
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[3],
   },
   orbWrap: {
     width: 160,

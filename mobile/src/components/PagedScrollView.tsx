@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { View, ScrollView, StyleSheet, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { View, ScrollView, StyleSheet, useWindowDimensions, NativeSyntheticEvent, NativeScrollEvent, Pressable } from 'react-native';
 import { useThemeColors } from '../theme/useThemeColors';
 import type { Colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
@@ -19,21 +19,63 @@ import { useAppAccentRgb } from '../utils/appAccent';
 // ScrollView (per the "split into more screens, not scroll-within-scroll"
 // decision this was built for — most Your Arc pages are short enough not
 // to need this at all).
-export function PagedScrollView({ children }: { children: React.ReactNode[] }) {
+interface PagedScrollViewProps {
+  children: React.ReactNode[];
+  // A one-shot external "jump to this page" signal (2026-08-19) — for a
+  // caller-driven navigation, not the person's own dot tap. Your Arc uses
+  // this so tapping a reading dot on the time cone lands the person on
+  // that reading's own detail page (appended dynamically at the END of
+  // the page list, several swipes past where the cone itself sits)
+  // instead of just quietly adding a new dot they'd have to notice and
+  // navigate to themselves.
+  //
+  // { index, token }, not a bare index — the index alone can legitimately
+  // repeat across two separate real triggers (Your Arc's own detail page
+  // always occupies the SAME slot at the end of the page list, so tapping
+  // cone point A then cone point B both resolve to an identical index),
+  // and a plain index prop can't tell "the same jump request" apart from
+  // "a new request that happens to land on the same page." `token` is any
+  // caller-chosen value that changes per distinct request (Your Arc uses
+  // Date.now()); this effect keys off `token`, not `index`, so it always
+  // refires on a genuinely new request even when the destination repeats.
+  jumpTo?: { index: number; token: number } | null;
+}
+
+export function PagedScrollView({ children, jumpTo }: PagedScrollViewProps) {
   const { width } = useWindowDimensions();
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeIndex, setActiveIndex] = useState(0);
+  const scrollRef = useRef<ScrollView>(null);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeIndex) setActiveIndex(index);
   };
 
+  // Dots are a real navigation control, not just a passive indicator
+  // (review, 2026-08-19: "there should be its own navigation in Your Arc,
+  // so that the user can go to any page at any point") — tapping any dot
+  // jumps straight there, reusing the same row already on screen rather
+  // than adding a second, separate nav affordance. animated: true so a
+  // far jump (e.g. dot 1 to dot 7) still reads as real motion through the
+  // pages, matching "gather, condense, become" over an instant teleport.
+  const handleJumpTo = (index: number) => {
+    scrollRef.current?.scrollTo({ x: index * width, animated: true });
+    setActiveIndex(index);
+  };
+
+  useEffect(() => {
+    if (jumpTo == null) return;
+    handleJumpTo(jumpTo.index);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpTo?.token]);
+
   return (
     <View style={styles.root}>
       <ScrollView
+        ref={scrollRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
@@ -47,17 +89,23 @@ export function PagedScrollView({ children }: { children: React.ReactNode[] }) {
         ))}
       </ScrollView>
       {children.length > 1 && (
-        <View style={styles.dotsRow} pointerEvents="none">
+        <View style={styles.dotsRow}>
           {children.map((_, i) => (
-            <View
+            <Pressable
               key={i}
-              style={[
-                styles.dot,
-                i === activeIndex
-                  ? { backgroundColor: `rgb(${accentRgb})`, opacity: 0.95 }
-                  : { backgroundColor: colors.text.faint, opacity: 0.5 },
-              ]}
-            />
+              onPress={() => handleJumpTo(i)}
+              hitSlop={8}
+              style={styles.dotTapTarget}
+            >
+              <View
+                style={[
+                  styles.dot,
+                  i === activeIndex
+                    ? { backgroundColor: `rgb(${accentRgb})`, opacity: 0.95 }
+                    : { backgroundColor: colors.text.faint, opacity: 0.5 },
+                ]}
+              />
+            </Pressable>
           ))}
         </View>
       )}
@@ -78,8 +126,20 @@ function makeStyles(colors: Colors) {
       right: 0,
       flexDirection: 'row',
       justifyContent: 'center',
-      gap: spacing[2],
+      // No gap here — dotTapTarget's own padding already provides the
+      // visible spacing between dots (see its comment); an additional
+      // gap on top of that padding spread dots noticeably further apart
+      // than the original bare-dot design (confirmed by the math: 8px
+      // padding each side + an 8px gap = 24px between visible dots,
+      // vs. the original 6px dot + 8px gap = 14px).
     },
+    // A real 6px dot is a small tap target — hitSlop alone still leaves a
+    // cramped hit area when several dots sit close together, so each dot
+    // gets its own padded Pressable wrapper (bigger tap area) around the
+    // small visible dot itself. The padding value itself now also DOUBLES
+    // as the visible gap between dots (see dotsRow's own comment) — it
+    // isn't purely a hit-area concern anymore.
+    dotTapTarget: { padding: spacing[2] },
     dot: { width: 6, height: 6, borderRadius: 3 },
   });
 }

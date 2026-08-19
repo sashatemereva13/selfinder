@@ -62,7 +62,11 @@ export function ArcKaleidoscopeLoading({ size, accentRgb }: { size: number; acce
           const y = cy + r * Math.sin(angle);
           return (
             <G key={i}>
-              <Circle cx={x} cy={y} r={size * 0.05} fill={`rgb(${accentRgb})`} fillOpacity={0.22} />
+              {/* fillOpacity raised from 0.22 (review, 2026-08-19: too
+                  faint to read as alive/moving against the near-black
+                  background — looked like flat gray static dots even
+                  while the pulse animation was actually running). */}
+              <Circle cx={x} cy={y} r={size * 0.05} fill={`rgb(${accentRgb})`} fillOpacity={0.4} />
             </G>
           );
         })}

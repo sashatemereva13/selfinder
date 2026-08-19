@@ -433,6 +433,7 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.chat,
+    letterSpacing: letterSpacings.body,
     maxWidth: '88%',
   },
   // A little extra room between turns on a tablet — the conversation

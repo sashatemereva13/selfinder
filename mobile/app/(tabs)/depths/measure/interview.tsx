@@ -16,7 +16,7 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from '
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
-import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
+import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -443,6 +443,7 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.chat,
+    letterSpacing: letterSpacings.body,
     maxWidth: '88%',
   },
   turnPhilosopher: {

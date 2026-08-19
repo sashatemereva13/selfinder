@@ -1,5 +1,5 @@
 import { Text, StyleSheet } from 'react-native';
-import { fonts, fontSizes, lineHeights } from '../theme/typography';
+import { fonts, fontSizes, lineHeights, letterSpacings } from '../theme/typography';
 import { useThemeColors } from '../theme/useThemeColors';
 
 // Same visual register Guide itself uses for a message bubble (see Turn in
@@ -30,6 +30,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.chat,
+    letterSpacing: letterSpacings.body,
     maxWidth: '88%',
   },
 });
