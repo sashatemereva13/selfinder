@@ -25,6 +25,18 @@ const wishSchema = new mongoose.Schema({
   // of ever re-showing the same wish indefinitely or needing any
   // content-based ranking.
   resurfacedAt: { type: String, default: null },
+  // "Ticked" — the user's own claim that this wish came true, set from
+  // Your Arc's "What calls you" page (2026-08-19). A timestamp, not a
+  // boolean, same pattern as resurfacedAt, so it also records WHEN. This
+  // is never inferred, scored, or suggested by the app — only the user
+  // marks a wish fulfilled, and only their own account of it; the app has
+  // no way to know whether a wish "really" came true and never claims to.
+  // A fulfilled wish is NOT the same as simply being superseded by a
+  // newer active wish (findActiveWish already treats any older wish as
+  // "past" once a newer one exists) — this is a separate, positive claim,
+  // and a wish can in principle be both superseded and never ticked, or
+  // ticked while still technically active.
+  fulfilledAt: { type: String, default: null },
 });
 
 export default mongoose.model("Wish", wishSchema);

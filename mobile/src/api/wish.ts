@@ -11,6 +11,11 @@ export interface SavedWish {
   // FIFO selection (see selectWishToResurface): oldest not-yet-resurfaced
   // wish first, no content-based ranking.
   resurfacedAt: string | null;
+  // The user's own claim that this wish came true (2026-08-19) — set only
+  // by their own explicit tap (markWishFulfilled), never inferred. See
+  // Wish.js's own comment: distinct from a wish simply being superseded
+  // by a newer active one.
+  fulfilledAt: string | null;
 }
 
 export type SaveWishResult =
@@ -73,5 +78,35 @@ export async function markWishResurfaced(id: string, token: string): Promise<voi
     await request(`/wish/${id}/resurface`, {}, { token });
   } catch (err) {
     console.error('Failed to mark wish resurfaced:', err);
+  }
+}
+
+// Ticking a wish as fulfilled/came true (2026-08-19) — only ever called
+// from the user's own explicit tap, never automatically. Returns whether
+// it succeeded so the caller can update local state optimistically;
+// unlike markWishResurfaced this DOES need to be reflected in the UI
+// immediately (the wish moves into the fulfilled list right away), so a
+// silent best-effort swallow isn't appropriate here the way it is for
+// resurfacing.
+export async function markWishFulfilled(id: string, token: string): Promise<boolean> {
+  try {
+    await request(`/wish/${id}/fulfill`, {}, { token });
+    return true;
+  } catch (err) {
+    console.error('Failed to mark wish fulfilled:', err);
+    return false;
+  }
+}
+
+// Reverses a tick — a person may mark something fulfilled and change
+// their mind; nothing about this feature should feel like a one-way,
+// high-stakes commitment.
+export async function unmarkWishFulfilled(id: string, token: string): Promise<boolean> {
+  try {
+    await request(`/wish/${id}/fulfill`, undefined, { method: 'DELETE', token });
+    return true;
+  } catch (err) {
+    console.error('Failed to unmark wish fulfilled:', err);
+    return false;
   }
 }

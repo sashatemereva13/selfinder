@@ -56,3 +56,31 @@ export async function markWishResurfaced(req, res) {
   }
   res.json({ id: wish.id, resurfacedAt: wish.resurfacedAt });
 }
+
+// Marks a wish as fulfilled — the user's own claim that it came true,
+// from Your Arc's "What calls you" page (2026-08-19). Idempotent
+// (re-ticking an already-ticked wish just returns the existing
+// timestamp) and reversible (a wish can be un-ticked — see
+// unmarkWishFulfilled — since a person may tick something and change
+// their mind, and nothing here should feel like a one-way, high-stakes
+// commitment). Never inferred or suggested by the app itself — this
+// endpoint only ever fires from the user's own explicit tap.
+export async function markWishFulfilled(req, res) {
+  const wish = await Wish.findOne({ id: req.params.id });
+  if (!wish) return res.status(404).json({ error: "Wish not found" });
+  if (wish.userId !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+  if (!wish.fulfilledAt) {
+    wish.fulfilledAt = new Date().toISOString();
+    await wish.save();
+  }
+  res.json({ id: wish.id, fulfilledAt: wish.fulfilledAt });
+}
+
+export async function unmarkWishFulfilled(req, res) {
+  const wish = await Wish.findOne({ id: req.params.id });
+  if (!wish) return res.status(404).json({ error: "Wish not found" });
+  if (wish.userId !== req.user.id) return res.status(403).json({ error: "Forbidden" });
+  wish.fulfilledAt = null;
+  await wish.save();
+  res.json({ id: wish.id, fulfilledAt: null });
+}

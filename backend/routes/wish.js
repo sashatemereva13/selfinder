@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { requireConsent } from "../middleware/requireConsent.js";
-import { saveWish, getWish, listMyWishes, markWishResurfaced } from "../controllers/wishController.js";
+import { saveWish, getWish, listMyWishes, markWishResurfaced, markWishFulfilled, unmarkWishFulfilled } from "../controllers/wishController.js";
 
 const router = Router();
 router.post("/save", requireAuth, requireConsent, saveWish);
@@ -13,5 +13,7 @@ router.post("/save", requireAuth, requireConsent, saveWish);
 // as an :id value.
 router.get("/mine", requireAuth, requireConsent, listMyWishes);
 router.post("/:id/resurface", requireAuth, requireConsent, markWishResurfaced);
+router.post("/:id/fulfill", requireAuth, requireConsent, markWishFulfilled);
+router.delete("/:id/fulfill", requireAuth, requireConsent, unmarkWishFulfilled);
 router.get("/:id", requireAuth, requireConsent, getWish);
 export default router;
