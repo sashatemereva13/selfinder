@@ -38,6 +38,20 @@ function todayKey() {
 // wanting it to "show something relevant... relate to the history of
 // that user"), and the fix has to hold the same anti-profiling line
 // Crossing already draws, not loosen it for a lower-stakes page.
+//
+// 2026-08-19: confirmed live on a real device that an earlier version of
+// this prompt (which told the model it "may quote or closely paraphrase"
+// the wish) let the model quote the wish's own words almost VERBATIM as
+// the bulk of the line, with only a thin philosopher-voiced fragment
+// tacked on ("Losing extra weight I gained and seeing my muscle
+// again—let us consider the path forward.") — technically compliant with
+// every rule above, but a real design failure: it read as the wish being
+// echoed back, not as the philosopher having said something, and made
+// the Cover page (a much more prominent, first-thing-you-see placement
+// than the wish's own quiet row on "What calls you") feel like it was
+// over-exposing a private wish. Fixed by explicitly forbidding leading
+// with/restating the wish's words and requiring the line to be the
+// philosopher's OWN remark that only gestures at the wish's subject.
 function buildArcLinePrompt({ readingCount, sinceDate, streakDays, latestLevelName, wishText }) {
   const facts = [
     `They have taken ${readingCount} reading${readingCount === 1 ? "" : "s"} since ${sinceDate}.`,
@@ -54,9 +68,10 @@ Write ONE line, in your voice — either a brief remark or a short question — 
 
 Hard rules, no exceptions:
 - Pick exactly ONE of the facts above to reference — either the reading count/streak, OR the most recent level, OR the wish. Never combine two facts, and never draw a connection between them.
-- If you reference the wish, only quote or closely paraphrase its words — do NOT ask whether it is closer, nearer, resonating, sitting well, helped by anything, or any variant of progress/effect. The wish is not a target to evaluate.
+- Never lead with, quote at length, or restate the wish's own words as the bulk of your line — the person can already see their wish elsewhere on this screen; do not just repeat it back to them with a phrase tacked on. Your line must be YOUR OWN remark or question, spoken in your voice, that at most gestures at the wish's subject in a few of your own words.
+- If you reference the wish, do NOT ask whether it is closer, nearer, resonating, sitting well, helped by anything, or any variant of progress/effect. The wish is not a target to evaluate.
 - Never ask what "draws them back," what they are "looking for," or anything else that presumes a reason or motive behind the fact — a fact may be stated or asked about directly, never explained.
-- Never state or imply a pattern, a reason, or a cause ("this suggests," "it seems like," "you tend to," "again," "still," "this shows").
+- Never state or imply a pattern, a reason, or a cause. NEVER use the words "again," "still," "once more," "back," "this time," or any other word implying repetition or history beyond the single fact given — you have no memory of any previous visit, only the one fact stated above.
 - Never assert anything about who they are, how they have changed, or what they feel.
 - Never judge whether their record is good or bad, or whether they are doing "well."
 - Under 20 words total. No preamble, no "Here is a line" — output only the line itself, in character, nothing else.`;
