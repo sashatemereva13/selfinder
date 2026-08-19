@@ -23,6 +23,19 @@ import { Locale } from '../store/localeStore';
 // unchanged — those were already correct and aren't the audio-comfort
 // lever. Original tracks kept at assets/audio/_originals-backup/ in case
 // of regression.
+//
+// 2026-08-19: sleep-delta.m4a specifically reworked AGAIN — even at 432Hz
+// with a light noise bed, the tone-forward mix (research: delta binaural
+// beats specifically documented as the "annoying" factor for sleep use)
+// still read as unpleasant on a real overnight listening test. Flipped
+// the balance for Sleep only: brown noise is now the dominant, clearly
+// audible layer (the user's own stated favorite among several noise-color
+// candidates tried), with the 432/434Hz delta beat mixed in underneath at
+// a level tuned across three iterations to be genuinely perceptible (not
+// just theoretically present) without overpowering the noise — Calm and
+// Deep Rest keep the original tone-forward balance; this rebalance is
+// deliberately scoped to Sleep alone, not applied retroactively to the
+// other two.
 export interface TuneInState {
   name: string;
   band: string;
