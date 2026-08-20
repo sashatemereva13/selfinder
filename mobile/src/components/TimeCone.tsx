@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Svg, { Ellipse as SvgEllipse, Line, Circle as SvgCircle } from 'react-native-svg';
+import Svg, { Defs, LinearGradient, Stop, Ellipse as SvgEllipse, Line, Circle as SvgCircle } from 'react-native-svg';
 import { useThemeColors } from '../theme/useThemeColors';
 import { fonts, fontSizes, letterSpacings } from '../theme/typography';
 
@@ -68,10 +68,19 @@ const RIM_RY_RATIO = 0.32; // ellipse foreshortening — matches AuraField's own
 // derived from the real available vertical space (half the box, minus
 // room for the rim ellipse's own vertical radius) so the whole shape —
 // rims included — always fits inside the box it's given.
+//
+// NOW_LABEL_MARGIN (2026-08-20) reserves real horizontal space on the
+// right for the "now" label, which moved from directly below the vertex
+// to beside it (see the label's own render comment) — without shrinking
+// the cone itself, the label's left position (centerX + baseRx + a few
+// px) would land right at or past the box's own right edge for the
+// width/height this component is actually given.
+const NOW_LABEL_MARGIN = 34;
+
 export function buildTimeConeGeometry(width: number, height: number) {
-  const centerX = width / 2;
+  const centerX = (width - NOW_LABEL_MARGIN) / 2;
   const vertexY = height / 2;
-  const baseRx = width / 2 - 4;
+  const baseRx = (width - NOW_LABEL_MARGIN) / 2 - 4;
   const baseRy = baseRx * RIM_RY_RATIO;
   const coneHeight = Math.max(0, height / 2 - baseRy - 4);
   const futureRimY = vertexY - coneHeight;
@@ -107,6 +116,12 @@ interface TimeConeProps {
   pastPoints: TimeConePoint[];
   futurePoints: TimeConePoint[];
   onPointPress?: (id: string) => void;
+  // A lighter, non-navigating preview (2026-08-20 review: "the dots don't
+  // make sense to anybody apart from me") — long-press shows a quick
+  // date+level label without leaving the page; a plain tap (onPointPress)
+  // still opens the full detail. Same past-points-only scope as
+  // onPointPress — see that prop's own comment.
+  onPointLongPress?: (id: string) => void;
 }
 
 // onPointPress went unwired for a first static-only pass (2026-08-14:
@@ -118,7 +133,7 @@ interface TimeConeProps {
 // your-arc.tsx's own sparkline tapLayer already uses: react-native-svg
 // shapes don't reliably take touch events at this marker size across
 // platforms, plain Views/Pressables do.
-export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress }: TimeConeProps) {
+export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
@@ -126,6 +141,38 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
   return (
     <View style={{ width, height }}>
       <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+        {/* Atmospheric-perspective depth cue (2026-08-20 review: "the cone
+            is a bit too 2D") — the wireframe itself stays pure stroke, no
+            fill (per this file's own standing rule), but each slant
+            line's OPACITY now fades from bright at the vertex to faint at
+            the rim, and the rim ellipses are fainter still — the same
+            "things further away read as fainter" cue real atmospheric
+            perspective uses, applied to line/stroke opacity rather than
+            an actual fill gradient on the cone's surface. Two gradients
+            (not one) since the future and past slant lines run opposite
+            directions — SVG's gradient offset is a fixed 0..1 along its
+            own defined vector, it can't be reversed per-shape without a
+            second def. */}
+        {/* Bounding-box-relative gradients (SVG default gradientUnits) —
+            offset 0 is the shape's own bounding-box top (y=0), offset 1
+            is its bottom (y=1), regardless of which direction a given
+            line's own x1/x2 run. Future lines' bounding box has the RIM
+            at the top (smaller Y, further from vertex) and the VERTEX at
+            the bottom (larger Y) — so offset 0 (rim) must be the FAINT
+            stop and offset 1 (vertex) the BRIGHT one for the vertex to
+            read as closer/brighter. Past lines are the mirror: vertex is
+            the bounding-box top, rim is the bottom. */}
+        <Defs>
+          <LinearGradient id="cone-fade-future" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={strokeColor} stopOpacity={0.15} />
+            <Stop offset="1" stopColor={strokeColor} stopOpacity={0.7} />
+          </LinearGradient>
+          <LinearGradient id="cone-fade-past" x1="0" y1="0" x2="0" y2="1">
+            <Stop offset="0" stopColor={strokeColor} stopOpacity={0.7} />
+            <Stop offset="1" stopColor={strokeColor} stopOpacity={0.15} />
+          </LinearGradient>
+        </Defs>
+
         {/* Future cone — open, sparse by construction (only ever the
             active wish, never a fabricated forecast). Slant lines rise
             from the vertex to the future rim. */}
@@ -134,7 +181,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           y1={geometry.futureRimY}
           x2={geometry.centerX}
           y2={geometry.vertexY}
-          stroke={strokeColor}
+          stroke="url(#cone-fade-future)"
           strokeWidth={1}
         />
         <Line
@@ -142,7 +189,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           y1={geometry.futureRimY}
           x2={geometry.centerX}
           y2={geometry.vertexY}
-          stroke={strokeColor}
+          stroke="url(#cone-fade-future)"
           strokeWidth={1}
         />
         <SvgEllipse
@@ -152,7 +199,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           ry={geometry.baseRy}
           fill="none"
           stroke={strokeColor}
-          strokeOpacity={0.55}
+          strokeOpacity={0.3}
           strokeWidth={1}
         />
 
@@ -164,7 +211,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           y1={geometry.pastRimY}
           x2={geometry.centerX}
           y2={geometry.vertexY}
-          stroke={strokeColor}
+          stroke="url(#cone-fade-past)"
           strokeWidth={1}
         />
         <Line
@@ -172,7 +219,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           y1={geometry.pastRimY}
           x2={geometry.centerX}
           y2={geometry.vertexY}
-          stroke={strokeColor}
+          stroke="url(#cone-fade-past)"
           strokeWidth={1}
         />
         <SvgEllipse
@@ -182,7 +229,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           ry={geometry.baseRy}
           fill="none"
           stroke={strokeColor}
-          strokeOpacity={0.55}
+          strokeOpacity={0.3}
           strokeWidth={1}
         />
 
@@ -208,13 +255,20 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           it named actually was (review, 2026-08-19: "it's not clear why
           'now' is at the top while 'now' is represented by the center of
           the cone"). Positioned in plain RN Text (not SVG text — no
-          existing pattern for that in this file) absolutely placed just
-          below the vertex dot, so the label points at the one point it's
-          actually about. */}
+          existing pattern for that in this file).
+
+          2026-08-20: moved from directly below the vertex dot to beside
+          it (same vertical height, offset past the cone's own outer
+          radius) — review: "the 'Now' is squeezed inside the cone, while
+          it should be a bit outside." Sitting below the vertex put the
+          label right where the future/past cones' own converging lines
+          meet, visually crowded by the shape itself; beside the vertex,
+          clear of both cones' lines, reads as pointing in at the dot from
+          outside rather than being squeezed inside the geometry. */}
       <Text
         style={[
           styles.nowLabel,
-          { color: colors.text.faint, left: geometry.centerX, top: geometry.vertexY + 8 },
+          { color: colors.text.faint, left: geometry.centerX + geometry.baseRx + 6, top: geometry.vertexY - 6 },
         ]}
       >
         now
@@ -224,14 +278,15 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           opening into their own detail; futurePoints is always just the
           one active wish, already shown in full on "What calls you," so
           it has nothing further to reveal by tapping it here. */}
-      {onPointPress && (
+      {(onPointPress || onPointLongPress) && (
         <View style={{ position: 'absolute', width, height }} pointerEvents="box-none">
           {pastPoints.map((p) => {
             const pos = timeConePointPosition(p, geometry, 'past');
             return (
               <Pressable
                 key={p.id}
-                onPress={() => onPointPress(p.id)}
+                onPress={onPointPress ? () => onPointPress(p.id) : undefined}
+                onLongPress={onPointLongPress ? () => onPointLongPress(p.id) : undefined}
                 hitSlop={10}
                 style={{
                   position: 'absolute',
@@ -250,11 +305,12 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
 }
 
 const styles = StyleSheet.create({
+  // No marginLeft/width/textAlign centering trick anymore (2026-08-20) —
+  // those existed to center the label under a point; now that it sits
+  // beside the vertex instead, left/top alone (set inline, computed from
+  // real geometry) position it directly.
   nowLabel: {
     position: 'absolute',
-    marginLeft: -20,
-    width: 40,
-    textAlign: 'center',
     fontFamily: fonts.medium,
     fontSize: fontSizes.xs,
     letterSpacing: letterSpacings.kicker,

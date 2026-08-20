@@ -66,6 +66,8 @@ const CONE_SIZE = 260;
 // was designed for, so it should never actually fire under normal
 // conditions — it's a backstop, not the primary mechanism.
 const FIRST_PAINT_FALLBACK_MS = 900;
+// How long the cone's long-press preview stays up before clearing itself.
+const CONE_PREVIEW_DISMISS_MS = 4000;
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -120,6 +122,16 @@ export default function YourArcScreen() {
   // with this mount, same reasoning as the richDataLoading effect above.
   const [firstPaintReady, setFirstPaintReady] = useState(false);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
+  // The cone's own long-press preview (2026-08-20 review: "the dots don't
+  // make sense to anybody apart from me") — a quick date+level label for
+  // a reading, or a quick date label for a wish, shown without leaving
+  // the page. Separate from `selected` (which drives the full detail page
+  // opened by a plain tap) — long-press is a lighter, non-navigating
+  // preview of the same point. Auto-dismissed a few seconds after being
+  // set (see handleConePointLongPress) rather than tracked against page
+  // navigation — simpler than wiring PagedScrollView's active index back
+  // up to this screen just to clear a transient preview.
+  const [conePreview, setConePreview] = useState<{ date: string; label: string } | null>(null);
   // Set by handleConePointPress — see PagedScrollView's own jumpTo prop
   // for why this is a token (a value that changes per tap), not a plain
   // boolean/index: the detail page always lands in the same page slot,
@@ -512,6 +524,34 @@ export default function YourArcScreen() {
     }
   };
 
+  // Long-press preview (2026-08-20) — a quick date+level label for a
+  // reading dot, or date+"a wish" for a wish dot, shown right on the page
+  // without opening anything. This is the per-dot half of the "dots don't
+  // make sense to anybody" fix; the legend (coneLegend below) is the
+  // other half, explaining the color convention once rather than per-dot.
+  const handleConePointLongPress = (pointId: string) => {
+    if (pointId.startsWith('reading-')) {
+      const ts = Number(pointId.slice('reading-'.length));
+      const entry = readingLog.find((e) => e.ts === ts);
+      if (!entry) return;
+      const level = VIBRATION_LEVELS.find((l) => l.slug === entry.levelSlug);
+      setConePreview({
+        date: formatDate(entry.ts),
+        label: level ? getLocalizedLevelName(level, locale) : entry.levelSlug,
+      });
+      setTimeout(() => setConePreview(null), CONE_PREVIEW_DISMISS_MS);
+    } else if (pointId.startsWith('wish-')) {
+      const id = pointId.slice('wish-'.length);
+      const wish = allWishes.find((w) => w.id === id);
+      if (!wish) return;
+      setConePreview({
+        date: formatDate(new Date(wish.savedAt).getTime()),
+        label: t('yourArc.coneLegendWishLabel'),
+      });
+      setTimeout(() => setConePreview(null), CONE_PREVIEW_DISMISS_MS);
+    }
+  };
+
   const points = readingLog.map((e) => e.score);
   const min = Math.min(...points, 0);
   const max = Math.max(...points, 1);
@@ -714,6 +754,7 @@ export default function YourArcScreen() {
   if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
     pages.push(
       <ScrollView key="cone" contentContainerStyle={styles.conePageContent}>
+        <View style={styles.coneTopSpacer} />
         {/* Top framing line — the future cone, named explicitly as the
             user's OWN envisioned future, never a forecast/prediction
             (review, 2026-08-19: "not some random future - the future in
@@ -721,7 +762,11 @@ export default function YourArcScreen() {
             "no fabricated trajectory" rule RULES.md already states for
             the future cone, just made legible in the copy itself rather
             than only true in how the geometry happens to be built
-            (futurePoints only ever holding the active wish). */}
+            (futurePoints only ever holding the active wish). Margin
+            tightened 2026-08-20 (review: "the clarifiers 'above' and
+            'below' should be positioned closer to the cone") — previously
+            pushed to the page's top edge by justifyContent: space-between;
+            now sits close enough to the shape to read as pointing at it. */}
         <Text style={styles.coneFramingTop}>{t('yourArc.coneFutureFraming')}</Text>
         <View style={styles.timeConeWrap}>
           <TimeCone
@@ -730,6 +775,7 @@ export default function YourArcScreen() {
             pastPoints={timeConeGeometry.pastPoints}
             futurePoints={timeConeGeometry.futurePoints}
             onPointPress={handleConePointPress}
+            onPointLongPress={handleConePointLongPress}
           />
         </View>
         {/* Bottom framing line — same move for the past cone: the past
@@ -738,7 +784,35 @@ export default function YourArcScreen() {
             record. Matches RULES.md's existing "the past cone is the
             user's own account... never asserted as raw objective fact." */}
         <Text style={styles.coneFramingBottom}>{t('yourArc.conePastFraming')}</Text>
+        {/* The long-press preview (2026-08-20) — appears right under the
+            bottom framing line once a dot's been long-pressed, cleared
+            whenever a DIFFERENT page is swiped to (see the pager-index
+            effect below) so a stale preview doesn't linger after leaving
+            this page. */}
+        {conePreview && (
+          <Text style={styles.conePreviewText}>
+            {conePreview.date} — {conePreview.label}
+          </Text>
+        )}
         <Text style={styles.tapPointHint}>{t('yourArc.coneTapHint')}</Text>
+        {/* The legend (2026-08-20 review: "the dots don't make sense to
+            anybody apart from me") — explains the color convention once,
+            in plain language, rather than requiring every dot to carry
+            its own label. Two lines: what a colored dot is (a reading, in
+            that reading's own real level color — same convention the
+            kaleidoscope and sphere history already use), and what a pale/
+            neutral dot is (a wish, which has no level to color it by). */}
+        <View style={styles.coneLegend}>
+          <View style={styles.coneLegendRow}>
+            <View style={[styles.coneLegendDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+            <Text style={styles.coneLegendText}>{t('yourArc.coneLegendReading')}</Text>
+          </View>
+          <View style={styles.coneLegendRow}>
+            <View style={[styles.coneLegendDot, { backgroundColor: `rgb(${colors.accent.ivoryRgb})` }]} />
+            <Text style={styles.coneLegendText}>{t('yourArc.coneLegendWish')}</Text>
+          </View>
+        </View>
+        <View style={styles.coneBottomSpacer} />
       </ScrollView>
     );
   }
@@ -1284,14 +1358,24 @@ function makeStyles(colors: Colors) {
   // future, bottom says past, cone fills the big space between them"
   // actually read as three deliberately-placed zones instead of one
   // centered stack.
+  // justifyContent: 'space-between' (removed 2026-08-20) pushed the top/
+  // bottom framing lines all the way to the page edges, as far from the
+  // cone as possible — review: "the clarifiers 'above' and 'below' should
+  // be positioned closer to the cone to make it more visible what they're
+  // clarifying." Real flex spacers above/below the whole content block
+  // (coneTopSpacer/coneBottomSpacer) center the block vertically instead,
+  // while the framing text keeps a small fixed margin to the cone itself
+  // (see coneFramingTop/Bottom's own marginBottom/marginTop) — same fix
+  // shape as Cover's own space-between bug from the same review pass.
   conePageContent: {
     flexGrow: 1,
-    justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: spacing[6],
     paddingTop: spacing[8],
-    paddingBottom: spacing[12],
+    paddingBottom: spacing[10],
   },
+  coneTopSpacer: { flex: 1, minHeight: spacing[4] },
+  coneBottomSpacer: { flex: 1, minHeight: spacing[4] },
   // Cover's own layout (2026-08-20) — the kaleidoscope+philosopher-line+
   // title as one centered group, with the save-hint caption clear of the
   // image, both pushed apart by real flexed spacers (coverTopSpacer/
@@ -1374,6 +1458,10 @@ function makeStyles(colors: Colors) {
   // left-aligned like coneFramingLine above, since these sit directly
   // above/below the cone itself (a centered shape) rather than under a
   // left-aligned title block the way the Cover page's framing line does.
+  // marginBottom/marginTop (2026-08-20) pull these close to the cone
+  // itself, replacing the old justifyContent: space-between layout that
+  // pushed them to the page's own top/bottom edges — see conePageContent's
+  // own comment.
   coneFramingTop: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
@@ -1381,6 +1469,8 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
+    paddingHorizontal: spacing[4],
+    marginBottom: spacing[4],
   },
   coneFramingBottom: {
     color: colors.text.secondary,
@@ -1389,6 +1479,37 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[4],
+  },
+  // The long-press preview (2026-08-20) — same restrained register as the
+  // rest of this page's supporting text, not a popover/tooltip box (no
+  // "cards" per aesthetic.md).
+  conePreviewText: {
+    color: colors.text.primary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    textAlign: 'center',
+    marginTop: spacing[3],
+  },
+  // The legend (2026-08-20) — two quiet rows, dot + label, same "a dot,
+  // colored by what's actually true" register the facts page's own
+  // factDot/factRow already use.
+  coneLegend: {
+    marginTop: spacing[5],
+    gap: spacing[2],
+    alignItems: 'flex-start',
+  },
+  coneLegendRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing[2],
+  },
+  coneLegendDot: { width: 6, height: 6, borderRadius: 3 },
+  coneLegendText: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
   },
   introLine: {
     alignSelf: 'flex-start',
