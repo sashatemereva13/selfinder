@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -17,6 +17,7 @@ import { listMyWishes, markWishResurfaced, saveWishIfConsented, markWishFulfille
 import { routeToCrisisSupport } from '../src/utils/routeToCrisisSupport';
 import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
 import { getArcLine } from '../src/api/arcLine';
+import { saveMessageImage } from '../src/utils/saveMessageImage';
 import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
@@ -169,6 +170,16 @@ export default function YourArcScreen() {
   // yet or unavailable," in which case the Cover page falls back to the
   // original static copy rather than showing nothing.
   const [arcLine, setArcLine] = useState<string | null>(null);
+  // Long-press-to-save the kaleidoscope (2026-08-20 review) — same
+  // captureRef/MediaLibrary pattern SaveMessageAction already uses for a
+  // Guide message, just a different capture target (the kaleidoscope's
+  // own wrapping View, which contains its react-native-svg content —
+  // captureRef supports capturing SVG-in-View on both platforms, same as
+  // any other view content). 'idle' | 'saving' | 'saved' | 'error',
+  // mirroring SaveMessageAction's own status shape.
+  const kaleidoscopeRef = useRef<View>(null);
+  const [kaleidoscopeSaveStatus, setKaleidoscopeSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [kaleidoscopeSaveError, setKaleidoscopeSaveError] = useState<string | null>(null);
   // "Try it as if it's already true" (2026-08-18) — an explicitly-named
   // EXERCISE, not the app asserting anything as fact: the user writes
   // their OWN present-tense, feeling-based version of their wish (e.g.
@@ -442,6 +453,19 @@ export default function YourArcScreen() {
     }
   };
 
+  const handleSaveKaleidoscope = async () => {
+    if (kaleidoscopeSaveStatus === 'saving') return;
+    setKaleidoscopeSaveStatus('saving');
+    setKaleidoscopeSaveError(null);
+    const result = await saveMessageImage(kaleidoscopeRef);
+    if (result.success) {
+      setKaleidoscopeSaveStatus('saved');
+    } else {
+      setKaleidoscopeSaveStatus('error');
+      setKaleidoscopeSaveError(result.error ?? null);
+    }
+  };
+
   // Locks in the user's own present-tense line — no moderation call here
   // (unlike the wish itself), since this text is never sent to the
   // server or stored anywhere; it only ever lives in this screen's own
@@ -625,28 +649,53 @@ export default function YourArcScreen() {
   // many pages exist, and both need to agree on that number.
   const pages: React.ReactNode[] = [];
 
-  // Page 1 — Cover. Kaleidoscope first, title/framing line BELOW it (per
-  // collaboration notes, 2026-08-14: "they see the kaleidoscope in the
-  // middle of the screen and header 'Your Arc' at the bottom with a brief
-  // description") — the pattern is the first thing anyone sees, not a
-  // heading above a picture. The framing line itself is real per-user
-  // content when arcLine has loaded (see getArcLine's own comment) —
-  // previously this was the same static sentence on every visit
-  // regardless of what was actually in the person's record, which is
-  // exactly the "wallpaper" problem raised in review (2026-08-18): the
-  // one dynamic thing on this page was the kaleidoscope alone. Falls back
-  // to the original static line if arcLine hasn't loaded (no session, no
-  // philosopher yet, still in flight, or the backend had nothing to
-  // generate from) — never renders a gap.
+  // Page 1 — Cover. Restructured 2026-08-20 (review): the kaleidoscope is
+  // "the main event" and previously had a caption sitting directly under
+  // it competing for the same first glance — moved to a quiet save-hint
+  // at the very bottom of the page instead, so the image stands alone.
+  // The kicker ("YOUR ARC") was dropped entirely — Cover isn't a page
+  // ABOUT a topic the way every other page is, it's the entry point
+  // itself, so a section-label above the title didn't fit; the title
+  // alone, smaller, is enough to name the place. The philosopher line
+  // (arcLine) moved ABOVE the title, in voice — matching RULES.md's
+  // standing "philosopher voice first, then a plain clarifying line"
+  // pattern used everywhere else in the app, which Cover previously did
+  // in the opposite order (static title first, personal line last).
+  //
+  // Long-press the kaleidoscope to save it (2026-08-20) — same
+  // captureRef/MediaLibrary mechanism as SaveMessageAction's "save as
+  // image" for a Guide message, applied to the kaleidoscope's own View
+  // (which contains its react-native-svg content).
   pages.push(
-    <ScrollView key="cover" contentContainerStyle={styles.pageCentered}>
-      <View style={styles.kaleidoscopeWrap}>
-        <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
-        <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
+    <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
+      <View style={styles.coverTopSpacer} />
+      <View style={styles.coverCenterGroup}>
+        <Pressable
+          onLongPress={handleSaveKaleidoscope}
+          disabled={kaleidoscopeSaveStatus === 'saving'}
+        >
+          <View ref={kaleidoscopeRef} collapsable={false} style={styles.kaleidoscopeWrap}>
+            <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
+          </View>
+        </Pressable>
+        <Text style={styles.coverPhilosopherLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
+        <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
       </View>
-      <Text style={styles.kicker}>{t('yourArc.kicker')}</Text>
-      <Text style={styles.title}>{t('yourArc.title')}</Text>
-      <Text style={styles.coneFramingLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
+      {/* Save hint, moved down here from directly under the kaleidoscope
+          (2026-08-20 review: "that line diminishes the beauty of the
+          kaleidoscope... distracts the attention") — a quiet clarifier at
+          the bottom of the page instead, doubling as the save affordance's
+          own status line once long-pressed. */}
+      <Text style={styles.kaleidoscopeCaption}>
+        {kaleidoscopeSaveStatus === 'saving'
+          ? t('saveMessage.saving')
+          : kaleidoscopeSaveStatus === 'saved'
+            ? t('saveMessage.saved')
+            : kaleidoscopeSaveStatus === 'error'
+              ? kaleidoscopeSaveError ?? t('saveMessage.somethingWentWrong')
+              : t('yourArc.kaleidoscopeCaption')}
+      </Text>
+      <View style={styles.coverBottomSpacer} />
     </ScrollView>
   );
 
@@ -1243,16 +1292,38 @@ function makeStyles(colors: Colors) {
     paddingTop: spacing[8],
     paddingBottom: spacing[12],
   },
+  // Cover's own layout (2026-08-20) — the kaleidoscope+philosopher-line+
+  // title as one centered group, with the save-hint caption clear of the
+  // image, both pushed apart by real flexed spacers (coverTopSpacer/
+  // coverBottomSpacer below), not justifyContent: 'space-between'. An
+  // earlier version used space-between with a bare zero-height spacer
+  // View at the top — confirmed live that this collapsed almost all the
+  // gap to one side (the caption sat nearly flush against the title, with
+  // a large dead gap further below it) rather than spreading evenly.
+  // flex: 1 spacers on both sides claim their share of remaining space
+  // directly, which is more predictable inside a ScrollView's content
+  // container than relying on space-between's gap distribution.
+  coverPageContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    paddingHorizontal: spacing[6],
+    paddingTop: spacing[8],
+    paddingBottom: spacing[10],
+  },
+  coverTopSpacer: { flex: 1, minHeight: spacing[6] },
+  coverBottomSpacer: { flex: 1, minHeight: spacing[6] },
+  coverCenterGroup: { alignItems: 'center' },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[8] },
+  kaleidoscopeWrap: { alignSelf: 'center' },
   kaleidoscopeCaption: {
     color: colors.text.faint,
     fontFamily: fonts.light,
     fontStyle: 'italic',
     fontSize: fontSizes.xs,
     textAlign: 'center',
-    marginTop: spacing[3],
+    paddingHorizontal: spacing[4],
+    marginTop: spacing[6],
   },
   timeConeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
   everyWalkHeading: {
@@ -1272,22 +1343,32 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  title: {
-    alignSelf: 'flex-start',
+  // Cover's own title (2026-08-20) — smaller than the old shared `title`
+  // (md, not lg) and centered, not left-aligned: without the "YOUR ARC"
+  // kicker above it, a large left-aligned heading read as too heavy for
+  // what's now just a quiet name under the philosopher line, not a
+  // page-topic header the way every other page's kicker+title pair is.
+  coverTitle: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.lg,
-    lineHeight: fontSizes.lg * lineHeights.tight,
+    fontSize: fontSizes.md,
+    lineHeight: fontSizes.md * lineHeights.tight,
+    textAlign: 'center',
     marginTop: spacing[2],
   },
-  coneFramingLine: {
-    alignSelf: 'flex-start',
+  // Philosopher voice first (2026-08-20) — matches RULES.md's standing
+  // "philosopher voice, then plain clarifying line" pattern used
+  // everywhere else in the app; Cover previously ran this in the
+  // opposite order (static title first, personal line last).
+  coverPhilosopherLine: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontStyle: 'italic',
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[3],
+    textAlign: 'center',
+    marginTop: spacing[6],
+    paddingHorizontal: spacing[4],
   },
   // The cone page's own top/bottom framing (2026-08-19) — centered, not
   // left-aligned like coneFramingLine above, since these sit directly
