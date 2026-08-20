@@ -16,6 +16,7 @@ import { useLocaleStore } from '../src/store/localeStore';
 import { useThemeStore } from '../src/store/themeStore';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
 import { AIDisclosureOverlay } from '../src/components/AIDisclosureOverlay';
+import { TuneInAudioController } from '../src/components/TuneInAudioController';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
 
@@ -130,6 +131,10 @@ export default function RootLayout() {
           <Stack.Screen name="crisis-support" />
         </Stack>
         {showAIDisclosure && <AIDisclosureOverlay />}
+        {/* Mounted once at the app root, not inside the Tune In screen, so
+            playback survives in-app navigation away from that screen — see
+            TuneInAudioController's own comment for why this moved here. */}
+        <TuneInAudioController />
       </GestureHandlerRootView>
     </SafeAreaProvider>
   );

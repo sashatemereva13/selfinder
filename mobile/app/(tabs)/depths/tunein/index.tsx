@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, Platform, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAudioPlayer, useAudioPlayerStatus, setAudioModeAsync } from 'expo-audio';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Asset } from 'expo-asset';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -24,43 +22,17 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
-
-// Lock-screen Now Playing artwork — without this, iOS shows a plain grey
-// placeholder box while Tune In plays in the background. iOS-only: on
-// Android, both Asset.fromModule's synchronous `.uri` (an internal
-// `assets_tuneinartwork`-style scheme with no protocol) AND the resolved
-// `.localUri` from `.downloadAsync()` reliably crashed the app the
-// instant Play was pressed — confirmed twice via on-device adb logcat,
-// including after switching to the (supposedly real file://) resolved
-// localUri, which still surfaced the same native
-// MalformedURLException("no protocol") deep in expo-audio's Kotlin
-// Metadata parsing. The actual native asset-resolution path
-// (expo-asset's Android downloadAsync, which is what's supposed to turn
-// a bundled asset into a real file:// URI) isn't behaving as documented
-// in this build. Since the original complaint was specifically about
-// iOS's lock screen, and Android's lock screen still shows title/artist
-// correctly without an image, this sidesteps the whole broken path
-// rather than continuing to chase it for a cosmetic feature.
-const tuneInArtworkReady =
-  Platform.OS === 'ios'
-    ? Asset.fromModule(require('../../../../assets/tunein-artwork.png')).downloadAsync()
-    : null;
-
-const VOLUME_STEPS = [0.1, 0.2, 0.3, 0.4, 0.5];
-const TIMER_OPTIONS = [5, 15, 30, 45, 60];
-// Fading out over the last stretch of a timer matters specifically for the
-// bedtime use case this was built for — an abrupt cut is jarring if you're
-// already half asleep; a fade reads as the sound settling, not stopping.
-const FADE_SECONDS = 15;
+import { tuneInArtworkReady } from '../../../../src/components/TuneInAudioController';
+import { VOLUME_STEPS, TIMER_OPTIONS, players, useTuneInStore } from '../../../../src/store/tuneInStore';
 
 // Tells the lock screen not to show a scrub bar/duration for Tune In's
 // Now Playing entry. The underlying .m4a is a fixed-length loop (60s) with
 // no relationship to how long a session actually runs — that's decided by
-// the sleep timer in this screen, not the file — so a real progress bar
-// would show the file looping every 60s regardless of the chosen timer,
-// which reads as "the timer isn't doing anything." Seek is disabled for
-// the same reason: skipping around inside one loop of an ambient tone has
-// no meaningful destination.
+// the sleep timer, not the file — so a real progress bar would show the
+// file looping every 60s regardless of the chosen timer, which reads as
+// "the timer isn't doing anything." Seek is disabled for the same reason:
+// skipping around inside one loop of an ambient tone has no meaningful
+// destination.
 const LOCK_SCREEN_OPTIONS = { isLiveStream: true, showSeekForward: false, showSeekBackward: false };
 
 const PULSE_REST_SCALE = 1;
@@ -135,17 +107,20 @@ export default function TuneInScreen() {
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [selected, setSelected] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [volume, setVolume] = useState(0.3);
-  // Defaults to the first timer option (5m) rather than "no timer" — the
-  // lock screen's Now Playing progress bar reflects the actual looped
-  // audio sample's own ~1s length, not the sleep timer, since expo-audio
-  // has no way to override that from JS; always having a real timer
-  // selected at least means the in-app countdown always shows a concrete,
-  // sensible duration instead of implying "plays forever" by default.
-  const [timerMinutes, setTimerMinutes] = useState<number | null>(TIMER_OPTIONS[0]);
-  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
+  // Playback state and the players themselves live outside this screen (see
+  // tuneInStore.ts and TuneInAudioController.tsx) so audio survives
+  // navigating away from Tune In, not just backgrounding the whole app —
+  // this screen only reads state and calls player methods imperatively.
+  const selected = useTuneInStore((s) => s.selected);
+  const isPlaying = useTuneInStore((s) => s.isPlaying);
+  const volume = useTuneInStore((s) => s.volume);
+  const timerMinutes = useTuneInStore((s) => s.timerMinutes);
+  const remainingSeconds = useTuneInStore((s) => s.remainingSeconds);
+  const setSelected = useTuneInStore((s) => s.setSelected);
+  const setIsPlaying = useTuneInStore((s) => s.setIsPlaying);
+  const setVolumeStore = useTuneInStore((s) => s.setVolume);
+  const setTimerMinutes = useTuneInStore((s) => s.setTimerMinutes);
+  const setRemainingSeconds = useTuneInStore((s) => s.setRemainingSeconds);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   const columnWidth = useReadingColumnWidth();
   // Real file:// URI once resolved, iOS only (see tuneInArtworkReady's own
@@ -161,76 +136,10 @@ export default function TuneInScreen() {
     });
   }, []);
 
-  const players = [
-    useAudioPlayer(TUNE_IN_STATES[0].asset),
-    useAudioPlayer(TUNE_IN_STATES[1].asset),
-    useAudioPlayer(TUNE_IN_STATES[2].asset),
-  ];
-
-  // Reflects each player's real native state — needed because pausing from
-  // the lock screen's remote controls calls player.pause() natively,
-  // entirely outside this component; the local isPlaying boolean below has
-  // no way to learn about that on its own, which left the in-app button
-  // stuck showing "Stop" after a lock-screen pause even though playback had
-  // actually stopped. Three fixed calls (not a loop) since there are always
-  // exactly three players — hooks can't be called a variable number of times.
-  const statuses = [
-    useAudioPlayerStatus(players[0]),
-    useAudioPlayerStatus(players[1]),
-    useAudioPlayerStatus(players[2]),
-  ];
-
-  // Syncs isPlaying down from the selected player's real native state —
-  // catches the case where playback was paused via the lock screen's own
-  // remote controls (an entirely native path that never touches this
-  // component's state directly) so reopening the app shows "Play" instead
-  // of a stale "Stop" for audio that has actually already paused.
-  useEffect(() => {
-    setIsPlaying(statuses[selected].playing);
-  }, [statuses[selected].playing, selected]);
-
-  // shouldPlayInBackground + doNotMix keep a tune sounding after the screen
-  // locks — deliberately available to every user, not gated behind
-  // Selfinder+: several states are explicitly built for falling asleep
-  // (see Sleep/Deep Rest's intent copy), and a sleep aid that stops the
-  // moment the screen locks doesn't do its job.
-  useEffect(() => {
-    setAudioModeAsync({
-      playsInSilentMode: true,
-      shouldPlayInBackground: true,
-      interruptionMode: 'doNotMix',
-    });
-  }, []);
-
-  useEffect(() => {
-    players.forEach((player) => {
-      player.loop = true;
-      player.volume = volume;
-    });
-  }, [volume]);
-
-  // Counts down once a timer is set, fading the active player's volume over
-  // the final FADE_SECONDS rather than cutting it off, then stops playback.
-  // Only ticks while something is actually playing — setting a timer before
-  // pressing Play should hold the chosen duration, not silently burn through
-  // it (or start fading toward silence) while nothing is even sounding.
-  useEffect(() => {
-    if (remainingSeconds === null || !isPlaying) return;
-    if (remainingSeconds <= 0) {
-      players[selected].pause();
-      players[selected].setActiveForLockScreen(false);
-      setIsPlaying(false);
-      players.forEach((player) => { player.volume = volume; });
-      setRemainingSeconds(null);
-      track('tune_in_stopped', { state: TUNE_IN_STATES[selected].name, reason: 'timer' });
-      return;
-    }
-    if (remainingSeconds <= FADE_SECONDS) {
-      players[selected].volume = volume * (remainingSeconds / FADE_SECONDS);
-    }
-    const id = setTimeout(() => setRemainingSeconds((s) => (s !== null ? s - 1 : null)), 1000);
-    return () => clearTimeout(id);
-  }, [remainingSeconds, isPlaying]);
+  const setVolume = (v: number) => {
+    setVolumeStore(v);
+    players.forEach((player) => { player.volume = v; });
+  };
 
   const activeState = TUNE_IN_STATES[selected];
 
