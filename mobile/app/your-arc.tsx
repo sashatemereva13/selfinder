@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
@@ -17,7 +17,6 @@ import { listMyWishes, markWishResurfaced, saveWishIfConsented, markWishFulfille
 import { routeToCrisisSupport } from '../src/utils/routeToCrisisSupport';
 import { generateCrossing, answerCrossing, listMyCrossings, SavedCrossing } from '../src/api/crossing';
 import { getArcLine } from '../src/api/arcLine';
-import { saveMessageImage } from '../src/utils/saveMessageImage';
 import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
@@ -26,6 +25,7 @@ import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkli
 import { SphereArc } from '../src/components/SphereArc';
 import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
+import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { PagedScrollView } from '../src/components/PagedScrollView';
@@ -182,16 +182,6 @@ export default function YourArcScreen() {
   // yet or unavailable," in which case the Cover page falls back to the
   // original static copy rather than showing nothing.
   const [arcLine, setArcLine] = useState<string | null>(null);
-  // Long-press-to-save the kaleidoscope (2026-08-20 review) — same
-  // captureRef/MediaLibrary pattern SaveMessageAction already uses for a
-  // Guide message, just a different capture target (the kaleidoscope's
-  // own wrapping View, which contains its react-native-svg content —
-  // captureRef supports capturing SVG-in-View on both platforms, same as
-  // any other view content). 'idle' | 'saving' | 'saved' | 'error',
-  // mirroring SaveMessageAction's own status shape.
-  const kaleidoscopeRef = useRef<View>(null);
-  const [kaleidoscopeSaveStatus, setKaleidoscopeSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
-  const [kaleidoscopeSaveError, setKaleidoscopeSaveError] = useState<string | null>(null);
   // "Try it as if it's already true" (2026-08-18) — an explicitly-named
   // EXERCISE, not the app asserting anything as fact: the user writes
   // their OWN present-tense, feeling-based version of their wish (e.g.
@@ -465,19 +455,6 @@ export default function YourArcScreen() {
     }
   };
 
-  const handleSaveKaleidoscope = async () => {
-    if (kaleidoscopeSaveStatus === 'saving') return;
-    setKaleidoscopeSaveStatus('saving');
-    setKaleidoscopeSaveError(null);
-    const result = await saveMessageImage(kaleidoscopeRef);
-    if (result.success) {
-      setKaleidoscopeSaveStatus('saved');
-    } else {
-      setKaleidoscopeSaveStatus('error');
-      setKaleidoscopeSaveError(result.error ?? null);
-    }
-  };
-
   // Locks in the user's own present-tense line — no moderation call here
   // (unlike the wish itself), since this text is never sent to the
   // server or stored anywhere; it only ever lives in this screen's own
@@ -522,6 +499,20 @@ export default function YourArcScreen() {
       // still triggers a fresh jump.
       setConeJumpToken(Date.now());
     }
+  };
+
+  // Opens the detail page from a tap on the Facts page's own reading list
+  // (2026-08-20 review: "add the list of past readings... so they look
+  // like the list of past readings on 'You' page") — reuses the exact
+  // same `selected` state/detail page the cone and sparkline already
+  // drive, so this is a third entry point into one shared detail, not a
+  // fourth, separate mechanism (e.g. an inline expand like AccountSection's
+  // own list uses). Resolves a richHistory item back to its matching
+  // readingLog entry by closest timestamp — same 60s tolerance
+  // selectedRich already uses in the opposite direction.
+  const handleFactsReadingPress = (rich: SavedMeasureResult) => {
+    const entry = readingLog.find((e) => Math.abs(e.ts - new Date(rich.savedAt).getTime()) < 60_000);
+    if (entry) setSelected(entry);
   };
 
   // Long-press preview (2026-08-20) — a quick date+level label for a
@@ -711,41 +702,28 @@ export default function YourArcScreen() {
   // page's name, separate from the philosopher's spoken introduction up
   // top.
   //
-  // Long-press the kaleidoscope to save it (2026-08-20) — same
-  // captureRef/MediaLibrary mechanism as SaveMessageAction's "save as
-  // image" for a Guide message, applied to the kaleidoscope's own View
-  // (which contains its react-native-svg content). Confirmed working well
-  // on-device — see collaboration notes on whether this should become the
-  // SAME mechanism used everywhere else images are saved in the app
-  // (currently a visible tap-button flow, not long-press) — not yet
-  // unified, flagged as a real open question, not decided here.
+  // Long-press the kaleidoscope to save it — now via the shared
+  // LongPressToSave component (2026-08-20, unified app-wide: Depths'
+  // headline, Cards, and Feeling Lucky all switched from a visible Save/
+  // Share button to the same long-press gesture this page introduced).
+  // captureChildren mode captures the kaleidoscope's own on-screen View
+  // directly (it contains its own react-native-svg content) rather than
+  // rendering a separate off-screen MessageCard, since the kaleidoscope
+  // itself — not a text card — is the thing worth saving here.
   pages.push(
     <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
       <View style={styles.coverTopSpacer} />
       <View style={styles.coverCenterGroup}>
         <Text style={styles.coverPhilosopherLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
-        <Pressable
-          onLongPress={handleSaveKaleidoscope}
-          disabled={kaleidoscopeSaveStatus === 'saving'}
-        >
-          <View ref={kaleidoscopeRef} collapsable={false} style={styles.kaleidoscopeWrap}>
+        <LongPressToSave captureChildren>
+          <View style={styles.kaleidoscopeWrap}>
             <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
           </View>
-        </Pressable>
+        </LongPressToSave>
       </View>
       <View style={styles.coverFooter}>
         <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
-        {/* Save hint, doubling as the save affordance's own status line
-            once long-pressed. */}
-        <Text style={styles.kaleidoscopeCaption}>
-          {kaleidoscopeSaveStatus === 'saving'
-            ? t('saveMessage.saving')
-            : kaleidoscopeSaveStatus === 'saved'
-              ? t('saveMessage.saved')
-              : kaleidoscopeSaveStatus === 'error'
-                ? kaleidoscopeSaveError ?? t('saveMessage.somethingWentWrong')
-                : t('yourArc.kaleidoscopeCaption')}
-        </Text>
+        <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
       </View>
       <View style={styles.coverBottomSpacer} />
     </ScrollView>
@@ -869,6 +847,36 @@ export default function YourArcScreen() {
             );
           })}
         </View>
+        {/* Past readings list (2026-08-20 review: "add the list of past
+            readings to this page, so they will look like the list of past
+            readings on 'You' page") — same date + level row shape as
+            AccountSection's own history list (fixed 2026-08-20 to drop
+            the bare score number there too — see that file's own
+            comment), but tapping a row here opens Your Arc's existing
+            rich Detail page instead of expanding inline, since that page
+            already holds more than just the Q&A transcript. Only shown
+            once richHistory exists (signed-in + consented) — a stricter
+            condition than the facts above it, which only need the
+            local-only readingLog. */}
+        {richHistory && richHistory.length > 0 && (
+          <View style={styles.pastReadingsSection}>
+            <Text style={styles.pastReadingsKicker}>{t('yourArc.pastReadingsHeading')}</Text>
+            {[...richHistory]
+              .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+              .map((reading) => (
+                <Pressable
+                  key={reading.id}
+                  style={styles.pastReadingRow}
+                  onPress={() => handleFactsReadingPress(reading)}
+                >
+                  <Text style={styles.pastReadingDate}>{formatDate(new Date(reading.savedAt).getTime())}</Text>
+                  <Text style={styles.pastReadingLevel}>
+                    {getLocalizedLevelName(reading.vibrationLevel, locale)}
+                  </Text>
+                </Pressable>
+              ))}
+          </View>
+        )}
       </ScrollView>
     );
   }
@@ -1612,6 +1620,35 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
   },
+  // Past readings list (2026-08-20) — same date-then-level row shape as
+  // AccountSection's own history list on the You page, no bare score
+  // (per RULES.md — see that file's own fix). No border/box per
+  // aesthetic.md's "no cards" rule; a thin top border on the section as a
+  // whole (matching AccountSection's historySection) is enough to
+  // separate this from the facts above it without boxing each row.
+  pastReadingsSection: {
+    marginTop: spacing[6],
+    paddingTop: spacing[4],
+    borderTopWidth: 1,
+    borderTopColor: colors.bg.border,
+    gap: spacing[1],
+  },
+  pastReadingsKicker: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+    marginBottom: spacing[2],
+  },
+  pastReadingRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: spacing[2],
+  },
+  pastReadingDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
+  pastReadingLevel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   // "Held, not displayed" — the row itself is a plain sentence, same
   // register as tapPointHint below (an instruction/label, not a card),
   // no border/box per aesthetic.md's "no cards" rule. Sits between the

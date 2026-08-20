@@ -10,7 +10,3 @@ export async function saveMessageImage(
 ): Promise<{ success: boolean; error?: string }> {
   return { success: false, error: 'Saving images is not supported on web — try the app.' };
 }
-
-export async function shareMessageImage(_ref: RefObject<View | null>): Promise<void> {
-  // Not supported on web.
-}

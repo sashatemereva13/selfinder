@@ -188,6 +188,7 @@
     "title": "Живая история",
     "nowKicker": "Сейчас",
     "factsKicker": "В этом месяце",
+    "pastReadingsHeading": "Каждое состояние",
     "introLine_one": "{{count}} состояние, {{sinceDate}}.",
     "introLine_few": "{{count}} состояния, первое — {{sinceDate}}.",
     "introLine_many": "{{count}} состояний, первое — {{sinceDate}}.",

@@ -42,7 +42,7 @@ import { getLevelBySlug, getLocalizedLevel } from '../../../src/content/levelsCo
 import { useLevelColors, getLocalizedLevelName } from '../../../src/content/measureConfig';
 import { useLocaleStore } from '../../../src/store/localeStore';
 import { Sphere } from '../../../src/types';
-import { SaveMessageAction } from '../../../src/components/SaveMessageAction';
+import { LongPressToSave } from '../../../src/components/LongPressToSave';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
 import {
   buildAuraFieldGeometry,
@@ -856,10 +856,15 @@ export default function DepthsScreen() {
               </View>
             )}
 
-            <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
-
-            {headlineMessage && (
-              <SaveMessageAction message={headlineMessage} accentRgb={levelRgb} />
+            {/* Long-press the headline to save it (2026-08-20 — replaces
+                the old visible Save/Share buttons app-wide, see
+                LongPressToSave's own header comment). */}
+            {headlineMessage ? (
+              <LongPressToSave message={headlineMessage} accentRgb={levelRgb}>
+                <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
+              </LongPressToSave>
+            ) : (
+              <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
             )}
           </>
         ) : (

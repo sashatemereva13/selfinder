@@ -525,8 +525,13 @@ function LoggedInAccount({
                   >
                     <View>
                       <Text style={styles.historyDate}>{formatDate(reading.savedAt, locale)}</Text>
+                      {/* No bare score next to the level name (2026-08-20
+                          fix — this violated RULES.md's own standing rule:
+                          "never show a bare numeric score next to a level
+                          name," previously read here as "Fear · 412"). The
+                          level name alone is the real information. */}
                       <Text style={styles.historyLabel}>
-                        {getLocalizedLevelName(reading.vibrationLevel, locale)} · {reading.vibrationScore}
+                        {getLocalizedLevelName(reading.vibrationLevel, locale)}
                       </Text>
                     </View>
                     {hasTranscript && (

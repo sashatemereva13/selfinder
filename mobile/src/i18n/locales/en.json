@@ -188,6 +188,7 @@
     "title": "A living record",
     "nowKicker": "Now",
     "factsKicker": "This month",
+    "pastReadingsHeading": "Every reading",
     "introLine_one": "{{count}} reading, on {{sinceDate}}.",
     "introLine_other": "{{count}} readings, the first on {{sinceDate}}.",
     "tapPointHint": "Tap a point to open that day again",

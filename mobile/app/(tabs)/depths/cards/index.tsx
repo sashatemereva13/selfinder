@@ -11,7 +11,7 @@ import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { AnimatedCardSymbol } from '../../../../src/components/AnimatedCardSymbol';
 import { CARDS_DECK, CardEntry, drawCard, cardRgbForTheme } from '../../../../src/content/cardsDeck';
-import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
+import { LongPressToSave } from '../../../../src/components/LongPressToSave';
 import { AmbientGlow } from '../../../../src/components/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
@@ -110,25 +110,26 @@ export default function CardsScreen() {
           element on the page; the line underneath is deliberately smaller
           and quieter than a first-time reader might expect — the artwork
           is the card, the words are a caption under it, not the other
-          way around. */}
-      <Animated.View style={[styles.cardPlane, cardFadeStyle]}>
-        <View style={styles.symbolWrap}>
-          <AnimatedCardSymbol id={card.id} rgb={cardRgb} size={240} />
-        </View>
+          way around.
 
-        <Text style={styles.kind}>{t(card.kind === 'statement' ? 'cards.receive' : 'cards.notice')}</Text>
-        <Text style={[styles.name, { color: `rgb(${cardRgb})` }]}>{name}</Text>
-        <Text style={styles.line}>{line}</Text>
-      </Animated.View>
+          Long-press the card to save it (2026-08-20 — replaces the old
+          visible Save/Share buttons app-wide, see LongPressToSave's own
+          header comment). Still saves the plain MessageCard text-card
+          design (message mode), not a screenshot of this card plane
+          itself — same "save/share is a meta-action about the card, not
+          part of the card" reasoning as before, just triggered by
+          long-press now instead of a separate button underneath. */}
+      <LongPressToSave message={line} accentRgb={cardRgb}>
+        <Animated.View style={[styles.cardPlane, cardFadeStyle]}>
+          <View style={styles.symbolWrap}>
+            <AnimatedCardSymbol id={card.id} rgb={cardRgb} size={240} />
+          </View>
 
-      {/* Save/share is a meta-action about the card, not part of the card
-          itself — same reasoning as Depths' own headline (see
-          depths/index.tsx), which places SaveMessageAction directly after
-          the content, never inside a bordered plane. Sits right under the
-          card, ahead of the next-step actions below. */}
-      <View style={styles.saveWrap}>
-        <SaveMessageAction message={line} accentRgb={cardRgb} />
-      </View>
+          <Text style={styles.kind}>{t(card.kind === 'statement' ? 'cards.receive' : 'cards.notice')}</Text>
+          <Text style={[styles.name, { color: `rgb(${cardRgb})` }]}>{name}</Text>
+          <Text style={styles.line}>{line}</Text>
+        </Animated.View>
+      </LongPressToSave>
 
       {/* Talk about it / Write about it are the real choice here — two
           genuine alternatives to each other, so they sit side by side in
@@ -181,6 +182,7 @@ function makeStyles(colors: Colors) {
     borderRadius: radius.lg,
     paddingVertical: spacing[8],
     paddingHorizontal: spacing[6],
+    marginBottom: spacing[6],
   },
   symbolWrap: { marginBottom: spacing[6] },
   kind: {
@@ -205,7 +207,6 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     maxWidth: 280,
   },
-  saveWrap: { alignItems: 'center', marginTop: spacing[6] },
   // Two real alternatives, side by side — equal width so neither reads as
   // the "more correct" option, with a vertical rule between them (same
   // "quiet, structural, not decorative" divider register as

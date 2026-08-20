@@ -2,8 +2,12 @@ import { RefObject } from 'react';
 import { View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 import * as MediaLibrary from 'expo-media-library';
-import * as Sharing from 'expo-sharing';
 
+// shareMessageImage (expo-sharing) removed 2026-08-20 — decision from
+// that review: sharing happens from the person's own gallery, after the
+// fact, once the image is already saved and they've had a moment with
+// it — not a second competing action inside the app. See
+// LongPressToSave.tsx for the current save-only flow.
 export async function saveMessageImage(
   ref: RefObject<View | null>
 ): Promise<{ success: boolean; error?: string }> {
@@ -18,12 +22,5 @@ export async function saveMessageImage(
     return { success: true };
   } catch {
     return { success: false, error: 'Something went wrong saving the image.' };
-  }
-}
-
-export async function shareMessageImage(ref: RefObject<View | null>): Promise<void> {
-  const uri = await captureRef(ref, { format: 'png', quality: 1 });
-  if (await Sharing.isAvailableAsync()) {
-    await Sharing.shareAsync(uri);
   }
 }

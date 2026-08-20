@@ -9,7 +9,7 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing } from '../../../../src/theme/spacing';
 import feelingLuckyListEn from '../../../../src/content/feelingLuckyList.json';
 import feelingLuckyListRu from '../../../../src/content/feelingLuckyList.ru.json';
-import { SaveMessageAction } from '../../../../src/components/SaveMessageAction';
+import { LongPressToSave } from '../../../../src/components/LongPressToSave';
 import { track } from '../../../../src/utils/analytics';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
@@ -61,13 +61,14 @@ export default function FeelingLuckyScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <View style={styles.messageWrap}>
-        <Text style={styles.message}>{message}</Text>
-      </View>
-
-      <View style={styles.saveWrap}>
-        <SaveMessageAction message={message} accentRgb={colors.accent.ivoryRgb} />
-      </View>
+      {/* Long-press the message itself to save it (2026-08-20 — replaces
+          the old visible Save/Share buttons app-wide, see
+          LongPressToSave's own header comment). */}
+      <LongPressToSave message={message} accentRgb={colors.accent.ivoryRgb}>
+        <View style={styles.messageWrap}>
+          <Text style={styles.message}>{message}</Text>
+        </View>
+      </LongPressToSave>
 
       {philosopher && (
         <Pressable style={styles.talkLinkWrap} onPress={handleTalkAboutIt}>
@@ -85,7 +86,6 @@ function makeStyles(colors: Colors) {
   backRow: { paddingBottom: spacing[8] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   messageWrap: { flex: 1, justifyContent: 'center', paddingVertical: spacing[8] },
-  saveWrap: { alignItems: 'center' },
   talkLinkWrap: { alignItems: 'center', marginTop: spacing[6] },
   talkLink: {
     color: colors.text.secondary,
