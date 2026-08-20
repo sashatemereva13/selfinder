@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, { Defs, LinearGradient, Stop, Ellipse as SvgEllipse, Line, Circle as SvgCircle } from 'react-native-svg';
 import { useThemeColors } from '../theme/useThemeColors';
@@ -137,6 +137,11 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
+  // Same onPress-fires-after-onLongPress guard as TimeConeRing.tsx (see
+  // its own comment) — kept here too even though this component currently
+  // receives no handlers from your-arc.tsx, since it's the same shared
+  // Pressable pattern and the bug would return the moment it's re-wired.
+  const suppressNextPress = useRef<Set<string>>(new Set());
 
   return (
     <View style={{ width, height }}>
@@ -285,8 +290,25 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             return (
               <Pressable
                 key={p.id}
-                onPress={onPointPress ? () => onPointPress(p.id) : undefined}
-                onLongPress={onPointLongPress ? () => onPointLongPress(p.id) : undefined}
+                onPress={
+                  onPointPress
+                    ? () => {
+                        if (suppressNextPress.current.has(p.id)) {
+                          suppressNextPress.current.delete(p.id);
+                          return;
+                        }
+                        onPointPress(p.id);
+                      }
+                    : undefined
+                }
+                onLongPress={
+                  onPointLongPress
+                    ? () => {
+                        suppressNextPress.current.add(p.id);
+                        onPointLongPress(p.id);
+                      }
+                    : undefined
+                }
                 hitSlop={10}
                 style={{
                   position: 'absolute',

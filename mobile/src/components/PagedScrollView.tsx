@@ -39,9 +39,24 @@ interface PagedScrollViewProps {
   // Date.now()); this effect keys off `token`, not `index`, so it always
   // refires on a genuinely new request even when the destination repeats.
   jumpTo?: { index: number; token: number } | null;
+  // Fired whenever the settled active page changes (2026-08-20, Your Arc's
+  // closing-page arrival beat) — lets a caller know when a SPECIFIC page
+  // becomes the one on screen, without this component needing to know
+  // anything about what that page is. All children stay mounted the whole
+  // time (this is a plain horizontal ScrollView, not virtualized), so a
+  // child's own onMount effect only ever fires once; a page that wants to
+  // replay an entrance animation each time it's actually swiped to needs
+  // this signal instead.
+  onActiveIndexChange?: (index: number) => void;
+  // Marks the LAST dot as visually distinct — a small filled/hollow shape
+  // difference, not a new color (aesthetic.md's "one accent color per
+  // screen" still applies) — so the row itself hints "this one is the
+  // destination" before arriving there (2026-08-20, Your Arc's "journey,
+  // not equal-weight carousel" pass).
+  distinctLastDot?: boolean;
 }
 
-export function PagedScrollView({ children, jumpTo }: PagedScrollViewProps) {
+export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinctLastDot }: PagedScrollViewProps) {
   const { width } = useWindowDimensions();
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
@@ -51,7 +66,10 @@ export function PagedScrollView({ children, jumpTo }: PagedScrollViewProps) {
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
-    if (index !== activeIndex) setActiveIndex(index);
+    if (index !== activeIndex) {
+      setActiveIndex(index);
+      onActiveIndexChange?.(index);
+    }
   };
 
   // Dots are a real navigation control, not just a passive indicator
@@ -64,6 +82,7 @@ export function PagedScrollView({ children, jumpTo }: PagedScrollViewProps) {
   const handleJumpTo = (index: number) => {
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
     setActiveIndex(index);
+    onActiveIndexChange?.(index);
   };
 
   useEffect(() => {
@@ -90,23 +109,32 @@ export function PagedScrollView({ children, jumpTo }: PagedScrollViewProps) {
       </ScrollView>
       {children.length > 1 && (
         <View style={styles.dotsRow}>
-          {children.map((_, i) => (
-            <Pressable
-              key={i}
-              onPress={() => handleJumpTo(i)}
-              hitSlop={8}
-              style={styles.dotTapTarget}
-            >
-              <View
-                style={[
-                  styles.dot,
-                  i === activeIndex
-                    ? { backgroundColor: `rgb(${accentRgb})`, opacity: 0.95 }
-                    : { backgroundColor: colors.text.faint, opacity: 0.5 },
-                ]}
-              />
-            </Pressable>
-          ))}
+          {children.map((_, i) => {
+            const isLast = distinctLastDot && i === children.length - 1;
+            return (
+              <Pressable
+                key={i}
+                onPress={() => handleJumpTo(i)}
+                hitSlop={8}
+                style={styles.dotTapTarget}
+              >
+                <View
+                  style={[
+                    // The last dot is a small ring (hollow center), not a
+                    // filled circle, when distinctLastDot is set — same
+                    // size and the same active/inactive color logic below,
+                    // just a shape difference (never a new color, per
+                    // aesthetic.md) so it reads as "the destination" in
+                    // the row at a glance.
+                    isLast ? styles.dotRing : styles.dot,
+                    i === activeIndex
+                      ? { backgroundColor: isLast ? 'transparent' : `rgb(${accentRgb})`, borderColor: `rgb(${accentRgb})`, opacity: 0.95 }
+                      : { backgroundColor: isLast ? 'transparent' : colors.text.faint, borderColor: colors.text.faint, opacity: 0.5 },
+                  ]}
+                />
+              </Pressable>
+            );
+          })}
         </View>
       )}
     </View>
@@ -141,5 +169,9 @@ function makeStyles(colors: Colors) {
     // isn't purely a hit-area concern anymore.
     dotTapTarget: { padding: spacing[2] },
     dot: { width: 6, height: 6, borderRadius: 3 },
+    // Same footprint as `dot`, but a hollow ring (borderWidth, transparent
+    // fill) instead of a filled circle — see distinctLastDot's own
+    // comment on why this exists.
+    dotRing: { width: 6, height: 6, borderRadius: 3, borderWidth: 1 },
   });
 }

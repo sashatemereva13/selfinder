@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { View, Pressable } from 'react-native';
 import Svg, { Circle as SvgCircle } from 'react-native-svg';
 import { useThemeColors } from '../theme/useThemeColors';
@@ -43,6 +43,17 @@ interface TimeConeRingProps {
 
 export function TimeConeRing({ size, points, onPointPress, onPointLongPress }: TimeConeRingProps) {
   const colors = useThemeColors();
+  // Pressable fires onPress on release even after onLongPress already
+  // fired (RN's documented behavior — long-press doesn't suppress the
+  // trailing press) — without this guard, a long-press on a reading dot
+  // set BOTH conePreview (via handleConePointLongPress) AND selected (via
+  // handleConePointPress) back to back, mounting the lightweight preview
+  // text and the fuller inline summary block at the same moment (report,
+  // 2026-08-20: app crashed long-pressing a dot on the rotated past
+  // ring). This ref tracks whether the just-finished gesture was already
+  // handled as a long-press, per point, so the trailing onPress is
+  // skipped instead of double-firing.
+  const suppressNextPress = useRef<Set<string>>(new Set());
   const cx = size / 2;
   const cy = size / 2;
   const ringR = size * 0.42;
@@ -81,8 +92,25 @@ export function TimeConeRing({ size, points, onPointPress, onPointLongPress }: T
           {positions.map(({ point, x, y }) => (
             <Pressable
               key={point.id}
-              onPress={onPointPress ? () => onPointPress(point.id) : undefined}
-              onLongPress={onPointLongPress ? () => onPointLongPress(point.id) : undefined}
+              onPress={
+                onPointPress
+                  ? () => {
+                      if (suppressNextPress.current.has(point.id)) {
+                        suppressNextPress.current.delete(point.id);
+                        return;
+                      }
+                      onPointPress(point.id);
+                    }
+                  : undefined
+              }
+              onLongPress={
+                onPointLongPress
+                  ? () => {
+                      suppressNextPress.current.add(point.id);
+                      onPointLongPress(point.id);
+                    }
+                  : undefined
+              }
               hitSlop={10}
               style={{ position: 'absolute', left: x - 11, top: y - 11, width: 22, height: 22 }}
             />
