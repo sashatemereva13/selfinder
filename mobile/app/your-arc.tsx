@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
@@ -21,9 +20,10 @@ import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { SavedMeasureResult } from '../src/types';
-import { SPARKLINE_VIEW_W, SPARKLINE_VIEW_H } from '../src/components/arcSparkline';
 import { SphereArc } from '../src/components/SphereArc';
 import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
+import { TimeConeRing } from '../src/components/TimeConeRing';
+import { CrossfadeSwitcher } from '../src/components/CrossfadeSwitcher';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
@@ -43,14 +43,6 @@ import { useLocaleStore } from '../src/store/localeStore';
 // since writing a Spill entry is a separate, slightly later action.
 const SPILL_MATCH_WINDOW_MS = 30 * 60 * 1000;
 
-const VIEW_W = SPARKLINE_VIEW_W;
-const VIEW_H = SPARKLINE_VIEW_H;
-const PAD_Y = 4;
-// Points closer together than this many view-units don't get their own
-// tap target — at full history, a long line can pack dozens of points
-// within a few pixels of each other, and a marker too small to reliably
-// tap is worse than no marker at all.
-const MIN_TAP_SPACING = 3;
 // Fills most of the content column's own width without touching its
 // padding — the kaleidoscope reads as a real, spacious presence (same
 // reasoning DepthsSpiral's own canvas sizing uses), not a small diagram.
@@ -132,6 +124,13 @@ export default function YourArcScreen() {
   // navigation — simpler than wiring PagedScrollView's active index back
   // up to this screen just to clear a transient preview.
   const [conePreview, setConePreview] = useState<{ date: string; label: string } | null>(null);
+  // Which rim the cone is "rotated" to face on, if any (2026-08-20
+  // review: "what if, on the cone screen, it will be possible to rotate
+  // the cone... to see the bottom and top circles as surfaces") — null
+  // means the normal side view. See TimeConeRing.tsx's own header
+  // comment for why this is a crossfade between two fully-rendered
+  // static views, not a live geometry rotation.
+  const [coneFacing, setConeFacing] = useState<'past' | 'future' | null>(null);
   // Set by handleConePointPress — see PagedScrollView's own jumpTo prop
   // for why this is a token (a value that changes per tap), not a plain
   // boolean/index: the detail page always lands in the same page slot,
@@ -543,23 +542,6 @@ export default function YourArcScreen() {
     }
   };
 
-  const points = readingLog.map((e) => e.score);
-  const min = Math.min(...points, 0);
-  const max = Math.max(...points, 1);
-  const span = max - min || 1;
-  const xAt = (i: number) => (i / Math.max(points.length - 1, 1)) * VIEW_W;
-  const yAt = (score: number) => PAD_Y + (1 - (score - min) / span) * (VIEW_H - PAD_Y * 2);
-  const d = readingLog
-    .map((e, i) => `${i === 0 ? 'M' : 'L'}${xAt(i).toFixed(1)},${yAt(e.score).toFixed(1)}`)
-    .join(' ');
-
-  // Only every Nth point gets a tap target once points are packed tighter
-  // than MIN_TAP_SPACING, evenly thinned rather than just taking the first
-  // N — otherwise a long history's tappable points would all bunch at one
-  // end of the line.
-  const tapStep = Math.max(1, Math.ceil(MIN_TAP_SPACING / (VIEW_W / Math.max(points.length - 1, 1))));
-  const tappablePoints = readingLog.filter((_, i) => i % tapStep === 0 || i === readingLog.length - 1);
-
   const selectedRich = selected
     ? richHistory?.find((r) => Math.abs(new Date(r.savedAt).getTime() - selected.ts) < 60_000)
     : undefined;
@@ -758,15 +740,63 @@ export default function YourArcScreen() {
             pushed to the page's top edge by justifyContent: space-between;
             now sits close enough to the shape to read as pointing at it. */}
         <Text style={styles.coneFramingTop}>{t('yourArc.coneFutureFraming')}</Text>
+        {/* Rotating to view a rim face-on (2026-08-20 review: "what if...
+            it will be possible to rotate the cone... to see the bottom
+            and top circles as surfaces with readings/wishes on them").
+            CrossfadeSwitcher fades between the normal side-view TimeCone
+            and a flat, unranked TimeConeRing of whichever rim is being
+            faced — see TimeConeRing.tsx's own header comment for why
+            this exists: the previous "Every walk" sparkline page mapped
+            vibration score directly to vertical position, a real,
+            longstanding violation of RULES.md's own anti-ranking rule
+            that this face-on ring replaces it with. coneFacing null
+            means the normal view; 'past' or 'future' means facing that
+            rim. Only past points are tappable on the ring (see
+            TimeConeRing's own scoping, matching TimeCone's). */}
         <View style={styles.timeConeWrap}>
-          <TimeCone
-            width={CONE_SIZE}
-            height={CONE_SIZE * 1.3}
-            pastPoints={timeConeGeometry.pastPoints}
-            futurePoints={timeConeGeometry.futurePoints}
-            onPointPress={handleConePointPress}
-            onPointLongPress={handleConePointLongPress}
+          <CrossfadeSwitcher
+            showSecond={coneFacing !== null}
+            first={
+              <TimeCone
+                width={CONE_SIZE}
+                height={CONE_SIZE * 1.3}
+                pastPoints={timeConeGeometry.pastPoints}
+                futurePoints={timeConeGeometry.futurePoints}
+                onPointPress={handleConePointPress}
+                onPointLongPress={handleConePointLongPress}
+              />
+            }
+            second={
+              <TimeConeRing
+                size={CONE_SIZE}
+                points={coneFacing === 'future' ? timeConeGeometry.futurePoints : timeConeGeometry.pastPoints}
+                onPointPress={coneFacing === 'past' ? handleConePointPress : undefined}
+                onPointLongPress={coneFacing === 'past' ? handleConePointLongPress : undefined}
+              />
+            }
           />
+        </View>
+        {/* The rotation controls — quiet text links, not icons (no new
+            iconography per aesthetic.md), below the shape so they don't
+            compete with the framing text for the space right around the
+            cone itself. Only offered when there's actually something to
+            face (a rim with at least one point) — facing an empty rim
+            would just be a bare circle with nothing on it. */}
+        <View style={styles.coneRotateRow}>
+          {timeConeGeometry.futurePoints.length > 0 && (
+            <Pressable onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}>
+              <Text style={styles.coneRotateLink}>
+                {coneFacing === 'future' ? t('yourArc.coneRotateBack') : t('yourArc.coneRotateFuture')}
+              </Text>
+            </Pressable>
+          )}
+          {timeConeGeometry.pastPoints.length > 0 && (
+            <Pressable onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}>
+              <Text style={styles.coneRotateLink}>
+                {coneFacing === 'past' ? t('yourArc.coneRotateBack') : t('yourArc.coneRotatePast')}
+              </Text>
+            </Pressable>
+          )}
         </View>
         {/* Bottom framing line — same move for the past cone: the past
             shown here is the user's OWN account of it (their reading, in
@@ -861,6 +891,11 @@ export default function YourArcScreen() {
         {richHistory && richHistory.length > 0 && (
           <View style={styles.pastReadingsSection}>
             <Text style={styles.pastReadingsKicker}>{t('yourArc.pastReadingsHeading')}</Text>
+            {/* fullLineNote moved here from the now-removed "Every walk"
+                sparkline page (2026-08-20) — the same free-vs-paid signal
+                ("the FULL line, not just the last few") stated once,
+                quietly, on the paid screen itself. */}
+            <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
             {[...richHistory]
               .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
               .map((reading) => (
@@ -881,69 +916,20 @@ export default function YourArcScreen() {
     );
   }
 
-  // Every walk — moved up to sit directly after the cone/facts pages
-  // (2026-08-19 review: "the information about the past readings should
-  // be available on the next screen" — Every Walk already IS that,
-  // tap-any-point-for-detail, so this reorders an existing page rather
-  // than building a second, duplicate past-readings page). The archive:
-  // the full sparkline, tap any point to open the dedicated detail page
-  // (still inserted later, only once something's selected) — "the graph
-  // becomes one navigation method, rather than the definition of Your
-  // Arc," not the page's own headline anymore.
-  pages.push(
-    <ScrollView key="every-walk" contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>{t('yourArc.everyWalkHeading')}</Text>
-      {readingLog.length >= 2 ? (
-        <View style={styles.sparklineWrap}>
-          {/* Stated once, quietly, on the paid screen itself — not just
-              at the paywall (your-arc-preview.tsx). Without this, nothing
-              on THIS screen ever confirms what's actually different from
-              the free preview once you're already looking at it. One
-              plain sentence, not a badge or upsell tone. */}
-          <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
-          <Text style={styles.tapPointHint}>{t('yourArc.tapPointHint')}</Text>
-          <Svg
-            width="100%"
-            height={140}
-            viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-            preserveAspectRatio="none"
-          >
-            <Path
-              d={d}
-              fill="none"
-              stroke={`rgb(${accentRgb})`}
-              strokeOpacity={0.7}
-              strokeWidth={1}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
-          {/* A separate absolutely-positioned tap layer, not SVG onPress per
-              point — react-native-svg shapes don't reliably take touch
-              events at this marker size across platforms, plain Views do. */}
-          <View style={styles.tapLayer} pointerEvents="box-none">
-            {tappablePoints.map((entry) => {
-              const i = readingLog.indexOf(entry);
-              const leftPct = (xAt(i) / VIEW_W) * 100;
-              const topPct = (yAt(entry.score) / VIEW_H) * 100;
-              return (
-                <Pressable
-                  key={entry.ts}
-                  style={[styles.tapTarget, { left: `${leftPct}%`, top: `${topPct}%` }]}
-                  onPress={() => setSelected(entry)}
-                  hitSlop={10}
-                />
-              );
-            })}
-          </View>
-        </View>
-      ) : (
-        <Text style={styles.emptyText}>
-          {t('yourArc.notEnoughReadings')}
-        </Text>
-      )}
-    </ScrollView>
-  );
+  // "Every walk" (the sparkline page) REMOVED entirely 2026-08-20 —
+  // review: "it shows a graph with ups and downs but it goes against my
+  // intentional design that vibrations aren't better or worse one
+  // another, they just are." arcSparkline.ts's sparklineCoords mapped
+  // vibration score directly to vertical position — a real, longstanding
+  // violation of RULES.md/aesthetic.md's own anti-ranking rule ("never
+  // show a bare numeric score," "no gradient bars... up=better, down=
+  // worse"), not just a styling issue. What it did is now covered two
+  // other ways, neither of which encodes a ranking: the cone's own
+  // rotate-to-face-a-rim view (TimeConeRing, see that file's header
+  // comment) for "every reading, unranked, as a shape," and the Facts
+  // page's own past-readings list (date + level, chronological, tap for
+  // detail) for "browse in order." fullLineNote (the free-vs-paid "the
+  // FULL line, not just the last few" signal) moved onto that list.
 
   // Page 3 — What calls you. The ACTIVE wish, standing on its own (moved
   // off Measure, 2026-08-14), plus the Crossing that builds from it —
@@ -1433,15 +1419,19 @@ function makeStyles(colors: Colors) {
     textAlign: 'left',
     marginTop: spacing[2],
   },
-  timeConeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
-  everyWalkHeading: {
-    alignSelf: 'flex-start',
+  timeConeWrap: { alignSelf: 'center', marginBottom: spacing[3] },
+  // The rotation controls (2026-08-20) — quiet, side-by-side text links,
+  // same register as tapPointHint below them.
+  coneRotateRow: {
+    flexDirection: 'row',
+    gap: spacing[5],
+    marginBottom: spacing[4],
+  },
+  coneRotateLink: {
     color: colors.text.muted,
-    fontFamily: fonts.medium,
+    fontFamily: fonts.light,
+    fontStyle: 'italic',
     fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginBottom: spacing[3],
   },
   kicker: {
     alignSelf: 'flex-start',
@@ -1813,15 +1803,11 @@ function makeStyles(colors: Colors) {
     justifyContent: 'center',
   },
   crossingSendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
-  sparklineWrap: {
-    width: '100%',
-    marginBottom: spacing[6],
-  },
   fullLineNote: {
     color: colors.text.muted,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
-    marginBottom: spacing[1],
+    marginBottom: spacing[3],
   },
   tapPointHint: {
     color: colors.text.faint,
@@ -1829,24 +1815,6 @@ function makeStyles(colors: Colors) {
     fontStyle: 'italic',
     fontSize: fontSizes.xs,
     marginBottom: spacing[2],
-  },
-  tapLayer: { ...StyleSheet.absoluteFill },
-  tapTarget: {
-    position: 'absolute',
-    width: 12,
-    height: 12,
-    marginLeft: -6,
-    marginTop: -6,
-    borderRadius: 6,
-    backgroundColor: colors.accent.ivory,
-    opacity: 0.5,
-  },
-  emptyText: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginBottom: spacing[6],
   },
   detailSection: {
     gap: spacing[2],
