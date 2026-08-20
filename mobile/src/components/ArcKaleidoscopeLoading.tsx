@@ -31,6 +31,18 @@ import { useThemeColors } from '../theme/useThemeColors';
 // stays specific to the real kaleidoscope's arrival, which also makes
 // that arrival read as more of a reveal, not a repeat of what the
 // loading state already showed.
+//
+// 2026-08-20: added 8 static tick dots around the ring (confirmed
+// on-device: the single traveling point alone, with nothing else marked
+// on the ring, read as "orbiting empty space" rather than sweeping past
+// anything — review: "it should go around every dot on the circle, since
+// it's a general animation, not personalised"). Matches
+// ArcKaleidoscope/VibrationSpectrum's own MIRROR_COUNT/tick-mark
+// convention (8-fold rhythm), but these ticks carry no per-reading color
+// or meaning — they're only here to give the traveling point something
+// to visibly pass, echoing the real kaleidoscope's 8-fold shape without
+// echoing its actual (expensive, personal) content.
+const MIRROR_COUNT = 8;
 const ROTATION_DURATION_MS = 1800;
 const SOFT_LINEAR = Easing.linear;
 
@@ -67,6 +79,16 @@ export function ArcKaleidoscopeLoading({ size, accentRgb }: { size: number; acce
             real vibration wheel rather than a new shape invented just
             for loading. */}
         <Circle cx={cx} cy={cy} r={ringR} fill="none" stroke={colors.bg.border} strokeWidth={1} />
+
+        {/* 8 static tick dots — see this file's own header comment for
+            why these exist (the traveling point alone had nothing
+            visible to sweep past). */}
+        {Array.from({ length: MIRROR_COUNT }).map((_, i) => {
+          const angle = ((i * (360 / MIRROR_COUNT) - 90) * Math.PI) / 180;
+          const x = cx + ringR * Math.cos(angle);
+          const y = cy + ringR * Math.sin(angle);
+          return <Circle key={i} cx={x} cy={y} r={2} fill={colors.text.faint} />;
+        })}
       </Svg>
       {/* The traveling point sits in its own rotating wrapper (plain RN
           transform, not SVG animation — cheaper, and keeps the rotating

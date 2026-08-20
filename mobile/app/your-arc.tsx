@@ -689,27 +689,41 @@ export default function YourArcScreen() {
   // many pages exist, and both need to agree on that number.
   const pages: React.ReactNode[] = [];
 
-  // Page 1 — Cover. Restructured 2026-08-20 (review): the kaleidoscope is
-  // "the main event" and previously had a caption sitting directly under
-  // it competing for the same first glance — moved to a quiet save-hint
-  // at the very bottom of the page instead, so the image stands alone.
-  // The kicker ("YOUR ARC") was dropped entirely — Cover isn't a page
-  // ABOUT a topic the way every other page is, it's the entry point
-  // itself, so a section-label above the title didn't fit; the title
-  // alone, smaller, is enough to name the place. The philosopher line
-  // (arcLine) moved ABOVE the title, in voice — matching RULES.md's
+  // Page 1 — Cover. Restructured 2026-08-20 (review round 1): the
+  // kaleidoscope is "the main event" and previously had a caption sitting
+  // directly under it competing for the same first glance — moved to a
+  // quiet save-hint at the very bottom of the page instead, so the image
+  // stands alone. The kicker ("YOUR ARC") was dropped entirely — Cover
+  // isn't a page ABOUT a topic the way every other page is, it's the
+  // entry point itself, so a section-label above the title didn't fit.
+  //
+  // Restructured again 2026-08-20 (review round 2, on-device): the
+  // philosopher line moved ABOVE the kaleidoscope entirely (not just
+  // above the title, which is where round 1 left it) — matching RULES.md's
   // standing "philosopher voice first, then a plain clarifying line"
-  // pattern used everywhere else in the app, which Cover previously did
-  // in the opposite order (static title first, personal line last).
+  // pattern, now read as the voice that INTRODUCES the image rather than
+  // commentary trailing it. Sized down and kept purely italic/light
+  // weight (never bold) so it stays a quiet spoken line, not competing
+  // with the kaleidoscope for visual weight below it. "A living record"
+  // became a real, large, left-aligned header (fontSizes.xl, not the
+  // small centered md/title treatment round 1 used) sitting at the
+  // bottom near the save-hint caption — its own distinct anchor for the
+  // page's name, separate from the philosopher's spoken introduction up
+  // top.
   //
   // Long-press the kaleidoscope to save it (2026-08-20) — same
   // captureRef/MediaLibrary mechanism as SaveMessageAction's "save as
   // image" for a Guide message, applied to the kaleidoscope's own View
-  // (which contains its react-native-svg content).
+  // (which contains its react-native-svg content). Confirmed working well
+  // on-device — see collaboration notes on whether this should become the
+  // SAME mechanism used everywhere else images are saved in the app
+  // (currently a visible tap-button flow, not long-press) — not yet
+  // unified, flagged as a real open question, not decided here.
   pages.push(
     <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
       <View style={styles.coverTopSpacer} />
       <View style={styles.coverCenterGroup}>
+        <Text style={styles.coverPhilosopherLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
         <Pressable
           onLongPress={handleSaveKaleidoscope}
           disabled={kaleidoscopeSaveStatus === 'saving'}
@@ -718,23 +732,21 @@ export default function YourArcScreen() {
             <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
           </View>
         </Pressable>
-        <Text style={styles.coverPhilosopherLine}>{arcLine ?? t('yourArc.coneFramingLine')}</Text>
-        <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
       </View>
-      {/* Save hint, moved down here from directly under the kaleidoscope
-          (2026-08-20 review: "that line diminishes the beauty of the
-          kaleidoscope... distracts the attention") — a quiet clarifier at
-          the bottom of the page instead, doubling as the save affordance's
-          own status line once long-pressed. */}
-      <Text style={styles.kaleidoscopeCaption}>
-        {kaleidoscopeSaveStatus === 'saving'
-          ? t('saveMessage.saving')
-          : kaleidoscopeSaveStatus === 'saved'
-            ? t('saveMessage.saved')
-            : kaleidoscopeSaveStatus === 'error'
-              ? kaleidoscopeSaveError ?? t('saveMessage.somethingWentWrong')
-              : t('yourArc.kaleidoscopeCaption')}
-      </Text>
+      <View style={styles.coverFooter}>
+        <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
+        {/* Save hint, doubling as the save affordance's own status line
+            once long-pressed. */}
+        <Text style={styles.kaleidoscopeCaption}>
+          {kaleidoscopeSaveStatus === 'saving'
+            ? t('saveMessage.saving')
+            : kaleidoscopeSaveStatus === 'saved'
+              ? t('saveMessage.saved')
+              : kaleidoscopeSaveStatus === 'error'
+                ? kaleidoscopeSaveError ?? t('saveMessage.somethingWentWrong')
+                : t('yourArc.kaleidoscopeCaption')}
+        </Text>
+      </View>
       <View style={styles.coverBottomSpacer} />
     </ScrollView>
   );
@@ -1396,18 +1408,22 @@ function makeStyles(colors: Colors) {
   },
   coverTopSpacer: { flex: 1, minHeight: spacing[6] },
   coverBottomSpacer: { flex: 1, minHeight: spacing[6] },
-  coverCenterGroup: { alignItems: 'center' },
+  coverCenterGroup: { alignItems: 'center', width: '100%' },
+  // The page's own name + save hint, left-aligned at the bottom
+  // (2026-08-20 round 2) — a distinct block from coverCenterGroup's
+  // philosopher-line-then-kaleidoscope group above it, not a continuation
+  // of that centered stack.
+  coverFooter: { alignSelf: 'flex-start', width: '100%' },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  kaleidoscopeWrap: { alignSelf: 'center' },
+  kaleidoscopeWrap: { alignSelf: 'center', marginTop: spacing[6] },
   kaleidoscopeCaption: {
     color: colors.text.faint,
     fontFamily: fonts.light,
     fontStyle: 'italic',
     fontSize: fontSizes.xs,
-    textAlign: 'center',
-    paddingHorizontal: spacing[4],
-    marginTop: spacing[6],
+    textAlign: 'left',
+    marginTop: spacing[2],
   },
   timeConeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
   everyWalkHeading: {
@@ -1427,31 +1443,33 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  // Cover's own title (2026-08-20) — smaller than the old shared `title`
-  // (md, not lg) and centered, not left-aligned: without the "YOUR ARC"
-  // kicker above it, a large left-aligned heading read as too heavy for
-  // what's now just a quiet name under the philosopher line, not a
-  // page-topic header the way every other page's kicker+title pair is.
+  // Cover's own title (2026-08-20 round 2) — now a real, large,
+  // left-aligned header (xl, not the small centered md round 1 used),
+  // sitting in coverFooter at the bottom of the page as its own distinct
+  // anchor for the page's name — separate from the philosopher's spoken
+  // line, which now introduces the kaleidoscope up top instead of trailing
+  // this title.
   coverTitle: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    lineHeight: fontSizes.md * lineHeights.tight,
-    textAlign: 'center',
-    marginTop: spacing[2],
+    fontSize: fontSizes.xl,
+    lineHeight: fontSizes.xl * lineHeights.tight,
   },
-  // Philosopher voice first (2026-08-20) — matches RULES.md's standing
-  // "philosopher voice, then plain clarifying line" pattern used
-  // everywhere else in the app; Cover previously ran this in the
-  // opposite order (static title first, personal line last).
+  // Philosopher voice, ABOVE the kaleidoscope (2026-08-20 round 2, moved
+  // from below the title in round 1) — matches RULES.md's standing
+  // "philosopher voice, then plain clarifying line" pattern, now reading
+  // as the voice introducing the image rather than commentary trailing
+  // it. Sized down (xs, was sm) and fontFamily stays fonts.light (never
+  // fonts.medium/bold) — review: "cursive and a bit smaller, not bold" —
+  // a quiet spoken line that doesn't compete with the kaleidoscope for
+  // visual weight right below it.
   coverPhilosopherLine: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
     textAlign: 'center',
-    marginTop: spacing[6],
     paddingHorizontal: spacing[4],
   },
   // The cone page's own top/bottom framing (2026-08-19) — centered, not
