@@ -78,3 +78,4 @@ terraform/crash.*.log
 # Monitoring (Prometheus/Grafana)
 # --------------------
 monitoring/secrets/
+monitoring/.env

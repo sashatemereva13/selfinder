@@ -1,0 +1,19 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: discord-selfinder-alerts
+    receivers:
+      - uid: discord-selfinder-alerts
+        type: discord
+        settings:
+          url: "$DISCORD_WEBHOOK_URL"
+        disableResolveMessage: false
+
+policies:
+  - orgId: 1
+    receiver: discord-selfinder-alerts
+    group_by: ["alertname"]
+    group_wait: 30s
+    group_interval: 5m
+    repeat_interval: 4h
