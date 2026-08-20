@@ -81,7 +81,45 @@ function formatDate(ts: number) {
 // that, a tapped point still means something (the date, the level, the
 // score) — just not the full story, since that was never saved anywhere
 // to recover. Never pretend detail exists that doesn't.
-export default function YourArcScreen() {
+// Thin wrapper mounted by the router — the real screen below builds its
+// `pages` array (including ArcKaleidoscope's dozens of mirrored SVG
+// Path/Filter nodes and the time cone's per-reading circles) directly in
+// its component body on every render, unconditionally. Previously that
+// whole 700+ line build ran synchronously as part of the FIRST render
+// expo-router produced for this route, so React had nothing to commit or
+// paint — not even the pagerPainted loading dot the screen itself shows —
+// until that heavy work finished. From the outside that read as "Depths
+// stays on screen, frozen, until Your Arc suddenly appears already
+// loaded," reintroducing the exact freeze pagerPainted (see its own
+// comment inside YourArcScreen) was built to hide, just one level higher
+// up: pagerPainted only ever deferred work WITHIN an already-mounted
+// YourArcScreen, never the screen's own first mount. Rendering a bare
+// loading placeholder here first, then swapping to the real screen a
+// frame later via requestAnimationFrame, guarantees the route transition
+// itself always paints instantly regardless of how expensive the real
+// screen's first render is.
+export default function YourArcRoute() {
+  const colors = useThemeColors();
+  const accentRgb = useAppAccentRgb();
+  const [ready, setReady] = useState(false);
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setReady(true));
+    return () => cancelAnimationFrame(id);
+  }, []);
+
+  if (!ready) {
+    return (
+      <View style={{ flex: 1, backgroundColor: colors.bg.base, justifyContent: 'center', alignItems: 'center' }}>
+        <ArcKaleidoscopeLoading size={KALEIDOSCOPE_SIZE * 0.6} accentRgb={accentRgb} />
+      </View>
+    );
+  }
+
+  return <YourArcScreen />;
+}
+
+function YourArcScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
