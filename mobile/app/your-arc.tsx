@@ -727,18 +727,23 @@ export default function YourArcScreen() {
     pages.push(
       <ScrollView key="cone" contentContainerStyle={styles.conePageContent}>
         <View style={styles.coneTopSpacer} />
-        {/* Top framing line — the future cone, named explicitly as the
-            user's OWN envisioned future, never a forecast/prediction
-            (review, 2026-08-19: "not some random future - the future in
-            the way user envisions it for themselves"). This is the same
-            "no fabricated trajectory" rule RULES.md already states for
-            the future cone, just made legible in the copy itself rather
-            than only true in how the geometry happens to be built
-            (futurePoints only ever holding the active wish). Margin
-            tightened 2026-08-20 (review: "the clarifiers 'above' and
-            'below' should be positioned closer to the cone") — previously
-            pushed to the page's top edge by justifyContent: space-between;
-            now sits close enough to the shape to read as pointing at it. */}
+        {/* Top framing line — reframed 2026-08-20 around the cone's real
+            phenomenological grounding (see docs/your-arc-expansion-plan.md,
+            Thread 1) rather than personal-history/goal-setting language
+            alone. The claim: a present moment isn't a bare instant — it
+            already HOLDS what's reaching forward in it, the way a single
+            note only sounds like music because of where it's heading, not
+            as an isolated sound. This is a checkable, felt structure
+            (listen to a few notes of anything), not a new belief to take
+            on — same "ask them to remember something they've already
+            experienced" rule RULES.md already holds everywhere else.
+            Deliberately never says "the future pulls/calls you" — HELD,
+            not reaching or pulling, keeps agency with the person, same
+            "you are shaping your future" rule RULES.md already states for
+            this cone (the older wording risked implying the opposite).
+            Still true to the older framing underneath (only ever the
+            active wish, never a forecast) — this changes HOW it's said,
+            not what's allowed to appear here. */}
         <Text style={styles.coneFramingTop}>{t('yourArc.coneFutureFraming')}</Text>
         {/* Rotating to view a rim face-on (2026-08-20 review: "what if...
             it will be possible to rotate the cone... to see the bottom
@@ -798,11 +803,18 @@ export default function YourArcScreen() {
             </Pressable>
           )}
         </View>
-        {/* Bottom framing line — same move for the past cone: the past
-            shown here is the user's OWN account of it (their reading, in
-            their own words if they tap in), never asserted as objective
-            record. Matches RULES.md's existing "the past cone is the
-            user's own account... never asserted as raw objective fact." */}
+        {/* Bottom framing line — same reframe as the top line (see its own
+            comment): this moment still HOLDS what came before it, the way
+            a note carries the ones just played, not a claim that the past
+            is a burden to release (an earlier "letting go" framing was
+            considered and rejected for exactly this reason — see
+            docs/your-arc-expansion-plan.md, Thread 2). Still true to the
+            older framing underneath: the past shown here is the user's
+            OWN account of it (their reading, in their own words if they
+            tap in), never asserted as objective record — RULES.md's "the
+            past cone is the user's own account... never asserted as raw
+            objective fact" still fully applies, this only changes HOW
+            it's said. */}
         <Text style={styles.coneFramingBottom}>{t('yourArc.conePastFraming')}</Text>
         {/* The long-press preview (2026-08-20) — appears right under the
             bottom framing line once a dot's been long-pressed, cleared

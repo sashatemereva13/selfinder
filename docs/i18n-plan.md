@@ -5,6 +5,13 @@ section with real implementation detail, based on a full code audit
 (2026-08-01). Read `roadmap.md` first for the original cost/scope framing
 (still accurate); this file is the *how*, not just the *how much*.
 
+**Historical note (2026-08-15):** the English-locale model referenced
+below, `llama-3.3-70b-versatile`, was decommissioned by Groq on
+2026-08-16 and `models[0]` now points at `openai/gpt-oss-120b` instead
+(see `chatController.js`/`crossingController.js`). The locale-routing
+decision and reasoning below are otherwise still accurate — only the
+specific English-side model name is stale.
+
 **Target behavior** (per the product requirement): the app defaults to
 whatever language the user's phone is set to (Russian phone → Russian app
 on first launch), and the user can independently override that with an

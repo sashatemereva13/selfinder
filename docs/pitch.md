@@ -149,6 +149,57 @@ no StoreKit/IAP integration exists as of this writing, see
 
 ---
 
+## Who this is really for, at the root (2026-08-20)
+
+The targeting language elsewhere in this doc and in ad copy — overthinkers,
+the self-aware, the 20-year-old figuring out who they are — is correct and
+should stay: it's the beachhead, the group who self-selects in first and
+the one worth buying attention against. But it's a targeting layer sitting
+on top of something wider, and it's worth keeping the wider claim explicit
+so it doesn't get lost under the marketing wedge.
+
+**The actual claim: Selfinder isn't for a psychographic segment. It's for
+anyone with an internal world — anyone who is a subject, not just a body
+moving through time.** Not everyone journals, same as not everyone
+meditates or goes to therapy — uptake is never universal. But what the app
+is *about* is universal in a stronger sense than "relevant to a lot of
+people": having a past that's still present to you, a future you reach
+toward, and a felt state that shifts underneath you moment to moment isn't
+a trait some humans have and others don't — it's close to what it means to
+be a conscious subject at all. Nobody knows what came before birth or what
+comes after death, and every culture that's ever existed has built some
+story to stand in that gap. Nobody has *not* felt something shift in them
+without being able to name it. That's the uniting layer — not a shared
+interest, a shared condition.
+
+This is a claim about the app's *subject matter*, not about who to run ads
+to — don't collapse the two. Love and hate are universal material (nearly
+every story ever told leans on one or both) without love and hate being a
+"target audience" anyone buys media against. The 17 states work the same
+way: the claim isn't "everyone will use this app," it's "the states
+themselves, as described, are legible to nearly anyone who reads them,"
+which is a claim about the map's honesty, not about market size. Treat
+this section as underneath the funnel, not a replacement for it — the
+30-second pitch, the door metaphor, and the psychographic targeting above
+all still do the actual job of getting someone to take a first reading.
+This section is why the product is allowed to feel bigger than its
+marketing without the marketing having to say so out loud.
+
+**Why this matters practically, not just as a nice thought:** it's the
+real foundation under the Husserl/"living present" reframe of Your Arc's
+cone (see `RULES.md`, and `docs/your-arc-expansion-plan.md`, Thread 1).
+Retention/primal-impression/protention isn't offered as a philosophical
+flavor choice — it's a structural description of what any present moment
+is like for a subject, which is exactly this section's claim, applied to
+one screen. If a future feature ever needs a gut-check for whether it's
+still "for anyone with an internal world" or has drifted into "for the
+kind of person who already reads philosophy," that drift is worth
+noticing — the whole point of this section is that the second one is a
+narrower, wrong description of who the product is actually for, even
+though it's often an accurate description of who tries it first.
+
+---
+
 ## The investor pitch (5 minutes)
 
 **Problem.** Most people spend their day thinking *about* their life instead of
