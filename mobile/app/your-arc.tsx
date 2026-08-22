@@ -641,9 +641,10 @@ function YourArcScreen() {
 
   // Long-press preview (2026-08-20) — a quick date+level label for a
   // reading dot, or date+"a wish" for a wish dot, shown right on the page
-  // without opening anything. This is the per-dot half of the "dots don't
-  // make sense to anybody" fix; the legend (coneLegend below) is the
-  // other half, explaining the color convention once rather than per-dot.
+  // without opening anything. Now the ONLY place the color convention
+  // gets explained at all (2026-08-22: the upfront legend was removed —
+  // see coneBottomSpacer's own comment) — discovering what a dot is by
+  // touching it, not by reading a key first.
   const handleConePointLongPress = (pointId: string) => {
     if (pointId.startsWith('reading-')) {
       const ts = Number(pointId.slice('reading-'.length));
@@ -909,28 +910,49 @@ function YourArcScreen() {
               />
             }
           />
-        </View>
-        {/* The rotation controls — quiet text links, not icons (no new
-            iconography per aesthetic.md), below the shape so they don't
-            compete with the framing text for the space right around the
-            cone itself. Only offered when there's actually something to
-            face (a rim with at least one point) — facing an empty rim
-            would just be a bare circle with nothing on it. */}
-        <View style={styles.coneRotateRow}>
-          {timeConeGeometry.futurePoints.length > 0 && (
-            <Pressable onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}>
-              <Text style={styles.coneRotateLink}>
-                {coneFacing === 'future' ? t('yourArc.coneRotateBack') : t('yourArc.coneRotateFuture')}
-              </Text>
-            </Pressable>
-          )}
-          {timeConeGeometry.pastPoints.length > 0 && (
-            <Pressable onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}>
-              <Text style={styles.coneRotateLink}>
-                {coneFacing === 'past' ? t('yourArc.coneRotateBack') : t('yourArc.coneRotatePast')}
-              </Text>
-            </Pressable>
-          )}
+          {/* Rotation controls — 2026-08-22: replaced the "See the future/
+              past as a circle" text links with plain ↑/↓ glyphs, positioned
+              at the vertex's own height (the wrapper's vertical center,
+              same spot "now" sits in TimeCone's side view) rather than
+              below the whole shape. Deliberately unlabeled — the goal is
+              curiosity: someone sees an arrow sitting right where "now"
+              is and wants to know what happens if they press it, the same
+              "keeps giving features you didn't expect" spirit as the
+              drag-to-explore rings elsewhere in the app, rather than
+              spelling out the destination in advance. Still not new
+              iconography (aesthetic.md/this file's own standing rule) —
+              ↑/↓ are plain typographic characters in the existing
+              typeface, the same register quote marks already use
+              elsewhere in this file to carry a signal without a custom
+              icon asset. Absolutely positioned over the CrossfadeSwitcher
+              (not a row below it) so they stay in the same place
+              regardless of which view — cone or ring — is currently
+              showing. Toggles the same coneFacing state the old links
+              did: pressing the arrow for the rim already being faced
+              returns to the normal side view. Only offered when there's
+              actually something to face (a rim with at least one point)
+              — facing an empty rim would just be a bare circle with
+              nothing on it. */}
+          <View style={styles.coneArrowLayer} pointerEvents="box-none">
+            {timeConeGeometry.futurePoints.length > 0 && (
+              <Pressable
+                hitSlop={16}
+                style={styles.coneArrowUp}
+                onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}
+              >
+                <Text style={[styles.coneArrow, coneFacing === 'future' && styles.coneArrowActive]}>↑</Text>
+              </Pressable>
+            )}
+            {timeConeGeometry.pastPoints.length > 0 && (
+              <Pressable
+                hitSlop={16}
+                style={styles.coneArrowDown}
+                onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}
+              >
+                <Text style={[styles.coneArrow, coneFacing === 'past' && styles.coneArrowActive]}>↓</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
         {/* Bottom framing line — same reframe as the top line (see its own
             comment): this moment still HOLDS what came before it, the way
@@ -988,23 +1010,15 @@ function YourArcScreen() {
             </Pressable>
           </View>
         )}
-        {/* The legend (2026-08-20 review: "the dots don't make sense to
-            anybody apart from me") — explains the color convention once,
-            in plain language, rather than requiring every dot to carry
-            its own label. Two lines: what a colored dot is (a reading, in
-            that reading's own real level color — same convention the
-            kaleidoscope and sphere history already use), and what a pale/
-            neutral dot is (a wish, which has no level to color it by). */}
-        <View style={styles.coneLegend}>
-          <View style={styles.coneLegendRow}>
-            <View style={[styles.coneLegendDot, { backgroundColor: `rgb(${accentRgb})` }]} />
-            <Text style={styles.coneLegendText}>{t('yourArc.coneLegendReading')}</Text>
-          </View>
-          <View style={styles.coneLegendRow}>
-            <View style={[styles.coneLegendDot, { backgroundColor: `rgb(${colors.accent.ivoryRgb})` }]} />
-            <Text style={styles.coneLegendText}>{t('yourArc.coneLegendWish')}</Text>
-          </View>
-        </View>
+        {/* The upfront legend (dot color = reading vs. wish) was removed
+            2026-08-22 — deliberately, per a product decision to let the
+            color convention be discovered through play (long-press a dot;
+            handleConePointLongPress already answers "a reading" or "a
+            wish" in plain language) rather than explained before anyone's
+            touched anything. The dots themselves are still real, honestly
+            colored data (this file's own timeConeGeometry comment) —
+            only the upfront explanation moved from static text to
+            in-context discovery. */}
         <View style={styles.coneBottomSpacer} />
       </ScrollView>
     );
@@ -1767,30 +1781,52 @@ function makeStyles(colors: Colors) {
   // instead of pinning it to the top.
   timeConeWrap: {
     alignSelf: 'center',
+    width: CONE_SIZE,
     marginBottom: spacing[3],
     height: CONE_SIZE * 1.3,
     justifyContent: 'center',
+    // Needed as the positioning root for coneArrowLayer's absolute
+    // overlay below — RN positions `absolute` children relative to the
+    // nearest ancestor that isn't `position: 'relative'`'s default
+    // (static), so without this the arrows would anchor to some further-
+    // out ancestor instead of this wrapper's own bounds.
+    position: 'relative',
   },
-  // The rotation controls — 2026-08-22: given real visual weight, distinct
-  // from the passive framing text around them. These are the page's only
-  // real controls (the one way to make the cone's dots tappable at all),
-  // but were previously styled almost identically to the page's other
-  // instructional text (same italic/xs/muted register) — indistinguishable
-  // from ambient copy rather than reading as something to actually press.
-  // fonts.medium (not light/italic) and text.secondary (not muted) match
-  // the weight conePointSummaryLevel uses for real content, one step down
-  // from text.primary so the framing lines above/below the cone still
-  // lead the eye first.
-  coneRotateRow: {
-    flexDirection: 'row',
-    gap: spacing[6],
-    marginBottom: spacing[4],
+  // The rotation controls — 2026-08-22: replaced the "See the future/past
+  // as a circle" text links with plain ↑/↓ glyphs sitting at the vertex's
+  // own height, overlaid on the cone/ring rather than in a row below it
+  // (see the JSX comment at their render site for the full reasoning:
+  // curiosity-driven discovery, deliberately unlabeled, still not new
+  // iconography since these are plain typographic characters).
+  coneArrowLayer: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  coneRotateLink: {
-    color: colors.text.secondary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
+  coneArrowUp: {
+    position: 'absolute',
+    // -18 clears the vertex dot's own small radius plus the "now" label
+    // beside it (see TimeCone.tsx) so the arrow doesn't crowd either —
+    // same clearance instinct as that file's own NOW_LABEL_CLEARANCE fix.
+    top: CONE_SIZE * 0.65 - 18,
   },
+  coneArrowDown: {
+    position: 'absolute',
+    top: CONE_SIZE * 0.65 + 18,
+  },
+  // fontSize.lg (not the sm/xs the old text links used) — a bare glyph
+  // with no surrounding label needs to read as a real, deliberate mark at
+  // a glance, not a decoration easy to miss at small text sizes.
+  // text.muted at rest so it doesn't compete with "now"/the vertex dot
+  // for attention before anyone has reason to notice it; text.primary
+  // once the rim it points to is actually being faced, so the arrow
+  // itself carries the same "this is active" feedback fonts.medium/
+  // text.secondary used to carry via label text.
+  coneArrow: {
+    color: colors.text.muted,
+    fontSize: fontSizes.lg,
+  },
+  coneArrowActive: { color: colors.text.primary },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
@@ -1898,25 +1934,6 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
     marginTop: spacing[3],
-  },
-  // The legend (2026-08-20) — two quiet rows, dot + label, same "a dot,
-  // colored by what's actually true" register the facts page's own
-  // factDot/factRow already use.
-  coneLegend: {
-    marginTop: spacing[5],
-    gap: spacing[2],
-    alignItems: 'flex-start',
-  },
-  coneLegendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing[2],
-  },
-  coneLegendDot: { width: 6, height: 6, borderRadius: 3 },
-  coneLegendText: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
   },
   introLine: {
     alignSelf: 'flex-start',
