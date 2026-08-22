@@ -265,6 +265,15 @@ Selfinder is or why it costs money.
   purchase — the previous €7.99/month, €49.99/year figures applied to
   the single old Selfinder+ tier and no longer apply to either product
   (not yet live either way — see the no-live-purchase-flow note below).
+  **Center requires an active Your Arc subscription as a real
+  prerequisite, not an arbitrary upsell gate.** Center is generated from
+  the server-saved reading history Your Arc's own subscription is what
+  makes reachable — without Your Arc, there is no server record for
+  Center to be generated from, so the dependency is technical, not just
+  a pricing decision layered on top of data that would work anyway.
+  Someone without Your Arc sees a plain, honest explanation of this (with
+  a path into Your Arc's own preview) rather than a locked/blurred
+  version of Center.
 - **Free core, two shapes of paid depth — never free features, paid
   access.** Measure, Guide, Spill, Tune In, Breathing are free for
   everyone, unconditionally, and stay exactly as rich as they are today —
