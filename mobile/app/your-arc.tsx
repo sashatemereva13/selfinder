@@ -817,20 +817,17 @@ function YourArcScreen() {
           <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
         </View>
       </LongPressToSave>
-      {/* "A living record" pulled down below the kaleidoscope (2026-08-20
-          round 3: "put 'a living record' a bit lower, so it reads as a
-          header for the future pages") — previously sat in coverFooter
-          right above the save-hint caption, reading as a caption FOR the
-          kaleidoscope; now it's the clear opening header for the pager
-          that follows, with real air around it rather than crowding the
-          save hint. */}
+      {/* "A living record" now closes the centered quote+image+title
+          cluster (2026-08-22 editorial-cover pass) — an album/magazine
+          cover's title sits directly under its art as one balanced group,
+          not as a header for whatever scrolls after it. */}
       <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
-      <View style={styles.coverBottomSpacer} />
-      {/* Save-hint caption, now alone at the very bottom of the page
-          (2026-08-20 round 3: "position 'this image is built...' at the
-          bottom of the screen") — no longer sharing coverFooter with the
-          title above. */}
-      <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
+      {/* Save-hint caption — pinned to the true bottom of the page via
+          coverCaptionRow, deliberately outside the centered cluster above
+          (small print under a cover, not part of the art itself). */}
+      <View style={styles.coverCaptionRow}>
+        <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
+      </View>
     </ScrollView>
   );
 
@@ -1708,35 +1705,38 @@ function makeStyles(colors: Colors) {
   },
   coneTopSpacer: { flex: 1, minHeight: spacing[4] },
   coneBottomSpacer: { flex: 1, minHeight: spacing[4] },
-  // Cover's own layout (2026-08-20, restructured round 3) — philosopher
-  // line opens the page directly, then the kaleidoscope, then the title
-  // (pulled down via coverBottomSpacer to read as a header for the pages
-  // that follow), then the save-hint caption alone at the very bottom.
-  // Not justifyContent: 'space-between' — an earlier version used that
-  // with a bare zero-height spacer View at the top and confirmed live
-  // that it collapsed almost all the gap to one side rather than
-  // spreading evenly. coverBottomSpacer's own flex: 1 claims its share of
-  // remaining space directly, which is more predictable inside a
-  // ScrollView's content container than space-between's gap distribution.
+  // Editorial-cover layout (2026-08-22): quote, kaleidoscope, and title
+  // are now ONE centered composition — the "subject" of the cover, per
+  // how a magazine or album cover balances art+title as a single group
+  // rather than pinning each element to its own edge and letting
+  // whatever's left over become one large, accidental-looking gap.
+  // justifyContent: 'center' centers that whole cluster in the space
+  // between the back link and the caption; the caption stays pinned to
+  // the true bottom via coverCaptionRow below (a colophon/imprint line,
+  // deliberately outside the centered art group, the way a cover's small
+  // print sits apart from the cover art itself).
   coverPageContent: {
     flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: spacing[6],
     paddingTop: spacing[8],
     paddingBottom: spacing[10],
   },
-  // Top spacer removed (2026-08-20 round 3) — the philosopher line now
-  // opens the page directly, no longer centered in a middle group, so
-  // there's nothing above it to push down. coverBottomSpacer still
-  // separates the title from the save-hint caption at the very bottom.
-  coverBottomSpacer: { flex: 1, minHeight: spacing[8] },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  kaleidoscopeWrap: { alignSelf: 'center', marginTop: spacing[6] },
-  // Alone at the bottom of the page now (2026-08-20 round 3), not sharing
-  // a footer block with coverTitle above it — left-aligned to match
-  // coverTitle's own alignment, so the two still read as one bottom
-  // region even without a shared wrapper View.
+  // Consistent rhythm across the whole centered cluster (quote →
+  // kaleidoscope → title) — same spacing[6] gap on both sides of the
+  // image, replacing three different ad hoc gaps (tight/tight/huge) that
+  // made the page read as unfinished rather than composed.
+  kaleidoscopeWrap: { alignSelf: 'center', marginTop: spacing[6], marginBottom: spacing[6] },
+  // Pinned to the true bottom of the page, deliberately separate from the
+  // centered quote+image+title cluster above — small print under a cover,
+  // not part of the composed art itself. flex: 1 pushes it down whenever
+  // the centered cluster doesn't already fill the page; minHeight keeps a
+  // minimum gap on tall screens where the cluster is short enough that
+  // centering alone would land it close to the caption.
+  coverCaptionRow: { flex: 1, minHeight: spacing[8], justifyContent: 'flex-end', width: '100%' },
   kaleidoscopeCaption: {
     color: colors.text.faint,
     fontFamily: fonts.light,
@@ -1783,20 +1783,21 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  // Cover's own title (2026-08-20 round 3: "put 'a living record' a bit
-  // lower, so it reads as a header for the future pages") — pulled down
-  // below the kaleidoscope via coverBottomSpacer above it, so it reads as
-  // the opening header for the pager that follows rather than a caption
-  // for the image right above it. Left-aligned, full width — now a
-  // direct child of coverPageContent (coverFooter's wrapper View was
-  // removed since it's no longer sharing a block with the caption).
+  // Cover's own title — now the closing element of the centered
+  // quote+image+title cluster (2026-08-22 editorial-cover pass), the way
+  // an album/magazine cover's title sits directly under its art as one
+  // balanced group rather than acting as a section header for whatever
+  // follows. Centered, not left-aligned/full-width, to match the quote
+  // and image above it — a left-aligned block would break the cluster's
+  // own symmetry now that it's a self-contained centered composition
+  // rather than the top of a top-anchored page.
   coverTitle: {
-    alignSelf: 'flex-start',
-    width: '100%',
+    alignSelf: 'center',
     color: colors.text.primary,
     fontFamily: fonts.medium,
     fontSize: fontSizes.xl,
     lineHeight: fontSizes.xl * lineHeights.tight,
+    textAlign: 'center',
   },
   // Philosopher voice, opening the page (2026-08-20 round 3, moved above
   // the kaleidoscope entirely rather than centered with it in a middle
