@@ -211,11 +211,30 @@ export function ArcKaleidoscope({
 
         <Circle cx={cx} cy={cy} r={outerR * 1.1} fill={`url(#${glowId})`} />
 
+        {/* The blur filter is applied ONCE per mirrored wedge (on the <G>
+            itself), not per shape — confirmed via on-device log capture
+            (2026-08-22) that the previous per-Path filter was the actual
+            cause of a ~9.8s main-thread hang on Your Arc's first open:
+            ~35-50 shapes (buildWedgeShapes, up to 17 segments' worth) ×
+            MIRROR_COUNT (8) each carrying their own `filter` prop meant
+            iOS's Core Image pipeline ran up to ~400 separate offscreen
+            Gaussian-blur passes (one per filtered element — react-native-
+            svg/Core Image don't batch per-element SVG filters), visible
+            in syslog as hundreds of repeated "image to use as an input
+            for the effect" CoreImage filter-bundle lookups spanning the
+            entire hang window. Filtering the <G> instead blurs the whole
+            composited wedge in one pass — visually equivalent (the blur
+            still softens every shape in it, just as a group rather than
+            individually) at 8 passes total instead of ~400. */}
         {Array.from({ length: MIRROR_COUNT }).map((_, i) => {
           const rotation = i * WEDGE_ANGLE;
           const mirrored = i % 2 === 1;
           return (
-            <G key={i} transform={`translate(${cx} ${cy}) rotate(${rotation}) ${mirrored ? 'scale(-1,1)' : ''}`}>
+            <G
+              key={i}
+              transform={`translate(${cx} ${cy}) rotate(${rotation}) ${mirrored ? 'scale(-1,1)' : ''}`}
+              filter={`url(#${filterId})`}
+            >
               {shapes.map((s, si) =>
                 s.kind === 'tendril' ? (
                   <Path
@@ -226,7 +245,6 @@ export function ArcKaleidoscope({
                     strokeOpacity={s.opacity + 0.15}
                     strokeWidth={0.9}
                     strokeLinecap="round"
-                    filter={`url(#${filterId})`}
                   />
                 ) : (
                   <Path
@@ -234,7 +252,6 @@ export function ArcKaleidoscope({
                     d={s.d}
                     fill={`rgb(${levelColors[s.color]})`}
                     fillOpacity={s.opacity}
-                    filter={`url(#${filterId})`}
                   />
                 )
               )}
