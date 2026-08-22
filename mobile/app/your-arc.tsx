@@ -33,6 +33,7 @@ import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
+import { useReadingColumnWidth } from '../src/theme/responsive';
 
 // Same loose-match window your-arc.tsx already uses for qaPairs/rich-
 // history matching — Spill has no reading link (it's its own free-standing
@@ -45,7 +46,19 @@ const SPILL_MATCH_WINDOW_MS = 30 * 60 * 1000;
 // Fills most of the content column's own width without touching its
 // padding — the kaleidoscope reads as a real, spacious presence (same
 // reasoning DepthsSpiral's own canvas sizing uses), not a small diagram.
+// Still used by the first-paint loading placeholder (scaled down) and as
+// the fallback before COVER_KALEIDOSCOPE_SIZE below is computed from the
+// real column width.
 const KALEIDOSCOPE_SIZE = 300;
+// The Cover page's own, larger size (2026-08-22 "just the kaleidoscope and
+// a header" pass) — now the ENTIRE visual content of the page (quote and
+// save-hint caption moved elsewhere, see their own new homes), so it earns
+// filling most of the available column width directly rather than sharing
+// space with three other text blocks. Computed from the real column width
+// at render time (see its call site) rather than a second fixed constant,
+// since "most of the width" should track actual screen size the same way
+// PagedScrollView's other full-bleed content does.
+const COVER_KALEIDOSCOPE_PADDING = 24;
 // Taller than wide — TimeCone's own two-cone-plus-vertex shape needs
 // vertical room (see TimeCone.tsx's CONE_HEIGHT_RATIO) more than it
 // needs width, unlike the kaleidoscope's square footprint.
@@ -132,6 +145,7 @@ function YourArcScreen() {
   const session = useAuthStore((s) => s.session);
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
+  const columnWidth = useReadingColumnWidth();
 
   const [richHistory, setRichHistory] = useState<SavedMeasureResult[] | null>(null);
   const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
@@ -776,65 +790,38 @@ function YourArcScreen() {
   // index that shifts depending on which earlier conditional pages exist.
   let conePageIndex: number | null = null;
 
-  // Page 1 — Cover. Restructured 2026-08-20 (review round 1): the
-  // kaleidoscope is "the main event" and previously had a caption sitting
-  // directly under it competing for the same first glance — moved to a
-  // quiet save-hint at the very bottom of the page instead, so the image
-  // stands alone. The kicker ("YOUR ARC") was dropped entirely — Cover
-  // isn't a page ABOUT a topic the way every other page is, it's the
-  // entry point itself, so a section-label above the title didn't fit.
+  // Page 1 — Cover. 2026-08-22 ("just the kaleidoscope and a header" pass,
+  // after a reference image of a dense radial artwork with only a small
+  // top caption): reduced to exactly two things — a small top header and
+  // the kaleidoscope, now the page's entire visual content, filling nearly
+  // the whole column width rather than sharing the frame with a
+  // philosopher quote and a save-hint caption. Those two moved rather than
+  // being cut: the quote is now its own quiet breathing page between Now
+  // and Facts (see "Page — Arc line" below, deliberately undense on
+  // purpose, alternating with the denser pages around it); the save-hint
+  // caption was dropped outright — LongPressToSave is used the same way
+  // elsewhere in the app (Depths' headline, Cards, Feeling Lucky) with no
+  // on-screen hint, so this page can rely on the same discoverability.
   //
-  // Restructured again 2026-08-20 (review round 2, on-device): the
-  // philosopher line moved ABOVE the kaleidoscope entirely (not just
-  // above the title, which is where round 1 left it) — matching RULES.md's
-  // standing "philosopher voice first, then a plain clarifying line"
-  // pattern, now read as the voice that INTRODUCES the image rather than
-  // commentary trailing it. Sized down and kept purely italic/light
-  // weight (never bold) so it stays a quiet spoken line, not competing
-  // with the kaleidoscope for visual weight below it. "A living record"
-  // became a real, large, left-aligned header (fontSizes.xl, not the
-  // small centered md/title treatment round 1 used) sitting at the
-  // bottom near the save-hint caption — its own distinct anchor for the
-  // page's name, separate from the philosopher's spoken introduction up
-  // top.
-  //
-  // Long-press the kaleidoscope to save it — now via the shared
-  // LongPressToSave component (2026-08-20, unified app-wide: Depths'
-  // headline, Cards, and Feeling Lucky all switched from a visible Save/
-  // Share button to the same long-press gesture this page introduced).
-  // captureChildren mode captures the kaleidoscope's own on-screen View
-  // directly (it contains its own react-native-svg content) rather than
-  // rendering a separate off-screen MessageCard, since the kaleidoscope
-  // itself — not a text card — is the thing worth saving here.
-  pages.push(
-    <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
-      {/* Philosopher line, quoted (2026-08-20 round 3) — fontStyle:
-          'italic' turned out to be a silent no-op the whole time: Etude
-          Noire's 4 weight files all have italicAngle 0 (confirmed via
-          fonttools), so nothing was ever actually slanting, on any
-          platform. No real italic/cursive face exists in this typeface,
-          and RULES.md's "one typeface" rule rules out adding a second
-          font just for this line. Quote marks + size/color do the
-          "this is spoken, not the app's own voice" job instead. */}
-      <Text style={styles.coverPhilosopherLine}>{`"${arcLine ?? t('yourArc.coneFramingLine')}"`}</Text>
-      <LongPressToSave captureChildren>
-        <View style={styles.kaleidoscopeWrap}>
-          <ArcKaleidoscope readingLog={readingLog} size={KALEIDOSCOPE_SIZE} />
-        </View>
-      </LongPressToSave>
-      {/* "A living record" now closes the centered quote+image+title
-          cluster (2026-08-22 editorial-cover pass) — an album/magazine
-          cover's title sits directly under its art as one balanced group,
-          not as a header for whatever scrolls after it. */}
-      <Text style={styles.coverTitle}>{t('yourArc.title')}</Text>
-      {/* Save-hint caption — pinned to the true bottom of the page via
-          coverCaptionRow, deliberately outside the centered cluster above
-          (small print under a cover, not part of the art itself). */}
-      <View style={styles.coverCaptionRow}>
-        <Text style={styles.kaleidoscopeCaption}>{t('yourArc.kaleidoscopeCaption')}</Text>
-      </View>
-    </ScrollView>
-  );
+  // Long-press the kaleidoscope to save it — via the shared
+  // LongPressToSave component (2026-08-20, unified app-wide). captureChildren
+  // mode captures the kaleidoscope's own on-screen View directly (it
+  // contains its own react-native-svg content) rather than rendering a
+  // separate off-screen MessageCard, since the kaleidoscope itself — not a
+  // text card — is the thing worth saving here.
+  {
+    const coverKaleidoscopeSize = columnWidth - COVER_KALEIDOSCOPE_PADDING * 2;
+    pages.push(
+      <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
+        <Text style={styles.coverKicker}>{t('yourArc.title')}</Text>
+        <LongPressToSave captureChildren>
+          <View style={styles.coverKaleidoscopeWrap}>
+            <ArcKaleidoscope readingLog={readingLog} size={coverKaleidoscopeSize} />
+          </View>
+        </LongPressToSave>
+      </ScrollView>
+    );
+  }
 
   // Page 2 — Now. The time cone, given real room — the present moment in
   // light of the person's own past and future (RULES.md, Product/
@@ -1022,6 +1009,23 @@ function YourArcScreen() {
       </ScrollView>
     );
   }
+
+  // Page — Arc line. 2026-08-22: the philosopher quote that used to open
+  // Cover, given its own page instead of being cut when Cover was reduced
+  // to just the kaleidoscope and a header — deliberately the quietest page
+  // in the whole pager (one spoken line, nothing else), sitting between
+  // Now (dense: cone, rotate controls, legend) and Facts (dense: stat
+  // rows, past-readings list) so the pager has real rhythm — dense, then a
+  // breath, then dense again — rather than every page carrying an equal
+  // amount to read. Reuses coverPhilosopherLine's own styling unchanged
+  // (quote marks carry "this is spoken" — see that style's own comment for
+  // why not real italics) and arcLine/coneFramingLine's own fallback
+  // exactly as Cover used to.
+  pages.push(
+    <ScrollView key="arc-line" contentContainerStyle={styles.arcLinePageContent}>
+      <Text style={styles.coverPhilosopherLine}>{`"${arcLine ?? t('yourArc.coneFramingLine')}"`}</Text>
+    </ScrollView>
+  );
 
   // Facts (2026-08-19: un-merged from the cone page — the top/bottom
   // framing lines above claim the space facts previously sat in, and a
@@ -1720,16 +1724,13 @@ function makeStyles(colors: Colors) {
   },
   coneTopSpacer: { flex: 1, minHeight: spacing[4] },
   coneBottomSpacer: { flex: 1, minHeight: spacing[4] },
-  // Editorial-cover layout (2026-08-22): quote, kaleidoscope, and title
-  // are now ONE centered composition — the "subject" of the cover, per
-  // how a magazine or album cover balances art+title as a single group
-  // rather than pinning each element to its own edge and letting
-  // whatever's left over become one large, accidental-looking gap.
-  // justifyContent: 'center' centers that whole cluster in the space
-  // between the back link and the caption; the caption stays pinned to
-  // the true bottom via coverCaptionRow below (a colophon/imprint line,
-  // deliberately outside the centered art group, the way a cover's small
-  // print sits apart from the cover art itself).
+  // "Just the kaleidoscope and a header" (2026-08-22, after a reference
+  // image of a dense radial artwork with only a small top caption) —
+  // Cover no longer shares the frame with a philosopher quote or a
+  // save-hint caption (both moved elsewhere, see their new homes' own
+  // comments); justifyContent: 'center' centers the header+image as one
+  // group in the available height, the way the reference's small top
+  // caption sits above art that fills nearly the whole rest of the frame.
   coverPageContent: {
     flexGrow: 1,
     alignItems: 'center',
@@ -1740,27 +1741,20 @@ function makeStyles(colors: Colors) {
   },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  // Consistent rhythm across the whole centered cluster (quote →
-  // kaleidoscope → title) — same spacing[6] gap on both sides of the
-  // image, replacing three different ad hoc gaps (tight/tight/huge) that
-  // made the page read as unfinished rather than composed.
-  kaleidoscopeWrap: { alignSelf: 'center', marginTop: spacing[6], marginBottom: spacing[6] },
-  // Pinned to the true bottom of the page, deliberately separate from the
-  // centered quote+image+title cluster above — small print under a cover,
-  // not part of the composed art itself. flex: 1 pushes it down whenever
-  // the centered cluster doesn't already fill the page; minHeight keeps a
-  // minimum gap on tall screens where the cluster is short enough that
-  // centering alone would land it close to the caption.
-  coverCaptionRow: { flex: 1, minHeight: spacing[8], justifyContent: 'flex-end', width: '100%' },
-  kaleidoscopeCaption: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+  // Small, quiet — the reference image's own top caption is a fraction of
+  // the art's size, not a competing headline. Reuses the app's standard
+  // kicker register (see `kicker` below) rather than the large centered
+  // treatment "A living record" used to have as its own header, since the
+  // kaleidoscope is now unambiguously the page's one subject.
+  coverKicker: {
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
     fontSize: fontSizes.xs,
-    textAlign: 'left',
-    alignSelf: 'flex-start',
-    width: '100%',
+    letterSpacing: letterSpacings.kicker,
+    textTransform: 'uppercase',
+    marginBottom: spacing[6],
   },
+  coverKaleidoscopeWrap: { alignSelf: 'center' },
   // Fixed height matching TimeCone's own taller shape (CONE_SIZE * 1.3,
   // the tallest of the two things CrossfadeSwitcher swaps between here —
   // TimeConeRing is only CONE_SIZE square) — 2026-08-20 round 3: "make
@@ -1784,9 +1778,9 @@ function makeStyles(colors: Colors) {
   // instructional text (same italic/xs/muted register) — indistinguishable
   // from ambient copy rather than reading as something to actually press.
   // fonts.medium (not light/italic) and text.secondary (not muted) match
-  // the weight coverTitle/conePointSummaryLevel use for real content, one
-  // step down from text.primary so the framing lines above/below the cone
-  // still lead the eye first.
+  // the weight conePointSummaryLevel uses for real content, one step down
+  // from text.primary so the framing lines above/below the cone still
+  // lead the eye first.
   coneRotateRow: {
     flexDirection: 'row',
     gap: spacing[6],
@@ -1805,36 +1799,29 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  // Cover's own title — now the closing element of the centered
-  // quote+image+title cluster (2026-08-22 editorial-cover pass), the way
-  // an album/magazine cover's title sits directly under its art as one
-  // balanced group rather than acting as a section header for whatever
-  // follows. Centered, not left-aligned/full-width, to match the quote
-  // and image above it — a left-aligned block would break the cluster's
-  // own symmetry now that it's a self-contained centered composition
-  // rather than the top of a top-anchored page.
-  coverTitle: {
-    alignSelf: 'center',
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xl,
-    lineHeight: fontSizes.xl * lineHeights.tight,
-    textAlign: 'center',
+  // The Arc line page's own container (2026-08-22) — deliberately just
+  // centers one line of text with generous padding, the quietest page in
+  // the whole pager on purpose (see the page's own JSX comment on pacing).
+  arcLinePageContent: {
+    flexGrow: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: spacing[8],
   },
-  // Philosopher voice, opening the page (2026-08-20 round 3, moved above
-  // the kaleidoscope entirely rather than centered with it in a middle
-  // group) — matches RULES.md's standing "philosopher voice, then plain
-  // clarifying line" pattern. No fontStyle: 'italic' (dropped — it was a
-  // silent no-op on this typeface, see the JSX comment above this line's
-  // own Text element); the quote marks in the string itself now carry the
+  // Philosopher voice — now its own page (2026-08-22), previously opened
+  // Cover above the kaleidoscope (2026-08-20 round 3) — matches RULES.md's
+  // standing "philosopher voice, then plain clarifying line" pattern, this
+  // page's clarifying line being simply the fact that it's followed by the
+  // record itself (Facts, the cone, etc.). No fontStyle: 'italic' —
+  // dropped, it was a silent no-op on this typeface (see the JSX comment
+  // at this line's own Text element); quote marks in the string carry the
   // "this is spoken" signal instead of a slant that was never rendering.
   coverPhilosopherLine: {
     color: colors.text.secondary,
     fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
-    paddingHorizontal: spacing[4],
   },
   // The cone page's own top/bottom framing (2026-08-19) — centered, not
   // left-aligned like coneFramingLine above, since these sit directly
