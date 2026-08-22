@@ -492,11 +492,23 @@ function LoggedInAccount({
       {/* The only in-app confirmation a real subscriber has that their
           entitlement is active — previously subscription.active was
           checked (useIsSubscribed) but never SHOWN anywhere, so even a
-          real subscriber had no way to confirm it from within the app. */}
+          real subscriber had no way to confirm it from within the app.
+          2026-08-22: split into two lines once Selfinder+ became two
+          separate products (see RULES.md) — Your Arc's own ongoing
+          status, plus Center's purchase count (plain, honest phrasing —
+          "purchased N times," never hype-y — matching this app's
+          existing copy register). */}
       {!loadingProfile && (
-        <Text style={styles.subscriptionStatus}>
-          {profile?.subscription?.active ? t('account.selfinderPlusActive') : t('account.selfinderPlusInactive')}
-        </Text>
+        <>
+          <Text style={styles.subscriptionStatus}>
+            {profile?.arcSubscription?.active ? t('account.arcSubscriptionActive') : t('account.arcSubscriptionInactive')}
+          </Text>
+          <Text style={styles.subscriptionStatus}>
+            {profile?.centerPurchases && profile.centerPurchases.length > 0
+              ? t('account.centerPurchaseCount', { count: profile.centerPurchases.length })
+              : t('account.centerPurchaseCountNone')}
+          </Text>
+        </>
       )}
 
       {consentGiven && (

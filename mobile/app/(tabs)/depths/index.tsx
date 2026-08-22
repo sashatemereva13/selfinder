@@ -26,7 +26,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/them
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
-import { useIsSubscribed } from '../../../src/utils/useIsSubscribed';
+import { useArcSubscription } from '../../../src/utils/useArcSubscription';
 import { useAuthStore } from '../../../src/store/authStore';
 import { getMe, getMeasureHistory } from '../../../src/api/user';
 import { listMyWishes, SavedWish } from '../../../src/api/wish';
@@ -264,7 +264,7 @@ export default function DepthsScreen() {
   const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
   const readingLog = useMeasureStore((s) => s.readingLog);
-  const isSubscribed = useIsSubscribed();
+  const isSubscribed = useArcSubscription();
   const session = useAuthStore((s) => s.session);
   // The local readingLog is per-device (SecureStore) — a signed-in,
   // consented account can have real server-side history the "Your arc"

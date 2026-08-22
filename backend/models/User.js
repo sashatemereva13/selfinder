@@ -38,19 +38,41 @@ const userSchema = new mongoose.Schema({
       log: { type: [consentLogEntrySchema], default: [] },
     },
   },
-  // The real entitlement source of truth (Selfinder+) — replaces the old
-  // client-only, per-device isSubscribed dev toggle for any signed-in
-  // account. `source: "manual"` is an admin-granted account (e.g. the
-  // founder's own account, a comp, support goodwill); "apple"/"google" are
-  // reserved for when real StoreKit/Play Billing receipt sync lands —
-  // nothing writes those yet. `expiresAt: null` means "doesn't expire"
-  // (appropriate for manual grants); a store-synced subscription would set
-  // a real expiry and get refreshed on renewal/cancellation webhooks.
-  subscription: {
+  // Your Arc — the ongoing, cheap record-access subscription (2026-08-22:
+  // renamed from the old single `subscription` field once Selfinder+ was
+  // split into two differently-shaped products — see RULES.md's Product/
+  // positioning section). `source: "manual"` is an admin-granted account
+  // (e.g. the founder's own account, a comp, support goodwill);
+  // "apple"/"google" are reserved for when real StoreKit/Play Billing
+  // receipt sync lands — nothing writes those yet. `expiresAt: null`
+  // means "doesn't expire" (appropriate for manual grants); a store-
+  // synced subscription would set a real expiry and get refreshed on
+  // renewal/cancellation webhooks.
+  arcSubscription: {
     active: { type: Boolean, default: false },
     source: { type: String, enum: ["manual", "apple", "google"], default: null },
     expiresAt: { type: String, default: null },
     grantedAt: { type: String, default: null },
+  },
+  // Center — the repeatable, one-time-purchase experience (2026-08-22,
+  // Selfinder's first non-subscription paid product; see RULES.md). An
+  // ARRAY, not a boolean: each purchase is its own entitlement record AND
+  // its own generated result, browsable individually — never "owned once"
+  // the way arcSubscription's flag is. seedNonce feeds
+  // kaleidoscopeData.ts's seedFromLog alongside the real reading history,
+  // so THIS purchase always regenerates the same result on revisit, while
+  // a new purchase (a new array entry, a new nonce) produces a genuinely
+  // different one even against unchanged history.
+  centerPurchases: {
+    type: [
+      {
+        id: { type: String, default: () => randomUUID() },
+        source: { type: String, enum: ["manual", "apple", "google"], required: true },
+        purchasedAt: { type: String, required: true },
+        seedNonce: { type: Number, required: true },
+      },
+    ],
+    default: [],
   },
   // One-time code for the forgot-password flow. codeHash is bcrypt'd like
   // the password itself; cleared on successful reset or left to expire.

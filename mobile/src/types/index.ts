@@ -141,6 +141,18 @@ export interface SubscriptionState {
   expiresAt: string | null;
 }
 
+// One Center purchase — repeatable, one-time-purchase experience (2026-08-22,
+// see RULES.md's Product/positioning section). seedNonce is combined with
+// real reading history in kaleidoscopeData.ts's seedFromLog so this
+// specific purchase always regenerates the same result on revisit, while a
+// different purchase (a different array entry) produces a different one.
+export interface CenterPurchase {
+  id: string;
+  source: 'manual' | 'apple' | 'google';
+  purchasedAt: string;
+  seedNonce: number;
+}
+
 export interface UserProfile {
   id: string;
   username: string;
@@ -148,7 +160,11 @@ export interface UserProfile {
   createdAt: string;
   email: string | null;
   consent: { psychologicalData: ConsentState };
-  subscription: SubscriptionState;
+  // Renamed from the old single `subscription` field (2026-08-22) once
+  // Selfinder+ split into two differently-shaped products — see
+  // centerPurchases below for the other one.
+  arcSubscription: SubscriptionState;
+  centerPurchases: CenterPurchase[];
 }
 
 /** Shape returned by GET /measure/history — a persisted MeasureResult document. */

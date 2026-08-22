@@ -157,9 +157,17 @@ function buildWedgeShapes(segments: KaleidoscopeSegment[], innerR: number, outer
 export function ArcKaleidoscope({
   readingLog,
   size,
+  seed: seedNonce,
 }: {
   readingLog: ReadingLogEntry[];
   size: number;
+  // Optional, 2026-08-22 (Center — see RULES.md) — a purchase-scoped
+  // nonce folded into seedFromLog alongside readingLog, so a specific
+  // Center purchase always regenerates the same result on revisit while a
+  // NEW purchase produces a genuinely different one. Your Arc's own
+  // kaleidoscope usage passes nothing, preserving the original
+  // stable-per-history behavior.
+  seed?: number;
 }) {
   const levelColors = useLevelColors();
 
@@ -169,12 +177,12 @@ export function ArcKaleidoscope({
   // which hooks are called, per React's rules of hooks.
   const { shapes, outerR } = useMemo(() => {
     const segments = buildKaleidoscopeSegments(readingLog);
-    const seed = seedFromLog(readingLog);
+    const seed = seedFromLog(readingLog, seedNonce);
     const rand = makeRng(seed);
     const inner = size * 0.03;
     const outer = size * 0.49;
     return { shapes: buildWedgeShapes(segments, inner, outer, rand), outerR: outer };
-  }, [readingLog, size]);
+  }, [readingLog, size, seedNonce]);
 
   const cx = size / 2;
   const cy = size / 2;

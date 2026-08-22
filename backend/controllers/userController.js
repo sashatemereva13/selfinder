@@ -24,11 +24,20 @@ export async function getMe(req, res) {
         timestamp: user.consent.psychologicalData.timestamp,
       },
     },
-    subscription: {
-      active: user.subscription?.active ?? false,
-      source: user.subscription?.source ?? null,
-      expiresAt: user.subscription?.expiresAt ?? null,
+    arcSubscription: {
+      active: user.arcSubscription?.active ?? false,
+      source: user.arcSubscription?.source ?? null,
+      expiresAt: user.arcSubscription?.expiresAt ?? null,
     },
+    // Full purchase list, not just a count/latest — the client needs every
+    // past purchase's own id/seedNonce to render Center's browsable
+    // history (see mobile/app/center.tsx).
+    centerPurchases: (user.centerPurchases ?? []).map((p) => ({
+      id: p.id,
+      source: p.source,
+      purchasedAt: p.purchasedAt,
+      seedNonce: p.seedNonce,
+    })),
   });
 }
 

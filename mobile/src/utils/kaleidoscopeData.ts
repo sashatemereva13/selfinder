@@ -74,8 +74,22 @@ export function buildKaleidoscopeSegments(
 // visually shuffle on every re-render, and two people's kaleidoscopes
 // differ because their readings differ, not because of an unrelated
 // random draw.
-export function seedFromLog(readingLog: ReadingLogEntry[]): number {
-  let s = 0;
+//
+// `nonce` (2026-08-22, added for Center — see RULES.md's Product/
+// positioning section) folds an optional purchase-scoped value into the
+// seed alongside the real reading history. Your Arc's own callers pass no
+// nonce (defaults to 0), preserving the original "never visually shuffles
+// for the same history" behavior described above. Center passes a
+// specific purchase's own seedNonce (persisted server-side on
+// User.centerPurchases, see backend/models/User.js) so THAT purchase
+// always regenerates the same result on revisit, while a genuinely NEW
+// purchase — a new array entry, a new nonce — produces a different one
+// even against unchanged history. This is what makes "buy Center again"
+// mean something: without a nonce, seedFromLog alone would return the
+// exact same seed (and therefore the exact same image) every time,
+// defeating the entire point of a repeatable purchase.
+export function seedFromLog(readingLog: ReadingLogEntry[], nonce: number = 0): number {
+  let s = nonce % 999999937;
   for (const e of readingLog) s = (s + e.ts) % 999999937;
   return s || 1;
 }

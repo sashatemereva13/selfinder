@@ -111,17 +111,34 @@ backend must actually be live at that URL before submitting, since App
 Store reviewers will exercise real network calls (chat, etc.) and a
 dead/local-only backend is a common rejection cause.
 
-## Subscriptions / Your Arc (Selfinder+)
+## Subscriptions / Your Arc / Center
 
-No real purchase flow exists yet, but a real entitlement source of truth
-does: `User.subscription` (`backend/models/User.js`), checked client-side
-via `src/utils/useIsSubscribed.ts` (a live `GET /user/me` call, not local
-device state). Today the only way `subscription.active` gets set to `true`
-is a manual admin grant — run `node backend/scripts/grantSubscription.js
-<username>` from `backend/` (add `--revoke` to undo). There is no local
-dev toggle anymore; a signed-out session, or a signed-in account with no
-grant, always sees the free `your-arc-preview` experience — the same as
-any real non-subscriber will. When real IAP is added, StoreKit/Play
-Billing receipt sync should write to this same `User.subscription` field
-(with `source: 'apple'`/`'google'` instead of `'manual'`) rather than
-introducing a separate entitlement mechanism.
+No real purchase flow exists yet for either product, but a real
+entitlement source of truth does for both — 2026-08-22: the old single
+`User.subscription` field split in two once Selfinder+ became two
+differently-shaped products (an ongoing subscription and a repeatable
+one-time purchase; see `RULES.md`'s Product/positioning section):
+
+- **Your Arc** — `User.arcSubscription` (`backend/models/User.js`),
+  checked client-side via `src/utils/useArcSubscription.ts` (a live
+  `GET /user/me` call, not local device state). The only way
+  `arcSubscription.active` gets set to `true` today is a manual admin
+  grant — run `node backend/scripts/grantArcSubscription.js <username>`
+  from `backend/` (add `--revoke` to undo). A signed-out session, or a
+  signed-in account with no grant, always sees the free
+  `your-arc-preview` experience.
+- **Center** — `User.centerPurchases` (an array, not a boolean — each
+  purchase is its own entry with its own `seedNonce`, since Center is
+  bought again and again, never just "owned"), checked client-side via
+  `src/utils/useCenterPurchases.ts`. Grant one purchase with
+  `node backend/scripts/grantCenter.js <username>` — run it again for a
+  second, independent purchase (no `--revoke`; there's nothing to undo
+  about a past generated result).
+
+There is no local dev toggle for either. When real IAP is added,
+StoreKit/Play Billing receipt sync should write to these same fields
+(`source: 'apple'`/`'google'` instead of `'manual'`) rather than
+introducing a separate entitlement mechanism — Your Arc as an
+auto-renewing subscription product, Center as Apple's "Consumable" IAP
+product type (the correct category for a repeatable, non-restoring
+purchase, distinct from "Non-Consumable").
