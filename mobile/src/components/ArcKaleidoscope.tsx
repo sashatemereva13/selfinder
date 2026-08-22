@@ -1,5 +1,5 @@
 import { useMemo, useEffect } from 'react';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Easing } from 'react-native-reanimated';
 import Svg, { Defs, Filter, FeGaussianBlur, RadialGradient, Stop, G, Path, Circle } from 'react-native-svg';
 import { ReadingLogEntry } from '../store/measureStore';
 import { useLevelColors } from '../content/measureConfig';
@@ -183,14 +183,39 @@ export function ArcKaleidoscope({
 
   const scale = useSharedValue(0.85);
   const opacity = useSharedValue(0);
+  // "A living record" (the Cover page's own title, directly under this
+  // image) reads as an inert picture without some sign of being alive —
+  // reusing AmbientGlow.tsx's own breathing technique (a slow sine-eased
+  // opacity/scale cycle, withRepeat + Easing.inOut(Easing.sin)) rather
+  // than inventing new motion language, matching aesthetic.md's "a
+  // breathing ambient pulse is fine on the aura figure specifically (it's
+  // alive)" — the kaleidoscope is this page's own version of that same
+  // idea. Deliberately animates the already-rendered Animated.View
+  // (transform/opacity on a composited layer), never the SVG shapes
+  // themselves — the per-shape blur filter fix just above this exists
+  // specifically because re-rendering those shapes is expensive; a
+  // transform/opacity animation on the outer view costs nothing close to
+  // that, so breathing doesn't reintroduce the hang that fix removed.
+  const breathe = useSharedValue(0);
   useEffect(() => {
     scale.value = withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: SOFT_EASE });
-    opacity.value = withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: SOFT_EASE });
+    opacity.value = withTiming(1, { duration: ENTRANCE_DURATION_MS, easing: SOFT_EASE }, (finished) => {
+      // Starts only once the entrance itself has settled — a breathing
+      // cycle overlapping the "gather, condense, become" entrance beat
+      // would read as two competing motions rather than one clean
+      // arrival followed by a quiet, ongoing "it's alive" signal.
+      if (finished) {
+        breathe.value = withRepeat(withTiming(1, { duration: 4200, easing: Easing.inOut(Easing.sin) }), -1, true);
+      }
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const entranceStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ scale: scale.value }],
+    // Barely perceptible on purpose — same restraint AmbientGlow's own
+    // comment calls for ("if you can describe it without squinting, it's
+    // too strong"): 0.94-1 scale, 0.9-1 opacity, not a pronounced pulse.
+    opacity: opacity.value * (0.9 + breathe.value * 0.1),
+    transform: [{ scale: scale.value * (0.94 + breathe.value * 0.06) }],
   }));
 
   if (readingLog.length === 0) return null;
