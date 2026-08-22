@@ -101,11 +101,13 @@ export default function RootLayout() {
     const inTabs = segments[0] === '(tabs)';
     // Top-level routes reachable from inside the tabs but not part of the
     // tab structure itself — sources (see its own fix), how-to-use (same
-    // reasoning, reachable from the You tab post-onboarding), and both
-    // Your Arc screens (moved out of app/(tabs)/you/ so their back link/
-    // gesture isn't tied to the you tab regardless of which tab they were
-    // opened from — see your-arc.tsx's comment).
-    const inStandaloneRoute = ['sources', 'how-to-use', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
+    // reasoning, reachable from the You tab post-onboarding), products and
+    // center (2026-08-22, the Center spin-off — reachable from the You
+    // tab's "Products →" row, same reasoning), and both Your Arc screens
+    // (moved out of app/(tabs)/you/ so their back link/gesture isn't tied
+    // to the you tab regardless of which tab they were opened from — see
+    // your-arc.tsx's comment).
+    const inStandaloneRoute = ['sources', 'how-to-use', 'products', 'center', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
     } else if (philosopher && !inTabs && !inStandaloneRoute) {
@@ -140,6 +142,8 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)"     />
           <Stack.Screen name="sources"    />
           <Stack.Screen name="how-to-use" />
+          <Stack.Screen name="products"   />
+          <Stack.Screen name="center"     />
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-preview" />
           <Stack.Screen name="crisis-support" />

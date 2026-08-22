@@ -21,11 +21,6 @@ import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { SavedMeasureResult } from '../src/types';
-import { TimeCone, TimeConePoint } from '../src/components/TimeCone';
-import { TimeConeRing } from '../src/components/TimeConeRing';
-import { CrossfadeSwitcher } from '../src/components/CrossfadeSwitcher';
-import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
-import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { ChatTurn } from '../src/components/ChatTurn';
 import { PagedScrollView } from '../src/components/PagedScrollView';
@@ -33,7 +28,6 @@ import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
-import { useReadingColumnWidth } from '../src/theme/responsive';
 
 // Same loose-match window your-arc.tsx already uses for qaPairs/rich-
 // history matching — Spill has no reading link (it's its own free-standing
@@ -43,34 +37,18 @@ import { useReadingColumnWidth } from '../src/theme/responsive';
 // since writing a Spill entry is a separate, slightly later action.
 const SPILL_MATCH_WINDOW_MS = 30 * 60 * 1000;
 
-// Fills most of the content column's own width without touching its
-// padding — the kaleidoscope reads as a real, spacious presence (same
-// reasoning DepthsSpiral's own canvas sizing uses), not a small diagram.
-// Still used by the first-paint loading placeholder (scaled down) and as
-// the fallback before COVER_KALEIDOSCOPE_SIZE below is computed from the
-// real column width.
+// Used by the first-paint loading placeholder (scaled down) — Your Arc no
+// longer shows the real kaleidoscope itself (spun out into Center, see
+// RULES.md's Product/positioning section), but keeps this same echo-of-
+// the-cover-art loading treatment since it's still a cheap, on-brand
+// placeholder shape independent of what the pager itself now contains.
 const KALEIDOSCOPE_SIZE = 300;
-// The Cover page's own, larger size (2026-08-22 "just the kaleidoscope and
-// a header" pass) — now the ENTIRE visual content of the page (quote and
-// save-hint caption moved elsewhere, see their own new homes), so it earns
-// filling most of the available column width directly rather than sharing
-// space with three other text blocks. Computed from the real column width
-// at render time (see its call site) rather than a second fixed constant,
-// since "most of the width" should track actual screen size the same way
-// PagedScrollView's other full-bleed content does.
-const COVER_KALEIDOSCOPE_PADDING = 24;
-// Taller than wide — TimeCone's own two-cone-plus-vertex shape needs
-// vertical room (see TimeCone.tsx's CONE_HEIGHT_RATIO) more than it
-// needs width, unlike the kaleidoscope's square footprint.
-const CONE_SIZE = 260;
 // Upper bound on how long the first-paint loading state can show before
 // pagerPainted flips even without its own onLayout signal firing — see
 // that state's own comment for the full mechanism. Under normal
 // conditions onLayout fires well before this, so it should rarely
 // actually trigger — it's a backstop, not the primary mechanism.
 const FIRST_PAINT_FALLBACK_MS = 900;
-// How long the cone's long-press preview stays up before clearing itself.
-const CONE_PREVIEW_DISMISS_MS = 4000;
 // The closing page's own arrival beat (2026-08-20, "journey, not
 // equal-weight carousel") — same easing/duration ArcKaleidoscope's own
 // entrance uses (docs/design/aesthetic.md's "gather, condense, become"
@@ -95,22 +73,23 @@ function formatDate(ts: number) {
 // score) — just not the full story, since that was never saved anywhere
 // to recover. Never pretend detail exists that doesn't.
 // Thin wrapper mounted by the router — the real screen below builds its
-// `pages` array (including ArcKaleidoscope's dozens of mirrored SVG
-// Path/Filter nodes and the time cone's per-reading circles) directly in
-// its component body on every render, unconditionally. Previously that
-// whole 700+ line build ran synchronously as part of the FIRST render
-// expo-router produced for this route, so React had nothing to commit or
-// paint — not even the pagerPainted loading dot the screen itself shows —
-// until that heavy work finished. From the outside that read as "Depths
-// stays on screen, frozen, until Your Arc suddenly appears already
-// loaded," reintroducing the exact freeze pagerPainted (see its own
-// comment inside YourArcScreen) was built to hide, just one level higher
-// up: pagerPainted only ever deferred work WITHIN an already-mounted
-// YourArcScreen, never the screen's own first mount. Rendering a bare
-// loading placeholder here first, then swapping to the real screen a
-// frame later via requestAnimationFrame, guarantees the route transition
-// itself always paints instantly regardless of how expensive the real
-// screen's first render is.
+// `pages` array directly in its component body on every render,
+// unconditionally. Previously (before the time cone/kaleidoscope spun out
+// into Center — see RULES.md's Product/positioning section) that build
+// included ArcKaleidoscope's dozens of mirrored SVG Path/Filter nodes and
+// the cone's per-reading circles, expensive enough that the whole 700+
+// line build ran synchronously as part of the FIRST render expo-router
+// produced for this route, so React had nothing to commit or paint — not
+// even the pagerPainted loading dot the screen itself shows — until that
+// heavy work finished. From the outside that read as "Depths stays on
+// screen, frozen, until Your Arc suddenly appears already loaded,"
+// reintroducing the exact freeze pagerPainted (see its own comment inside
+// YourArcScreen) was built to hide, just one level higher up: pagerPainted
+// only ever deferred work WITHIN an already-mounted YourArcScreen, never
+// the screen's own first mount. This wrapper pattern is kept even now
+// that Your Arc's own pages are lighter (Center inherited the real cost),
+// since the record pages still do real work (facts, wish/crossing
+// content) worth keeping off the route transition's own critical path.
 export default function YourArcRoute() {
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
@@ -145,7 +124,6 @@ function YourArcScreen() {
   const session = useAuthStore((s) => s.session);
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
-  const columnWidth = useReadingColumnWidth();
 
   const [richHistory, setRichHistory] = useState<SavedMeasureResult[] | null>(null);
   const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
@@ -187,29 +165,12 @@ function YourArcScreen() {
   // gone.
   const [pagerPainted, setPagerPainted] = useState(false);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
-  // The cone's own long-press preview (2026-08-20 review: "the dots don't
-  // make sense to anybody apart from me") — a quick date+level label for
-  // a reading, or a quick date label for a wish, shown without leaving
-  // the page. Separate from `selected` (which drives the full detail page
-  // opened by a plain tap) — long-press is a lighter, non-navigating
-  // preview of the same point. Auto-dismissed a few seconds after being
-  // set (see handleConePointLongPress) rather than tracked against page
-  // navigation — simpler than wiring PagedScrollView's active index back
-  // up to this screen just to clear a transient preview.
-  const [conePreview, setConePreview] = useState<{ date: string; label: string } | null>(null);
-  // Which rim the cone is "rotated" to face on, if any (2026-08-20
-  // review: "what if, on the cone screen, it will be possible to rotate
-  // the cone... to see the bottom and top circles as surfaces") — null
-  // means the normal side view. See TimeConeRing.tsx's own header
-  // comment for why this is a crossfade between two fully-rendered
-  // static views, not a live geometry rotation.
-  const [coneFacing, setConeFacing] = useState<'past' | 'future' | null>(null);
-  // Set by handleConePointPress — see PagedScrollView's own jumpTo prop
+  // Set by handleFactsReadingPress — see PagedScrollView's own jumpTo prop
   // for why this is a token (a value that changes per tap), not a plain
   // boolean/index: the detail page always lands in the same page slot,
   // so two separate cone taps can resolve to an identical target index,
   // and only a per-request token reliably tells them apart.
-  const [coneJumpToken, setConeJumpToken] = useState<number | null>(null);
+  const [detailJumpToken, setDetailJumpToken] = useState<number | null>(null);
   const [linkedConversation, setLinkedConversation] = useState<SavedConversation | null>(null);
   const [loadingConversation, setLoadingConversation] = useState(false);
   // The one wish eligible for "pure resurfacing" this visit (see
@@ -288,7 +249,7 @@ function YourArcScreen() {
   // comment for why all pages stay mounted, so a mount-only entrance would
   // only ever play once. A token, not a boolean, so swiping away and back
   // replays the arrival beat every time, the same "fresh value per
-  // request" reasoning coneJumpToken already uses.
+  // request" reasoning detailJumpToken already uses.
   const [closingArrivalToken, setClosingArrivalToken] = useState(0);
   const closingScale = useSharedValue(0.94);
   const closingOpacity = useSharedValue(0);
@@ -579,92 +540,23 @@ function YourArcScreen() {
     if (saved) setClosingWriteSaved(true);
   };
 
-  // Sets the tapped reading as `selected` — same state the Detail page
-  // and Facts page's reading list already share — but, as of 2026-08-20
-  // round 3, no longer auto-jumps the pager there. Previously this fired
-  // setConeJumpToken immediately, so a single tap swiped the whole screen
-  // to a separate page — reported as "a bit unexpected... it would be
-  // smoother to open the reading on the same page somewhere near, in case
-  // they want to press on the other dot next." Now the cone page renders
-  // its own inline summary for `selected` directly (see conePointSummary
-  // below the cone) and the person can tap a different dot right after
-  // without leaving the page; handleOpenFullReading is the new, explicit
-  // step that jumps to the fuller Detail page, only when asked. Point ids
-  // are built as `reading-${entry.ts}` in timeConeGeometry above; wish
-  // points (`wish-...`) are a different kind of point with no
-  // reading-detail equivalent, so they're a no-op here rather than
-  // silently opening the wrong thing.
-  const handleConePointPress = (pointId: string) => {
-    if (!pointId.startsWith('reading-')) return;
-    const ts = Number(pointId.slice('reading-'.length));
-    const entry = readingLog.find((e) => e.ts === ts);
-    if (entry) setSelected(entry);
-  };
-
-  // The explicit "open full reading" step (2026-08-20 round 3) — jumps to
-  // the same rich Detail page handleConePointPress used to open
-  // automatically. Only reachable from the inline cone summary, once
-  // `selected` is already set.
-  const handleOpenFullReading = () => {
-    // A fresh token per tap (Date.now() is unique enough here — this
-    // fires from a discrete user tap, never in a tight loop) — see
-    // PagedScrollView's own jumpTo prop comment for why a plain
-    // boolean/index isn't enough to guarantee a second, distinct tap
-    // still triggers a fresh jump.
-    setConeJumpToken(Date.now());
-  };
-
   // Opens the detail page from a tap on the Facts page's own reading list
   // (2026-08-20 review: "add the list of past readings... so they look
   // like the list of past readings on 'You' page") — reuses the exact
-  // same `selected` state/detail page the cone and sparkline already
-  // drive, so this is a third entry point into one shared detail, not a
-  // fourth, separate mechanism (e.g. an inline expand like AccountSection's
-  // own list uses). Resolves a richHistory item back to its matching
-  // readingLog entry by closest timestamp — same 60s tolerance
-  // selectedRich already uses in the opposite direction.
-  //
-  // Also sets coneJumpToken (fixed 2026-08-20, "Detail page prominence"
-  // pass) — this was a real bug: unlike the cone's own explicit "Open full
-  // reading" link (handleOpenFullReading), tapping a row here only ever
-  // set `selected` and appended the Detail page to the end of the pager
-  // without navigating there, so nothing visibly happened unless the
-  // person manually swiped all the way to the last page. A list row's own
-  // affordance is "tap to open" — it should actually open.
+  // same `selected` state the Detail page already drives, so this is a
+  // second entry point into one shared detail, not a separate mechanism
+  // (e.g. an inline expand like AccountSection's own list uses). Resolves
+  // a richHistory item back to its matching readingLog entry by closest
+  // timestamp — same 60s tolerance selectedRich already uses in the
+  // opposite direction. Sets detailJumpToken (2026-08-20, "Detail page
+  // prominence" pass) to actually navigate there — a list row's own
+  // affordance is "tap to open," not just marking something selected
+  // without visibly going anywhere.
   const handleFactsReadingPress = (rich: SavedMeasureResult) => {
     const entry = readingLog.find((e) => Math.abs(e.ts - new Date(rich.savedAt).getTime()) < 60_000);
     if (entry) {
       setSelected(entry);
-      setConeJumpToken(Date.now());
-    }
-  };
-
-  // Long-press preview (2026-08-20) — a quick date+level label for a
-  // reading dot, or date+"a wish" for a wish dot, shown right on the page
-  // without opening anything. Now the ONLY place the color convention
-  // gets explained at all (2026-08-22: the upfront legend was removed —
-  // see coneBottomSpacer's own comment) — discovering what a dot is by
-  // touching it, not by reading a key first.
-  const handleConePointLongPress = (pointId: string) => {
-    if (pointId.startsWith('reading-')) {
-      const ts = Number(pointId.slice('reading-'.length));
-      const entry = readingLog.find((e) => e.ts === ts);
-      if (!entry) return;
-      const level = VIBRATION_LEVELS.find((l) => l.slug === entry.levelSlug);
-      setConePreview({
-        date: formatDate(entry.ts),
-        label: level ? getLocalizedLevelName(level, locale) : entry.levelSlug,
-      });
-      setTimeout(() => setConePreview(null), CONE_PREVIEW_DISMISS_MS);
-    } else if (pointId.startsWith('wish-')) {
-      const id = pointId.slice('wish-'.length);
-      const wish = allWishes.find((w) => w.id === id);
-      if (!wish) return;
-      setConePreview({
-        date: formatDate(new Date(wish.savedAt).getTime()),
-        label: t('yourArc.coneLegendWishLabel'),
-      });
-      setTimeout(() => setConePreview(null), CONE_PREVIEW_DISMISS_MS);
+      setDetailJumpToken(Date.now());
     }
   };
 
@@ -729,321 +621,38 @@ function YourArcScreen() {
   // date convention.
   const sinceDate = readingLog.length > 0 ? formatDate(readingLog[0].ts) : '';
 
-  // The time cone's own points (see TimeCone.tsx) — past cone gets every
-  // reading plus every wish OTHER than the current active one, spread by
-  // AGE alone (oldest = furthest from the vertex), never by anything
-  // about what a reading/wish says. Future cone gets only the active
-  // wish, per RULES.md's existing "no fabricated trajectory" rule — this
-  // is never a forecast, only the one real, stated thing reaching
-  // forward. `angle` uses a cheap deterministic hash of each id so a
-  // given point's angular position is stable across re-renders instead
-  // of jumping around, but carries no real information itself (see
-  // TimeConePoint's own comment).
-  const timeConeGeometry = useMemo(() => {
-    const now = Date.now();
-    const oldestTs = readingLog.length > 0 ? readingLog[0].ts : now;
-    const span = Math.max(now - oldestTs, 1);
-    const hashAngle = (id: string) => {
-      let hash = 0;
-      for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 1000;
-      return hash / 1000;
-    };
-    const pastFromReadings: TimeConePoint[] = readingLog.map((entry) => ({
-      id: `reading-${entry.ts}`,
-      depth: Math.min(1, (now - entry.ts) / span),
-      angle: hashAngle(`reading-${entry.ts}`),
-      colorRgb: levelColors[entry.levelSlug],
-    }));
-    // Wishes have no vibration level, so they never get a level color —
-    // the neutral accent (ivoryRgb, the same pre-reading fallback used
-    // everywhere else) marks them as a different KIND of past point from
-    // a reading, not a missing/default color.
-    const pastFromWishes: TimeConePoint[] = allWishes
-      .filter((w) => w.id !== activeWish?.id)
-      .map((w) => {
-        const ts = new Date(w.savedAt).getTime();
-        return {
-          id: `wish-${w.id}`,
-          depth: Math.min(1, (now - ts) / span),
-          angle: hashAngle(`wish-${w.id}`),
-          colorRgb: colors.accent.ivoryRgb,
-        };
-      });
-    const futurePoints: TimeConePoint[] = activeWish ? [{ id: `active-wish-${activeWish.id}`, depth: 1, angle: 0.25 }] : [];
-    return { pastPoints: [...pastFromReadings, ...pastFromWishes], futurePoints };
-  }, [readingLog, allWishes, activeWish, levelColors, colors.accent.ivoryRgb]);
-
   // Building the page list explicitly (not conditionally spread inline in
   // JSX) so PagedScrollView's dot count and the pages actually shown never
   // drift apart — a resurfaced wish or a tapped detail page changes how
   // many pages exist, and both need to agree on that number.
   const pages: React.ReactNode[] = [];
-  // Recorded at push time, below, the same way coneJumpTo tracks the
+  // Recorded at push time, below, the same way detailJumpTo tracks the
   // Detail page's own index — the closing page (Thread 2) is always the
   // true last STATIC page (Detail is appended dynamically afterward, only
   // once something's selected), but its exact index still shifts
   // depending on which conditional pages exist above it (resurfaced wish,
   // etc.), so it can't be hardcoded.
   let closingPageIndex: number | null = null;
-  // Recorded at push time, same pattern as closingPageIndex above — lets
-  // onActiveIndexChange below detect "the person has swiped away from the
-  // cone page" so coneFacing/conePreview can reset, without hardcoding an
-  // index that shifts depending on which earlier conditional pages exist.
-  let conePageIndex: number | null = null;
 
-  // Page 1 — Cover. 2026-08-22 ("just the kaleidoscope and a header" pass,
-  // after a reference image of a dense radial artwork with only a small
-  // top caption): reduced to exactly two things — a small top header and
-  // the kaleidoscope, now the page's entire visual content, filling nearly
-  // the whole column width rather than sharing the frame with a
-  // philosopher quote and a save-hint caption. Those two moved rather than
-  // being cut: the quote is now its own quiet breathing page between Now
-  // and Facts (see "Page — Arc line" below, deliberately undense on
-  // purpose, alternating with the denser pages around it); the save-hint
-  // caption was dropped outright — LongPressToSave is used the same way
-  // elsewhere in the app (Depths' headline, Cards, Feeling Lucky) with no
-  // on-screen hint, so this page can rely on the same discoverability.
-  //
-  // Long-press the kaleidoscope to save it — via the shared
-  // LongPressToSave component (2026-08-20, unified app-wide). captureChildren
-  // mode captures the kaleidoscope's own on-screen View directly (it
-  // contains its own react-native-svg content) rather than rendering a
-  // separate off-screen MessageCard, since the kaleidoscope itself — not a
-  // text card — is the thing worth saving here.
-  {
-    const coverKaleidoscopeSize = columnWidth - COVER_KALEIDOSCOPE_PADDING * 2;
-    pages.push(
-      <ScrollView key="cover" contentContainerStyle={styles.coverPageContent}>
-        <Text style={styles.coverKicker}>{t('yourArc.title')}</Text>
-        <LongPressToSave captureChildren>
-          <View style={styles.coverKaleidoscopeWrap}>
-            <ArcKaleidoscope readingLog={readingLog} size={coverKaleidoscopeSize} />
-          </View>
-        </LongPressToSave>
-      </ScrollView>
-    );
-  }
-
-  // Page 2 — Now. The time cone, given real room — the present moment in
-  // light of the person's own past and future (RULES.md, Product/
-  // positioning, 2026-08-14). Static for now, deliberately — see
-  // TimeCone.tsx's own comment on why motion/interaction is a later pass.
-  // Merged with the former standalone "This month" facts page (2026-08-18
-  // review: "let's move this page, combine it with 'this month'... every
-  // dot in the cone can be colored in the reading's color") — the cone's
-  // own past-point dots now carry each reading's real level color (see
-  // timeConeGeometry above), so this page and the facts page were both
-  // "about the shape of the whole record," not two separate ideas
-  // sharing a swipe slot by convenience. Facts sit below the cone, in
-  // place of the old static introLine.
-  if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
-    conePageIndex = pages.length;
-    pages.push(
-      <ScrollView key="cone" contentContainerStyle={styles.conePageContent}>
-        <View style={styles.coneTopSpacer} />
-        {/* Top framing line — reframed 2026-08-20 around the cone's real
-            phenomenological grounding (see docs/your-arc-expansion-plan.md,
-            Thread 1) rather than personal-history/goal-setting language
-            alone. The claim: a present moment isn't a bare instant — it
-            already HOLDS what's reaching forward in it, the way a single
-            note only sounds like music because of where it's heading, not
-            as an isolated sound. This is a checkable, felt structure
-            (listen to a few notes of anything), not a new belief to take
-            on — same "ask them to remember something they've already
-            experienced" rule RULES.md already holds everywhere else.
-            Deliberately never says "the future pulls/calls you" — HELD,
-            not reaching or pulling, keeps agency with the person, same
-            "you are shaping your future" rule RULES.md already states for
-            this cone (the older wording risked implying the opposite).
-            Still true to the older framing underneath (only ever the
-            active wish, never a forecast) — this changes HOW it's said,
-            not what's allowed to appear here.
-            2026-08-20 round 3: hidden while facing the PAST rim
-            specifically ("when the cone is turned one of the ways, the
-            other hint disappears") — this line is about the future rim,
-            so it has nothing to say while the past rim is what's actually
-            being looked at; still shown in the normal side view and while
-            facing the future rim itself. */}
-        {coneFacing !== 'past' && (
-          <Text style={styles.coneFramingTop}>{t('yourArc.coneFutureFraming')}</Text>
-        )}
-        {/* Rotating to view a rim face-on (2026-08-20 review: "what if...
-            it will be possible to rotate the cone... to see the bottom
-            and top circles as surfaces with readings/wishes on them").
-            CrossfadeSwitcher fades between the normal side-view TimeCone
-            and a flat, unranked TimeConeRing of whichever rim is being
-            faced — see TimeConeRing.tsx's own header comment for why
-            this exists: the previous "Every walk" sparkline page mapped
-            vibration score directly to vertical position, a real,
-            longstanding violation of RULES.md's own anti-ranking rule
-            that this face-on ring replaces it with. coneFacing null
-            means the normal view; 'past' or 'future' means facing that
-            rim.
-            2026-08-20 round 3: dots are now tappable ONLY once a rim is
-            actually faced (TimeCone in the normal side view no longer
-            takes onPointPress/onPointLongPress at all) — tapping a dot
-            in the angled side view, then having the whole pager instantly
-            swipe to a detail page, read as unexpectedly abrupt ("a bit
-            unexpected how the whole screen swipes instantly"). Facing a
-            rim first is now the deliberate step that says "I want to
-            look at these points," matching TimeConeRing's own pre-
-            existing "only past points are tappable" scoping — this just
-            extends the same discipline to the side view too, rather than
-            leaving it as an inconsistent, easier-to-trigger back door. */}
-        <View style={styles.timeConeWrap}>
-          <CrossfadeSwitcher
-            showSecond={coneFacing !== null}
-            first={
-              <TimeCone
-                width={CONE_SIZE}
-                height={CONE_SIZE * 1.3}
-                pastPoints={timeConeGeometry.pastPoints}
-                futurePoints={timeConeGeometry.futurePoints}
-              />
-            }
-            second={
-              <TimeConeRing
-                size={CONE_SIZE}
-                points={coneFacing === 'future' ? timeConeGeometry.futurePoints : timeConeGeometry.pastPoints}
-                onPointPress={coneFacing === 'past' ? handleConePointPress : undefined}
-                onPointLongPress={coneFacing === 'past' ? handleConePointLongPress : undefined}
-              />
-            }
-          />
-          {/* Rotation controls — 2026-08-22: replaced the "See the future/
-              past as a circle" text links with plain ↑/↓ glyphs, positioned
-              at the vertex's own height (the wrapper's vertical center,
-              same spot "now" sits in TimeCone's side view) rather than
-              below the whole shape. Deliberately unlabeled — the goal is
-              curiosity: someone sees an arrow sitting right where "now"
-              is and wants to know what happens if they press it, the same
-              "keeps giving features you didn't expect" spirit as the
-              drag-to-explore rings elsewhere in the app, rather than
-              spelling out the destination in advance. Still not new
-              iconography (aesthetic.md/this file's own standing rule) —
-              ↑/↓ are plain typographic characters in the existing
-              typeface, the same register quote marks already use
-              elsewhere in this file to carry a signal without a custom
-              icon asset. Absolutely positioned over the CrossfadeSwitcher
-              (not a row below it) so they stay in the same place
-              regardless of which view — cone or ring — is currently
-              showing. Toggles the same coneFacing state the old links
-              did: pressing the arrow for the rim already being faced
-              returns to the normal side view. Only offered when there's
-              actually something to face (a rim with at least one point)
-              — facing an empty rim would just be a bare circle with
-              nothing on it. */}
-          <View style={styles.coneArrowLayer} pointerEvents="box-none">
-            {timeConeGeometry.futurePoints.length > 0 && (
-              <Pressable
-                hitSlop={16}
-                style={styles.coneArrowUp}
-                onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}
-              >
-                <Text style={[styles.coneArrow, coneFacing === 'future' && styles.coneArrowActive]}>↑</Text>
-              </Pressable>
-            )}
-            {timeConeGeometry.pastPoints.length > 0 && (
-              <Pressable
-                hitSlop={16}
-                style={styles.coneArrowDown}
-                onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}
-              >
-                <Text style={[styles.coneArrow, coneFacing === 'past' && styles.coneArrowActive]}>↓</Text>
-              </Pressable>
-            )}
-          </View>
-        </View>
-        {/* Bottom framing line — same reframe as the top line (see its own
-            comment): this moment still HOLDS what came before it, the way
-            a note carries the ones just played, not a claim that the past
-            is a burden to release (an earlier "letting go" framing was
-            considered and rejected for exactly this reason — see
-            docs/your-arc-expansion-plan.md, Thread 2). Still true to the
-            older framing underneath: the past shown here is the user's
-            OWN account of it (their reading, in their own words if they
-            tap in), never asserted as objective record — RULES.md's "the
-            past cone is the user's own account... never asserted as raw
-            objective fact" still fully applies, this only changes HOW
-            it's said.
-            2026-08-20 round 3: hidden while facing the FUTURE rim, same
-            reasoning as coneFramingTop's own comment above — this line is
-            about the past rim, nothing to say while the future rim is
-            what's being looked at. */}
-        {coneFacing !== 'future' && (
-          <Text style={styles.coneFramingBottom}>{t('yourArc.conePastFraming')}</Text>
-        )}
-        {/* The long-press preview (2026-08-20) — appears right under the
-            bottom framing line once a dot's been long-pressed, cleared
-            whenever a DIFFERENT page is swiped to (see the pager-index
-            effect below) so a stale preview doesn't linger after leaving
-            this page. */}
-        {conePreview && (
-          <Text style={styles.conePreviewText}>
-            {conePreview.date} — {conePreview.label}
-          </Text>
-        )}
-        {/* The tap summary (2026-08-20 round 3) — replaces the old
-            instant pager-jump to the Detail page (see
-            handleConePointPress's own comment). Richer than the
-            long-press preview above (date + level + the philosopher's
-            own reflection line, when it exists) but still inline, right
-            on the cone page, so a second dot is one tap away rather than
-            a swipe back first. "Open full reading" is the one explicit
-            step that still reaches the fuller Detail page (transcript,
-            Spill entry, Guide conversation) — never automatic anymore. */}
-        {selected && (
-          <View style={styles.conePointSummary}>
-            <Text style={styles.conePointSummaryDate}>{formatDate(selected.ts)}</Text>
-            <Text style={styles.conePointSummaryLevel}>
-              {selectedRich
-                ? getLocalizedLevelName(selectedRich.vibrationLevel, locale)
-                : (VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)
-                    ? getLocalizedLevelName(VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)!, locale)
-                    : selected.levelSlug)}
-            </Text>
-            {selectedRich?.combinationMessage && (
-              <Text style={styles.conePointSummaryReflection}>{selectedRich.combinationMessage}</Text>
-            )}
-            <Pressable onPress={handleOpenFullReading}>
-              <Text style={styles.conePointSummaryLink}>{t('yourArc.openFullReading')}</Text>
-            </Pressable>
-          </View>
-        )}
-        {/* The upfront legend (dot color = reading vs. wish) was removed
-            2026-08-22 — deliberately, per a product decision to let the
-            color convention be discovered through play (long-press a dot;
-            handleConePointLongPress already answers "a reading" or "a
-            wish" in plain language) rather than explained before anyone's
-            touched anything. The dots themselves are still real, honestly
-            colored data (this file's own timeConeGeometry comment) —
-            only the upfront explanation moved from static text to
-            in-context discovery. */}
-        <View style={styles.coneBottomSpacer} />
-      </ScrollView>
-    );
-  }
-
-  // Page — Arc line. 2026-08-22: the philosopher quote that used to open
-  // Cover, given its own page instead of being cut when Cover was reduced
-  // to just the kaleidoscope and a header — deliberately the quietest page
-  // in the whole pager (one spoken line, nothing else), sitting between
-  // Now (dense: cone, rotate controls, legend) and Facts (dense: stat
-  // rows, past-readings list) so the pager has real rhythm — dense, then a
-  // breath, then dense again — rather than every page carrying an equal
-  // amount to read. Reuses coverPhilosopherLine's own styling unchanged
-  // (quote marks carry "this is spoken" — see that style's own comment for
-  // why not real italics) and arcLine/coneFramingLine's own fallback
-  // exactly as Cover used to.
+  // Page 1 — Arc line. 2026-08-22: previously opened Cover, above the
+  // kaleidoscope — now Your Arc's own opening page, since Cover and the
+  // time cone both spun out into Center (see RULES.md's Product/
+  // positioning section, the Your Arc + Center split). Deliberately the
+  // quietest page in the whole pager (one spoken line, nothing else),
+  // opening onto Facts (dense: stat rows, past-readings list) with a
+  // breath first rather than launching straight into the densest content.
+  // Reuses coverPhilosopherLine's own styling unchanged (quote marks
+  // carry "this is spoken" — see that style's own comment for why not
+  // real italics) and arcLine/coneFramingLine's own fallback exactly as
+  // Cover used to.
   pages.push(
     <ScrollView key="arc-line" contentContainerStyle={styles.arcLinePageContent}>
       <Text style={styles.coverPhilosopherLine}>{`"${arcLine ?? t('yourArc.coneFramingLine')}"`}</Text>
     </ScrollView>
   );
 
-  // Facts (2026-08-19: un-merged from the cone page — the top/bottom
-  // framing lines above claim the space facts previously sat in, and a
-  // full-cone moment reads better as its own uncluttered page). Real,
+  // Facts — the pager's second page now that the time cone has moved to
+  // Center (2026-08-22, see RULES.md's Product/positioning section). Real,
   // true facts about this person's OWN record — never an interpretation
   // of what a pattern means (see arcFacts.ts's own header comment).
   if (facts.length > 0) {
@@ -1605,13 +1214,13 @@ function YourArcScreen() {
     );
   }
 
-  // Resolves handleConePointPress's request into a real { index, token }
+  // Resolves handleFactsReadingPress's request into a real { index, token }
   // for PagedScrollView, now that `pages` is fully built — the detail
   // page pushed just above is always the LAST page when `selected` is
   // set, so its index is simply pages.length - 1.
-  const coneJumpTo = useMemo(
-    () => (coneJumpToken !== null && selected ? { index: pages.length - 1, token: coneJumpToken } : null),
-    [coneJumpToken, selected, pages.length]
+  const detailJumpTo = useMemo(
+    () => (detailJumpToken !== null && selected ? { index: pages.length - 1, token: detailJumpToken } : null),
+    [detailJumpToken, selected, pages.length]
   );
 
   return (
@@ -1653,20 +1262,11 @@ function YourArcScreen() {
         onLayout={() => setPagerPainted(true)}
       >
         <PagedScrollView
-          jumpTo={coneJumpTo}
+          jumpTo={detailJumpTo}
           distinctLastDot={closingPageIndex !== null}
           onActiveIndexChange={(index) => {
             if (closingPageIndex !== null && index === closingPageIndex) {
               setClosingArrivalToken((n) => n + 1);
-            }
-            // Fresh arrival on the cone page every time, not whatever was
-            // left mid-rotation/mid-preview on a previous visit this
-            // session — matches the JSX comment on conePreview's own
-            // dismiss timer, which already claimed this reset existed
-            // before it actually did.
-            if (conePageIndex !== null && index !== conePageIndex) {
-              setConeFacing(null);
-              setConePreview(null);
             }
           }}
         >
@@ -1713,120 +1313,8 @@ function makeStyles(colors: Colors) {
     padding: spacing[6],
     paddingBottom: spacing[16],
   },
-  // The cone page's own layout (2026-08-19) — space-between spreads the
-  // top framing line, the cone itself, and the bottom framing line across
-  // the full page height, rather than clustering everything at vertical
-  // center the way pageCentered does. This is what makes "top says
-  // future, bottom says past, cone fills the big space between them"
-  // actually read as three deliberately-placed zones instead of one
-  // centered stack.
-  // justifyContent: 'space-between' (removed 2026-08-20) pushed the top/
-  // bottom framing lines all the way to the page edges, as far from the
-  // cone as possible — review: "the clarifiers 'above' and 'below' should
-  // be positioned closer to the cone to make it more visible what they're
-  // clarifying." Real flex spacers above/below the whole content block
-  // (coneTopSpacer/coneBottomSpacer) center the block vertically instead,
-  // while the framing text keeps a small fixed margin to the cone itself
-  // (see coneFramingTop/Bottom's own marginBottom/marginTop) — same fix
-  // shape as Cover's own space-between bug from the same review pass.
-  conePageContent: {
-    flexGrow: 1,
-    alignItems: 'center',
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[8],
-    paddingBottom: spacing[10],
-  },
-  coneTopSpacer: { flex: 1, minHeight: spacing[4] },
-  coneBottomSpacer: { flex: 1, minHeight: spacing[4] },
-  // "Just the kaleidoscope and a header" (2026-08-22, after a reference
-  // image of a dense radial artwork with only a small top caption) —
-  // Cover no longer shares the frame with a philosopher quote or a
-  // save-hint caption (both moved elsewhere, see their new homes' own
-  // comments); justifyContent: 'center' centers the header+image as one
-  // group in the available height, the way the reference's small top
-  // caption sits above art that fills nearly the whole rest of the frame.
-  coverPageContent: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[6],
-    paddingTop: spacing[8],
-    paddingBottom: spacing[10],
-  },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  // Small, quiet — the reference image's own top caption is a fraction of
-  // the art's size, not a competing headline. Reuses the app's standard
-  // kicker register (see `kicker` below) rather than the large centered
-  // treatment "A living record" used to have as its own header, since the
-  // kaleidoscope is now unambiguously the page's one subject.
-  coverKicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginBottom: spacing[6],
-  },
-  coverKaleidoscopeWrap: { alignSelf: 'center' },
-  // Fixed height matching TimeCone's own taller shape (CONE_SIZE * 1.3,
-  // the tallest of the two things CrossfadeSwitcher swaps between here —
-  // TimeConeRing is only CONE_SIZE square) — 2026-08-20 round 3: "make
-  // the rest of the page content stay in their dedicated positions while
-  // the cone is turning." Without this, CrossfadeSwitcher's wrapper
-  // shrinks to whichever child is currently mounted alone once its fade
-  // settles, so everything below (rotation links, framing text, legend)
-  // visibly jumped up/down on every rotation. justifyContent centers
-  // TimeConeRing's shorter square vertically in the reserved space
-  // instead of pinning it to the top.
-  timeConeWrap: {
-    alignSelf: 'center',
-    width: CONE_SIZE,
-    marginBottom: spacing[3],
-    height: CONE_SIZE * 1.3,
-    justifyContent: 'center',
-    // Needed as the positioning root for coneArrowLayer's absolute
-    // overlay below — RN positions `absolute` children relative to the
-    // nearest ancestor that isn't `position: 'relative'`'s default
-    // (static), so without this the arrows would anchor to some further-
-    // out ancestor instead of this wrapper's own bounds.
-    position: 'relative',
-  },
-  // The rotation controls — 2026-08-22: replaced the "See the future/past
-  // as a circle" text links with plain ↑/↓ glyphs sitting at the vertex's
-  // own height, overlaid on the cone/ring rather than in a row below it
-  // (see the JSX comment at their render site for the full reasoning:
-  // curiosity-driven discovery, deliberately unlabeled, still not new
-  // iconography since these are plain typographic characters).
-  coneArrowLayer: {
-    ...StyleSheet.absoluteFill,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  coneArrowUp: {
-    position: 'absolute',
-    // -18 clears the vertex dot's own small radius plus the "now" label
-    // beside it (see TimeCone.tsx) so the arrow doesn't crowd either —
-    // same clearance instinct as that file's own NOW_LABEL_CLEARANCE fix.
-    top: CONE_SIZE * 0.65 - 18,
-  },
-  coneArrowDown: {
-    position: 'absolute',
-    top: CONE_SIZE * 0.65 + 18,
-  },
-  // fontSize.lg (not the sm/xs the old text links used) — a bare glyph
-  // with no surrounding label needs to read as a real, deliberate mark at
-  // a glance, not a decoration easy to miss at small text sizes.
-  // text.muted at rest so it doesn't compete with "now"/the vertex dot
-  // for attention before anyone has reason to notice it; text.primary
-  // once the rim it points to is actually being faced, so the arrow
-  // itself carries the same "this is active" feedback fonts.medium/
-  // text.secondary used to carry via label text.
-  coneArrow: {
-    color: colors.text.muted,
-    fontSize: fontSizes.lg,
-  },
-  coneArrowActive: { color: colors.text.primary },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,
@@ -1858,82 +1346,6 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
-  },
-  // The cone page's own top/bottom framing (2026-08-19) — centered, not
-  // left-aligned like coneFramingLine above, since these sit directly
-  // above/below the cone itself (a centered shape) rather than under a
-  // left-aligned title block the way the Cover page's framing line does.
-  // marginBottom/marginTop (2026-08-20) pull these close to the cone
-  // itself, replacing the old justifyContent: space-between layout that
-  // pushed them to the page's own top/bottom edges — see conePageContent's
-  // own comment.
-  coneFramingTop: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-    paddingHorizontal: spacing[4],
-    marginBottom: spacing[4],
-  },
-  coneFramingBottom: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-    paddingHorizontal: spacing[4],
-    marginTop: spacing[4],
-  },
-  // The long-press preview (2026-08-20) — same restrained register as the
-  // rest of this page's supporting text, not a popover/tooltip box (no
-  // "cards" per aesthetic.md).
-  conePreviewText: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-    marginTop: spacing[3],
-  },
-  // The tap summary (2026-08-20 round 3) — a fuller, inline alternative
-  // to the pager jump handleConePointPress used to trigger automatically.
-  // Centered, same register as the rest of this page (framing lines,
-  // preview text) rather than the Detail page's own left-aligned block —
-  // this is a quieter, in-place look at one reading, not a full page.
-  conePointSummary: {
-    alignItems: 'center',
-    marginTop: spacing[4],
-    paddingHorizontal: spacing[4],
-  },
-  conePointSummaryDate: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textTransform: 'uppercase',
-    letterSpacing: letterSpacings.wide,
-  },
-  conePointSummaryLevel: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    textTransform: 'capitalize',
-    marginTop: spacing[1],
-  },
-  conePointSummaryReflection: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-    marginTop: spacing[2],
-  },
-  conePointSummaryLink: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[3],
   },
   introLine: {
     alignSelf: 'flex-start',

@@ -250,6 +250,15 @@ export default function YouScreen() {
           <Text style={styles.sourcesLink}>{t('you.howToUseLink')}</Text>
         </Pressable>
 
+        {/* Center's entry point (2026-08-22, the Your Arc + Center split
+            — see RULES.md's Product/positioning section) — a catalog of
+            one-time-purchase experiences, distinct from Your Arc's
+            ongoing subscription, same row weight as the links around it. */}
+        <View style={styles.divider} />
+        <Pressable onPress={() => router.push('/products')}>
+          <Text style={styles.sourcesLink}>{t('you.productsLink')}</Text>
+        </Pressable>
+
         <View style={styles.divider} />
         <Pressable onPress={() => router.push('/sources')}>
           <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>

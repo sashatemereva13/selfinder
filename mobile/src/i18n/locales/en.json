@@ -24,6 +24,7 @@
   },
   "you": {
     "howToUseLink": "How to use Selfinder →",
+    "productsLink": "Products →",
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
     "chooseWhoWalksBesideYou": "Choose who walks beside you",
@@ -197,7 +198,6 @@
   },
   "yourArc": {
     "kicker": "Your arc",
-    "title": "A living record",
     "nowKicker": "Now",
     "factsKicker": "This month",
     "pastReadingsHeading": "Every reading",
@@ -223,9 +223,6 @@
     "wishResurfaceHeading": "What you wished for",
     "wishResurfaceHint": "Your own words, unchanged",
     "coneFramingLine": "Here is where you are. Here is how you've told it. Here is what's calling you forward.",
-    "coneFutureFraming": "This moment already holds what you're reaching for — the way one note leans toward the next.",
-    "conePastFraming": "This moment still holds what came before it — tap a point to hear that note again.",
-    "openFullReading": "Open full reading",
     "coneLegendWishLabel": "A wish",
     "closingSynthesisWithWish": "{{level}} is still close. So is what you wished for. Both are here, in this moment, the way a held note is still sounding after the ones before it.",
     "closingSynthesisNoWish": "{{level}} is still close, here in this moment, the way a held note is still sounding after the ones before it.",
@@ -284,6 +281,23 @@
     "volume": "Volume",
     "sleepTimer": "Sleep timer",
     "fadingOutIn": "Fading out in {{time}}"
+  },
+  "products": {
+    "title": "Products",
+    "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record.",
+    "centerLabel": "Center",
+    "centerDescription": "A kaleidoscope and light cone made from your saved history — a new result every time you get it."
+  },
+  "center": {
+    "kicker": "Center",
+    "title": "Center",
+    "introLine": "A kaleidoscope made from your own reading colors, and the light cone — your present moment between what has shaped you and what's calling you forward.",
+    "repeatLine": "Get Center again for a new one — the same real history, a different result every time.",
+    "requiresArcLine": "Center is generated from your saved reading history, which Your Arc holds. Subscribe to Your Arc first to unlock Center.",
+    "getCenter": "Get Center",
+    "seeYourArc": "See Your Arc",
+    "comingSoonTitle": "Not yet available",
+    "comingSoonBody": "Purchasing isn't live yet — check back soon."
   },
   "yourArcPreview": {
     "kicker": "Your arc",
