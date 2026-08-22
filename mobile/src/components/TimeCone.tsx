@@ -133,10 +133,39 @@ interface TimeConeProps {
 // your-arc.tsx's own sparkline tapLayer already uses: react-native-svg
 // shapes don't reliably take touch events at this marker size across
 // platforms, plain Views/Pressables do.
+// How close (px) a rendered point's center can get to the "now" label's own
+// anchor position before the label is pushed further out to clear it.
+// hashAngle-based scatter (see TimeConePoint's own comment on `angle`)
+// means a point can land anywhere around the rim regardless of its depth —
+// for a high-depth point whose angle happens to put it near cos(theta)≈0,
+// its x lands close to centerX + baseRx, the same neighborhood the label's
+// fixed `left` offset starts from (confirmed on a real device: a recent
+// reading's dot sat almost touching the label). NOW_LABEL_MARGIN alone
+// only ever cleared the CONE's own geometry, never an individual point's
+// actual position, since points are scattered independently of it.
+const NOW_LABEL_CLEARANCE = 16;
+const NOW_LABEL_EXTRA_PUSH = 20;
+
 export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
+  // Checks real rendered positions (not depth/angle inputs) against the
+  // label's own default anchor — the actual collision only exists once
+  // points are turned into screen coordinates, so this has to run after
+  // that math, not try to predict it from raw depth/angle values.
+  const nowLabelLeft = useMemo(() => {
+    const defaultLeft = geometry.centerX + geometry.baseRx + 6;
+    const labelY = geometry.vertexY - 6;
+    const tooClose = [...pastPoints, ...futurePoints].some((p) => {
+      const dir = futurePoints.includes(p) ? 'future' : 'past';
+      const pos = timeConePointPosition(p, geometry, dir);
+      const dx = pos.x - defaultLeft;
+      const dy = pos.y - labelY;
+      return Math.sqrt(dx * dx + dy * dy) < NOW_LABEL_CLEARANCE;
+    });
+    return tooClose ? defaultLeft + NOW_LABEL_EXTRA_PUSH : defaultLeft;
+  }, [pastPoints, futurePoints, geometry]);
   // Same onPress-fires-after-onLongPress guard as TimeConeRing.tsx (see
   // its own comment) — kept here too even though this component currently
   // receives no handlers from your-arc.tsx, since it's the same shared
@@ -273,7 +302,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
       <Text
         style={[
           styles.nowLabel,
-          { color: colors.text.faint, left: geometry.centerX + geometry.baseRx + 6, top: geometry.vertexY - 6 },
+          { color: colors.text.faint, left: nowLabelLeft, top: geometry.vertexY - 6 },
         ]}
       >
         now

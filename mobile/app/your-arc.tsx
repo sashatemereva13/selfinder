@@ -770,6 +770,11 @@ function YourArcScreen() {
   // depending on which conditional pages exist above it (resurfaced wish,
   // etc.), so it can't be hardcoded.
   let closingPageIndex: number | null = null;
+  // Recorded at push time, same pattern as closingPageIndex above — lets
+  // onActiveIndexChange below detect "the person has swiped away from the
+  // cone page" so coneFacing/conePreview can reset, without hardcoding an
+  // index that shifts depending on which earlier conditional pages exist.
+  let conePageIndex: number | null = null;
 
   // Page 1 — Cover. Restructured 2026-08-20 (review round 1): the
   // kaleidoscope is "the main event" and previously had a caption sitting
@@ -844,6 +849,7 @@ function YourArcScreen() {
   // sharing a swipe slot by convenience. Facts sit below the cone, in
   // place of the old static introLine.
   if (timeConeGeometry.pastPoints.length > 0 || timeConeGeometry.futurePoints.length > 0) {
+    conePageIndex = pages.length;
     pages.push(
       <ScrollView key="cone" contentContainerStyle={styles.conePageContent}>
         <View style={styles.coneTopSpacer} />
@@ -995,7 +1001,6 @@ function YourArcScreen() {
             </Pressable>
           </View>
         )}
-        <Text style={styles.tapPointHint}>{t('yourArc.coneTapHint')}</Text>
         {/* The legend (2026-08-20 review: "the dots don't make sense to
             anybody apart from me") — explains the color convention once,
             in plain language, rather than requiring every dot to carry
@@ -1080,8 +1085,9 @@ function YourArcScreen() {
             {/* "Detail page prominence" pass (2026-08-20) — this list's own
                 tap-to-open affordance was never stated anywhere, so a
                 first-time visitor had no reason to expect tapping a row
-                did anything. Same quiet register as the cone's own
-                tapPointHint, not a bordered callout. */}
+                did anything. Same quiet instructional register the cone
+                page's own framing text carries its tap instructions in,
+                not a bordered callout. */}
             <Text style={styles.pastReadingsTapHint}>{t('yourArc.pastReadingsTapHint')}</Text>
             {[...richHistory]
               .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
@@ -1635,6 +1641,15 @@ function YourArcScreen() {
             if (closingPageIndex !== null && index === closingPageIndex) {
               setClosingArrivalToken((n) => n + 1);
             }
+            // Fresh arrival on the cone page every time, not whatever was
+            // left mid-rotation/mid-preview on a previous visit this
+            // session — matches the JSX comment on conePreview's own
+            // dismiss timer, which already claimed this reset existed
+            // before it actually did.
+            if (conePageIndex !== null && index !== conePageIndex) {
+              setConeFacing(null);
+              setConePreview(null);
+            }
           }}
         >
           {pages}
@@ -1762,18 +1777,25 @@ function makeStyles(colors: Colors) {
     height: CONE_SIZE * 1.3,
     justifyContent: 'center',
   },
-  // The rotation controls (2026-08-20) — quiet, side-by-side text links,
-  // same register as tapPointHint below them.
+  // The rotation controls — 2026-08-22: given real visual weight, distinct
+  // from the passive framing text around them. These are the page's only
+  // real controls (the one way to make the cone's dots tappable at all),
+  // but were previously styled almost identically to the page's other
+  // instructional text (same italic/xs/muted register) — indistinguishable
+  // from ambient copy rather than reading as something to actually press.
+  // fonts.medium (not light/italic) and text.secondary (not muted) match
+  // the weight coverTitle/conePointSummaryLevel use for real content, one
+  // step down from text.primary so the framing lines above/below the cone
+  // still lead the eye first.
   coneRotateRow: {
     flexDirection: 'row',
-    gap: spacing[5],
+    gap: spacing[6],
     marginBottom: spacing[4],
   },
   coneRotateLink: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
+    color: colors.text.secondary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
   },
   kicker: {
     alignSelf: 'flex-start',
@@ -2033,9 +2055,9 @@ function makeStyles(colors: Colors) {
   },
   pastReadingDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   pastReadingLevel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  // "Held, not displayed" — the row itself is a plain sentence, same
-  // register as tapPointHint below (an instruction/label, not a card),
-  // no border/box per aesthetic.md's "no cards" rule. Sits between the
+  // "Held, not displayed" — the row itself is a plain sentence (an
+  // instruction/label, not a card), no border/box per aesthetic.md's
+  // "no cards" rule. Sits between the
   // facts and the sparkline: it's its own kind of true, real information
   // about the record, same tier as the facts above it, but distinct
   // enough (a private, held thing rather than a public count) to get its
@@ -2270,13 +2292,6 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
     marginBottom: spacing[3],
-  },
-  tapPointHint: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
-    marginBottom: spacing[2],
   },
   detailSection: {
     gap: spacing[2],
