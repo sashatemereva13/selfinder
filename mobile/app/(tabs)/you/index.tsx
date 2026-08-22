@@ -246,6 +246,11 @@ export default function YouScreen() {
         )}
 
         <View style={styles.divider} />
+        <Pressable onPress={() => router.push('/how-to-use')}>
+          <Text style={styles.sourcesLink}>{t('you.howToUseLink')}</Text>
+        </Pressable>
+
+        <View style={styles.divider} />
         <Pressable onPress={() => router.push('/sources')}>
           <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>
         </Pressable>

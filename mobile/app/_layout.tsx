@@ -16,6 +16,8 @@ import { useLocaleStore } from '../src/store/localeStore';
 import { useThemeStore } from '../src/store/themeStore';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
 import { AIDisclosureOverlay } from '../src/components/AIDisclosureOverlay';
+import { useHowToUseStore } from '../src/store/howToUseStore';
+import { HowToUseOverlay } from '../src/components/HowToUseOverlay';
 import { TuneInAudioController } from '../src/components/TuneInAudioController';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
@@ -41,6 +43,7 @@ export default function RootLayout() {
   const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
   const { hydrated: themeHydrated, hydrate: hydrateTheme, theme } = useThemeStore();
   const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure, acknowledged: aiDisclosureAcknowledged } = useAIDisclosureStore();
+  const { hydrated: howToUseHydrated, hydrate: hydrateHowToUse, acknowledged: howToUseAcknowledged } = useHowToUseStore();
   const router   = useRouter();
   const segments = useSegments();
 
@@ -62,11 +65,13 @@ export default function RootLayout() {
     hydrateLocale();
     hydrateTheme();
     hydrateAIDisclosure();
+    hydrateHowToUse();
   }, []);
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated;
+    && engagementHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated
+    && howToUseHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder
@@ -95,11 +100,12 @@ export default function RootLayout() {
     const inOnboarding = segments[0] === 'onboarding';
     const inTabs = segments[0] === '(tabs)';
     // Top-level routes reachable from inside the tabs but not part of the
-    // tab structure itself — sources (see its own fix) and both Your Arc
-    // screens (moved out of app/(tabs)/you/ so their back link/gesture
-    // isn't tied to the you tab regardless of which tab they were opened
-    // from — see your-arc.tsx's comment).
-    const inStandaloneRoute = ['sources', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
+    // tab structure itself — sources (see its own fix), how-to-use (same
+    // reasoning, reachable from the You tab post-onboarding), and both
+    // Your Arc screens (moved out of app/(tabs)/you/ so their back link/
+    // gesture isn't tied to the you tab regardless of which tab they were
+    // opened from — see your-arc.tsx's comment).
+    const inStandaloneRoute = ['sources', 'how-to-use', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
     } else if (philosopher && !inTabs && !inStandaloneRoute) {
@@ -109,13 +115,20 @@ export default function RootLayout() {
 
   if (!ready) return null;
 
+  // How-to-use shows FIRST, then AI disclosure — both become eligible at
+  // the same moment (right after choosing a philosopher, onboarding's own
+  // exit point), but how-to-use is general app orientation while the AI
+  // disclosure is specific to a feature (Guide/Measure) someone hasn't
+  // necessarily reached yet. Never both at once; showAIDisclosure only
+  // flips true once howToUseAcknowledged is already true.
+  const showHowToUse = Boolean(philosopher) && !howToUseAcknowledged;
   // Onboarding itself never touches the AI provider (no Guide/Measure
   // reachable from it) — the notice only needs to appear once a
   // philosopher exists, which is the true first moment those features
   // become reachable, regardless of account status. Gating on `philosopher`
   // rather than a route means it also catches someone who somehow lands
   // back on a fresh install's tabs without re-onboarding.
-  const showAIDisclosure = Boolean(philosopher) && !aiDisclosureAcknowledged;
+  const showAIDisclosure = Boolean(philosopher) && howToUseAcknowledged && !aiDisclosureAcknowledged;
 
   return (
     <SafeAreaProvider>
@@ -126,10 +139,12 @@ export default function RootLayout() {
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)"     />
           <Stack.Screen name="sources"    />
+          <Stack.Screen name="how-to-use" />
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-preview" />
           <Stack.Screen name="crisis-support" />
         </Stack>
+        {showHowToUse && <HowToUseOverlay />}
         {showAIDisclosure && <AIDisclosureOverlay />}
         {/* Mounted once at the app root, not inside the Tune In screen, so
             playback survives in-app navigation away from that screen — see

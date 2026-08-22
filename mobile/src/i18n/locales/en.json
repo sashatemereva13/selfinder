@@ -23,6 +23,7 @@
     "tabYou": "You"
   },
   "you": {
+    "howToUseLink": "How to use Selfinder →",
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
     "chooseWhoWalksBesideYou": "Choose who walks beside you",
@@ -174,6 +175,14 @@
     "disclaimer": "Selfinder is a self-reflection practice, not medical advice, diagnosis, or treatment. The ideas here — including the map of seventeen states and the psychological concepts referenced on each level's page — are drawn from the named sources below. If you're struggling with your mental health, please talk to a doctor or a licensed mental health professional.",
     "sectionHeading": "Sources referenced in this app",
     "openLink": "Open source ↗"
+  },
+  "howToUse": {
+    "title": "How to use Selfinder",
+    "intro": "A few ways of touching the app that aren't always obvious at a glance.",
+    "saveHeading": "Keep any image",
+    "saveBody": "Wherever you see a glowing image or figure — the aura on Depths, a Card, Feeling Lucky's message, the kaleidoscope on Your Arc — press and hold to save it to your own photo gallery.",
+    "ringHeading": "Explore the ring by dragging",
+    "ringBody": "On the Levels map, and wherever a reading's own wheel appears, drag your finger around the ring to feel your way through the states — it names whatever you're pointing at and settles on release."
   },
   "guide": {
     "chooseSomeone": "Choose who walks beside you in the You tab to begin.",
