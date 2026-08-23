@@ -14,18 +14,29 @@ interface Product {
   key: string;
   labelKey: string;
   descriptionKey: string;
-  route: '/center';
+  // A plain string, not a closed union of known routes — Journeys are an
+  // explicitly open-ended, growing family (2026-08-23 pivot, see RULES.md's
+  // Product/positioning section), so this list is expected to keep
+  // growing without needing this type edited for every new entry.
+  route: string;
 }
 
-// The catalog of one-time-purchase experiences (2026-08-22, the Your Arc +
-// Center split — see RULES.md's Product/positioning section) — distinct
-// from Your Arc's ongoing subscription, this screen lists things bought
-// once, repeatably, each producing its own generated result. Just Center
-// for now; built as a real array (same SOURCES/HOW_TO_USE_ENTRIES pattern
-// as sources/index.tsx and howToUseEntries.ts) so a second experience
-// later is a new entry here, not a new screen.
+// The catalog of Journeys — one-time-purchase experiences, standalone from
+// Your Arc's ongoing subscription (see RULES.md's Product/positioning
+// section for the full definition: every Journey is an environment for
+// examining what is happening within the person in relation to their
+// external reality). Built as a real array (same SOURCES/HOW_TO_USE_ENTRIES
+// pattern as sources/index.tsx and howToUseEntries.ts) so a future Journey
+// is a new entry here, not a new screen. Center is the only one with real
+// content today; Either/Or and Identity are named, reachable, honest
+// "not yet available" placeholders (see either-or.tsx/identity.tsx) — not
+// dead links, since a catalog entry that goes nowhere would be exactly the
+// kind of tap-target-that-looks-like-a-purchase-and-doesn't this project's
+// own standing rule warns against.
 const PRODUCTS: Product[] = [
   { key: 'center', labelKey: 'products.centerLabel', descriptionKey: 'products.centerDescription', route: '/center' },
+  { key: 'either-or', labelKey: 'products.eitherOrLabel', descriptionKey: 'products.eitherOrDescription', route: '/either-or' },
+  { key: 'identity', labelKey: 'products.identityLabel', descriptionKey: 'products.identityDescription', route: '/identity' },
 ];
 
 export default function ProductsScreen() {

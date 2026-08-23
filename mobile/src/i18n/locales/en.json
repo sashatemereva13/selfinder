@@ -284,9 +284,16 @@
   },
   "products": {
     "title": "Products",
-    "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record.",
+    "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record. No subscription required.",
     "centerLabel": "Center",
-    "centerDescription": "A kaleidoscope and light cone made from your saved history — a new result every time you get it."
+    "centerDescription": "A kaleidoscope and light cone made from your saved history — a new result every time you get it.",
+    "eitherOrLabel": "Either/Or",
+    "eitherOrDescription": "What changes in me under either possibility?",
+    "identityLabel": "Identity",
+    "identityDescription": "What have I not expressed?"
+  },
+  "journeyComingSoon": {
+    "notYetAvailable": "Not yet available — this Journey is still being made."
   },
   "center": {
     "kicker": "Center",
@@ -302,6 +309,8 @@
     "kicker": "Your arc",
     "title": "The line you're already drawing",
     "introLine": "Every reading you take is a point. This is the real shape they trace so far.",
+    "trialProgress": "Your Arc is taking shape — {{count}} of {{limit}} free readings saved.",
+    "trialExhausted": "You've used your free readings — saving your next one will let go of your oldest saved one. Subscribe to keep everything.",
     "whatSelfinderPlusAdds": "What Selfinder+ adds",
     "fullLine": "The full line, not just your last {{count}} readings — every walk you've ever taken, in order.",
     "tapAnyPoint": "Tap any point on it to open that day again: what it read as, and what your philosopher said about it.",

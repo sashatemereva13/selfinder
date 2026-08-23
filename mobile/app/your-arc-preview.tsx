@@ -17,6 +17,7 @@ import { useEngagementStore, TALK_ABOUT_IT_UPSELL_THRESHOLD } from '../src/store
 import { track } from '../src/utils/analytics';
 import { VIBRATION_LEVELS, getLocalizedLevelName } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
+import { useArcTrialStatus } from '../src/utils/useArcTrialStatus';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -34,6 +35,15 @@ function formatDate(ts: number) {
 // all intended to grow here over time; this screen's copy should be
 // revisited once that fuller subscribed experience (your-arc.tsx) is
 // actually designed, not just promised in one line.
+//
+// 2026-08-23 pivot (see RULES.md's Product/positioning section): this is
+// now also the screen carrying Your Arc's free-trial framing —
+// useArcTrialStatus() reports real progress toward the 7-saved-reading
+// free trial while it's still open, and switches to the "keep everything"
+// framing once it's exhausted. The trial itself is enforced server-side
+// (chatController.js's saveMeasureResultIfConsented); this screen only
+// ever reflects real state back, never claims anything about the trial
+// that isn't already true server-side.
 export default function YourArcPreviewScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -49,6 +59,7 @@ export default function YourArcPreviewScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
   const talkAboutItCount = useEngagementStore((s) => s.talkAboutItCount);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
+  const trialStatus = useArcTrialStatus();
 
   const previewEntries = readingLog.slice(-PREVIEW_POINTS);
   const points = previewEntries.map((e) => e.score);
@@ -169,6 +180,29 @@ export default function YourArcPreviewScreen() {
           </Text>
           <Text style={styles.pointUnlockHint}>{t('yourArcPreview.pointUnlockHint')}</Text>
         </View>
+      )}
+
+      {/* Free-trial framing (2026-08-23 pivot) — real progress while the
+          trial is still open, honest "replaces oldest" messaging once
+          it's exhausted. trialStatus is null while loading/signed-out
+          (useArcTrialStatus's own contract, same as every other hook in
+          this codebase) — nothing renders here in that case, same as the
+          rest of this screen already assumes a session exists to show
+          anything meaningful. subscribed is checked too even though this
+          screen shouldn't normally be reached by a subscriber (Depths'
+          own routing sends them straight to your-arc.tsx) — a defensive
+          read of real state, not a route guard. */}
+      {trialStatus && !trialStatus.subscribed && (
+        trialStatus.remaining > 0 ? (
+          <Text style={styles.unlockLine}>
+            {t('yourArcPreview.trialProgress', {
+              count: trialStatus.savedReadingCount,
+              limit: trialStatus.trialLimit,
+            })}
+          </Text>
+        ) : (
+          <Text style={styles.unlockLine}>{t('yourArcPreview.trialExhausted')}</Text>
+        )
       )}
 
       <Text style={styles.unlockKicker}>{t('yourArcPreview.whatSelfinderPlusAdds')}</Text>
