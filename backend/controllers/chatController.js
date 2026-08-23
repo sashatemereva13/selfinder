@@ -618,6 +618,15 @@ async function requestRawInterviewScores(scoringPrompt) {
   return JSON.parse(text.slice(jsonStart, jsonEnd + 1));
 }
 
+// Free-trial window for a non-subscribed account (2026-08-23 pivot — see
+// RULES.md's Product/positioning section). Everyone's first 7 server-saved
+// readings are free and fully real, not a preview/teaser; a subscribed
+// account's history is never trimmed. Chosen deliberately over gating
+// saving itself behind a subscription from reading #1 — the purchase
+// decision becomes concrete (a real, visible Arc already exists) instead
+// of abstract (an imagined future value).
+const FREE_TRIAL_READING_LIMIT = 7;
+
 // Best-effort — a save failure should never break the reading itself. Requires
 // both an authenticated user and explicit special-category consent (Art. 9),
 // same gate the conversation-storage flow already uses. Returns the saved
@@ -648,6 +657,26 @@ async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs
       qaPairs: Array.isArray(qaPairs) ? qaPairs : [],
       savedAt: new Date().toISOString(),
     });
+
+    // Free-trial rolling window — a non-subscribed account's server
+    // history never grows past FREE_TRIAL_READING_LIMIT; each new save
+    // beyond it permanently deletes the oldest saved reading (a real
+    // delete, not a soft/archive flag — confirmed with the user as "gone
+    // means gone"). Subscribing at any point stops this: the check below
+    // is against CURRENT subscription status at save time, not a one-time
+    // migration, so the moment arcSubscription.active flips true, saves
+    // stop being trimmed and everything already in the window (plus
+    // everything from then on) simply accumulates. This intentionally
+    // does not resurrect anything already deleted before subscribing.
+    if (!user.arcSubscription?.active) {
+      const excess = await MeasureResult.find({ userId: userPayload.id })
+        .sort({ savedAt: 1 })
+        .skip(FREE_TRIAL_READING_LIMIT);
+      if (excess.length > 0) {
+        await MeasureResult.deleteMany({ _id: { $in: excess.map((r) => r._id) } });
+      }
+    }
+
     return saved.id;
   } catch (err) {
     console.error("Failed to save measure result:", err.message);

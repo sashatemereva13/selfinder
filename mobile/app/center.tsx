@@ -22,33 +22,32 @@ import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading
 import { PagedScrollView } from '../src/components/PagedScrollView';
 import { AmbientGlow } from '../src/components/AmbientGlow';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { useArcSubscription } from '../src/utils/useArcSubscription';
-import { useCenterPurchases } from '../src/utils/useCenterPurchases';
+import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { useTimeConeGeometry } from '../src/utils/useTimeConeGeometry';
 import { useReadingColumnWidth } from '../src/theme/responsive';
 import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
-import { CenterPurchase } from '../src/types';
+import { JourneyPurchase } from '../src/types';
 
-// Center — Selfinder's first one-time-purchase, repeatable experience (the
-// light cone + kaleidoscope, spun out of what used to be Your Arc's Cover/
-// Cone pages; see RULES.md's Product/positioning section, 2026-08-22
-// pivot). Unlike Your Arc, this is NOT part of the record — each purchase
-// generates its own, genuinely different result (a fresh seedNonce folded
-// into kaleidoscopeData.ts's seedFromLog), and every past purchase stays
-// individually browsable rather than being replaced by the latest one.
+// Center — Selfinder's first Journey: a one-time-purchase, repeatable
+// experience (the light cone + kaleidoscope, spun out of what used to be
+// Your Arc's Cover/Cone pages; see RULES.md's Product/positioning
+// section). Unlike Your Arc, this is NOT part of the record — each
+// purchase generates its own, genuinely different result (a fresh
+// seedNonce folded into kaleidoscopeData.ts's seedFromLog), and every
+// past purchase stays individually browsable rather than being replaced
+// by the latest one.
 //
-// Center requires an active Your Arc subscription as a real prerequisite,
-// not an arbitrary upsell gate — Center is generated from the person's
-// SERVER-SAVED reading history (getMeasureHistory), the same record data
-// Your Arc's own pages read, not the local-only readingLog every device
-// keeps regardless of account/subscription status. Without Your Arc,
-// there's no reachable server record for Center to be generated from —
-// deliberately, so this dependency is real, not just a business rule
-// layered on top of data that would work anyway. Someone without Your Arc
-// sees a plain "requires Your Arc" state (with a path to
-// /your-arc-preview, the same place Depths' own gate sends a non-
-// subscriber) rather than the teaser/purchase flow below.
+// 2026-08-23 pivot: Center no longer requires an active Your Arc
+// subscription — that gate was reversed once Center generalized into the
+// first of an open-ended "Journey" family (see RULES.md). Every Journey
+// is purchasable and completable standalone; Your Arc's role is additive
+// (it's what would let a Journey's result connect into a person's
+// broader longitudinal record over time), not a prerequisite to use one.
+// Center still only needs a signed-in session — no server record to
+// generate from requires no Your Arc, just an account (getMeasureHistory
+// itself requires auth, so a fully signed-out visitor sees its own honest
+// "sign in" state below, distinct from "signed in, nothing saved yet").
 //
 // Same "just the kaleidoscope and a header" reference-image treatment
 // Cover used (see your-arc.tsx's own history) — the kaleidoscope fills
@@ -101,19 +100,17 @@ function CenterScreen() {
   const session = useAuthStore((s) => s.session);
   const columnWidth = useReadingColumnWidth();
   const accentRgb = useAppAccentRgb();
-  const hasArc = useArcSubscription();
-  const purchases = useCenterPurchases();
+  const purchases = useJourneyPurchases('center');
 
-  // The server-saved record, not local readingLog — see this file's own
-  // header comment for why: Center's dependency on Your Arc needs to be a
-  // real one, not just a gate on top of data that would render fine
-  // without it. Only fetched once hasArc is true; without Your Arc there's
-  // nothing to fetch this for (the gated "requires Your Arc" state below
-  // never reaches this data at all).
+  // The server-saved record — fetched for any signed-in session, no Your
+  // Arc subscription required (see this file's own header comment for the
+  // 2026-08-23 gate reversal). A fully signed-out visitor never reaches
+  // this fetch at all (getMeasureHistory requires auth) — see the
+  // `!session` branch in the render below.
   const [serverReadingLog, setServerReadingLog] = useState<ReadingLogEntry[]>([]);
   const [allWishes, setAllWishes] = useState<SavedWish[]>([]);
   useEffect(() => {
-    if (!session || !hasArc) return;
+    if (!session) return;
     let cancelled = false;
     (async () => {
       try {
@@ -140,7 +137,7 @@ function CenterScreen() {
     return () => {
       cancelled = true;
     };
-  }, [session, hasArc]);
+  }, [session]);
   const activeWish = findActiveWish(allWishes);
 
   const timeConeGeometry = useTimeConeGeometry(serverReadingLog, allWishes, activeWish);
@@ -195,7 +192,7 @@ function CenterScreen() {
 
   const kaleidoscopeSize = columnWidth - KALEIDOSCOPE_PADDING * 2;
 
-  const renderExperience = (purchase: CenterPurchase | null) => (
+  const renderExperience = (purchase: JourneyPurchase | null) => (
     <View style={styles.experienceBlock}>
       <LongPressToSave captureChildren>
         <View style={styles.kaleidoscopeWrap}>
@@ -268,22 +265,24 @@ function CenterScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      {!hasArc ? (
-        // No Your Arc subscription — Center's real prerequisite (see this
-        // file's own header comment). Sends the same place Depths' own
-        // gate sends a non-subscriber, rather than a dead end.
+      {!session ? (
+        // Genuinely signed out — Center's real prerequisite now that the
+        // Your Arc gate is reversed (see this file's own header comment).
+        // Distinct from `purchases === null`'s loading state below: that
+        // state also covers signed-out per useJourneyPurchases' own
+        // contract, but rendering it as a bare spinner for a signed-out
+        // visitor would be silently unhelpful rather than honest about
+        // what's actually needed.
         <ScrollView contentContainerStyle={styles.teaserContent}>
           <Text style={styles.kicker}>{t('center.kicker')}</Text>
           <Text style={styles.title}>{t('center.title')}</Text>
-          <Text style={styles.introLine}>{t('center.requiresArcLine')}</Text>
-          <Pressable style={styles.getButton} onPress={() => router.push('/your-arc-preview')}>
-            <Text style={styles.getButtonText}>{t('center.seeYourArc')}</Text>
-          </Pressable>
+          <Text style={styles.introLine}>{t('center.signInLine')}</Text>
         </ScrollView>
       ) : purchases === null ? (
-        // Loading/signed-out — a bare wait state, matching the app's
-        // existing "no spinner-heavy UI" restraint (see richDataLoading's
-        // own comment in your-arc.tsx) rather than a bespoke loading UI.
+        // Loading (session exists, profile fetch still in flight) — a bare
+        // wait state, matching the app's existing "no spinner-heavy UI"
+        // restraint (see richDataLoading's own comment in your-arc.tsx)
+        // rather than a bespoke loading UI.
         <View style={styles.centerFill}>
           <ArcKaleidoscopeLoading size={KALEIDOSCOPE_LOADING_SIZE * 0.6} accentRgb={accentRgb} />
         </View>

@@ -10,6 +10,14 @@ export async function getMe(req, res) {
   const user = await User.findOne({ id: req.user.id });
   if (!user) return res.status(404).json({ error: "User not found" });
 
+  // Cheap count, not the full history — backs the client's free-trial
+  // progress display (useArcTrialStatus.ts, "N of 7 free readings saved")
+  // without paying for a full getMeasureHistory fetch just to measure its
+  // length. Real count regardless of subscription status; the client
+  // decides what it means (a subscribed account has no trial limit to
+  // compare it against).
+  const savedReadingCount = await MeasureResult.countDocuments({ userId: req.user.id });
+
   res.json({
     id: user.id,
     username: user.username,
@@ -29,11 +37,16 @@ export async function getMe(req, res) {
       source: user.arcSubscription?.source ?? null,
       expiresAt: user.arcSubscription?.expiresAt ?? null,
     },
+    savedReadingCount,
     // Full purchase list, not just a count/latest — the client needs every
-    // past purchase's own id/seedNonce to render Center's browsable
-    // history (see mobile/app/center.tsx).
-    centerPurchases: (user.centerPurchases ?? []).map((p) => ({
+    // past purchase's own id/journey/seedNonce to render a Journey's
+    // browsable history (see mobile/app/center.tsx). Renamed from
+    // centerPurchases (2026-08-23) once Center generalized into the first
+    // of an open-ended Journey family — see RULES.md's Product/positioning
+    // section.
+    journeyPurchases: (user.journeyPurchases ?? []).map((p) => ({
       id: p.id,
+      journey: p.journey,
       source: p.source,
       purchasedAt: p.purchasedAt,
       seedNonce: p.seedNonce,

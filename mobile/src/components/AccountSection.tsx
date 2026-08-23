@@ -497,16 +497,23 @@ function LoggedInAccount({
           separate products (see RULES.md) — Your Arc's own ongoing
           status, plus Center's purchase count (plain, honest phrasing —
           "purchased N times," never hype-y — matching this app's
-          existing copy register). */}
+          existing copy register). 2026-08-23: journeyPurchases is now a
+          mixed-Journey array (Center is the only purchasable one today,
+          per RULES.md's Journey family) — filtered to Center specifically
+          here so this line's meaning is unchanged; a future pass can add
+          a line per Journey once more than one is actually purchasable. */}
       {!loadingProfile && (
         <>
           <Text style={styles.subscriptionStatus}>
             {profile?.arcSubscription?.active ? t('account.arcSubscriptionActive') : t('account.arcSubscriptionInactive')}
           </Text>
           <Text style={styles.subscriptionStatus}>
-            {profile?.centerPurchases && profile.centerPurchases.length > 0
-              ? t('account.centerPurchaseCount', { count: profile.centerPurchases.length })
-              : t('account.centerPurchaseCountNone')}
+            {(() => {
+              const centerCount = profile?.journeyPurchases?.filter((p) => p.journey === 'center').length ?? 0;
+              return centerCount > 0
+                ? t('account.centerPurchaseCount', { count: centerCount })
+                : t('account.centerPurchaseCountNone');
+            })()}
           </Text>
         </>
       )}

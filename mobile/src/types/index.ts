@@ -141,13 +141,24 @@ export interface SubscriptionState {
   expiresAt: string | null;
 }
 
-// One Center purchase — repeatable, one-time-purchase experience (2026-08-22,
-// see RULES.md's Product/positioning section). seedNonce is combined with
-// real reading history in kaleidoscopeData.ts's seedFromLog so this
-// specific purchase always regenerates the same result on revisit, while a
-// different purchase (a different array entry) produces a different one.
-export interface CenterPurchase {
+// Every Journey named so far — an OPEN-ENDED, growing family, not a fixed
+// set (2026-08-23 pivot — see RULES.md's Product/positioning section).
+// Center is the only one with real content today; Either/Or and Identity
+// are named catalog entries with no content yet.
+export type JourneyKey = 'center' | 'either-or' | 'identity';
+
+// One Journey purchase — repeatable, one-time-purchase experience,
+// standalone from Your Arc (2026-08-23: generalized from the old
+// Center-only CenterPurchase once Center became the first of an
+// open-ended Journey family — see RULES.md's Product/positioning
+// section). seedNonce is combined with real reading history in
+// kaleidoscopeData.ts's seedFromLog (Center) or the equivalent for a
+// future Journey, so this specific purchase always regenerates the same
+// result on revisit, while a different purchase (a different array
+// entry) produces a different one.
+export interface JourneyPurchase {
   id: string;
+  journey: JourneyKey;
   source: 'manual' | 'apple' | 'google';
   purchasedAt: string;
   seedNonce: number;
@@ -162,9 +173,14 @@ export interface UserProfile {
   consent: { psychologicalData: ConsentState };
   // Renamed from the old single `subscription` field (2026-08-22) once
   // Selfinder+ split into two differently-shaped products — see
-  // centerPurchases below for the other one.
+  // journeyPurchases below for the other one.
   arcSubscription: SubscriptionState;
-  centerPurchases: CenterPurchase[];
+  // Real count, not the full history — backs the free-trial progress
+  // display (useArcTrialStatus.ts). See backend/controllers/
+  // userController.js's own comment for why this is a cheap count query,
+  // not a byproduct of a full getMeasureHistory fetch.
+  savedReadingCount: number;
+  journeyPurchases: JourneyPurchase[];
 }
 
 /** Shape returned by GET /measure/history — a persisted MeasureResult document. */

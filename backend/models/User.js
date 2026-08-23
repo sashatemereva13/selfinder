@@ -54,19 +54,28 @@ const userSchema = new mongoose.Schema({
     expiresAt: { type: String, default: null },
     grantedAt: { type: String, default: null },
   },
-  // Center — the repeatable, one-time-purchase experience (2026-08-22,
-  // Selfinder's first non-subscription paid product; see RULES.md). An
-  // ARRAY, not a boolean: each purchase is its own entitlement record AND
-  // its own generated result, browsable individually — never "owned once"
-  // the way arcSubscription's flag is. seedNonce feeds
-  // kaleidoscopeData.ts's seedFromLog alongside the real reading history,
-  // so THIS purchase always regenerates the same result on revisit, while
-  // a new purchase (a new array entry, a new nonce) produces a genuinely
-  // different one even against unchanged history.
-  centerPurchases: {
+  // Journeys — repeatable, one-time-purchase experiences, standalone from
+  // Your Arc (2026-08-23 pivot: generalized from the old Center-only
+  // `centerPurchases` field once Center became the first of an open-ended
+  // family; see RULES.md's Product/positioning section). An ARRAY, not a
+  // boolean: each purchase is its own entitlement record AND its own
+  // generated result, browsable individually — never "owned once" the way
+  // arcSubscription's flag is. `journey` is a discriminator, not a
+  // separate array per product, so a future Journey is a one-line enum
+  // edit here, never a schema migration. seedNonce feeds
+  // kaleidoscopeData.ts's seedFromLog (Center) or the equivalent for a
+  // future Journey, alongside the real reading history, so THIS purchase
+  // always regenerates the same result on revisit, while a new purchase
+  // (a new array entry, a new nonce) produces a genuinely different one
+  // even against unchanged history. No longer requires an active
+  // arcSubscription to purchase or use — that gate was reversed in the
+  // same pivot; Your Arc's role is additive (connecting Journey results
+  // longitudinally over time), not a prerequisite.
+  journeyPurchases: {
     type: [
       {
         id: { type: String, default: () => randomUUID() },
+        journey: { type: String, enum: ["center", "either-or", "identity"], required: true },
         source: { type: String, enum: ["manual", "apple", "google"], required: true },
         purchasedAt: { type: String, required: true },
         seedNonce: { type: Number, required: true },
