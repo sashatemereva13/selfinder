@@ -181,149 +181,149 @@ Full pitch, mechanisms, and business model: **[`docs/pitch.md`](docs/pitch.md)**
 flowing copy) — read before writing anything user-facing about what
 Selfinder is or why it costs money.
 
-- **Two products now, not one (2026-08-22 pivot).** Until this date,
-  "Selfinder+" was a single subscription that included the light-cone
-  visualization. It has split into two differently-shaped paid products —
-  **Your Arc**, an ongoing, cheap subscription that sells *access to your
-  own record* (see below), and **Center**, a new, repeatable one-time
-  purchase that sells a *generated experience* (see its own bullet below)
-  — because these are genuinely different things to buy, not two prices
-  for the same thing. This reverses this file's own prior explicit
-  instruction that separate paid experiences were off-brief "until this
-  file says otherwise" — this is that update. Both products still answer
-  to every anti-diagnosis, anti-fabrication, and privacy constraint in
-  this document; only which product a given piece of content sits under
-  has changed.
-- **History is the product for Your Arc. Not more philosophers, not more
-  sounds, and not Center either.** Your Arc sells exactly one thing: the
-  accumulated record of you becoming fully yours to hold and return to.
-  That means the full line across every reading (not a recent slice),
-  rich re-entry into any past moment (reopening what you said, what your
-  philosopher said back, not just a date and a dot), and the app actively
-  bringing a past moment back to you at a meaningful time — not five more
-  philosophers, not a deeper sound library, and not Center's generated
-  images either (Center is deliberately *not* part of the record — see
-  its own bullet). This is a deliberate, considered choice (see
-  `collaboration-log.md` for the reasoning), not a placeholder waiting for
-  more content to be built. **The single experience to make magical is
-  revisiting your own past** — every other free feature (Measure, Guide,
-  Spill, Tune In, Breathing) exists to make that history worth having, by
-  feeding it. Cross-app research on what retains paying subscribers long-
-  term (Oura, Strava, Day One, Timehop-style memory surfacing) converges
-  on the same mechanism: people don't resubscribe because the feature
-  list grew, they resubscribe because the app is where a year of
-  themselves lives, and losing access would mean losing that. Two things
-  make this legitimate rather than a dark pattern: the record was always
-  theirs (see the GDPR/profiling point above — it's a mirror, not an
-  analysis), and it must stay exportable even if someone cancels — never
-  lock someone out of their own past to punish non-payment. That
-  distinction — richer *access to your own record* vs. richer *content
-  the app supplies* — is what Your Arc is; treat "more philosophers" or
-  "more sound/breathing content" as explicitly off-brief for it, same as
-  before.
-- **Center is the light cone.** Spun out of what used to be Your Arc's
-  Cover/Cone pages (the kaleidoscope built from real reading colors, and
-  the light-cone visualization) into its own, separately-named, one-time-
-  purchase experience — Selfinder's first non-subscription paid product.
-  Center adds *dimensionality* — it lets someone look at the present
-  moment in light of their own past and their own future, not alone.
-  **Center doesn't tell you who you are. It helps you notice where you
-  are — between what has shaped you and what is calling you forward.**
-  This is the same anti-diagnosis constraint that governed this content
-  as part of the old Selfinder+, unchanged by which product it now sits
-  under. Visual/copy metaphor: a light cone (fixed past below, open
-  future above, meeting at "here and now") plus a kaleidoscope generated
-  from real reading-history colors — borrowed deliberately as a *shape*,
-  never a physics claim, same "structural metaphor, no attached belief
-  system" test `docs/measure-experience-concept.md` already applies to
-  the cultural-symbol boundary. Two things this framing must never
-  become: the past cone is *the user's own account* of what happened (a
-  Measure answer, a wish, a kept Spill entry), never asserted as raw
-  objective fact — Selfinder never had access to anything but someone's
-  own telling of it. The future cone is never a projection, forecast, or
-  "expected trajectory" (already forbidden elsewhere in this file) — it
-  holds only the active wish, the one real, stated thing reaching
-  forward. Say "you are shaping your future," never "the future is
-  calling/pulling you" — the present moment is the source, not the
-  effect of something ahead of it; agency stays with the person, matching
-  "the answers are already inside the person" above.
-  **Center is bought again, not owned once.** Each purchase generates a
-  new, different result from a fresh seed (a purchase-scoped nonce, see
-  `kaleidoscopeData.ts`'s `seedFromLog`) even against completely
-  unchanged reading history — the same way returning to a kaleidoscope
-  and giving it a turn produces a new pattern from the same shards, not
-  because anything about the person changed. This repeatability is the
-  point, not a bug to reconcile with "the record is stable": Center is
-  deliberately *not* part of the record (that's Your Arc's job, see
-  above) — it's a one-time-purchase *experience*, closer in kind to a
-  Tarot pull or a single Guide conversation than to something archived
-  and accumulated. Every past Center purchase stays individually
-  browsable (not just the latest) — someone should be able to look back
-  at an earlier Center result the way they'd look back at a photo, even
-  though it was never folded into "the record" Your Arc holds.
-  Price: TBD for both the ongoing subscription and Center's one-time
-  purchase — the previous €7.99/month, €49.99/year figures applied to
-  the single old Selfinder+ tier and no longer apply to either product
-  (not yet live either way — see the no-live-purchase-flow note below).
-  **Center requires an active Your Arc subscription as a real
-  prerequisite, not an arbitrary upsell gate.** Center is generated from
-  the server-saved reading history Your Arc's own subscription is what
-  makes reachable — without Your Arc, there is no server record for
-  Center to be generated from, so the dependency is technical, not just
-  a pricing decision layered on top of data that would work anyway.
-  Someone without Your Arc sees a plain, honest explanation of this (with
-  a path into Your Arc's own preview) rather than a locked/blurred
-  version of Center.
+- **Two products, two shapes (2026-08-22 split, 2026-08-23 pivot).**
+  "Selfinder+" was once a single subscription that included the light-cone
+  visualization. It first split into **Your Arc** (an ongoing subscription
+  selling *access to your own record*) and **Center** (a one-time purchase
+  selling a *generated experience*) — because these are genuinely
+  different things to buy, not two prices for the same thing. This
+  reversed this file's own prior instruction that separate paid
+  experiences were off-brief "until this file says otherwise." A second
+  pivot the next day reshaped the funnel and Center's own relationship to
+  Your Arc — see the two bullets below. Both products still answer to
+  every anti-diagnosis, anti-fabrication, and privacy constraint in this
+  document; only which product a given piece of content sits under, and
+  how the two relate, has changed.
+- **Your Arc is free-trial-then-subscribe, not gated from reading #1.**
+  Everyone's first **7 server-saved readings are free and fully real** —
+  not a teaser or preview, genuinely saved and genuinely revisitable, the
+  same as a subscriber's. Chosen deliberately over gating saving itself
+  behind a subscription from the first reading: the person experiences
+  their own Arc actually forming before ever being asked to pay, so the
+  purchase decision becomes concrete (a real, visible Arc already exists)
+  rather than abstract (an imagined future value). Past the 7th save, a
+  non-subscribed account's server history behaves as a rolling window of
+  exactly 7 — each new save permanently deletes the oldest saved reading
+  (enforced in `saveMeasureResultIfConsented`,
+  `backend/controllers/chatController.js`; real deletion, not a soft/
+  archive flag). **Subscribing at any point freezes this and keeps
+  whatever's in the window plus everything saved after** — it does not
+  retroactively recover anything already rolled off before subscribing;
+  only what's present at subscribe-time carries forward. This is what
+  Your Arc's own subscription actually removes: the free trial's rolling-
+  window limit, not access to saving at all. Every other still-true part
+  of the original "History is the product" reasoning is unchanged: the
+  full line across every reading (not a recent slice), rich re-entry into
+  any past moment, the app actively bringing a past moment back at a
+  meaningful time — not five more philosophers, not a deeper sound
+  library, and not a Journey's generated images either (Journeys are
+  deliberately *not* part of the record — see the next bullet). Two
+  things keep this legitimate rather than a dark pattern: the record was
+  always theirs (it's a mirror, not an analysis — see the GDPR/profiling
+  point above), and it must stay exportable even if someone cancels —
+  never lock someone out of their own past to punish non-payment.
+- **Journeys are one-time-purchase experiences, standalone from Your
+  Arc — an open-ended, growing family, not a fixed set.** Every Journey
+  is an environment for examining what is happening within the person in
+  relation to their external reality — this is the unifying definition
+  of the category, and the actual test for whether something pitched as
+  "just content" belongs in it at all. **Center** (the light cone +
+  kaleidoscope, spun out of Your Arc's old Cover/Cone pages, Selfinder's
+  first non-subscription paid product) is the only Journey with real
+  content today; **Either/Or** ("what changes in me under either
+  possibility?") and **Identity** ("what have I not expressed?") are
+  named, reachable, honestly "not yet available" — more are expected
+  over time, so nothing about a Journey's infrastructure (the `journey`
+  discriminator on `User.journeyPurchases`, the Products catalog array,
+  `useJourneyPurchases`) should assume exactly these three. **A Journey
+  requires no Your Arc subscription** — anyone signed in can buy and
+  complete one standalone (2026-08-23: reverses the previous day's rule
+  that Center required an active Your Arc subscription; that dependency
+  turned out to be the wrong shape for the funnel — see the sign-in-
+  incentive note below for what actually motivates an account instead).
+  **Your Arc's relationship to Journeys is additive, not gatekeeping** —
+  a Journey's result stands alone whether or not the buyer has Your Arc;
+  Your Arc is what would let a Journey's result connect into a person's
+  broader longitudinal record over time (the exact connection mechanism
+  is future work, not built yet — don't imply it exists in any copy).
+  **Bought again, not owned once** — each purchase of the same Journey
+  generates a new, different result from a fresh seed (a purchase-scoped
+  nonce, see `kaleidoscopeData.ts`'s `seedFromLog` for Center) even
+  against completely unchanged history, the same way returning to a
+  kaleidoscope and giving it a turn produces a new pattern from the same
+  shards. Every past purchase stays individually browsable, not just the
+  latest — someone should be able to look back at an earlier Journey
+  result the way they'd look back at a photo, even though it was never
+  folded into "the record" Your Arc holds. Center's own content
+  constraints (anti-diagnosis — "doesn't tell you who you are, helps you
+  notice where you are"; the past cone as the user's own account, never
+  raw fact; the future cone holding only the active wish, never a
+  forecast; "you are shaping your future," never "the future calls you")
+  are unchanged by any of this — they govern content, not which product
+  or gate it sits under. Price: TBD for both Your Arc's subscription and
+  every Journey's one-time purchase — the old €7.99/month, €49.99/year
+  figures applied to the original single Selfinder+ tier and no longer
+  apply to anything live today (not yet live either way — see the no-
+  live-purchase-flow note below).
 - **Free core, two shapes of paid depth — never free features, paid
   access.** Measure, Guide, Spill, Tune In, Breathing are free for
   everyone, unconditionally, and stay exactly as rich as they are today —
-  free is never made to feel incomplete on purpose. Paid depth now comes
-  in two distinct shapes, not one: **Your Arc** sells depth of *history*
-  — the full arc instead of a preview slice, richer ways back into an old
-  moment. **Center** sells a *generated experience* — a unique image/
-  visualization made from that history, bought fresh each time, never
-  accumulated or archived as part of the record. Both stay true to "a
-  gym, not a hospital, never gated like therapy" — neither gates the free
-  core loop, and neither implies the free experience is incomplete on
-  purpose. Don't let a growth idea erode either.
+  free is never made to feel incomplete on purpose. Paid depth comes in
+  two distinct shapes: **Your Arc** sells depth of *history* — access
+  past the free 7-reading trial, richer ways back into an old moment.
+  **A Journey** sells a *generated experience* — a unique result made
+  from real history, bought fresh each time, never accumulated or
+  archived as part of the record. Both stay true to "a gym, not a
+  hospital, never gated like therapy" — neither gates the free core loop,
+  and neither implies the free experience is incomplete on purpose. The
+  free trial itself is real depth too, not a crippled preview — don't let
+  a growth idea erode any of this.
 - **No live purchase/subscribe flow exists yet for either product — but
   real entitlement-gated depth does, for both.** `useArcSubscription.ts`
   is a live `GET /user/me` check against `User.arcSubscription.active`;
-  `useCenterPurchases.ts` checks `User.centerPurchases`, an array rather
-  than a boolean since Center is bought repeatedly (both in
-  `backend/models/User.js`) — no client-side dev toggle exists for
-  either. The only way either becomes real today is a manual admin grant
-  — `backend/scripts/grantArcSubscription.js <username>` for Your Arc,
-  `backend/scripts/grantCenter.js <username>` (run again for a second,
-  independent purchase) for Center; nothing writes `source: "apple"/
-  "google"` yet for either, so there is still no real checkout. Depths'
-  spiral (`SLOT_META.yourArc`, `depths/index.tsx`) still routes to
-  `/your-arc` if subscribed or `/your-arc-preview` if not — unchanged in
-  shape, but Your Arc's own pager now covers only the record pages
-  (Arc line, Facts, Resurfaced wish, Wish-crossing, Closing, Detail).
-  Center has its own entry point: a "Products →" row on the You tab
-  (same weight as the existing "How to use Selfinder →"/"Where this
-  comes from →" rows), opening a catalog screen built to hold more
-  one-time-purchase experiences later, not just Center. Depths' own
-  "Talk about it" row is still permanently static (always "Talk about
-  it," never swaps copy, always opens Guide) — the upsell copy-swap
+  `useArcTrialStatus.ts` layers the free-trial signal on top of the same
+  call (`savedReadingCount`, `remaining`); `useJourneyPurchases.ts`
+  checks `User.journeyPurchases`, an array keyed by a `journey`
+  discriminator rather than a boolean, since a Journey is bought
+  repeatedly and each purchase browsable on its own (all three in
+  `backend/models/User.js` / `backend/controllers/userController.js`) —
+  no client-side dev toggle exists for any of them. The only way any
+  becomes real today is a manual admin grant —
+  `backend/scripts/grantArcSubscription.js <username>` for Your Arc,
+  `backend/scripts/grantJourney.js <username> <journey>` (run again for
+  another independent purchase, of the same or a different Journey) for
+  Journeys; nothing writes `source: "apple"/"google"` yet for either, so
+  there is still no real checkout. The free-trial deque itself needs no
+  purchase flow to be real — it's pure server/client logic already
+  enforced today, no payment involved. Depths' spiral (`SLOT_META.yourArc`,
+  `depths/index.tsx`) still routes to `/your-arc` if subscribed or
+  `/your-arc-preview` if not — that screen now also carries the trial's
+  own progress messaging. Journeys have their own entry point: a
+  "Products →" row on the You tab (same weight as the existing "How to
+  use Selfinder →"/"Where this comes from →" rows), opening a catalog
+  screen built to hold more Journeys as they're built. Depths' own "Talk
+  about it" row is still permanently static (always "Talk about it,"
+  never swaps copy, always opens Guide) — the upsell copy-swap
   (`TALK_ABOUT_IT_UPSELL_THRESHOLD`, `engagementStore.ts`) still lives on
-  `your-arc-preview.tsx` itself ("Keep the conversation going"), shown
-  only to non-subscribers past the threshold; unaffected by this split.
-  Beyond these seeds, real subscriber-only depth already ships for Your
-  Arc: server-linked Guide-conversation persistence, Spill's "keep this
-  moment" affordance, per-sphere history, and richer same-day re-entry
-  into a past reading (transcript + matched Spill entry) — all
-  entitlement-gated via the same live check, not additional UI seeds.
-  Never build a tap target that looks like it leads to a purchase and
-  doesn't — that discipline still stands for both products even though
-  real depth now sits behind the entitlement check. When a real IAP/
-  checkout flow is built for either, this rule should be rewritten again,
-  not left stale — the same fate that already happened to it once (see
+  `your-arc-preview.tsx` itself, unaffected by either pivot. Never build a
+  tap target that looks like it leads to a purchase and doesn't — that
+  discipline still stands for both products. When a real IAP/checkout
+  flow is built for either, this rule should be rewritten again, not left
+  stale — the same fate that already happened to it once (see
   collaboration history around commit `5753a0d7`).
+- **Selfinder needs a real incentive to sign in — not yet designed.**
+  Both the free-trial deque and every Journey purchase depend on being
+  signed in, but nothing in the app currently gives someone a reason to
+  create an account beyond "so these features work" — a purely
+  functional, not felt, motivation. Direction: something in the spirit of
+  belonging/membership ("join the club"), not a bare "sign in to
+  continue" prompt. This is a noted gap, not designed or built yet — a
+  future session should design where it appears, what it says, and how it
+  avoids reading as a dark pattern, rather than bolting on a generic
+  prompt.
 - **Every change should lean toward "what makes this a paid app?"** — not
   by adding friction to the free core, but by asking whether a change adds
-  polish, a funnel-analytics touchpoint, a Your Arc seed, or a Center
+  polish, a funnel-analytics touchpoint, a Your Arc seed, or a Journey
   seed. A change that does none of these isn't wrong, but a change that
   actively works against this (e.g. making free content feel already-
   complete with nothing more to want) is worth a second look.

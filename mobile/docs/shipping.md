@@ -111,13 +111,16 @@ backend must actually be live at that URL before submitting, since App
 Store reviewers will exercise real network calls (chat, etc.) and a
 dead/local-only backend is a common rejection cause.
 
-## Subscriptions / Your Arc / Center
+## Subscriptions / Your Arc / Journeys
 
 No real purchase flow exists yet for either product, but a real
 entitlement source of truth does for both — 2026-08-22: the old single
 `User.subscription` field split in two once Selfinder+ became two
 differently-shaped products (an ongoing subscription and a repeatable
-one-time purchase; see `RULES.md`'s Product/positioning section):
+one-time purchase); 2026-08-23: a further pivot made Your Arc free-
+trial-then-subscribe and generalized the one-time-purchase side into an
+open-ended "Journey" family, no longer gated behind Your Arc (see
+`RULES.md`'s Product/positioning section for the full reasoning on both):
 
 - **Your Arc** — `User.arcSubscription` (`backend/models/User.js`),
   checked client-side via `src/utils/useArcSubscription.ts` (a live
@@ -125,20 +128,29 @@ one-time purchase; see `RULES.md`'s Product/positioning section):
   `arcSubscription.active` gets set to `true` today is a manual admin
   grant — run `node backend/scripts/grantArcSubscription.js <username>`
   from `backend/` (add `--revoke` to undo). A signed-out session, or a
-  signed-in account with no grant, always sees the free
-  `your-arc-preview` experience.
-- **Center** — `User.centerPurchases` (an array, not a boolean — each
-  purchase is its own entry with its own `seedNonce`, since Center is
-  bought again and again, never just "owned"), checked client-side via
-  `src/utils/useCenterPurchases.ts`. Grant one purchase with
-  `node backend/scripts/grantCenter.js <username>` — run it again for a
-  second, independent purchase (no `--revoke`; there's nothing to undo
-  about a past generated result).
+  signed-in account with no grant, sees the free `your-arc-preview`
+  experience, which now also shows real free-trial progress via
+  `src/utils/useArcTrialStatus.ts` (backed by `getMe`'s new
+  `savedReadingCount` field). The trial itself — 7 free server-saved
+  readings, oldest permanently deleted past that for a non-subscribed
+  account — is enforced server-side in
+  `backend/controllers/chatController.js`'s `saveMeasureResultIfConsented`,
+  not just reflected client-side.
+- **Journeys** — `User.journeyPurchases` (an array, not a boolean — each
+  purchase is its own entry with its own `journey` key and `seedNonce`,
+  since a Journey is bought again and again, never just "owned"), checked
+  client-side via `src/utils/useJourneyPurchases.ts` (optionally filtered
+  to one Journey, e.g. `useJourneyPurchases('center')`). Grant one
+  purchase with `node backend/scripts/grantJourney.js <username>
+  <journey>` (`center`/`either-or`/`identity`) — run it again for a
+  second, independent purchase of the same or a different Journey (no
+  `--revoke`; there's nothing to undo about a past generated result). No
+  Your Arc subscription is required to grant or use any Journey.
 
 There is no local dev toggle for either. When real IAP is added,
 StoreKit/Play Billing receipt sync should write to these same fields
 (`source: 'apple'`/`'google'` instead of `'manual'`) rather than
 introducing a separate entitlement mechanism — Your Arc as an
-auto-renewing subscription product, Center as Apple's "Consumable" IAP
-product type (the correct category for a repeatable, non-restoring
+auto-renewing subscription product, each Journey as Apple's "Consumable"
+IAP product type (the correct category for a repeatable, non-restoring
 purchase, distinct from "Non-Consumable").

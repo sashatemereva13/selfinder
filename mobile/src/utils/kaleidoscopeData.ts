@@ -81,7 +81,7 @@ export function buildKaleidoscopeSegments(
 // nonce (defaults to 0), preserving the original "never visually shuffles
 // for the same history" behavior described above. Center passes a
 // specific purchase's own seedNonce (persisted server-side on
-// User.centerPurchases, see backend/models/User.js) so THAT purchase
+// User.journeyPurchases, see backend/models/User.js) so THAT purchase
 // always regenerates the same result on revisit, while a genuinely NEW
 // purchase — a new array entry, a new nonce — produces a different one
 // even against unchanged history. This is what makes "buy Center again"
