@@ -227,20 +227,36 @@ Selfinder is or why it costs money.
   is an environment for examining what is happening within the person in
   relation to their external reality — this is the unifying definition
   of the category, and the actual test for whether something pitched as
-  "just content" belongs in it at all. **Center** (the light cone +
-  kaleidoscope, spun out of Your Arc's old Cover/Cone pages, Selfinder's
-  first non-subscription paid product) is the only Journey with real
-  content today; **Either/Or** ("what changes in me under either
-  possibility?") and **Identity** ("what have I not expressed?") are
-  named, reachable, honestly "not yet available" — more are expected
-  over time, so nothing about a Journey's infrastructure (the `journey`
-  discriminator on `User.journeyPurchases`, the Products catalog array,
-  `useJourneyPurchases`) should assume exactly these three. **A Journey
-  requires no Your Arc subscription** — anyone signed in can buy and
-  complete one standalone (2026-08-23: reverses the previous day's rule
-  that Center required an active Your Arc subscription; that dependency
-  turned out to be the wrong shape for the funnel — see the sign-in-
-  incentive note below for what actually motivates an account instead).
+  "just content" belongs in it at all. A Journey is not content
+  Selfinder gives the user — it's a carefully designed sequence of
+  questions that takes someone somewhere they probably wouldn't reach by
+  asking themselves one question directly; the product is the path to
+  an answer, not the answer itself. Full architecture (the four-layer
+  design process, the fixed-tree/responsive-questioning split, what
+  Selfinder's AI may and may not do inside a Journey, and Control's full
+  worked example) lives in **[`docs/journeys-concept.md`](docs/journeys-concept.md)**
+  — read that before designing or building any Journey, the same way
+  `docs/pitch.md` governs outward-facing positioning. **Center** (the
+  light cone + kaleidoscope, spun out of Your Arc's old Cover/Cone
+  pages, Selfinder's first non-subscription paid product) is the only
+  Journey with real content today. The next set to build toward,
+  framed as the question in the user's own voice rather than a feature
+  name (2026-08-23, replacing the earlier placeholder Either/Or/Identity
+  entries, which had no worked-through architecture): **Control** ("what
+  am I really trying to control?" — the reference implementation, see
+  `docs/journeys-concept.md`), **The Choice**, **The Loop**, **Whose
+  Voice?**, **The Road Not Taken**, **Letting Go**, **The Mirror**,
+  **The Unsaid**, **Becoming**, **The Threshold**, **Possible Selves**,
+  **Enough** — named, not yet built, and still not a final fixed list;
+  more are expected over time, so nothing about a Journey's
+  infrastructure (the `journey` discriminator on `User.journeyPurchases`,
+  the Products catalog array, `useJourneyPurchases`) should assume
+  exactly this set. **A Journey requires no Your Arc subscription** —
+  anyone signed in can buy and complete one standalone (2026-08-23:
+  reverses the previous day's rule that Center required an active Your
+  Arc subscription; that dependency turned out to be the wrong shape for
+  the funnel — see the sign-in-incentive note below for what actually
+  motivates an account instead).
   **Your Arc's relationship to Journeys is additive, not gatekeeping** —
   a Journey's result stands alone whether or not the buyer has Your Arc;
   Your Arc is what would let a Journey's result connect into a person's

@@ -17,6 +17,7 @@ import feedbackRouter     from "./routes/feedback.js";
 import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
 import eventsRouter       from "./routes/events.js";
+import journeysRouter     from "./routes/journeys.js";
 
 const app = express();
 const port = Number(process.env.PORT || 3001);
@@ -61,6 +62,7 @@ app.use("/api/crossing",      crossingRouter);
 app.use("/api/arc-line",      arcLineRouter);
 app.use("/api/feedback",      feedbackRouter);
 app.use("/api/events",        eventsRouter);
+app.use("/api/journeys",      journeysRouter);
 
 connectDB()
   .then(() => {

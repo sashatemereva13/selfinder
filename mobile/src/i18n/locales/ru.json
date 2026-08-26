@@ -38,9 +38,7 @@
     "theme": "Оформление",
     "themeSystem": "Системная",
     "themeLight": "Светлая",
-    "themeDark": "Тёмная",
-    "devResetOnboarding": "Сбросить онбординг (только для разработки)",
-    "devResetDone": "Сброшено ✓"
+    "themeDark": "Тёмная"
   },
   "account": {
     "kicker": "Аккаунт",
@@ -291,15 +289,59 @@
   "products": {
     "title": "Продукты",
     "intro": "Разовые впечатления, которые покупаются заново каждый раз — отдельно от вашей постоянной истории в «Вашей траектории». Подписка не требуется.",
+    "groupPast": "Что из прошлого всё ещё здесь",
+    "groupPresent": "Что происходит сейчас",
+    "groupFuture": "Что будущее уже делает здесь",
     "centerLabel": "Центр",
     "centerDescription": "Калейдоскоп и световой конус, созданные из вашей сохранённой истории — новый результат каждый раз, когда вы его получаете.",
-    "eitherOrLabel": "Или/Или",
-    "eitherOrDescription": "Что меняется во мне при каждой из возможностей?",
-    "identityLabel": "Идентичность",
-    "identityDescription": "Что я не выразил(а)?"
+    "controlLabel": "Контроль",
+    "controlDescription": "Что я на самом деле пытаюсь контролировать?",
+    "theChoiceLabel": "Выбор",
+    "theChoiceDescription": "Чего я на самом деле хочу?",
+    "theLoopLabel": "Петля",
+    "theLoopDescription": "Почему это продолжает происходить со мной?",
+    "whoseVoiceLabel": "Чей это голос?",
+    "whoseVoiceDescription": "Это действительно то, во что я верю или чего хочу?",
+    "theRoadNotTakenLabel": "Непройденный путь",
+    "theRoadNotTakenDescription": "Почему я не могу перестать думать о том, что могло бы быть?",
+    "lettingGoLabel": "Отпустить",
+    "lettingGoDescription": "За что я на самом деле держусь?",
+    "theMirrorLabel": "Зеркало",
+    "theMirrorDescription": "Почему этот человек так сильно на меня влияет?",
+    "theUnsaidLabel": "Несказанное",
+    "theUnsaidDescription": "Что я на самом деле хочу сказать?",
+    "becomingLabel": "Становление",
+    "becomingDescription": "Кем я становлюсь?",
+    "theThresholdLabel": "Порог",
+    "theThresholdDescription": "Что мешает мне двигаться вперёд?",
+    "possibleSelvesLabel": "Возможные «я»",
+    "possibleSelvesDescription": "Какое будущее по-настоящему ощущается моим?",
+    "enoughLabel": "Достаточно",
+    "enoughDescription": "Чего мне было бы действительно достаточно?"
   },
   "journeyComingSoon": {
     "notYetAvailable": "Пока недоступно — этот Journey ещё создаётся."
+  },
+  "journey": {
+    "previousQuestion": "Вернуться к предыдущему вопросу",
+    "inputPlaceholder": "Напишите то, что для вас верно",
+    "somethingWentWrong": "Что-то пошло не так. Попробуйте снова.",
+    "notPurchasedTitle": "Вы ещё не начали этот Journey",
+    "notPurchasedBody": "Это разовая покупка — загляните позже, когда покупка станет доступна.",
+    "signInTitle": "Войдите, чтобы начать",
+    "signInBody": "Этот Journey привязан к вашему аккаунту — так вы сможете продолжить с того же места."
+  },
+  "control": {
+    "agencySortInstruction": "Распределите сказанное туда, куда оно действительно относится.",
+    "agencyBucket": "Моё, чтобы выбирать",
+    "influenceBucket": "Могу повлиять, не решаю",
+    "authorshipBucket": "Не мне решать",
+    "agencyHint": "То, что вы можете выбрать напрямую.",
+    "influenceHint": "То, на что вы можете повлиять, но не можете определить.",
+    "authorshipHint": "То, что имеет причины за пределами вас.",
+    "agencySortDone": "Готово",
+    "reflectionBegan": "Вы начали с:",
+    "reflectionArrived": "Вы пришли к:"
   },
   "center": {
     "kicker": "Центр",

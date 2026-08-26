@@ -38,9 +38,7 @@
     "theme": "Appearance",
     "themeSystem": "System",
     "themeLight": "Light",
-    "themeDark": "Dark",
-    "devResetOnboarding": "Reset onboarding state (dev only)",
-    "devResetDone": "Reset ✓"
+    "themeDark": "Dark"
   },
   "account": {
     "kicker": "Account",
@@ -285,15 +283,59 @@
   "products": {
     "title": "Products",
     "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record. No subscription required.",
+    "groupPast": "What the past is still doing here",
+    "groupPresent": "What's actually happening now",
+    "groupFuture": "What the future is already doing here",
     "centerLabel": "Center",
     "centerDescription": "A kaleidoscope and light cone made from your saved history — a new result every time you get it.",
-    "eitherOrLabel": "Either/Or",
-    "eitherOrDescription": "What changes in me under either possibility?",
-    "identityLabel": "Identity",
-    "identityDescription": "What have I not expressed?"
+    "controlLabel": "Control",
+    "controlDescription": "What am I really trying to control?",
+    "theChoiceLabel": "The Choice",
+    "theChoiceDescription": "What do I actually want?",
+    "theLoopLabel": "The Loop",
+    "theLoopDescription": "Why does this keep happening to me?",
+    "whoseVoiceLabel": "Whose Voice?",
+    "whoseVoiceDescription": "Is this really what I believe or want?",
+    "theRoadNotTakenLabel": "The Road Not Taken",
+    "theRoadNotTakenDescription": "Why can't I stop thinking about what could have been?",
+    "lettingGoLabel": "Letting Go",
+    "lettingGoDescription": "What am I actually holding onto?",
+    "theMirrorLabel": "The Mirror",
+    "theMirrorDescription": "Why does this person affect me so strongly?",
+    "theUnsaidLabel": "The Unsaid",
+    "theUnsaidDescription": "What do I actually want to say?",
+    "becomingLabel": "Becoming",
+    "becomingDescription": "Who am I becoming?",
+    "theThresholdLabel": "The Threshold",
+    "theThresholdDescription": "What is stopping me from moving forward?",
+    "possibleSelvesLabel": "Possible Selves",
+    "possibleSelvesDescription": "Which future actually feels like mine?",
+    "enoughLabel": "Enough",
+    "enoughDescription": "What would actually be enough for me?"
   },
   "journeyComingSoon": {
     "notYetAvailable": "Not yet available — this Journey is still being made."
+  },
+  "journey": {
+    "previousQuestion": "Back to the previous question",
+    "inputPlaceholder": "Write what's true for you",
+    "somethingWentWrong": "Something went wrong. Try again.",
+    "notPurchasedTitle": "You haven't started this Journey yet",
+    "notPurchasedBody": "This is a one-time purchase — check back once purchasing is available.",
+    "signInTitle": "Sign in to begin",
+    "signInBody": "This Journey is tied to your account, so it can be picked up right where you left it."
+  },
+  "control": {
+    "agencySortInstruction": "Place what you've said into where it actually belongs.",
+    "agencyBucket": "Mine to choose",
+    "influenceBucket": "I can affect, not decide",
+    "authorshipBucket": "Not mine to author",
+    "agencyHint": "Something you can directly choose.",
+    "influenceHint": "Something you can affect but can't determine.",
+    "authorshipHint": "Something with causes beyond you.",
+    "agencySortDone": "Done",
+    "reflectionBegan": "You began with:",
+    "reflectionArrived": "You arrived at:"
   },
   "center": {
     "kicker": "Center",

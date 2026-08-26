@@ -102,12 +102,21 @@ export default function RootLayout() {
     // Top-level routes reachable from inside the tabs but not part of the
     // tab structure itself — sources (see its own fix), how-to-use (same
     // reasoning, reachable from the You tab post-onboarding), products,
-    // center, either-or, and identity (2026-08-22/23, the Journey family
-    // — reachable from the You tab's "Products →" row, same reasoning),
-    // and both Your Arc screens (moved out of app/(tabs)/you/ so their
-    // back link/gesture isn't tied to the you tab regardless of which tab
-    // they were opened from — see your-arc.tsx's comment).
-    const inStandaloneRoute = ['sources', 'how-to-use', 'products', 'center', 'either-or', 'identity', 'your-arc', 'your-arc-preview', 'crisis-support'].includes(segments[0] as string);
+    // center plus the rest of the Journey catalog (2026-08-22/23, the
+    // Journey family — reachable from the You tab's "Products →" row,
+    // same reasoning; the 2026-08-23 question-first catalog replaced the
+    // earlier either-or/identity placeholders, see
+    // docs/journeys-concept.md), and both Your Arc screens (moved out of
+    // app/(tabs)/you/ so their back link/gesture isn't tied to the you
+    // tab regardless of which tab they were opened from — see
+    // your-arc.tsx's comment).
+    const inStandaloneRoute = [
+      'sources', 'how-to-use', 'products', 'center',
+      'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
+      'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
+      'possible-selves', 'enough',
+      'your-arc', 'your-arc-preview', 'crisis-support',
+    ].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
     } else if (philosopher && !inTabs && !inStandaloneRoute) {
@@ -144,8 +153,18 @@ export default function RootLayout() {
           <Stack.Screen name="how-to-use" />
           <Stack.Screen name="products"   />
           <Stack.Screen name="center"     />
-          <Stack.Screen name="either-or"  />
-          <Stack.Screen name="identity"   />
+          <Stack.Screen name="control"    />
+          <Stack.Screen name="the-choice" />
+          <Stack.Screen name="the-loop"   />
+          <Stack.Screen name="whose-voice" />
+          <Stack.Screen name="the-road-not-taken" />
+          <Stack.Screen name="letting-go" />
+          <Stack.Screen name="the-mirror" />
+          <Stack.Screen name="the-unsaid" />
+          <Stack.Screen name="becoming"   />
+          <Stack.Screen name="the-threshold" />
+          <Stack.Screen name="possible-selves" />
+          <Stack.Screen name="enough"     />
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-preview" />
           <Stack.Screen name="crisis-support" />
