@@ -2,30 +2,45 @@
 // ground the interview scoring prompt so it discriminates between
 // adjacent/similar-sounding levels (e.g. fear vs. anger vs. desire) instead
 // of guessing from bare word association with the level name alone.
-// Source of truth is mobile/src/content/levelsContent.ts (the actively
-// developed app) — keep this file, frontend/src/levels/levelsContent.js,
-// and selfinder-app/src/content/levelsContent.ts in sync by hand whenever
-// mobile's frame text changes, so the philosopher's own grounding never
-// reads a different version of a level than the user does.
-export const VIBRATION_LEVELS = [
-  { name: "Shame", slug: "shame", score: 20, route: "/levels/shame", frame: "The deepest wound to who you know yourself to be." },
-  { name: "Guilt", slug: "guilt", score: 30, route: "/levels/guilt", frame: "The mind still judging itself." },
-  { name: "Apathy", slug: "apathy", score: 50, route: "/levels/apathy", frame: "Too tired to expect anything." },
-  { name: "Grief", slug: "grief", score: 75, route: "/levels/grief", frame: "You loved it, so you feel it." },
-  { name: "Fear", slug: "fear", score: 100, route: "/levels/fear", frame: "Your mind reading the room for danger." },
-  { name: "Desire", slug: "desire", score: 125, route: "/levels/desire", frame: "Looking outside for what's missing inside." },
-  { name: "Anger", slug: "anger", score: 150, route: "/levels/anger", frame: "A boundary was crossed." },
-  { name: "Pride", slug: "pride", score: 175, route: "/levels/pride", frame: "Self-worth still learning to stand alone." },
-  { name: "Courage", slug: "courage", score: 200, route: "/levels/courage", frame: "Fear met straight on." },
-  { name: "Neutrality", slug: "neutrality", score: 250, route: "/levels/neutrality", frame: "Calm without needing anything different." },
-  { name: "Willingness", slug: "willingness", score: 310, route: "/levels/willingness", frame: "The resistance wears itself out." },
-  { name: "Acceptance", slug: "acceptance", score: 350, route: "/levels/acceptance", frame: "What is, without the argument." },
-  { name: "Reason", slug: "reason", score: 400, route: "/levels/reason", frame: "Clarity that doesn't mistake itself for truth." },
-  { name: "Love", slug: "love", score: 500, route: "/levels/love", frame: "Warmth that goes nowhere in particular." },
-  { name: "Unconditional Love", slug: "unconditionallove", score: 540, route: "/levels/unconditionallove", frame: "Love without conditions." },
-  { name: "Peace", slug: "peace", score: 600, route: "/levels/peace", frame: "Feeling everything, resisting nothing." },
-  { name: "Enlightenment", slug: "enlightenment", score: 700, route: "/levels/enlightenment", frame: "Nothing left to defend." },
-];
+// `name`/`slug`/`score`/`route` now come from shared/vibrationLevels.mjs —
+// the single source of truth this file and mobile/src/content/
+// measureConfig.ts's own VIBRATION_LEVELS both import, instead of two
+// independently hardcoded 17-entry arrays.
+//
+// `frame` itself stays backend-only local content, layered over the
+// shared array by slug below — it's LLM-prompt-grounding text mobile's
+// bundle has no use for. This is a SEPARATE, still-manual duplication:
+// mobile/src/content/levelsContent.ts has its own `frame` field (richer,
+// reader-facing Level-detail copy, matching this text verbatim in the
+// entries checked), and frontend/src/levels/levelsContent.js has a third
+// copy — none of those three are unified by this change; flagged here as
+// known, unfixed debt for a future pass.
+import { VIBRATION_LEVELS as SHARED_LEVELS } from "../../shared/vibrationLevels.mjs";
+
+const FRAMES = {
+  shame: "The deepest wound to who you know yourself to be.",
+  guilt: "The mind still judging itself.",
+  apathy: "Too tired to expect anything.",
+  grief: "You loved it, so you feel it.",
+  fear: "Your mind reading the room for danger.",
+  desire: "Looking outside for what's missing inside.",
+  anger: "A boundary was crossed.",
+  pride: "Self-worth still learning to stand alone.",
+  courage: "Fear met straight on.",
+  neutrality: "Calm without needing anything different.",
+  willingness: "The resistance wears itself out.",
+  acceptance: "What is, without the argument.",
+  reason: "Clarity that doesn't mistake itself for truth.",
+  love: "Warmth that goes nowhere in particular.",
+  unconditionallove: "Love without conditions.",
+  peace: "Feeling everything, resisting nothing.",
+  enlightenment: "Nothing left to defend.",
+};
+
+export const VIBRATION_LEVELS = SHARED_LEVELS.map((level) => ({
+  ...level,
+  frame: FRAMES[level.slug],
+}));
 
 // Single source of truth for "the 17 levels, briefly" — used both in the
 // interview scoring prompt and in UNIVERSAL_RULES, so every philosopher

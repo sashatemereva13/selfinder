@@ -1,6 +1,7 @@
 import { Sphere, VibrationLevel } from '../types';
 import { Locale } from '../store/localeStore';
 import { useThemeStore } from '../store/themeStore';
+import { VIBRATION_LEVELS as SHARED_VIBRATION_LEVELS } from '@selfinder/shared';
 
 export const THERMOMETER_MAX = 750;
 
@@ -96,27 +97,15 @@ export function useLevelColors(): Record<string, string> {
   return theme === 'light' ? LEVEL_COLORS_LIGHT : LEVEL_COLORS_DARK;
 }
 
-// Mirrors backend/data/vibrationLevels.js — used to resolve a level's slug for
-// in-app navigation (`route` there is a web path, not usable directly here).
-export const VIBRATION_LEVELS: VibrationLevel[] = [
-  { name: 'Shame',              slug: 'shame',              score: 20,  route: '/levels/shame' },
-  { name: 'Guilt',               slug: 'guilt',              score: 30,  route: '/levels/guilt' },
-  { name: 'Apathy',              slug: 'apathy',             score: 50,  route: '/levels/apathy' },
-  { name: 'Grief',               slug: 'grief',              score: 75,  route: '/levels/grief' },
-  { name: 'Fear',                slug: 'fear',               score: 100, route: '/levels/fear' },
-  { name: 'Desire',              slug: 'desire',             score: 125, route: '/levels/desire' },
-  { name: 'Anger',               slug: 'anger',              score: 150, route: '/levels/anger' },
-  { name: 'Pride',               slug: 'pride',              score: 175, route: '/levels/pride' },
-  { name: 'Courage',             slug: 'courage',            score: 200, route: '/levels/courage' },
-  { name: 'Neutrality',          slug: 'neutrality',         score: 250, route: '/levels/neutrality' },
-  { name: 'Willingness',         slug: 'willingness',        score: 310, route: '/levels/willingness' },
-  { name: 'Acceptance',          slug: 'acceptance',         score: 350, route: '/levels/acceptance' },
-  { name: 'Reason',              slug: 'reason',             score: 400, route: '/levels/reason' },
-  { name: 'Love',                slug: 'love',               score: 500, route: '/levels/love' },
-  { name: 'Unconditional Love',  slug: 'unconditionallove',  score: 540, route: '/levels/unconditionallove' },
-  { name: 'Peace',               slug: 'peace',              score: 600, route: '/levels/peace' },
-  { name: 'Enlightenment',       slug: 'enlightenment',      score: 700, route: '/levels/enlightenment' },
-];
+// name/slug/score/route now come from shared/vibrationLevels.mjs — the
+// single source of truth this file and backend/data/vibrationLevels.js
+// both import, instead of two independently hardcoded 17-entry arrays.
+// (`route` here is a web path, not usable directly for in-app navigation
+// — use `slug` instead.) Backend layers its own local `frame` field over
+// the same shared array; mobile's bundle has no use for that field, so
+// it's deliberately not part of the shared source (see
+// shared/vibrationLevels.mjs's own header comment).
+export const VIBRATION_LEVELS: VibrationLevel[] = SHARED_VIBRATION_LEVELS;
 
 // Display-only Russian names, keyed by slug — deliberately NOT a change to
 // VIBRATION_LEVELS[].name itself. That field is the stable English

@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useAuthStore } from '../store/authStore';
 import { getMe } from '../api/user';
+import { FREE_TRIAL_READING_LIMIT } from '@selfinder/shared';
 
 // Free-trial window for a non-subscribed account (2026-08-23 pivot — see
-// RULES.md's Product/positioning section). Mirrors
-// backend/controllers/chatController.js's own FREE_TRIAL_READING_LIMIT —
-// kept in sync by hand, same pattern the app already uses for other
-// server/client-shared constants.
-export const FREE_TRIAL_READING_LIMIT = 7;
+// RULES.md's Product/positioning section). FREE_TRIAL_READING_LIMIT now
+// comes from shared/arcTrial.mjs, the single source of truth this file
+// and backend/controllers/chatController.js both import — no longer two
+// independently hardcoded 7s.
 
 export interface ArcTrialStatus {
   subscribed: boolean;

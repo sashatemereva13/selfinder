@@ -1,3 +1,5 @@
+import { JOURNEY_KEYS } from '@selfinder/shared';
+
 export type Sphere = 'body' | 'mind' | 'heart' | 'spirit';
 
 export interface MeasureQuestion {
@@ -144,8 +146,11 @@ export interface SubscriptionState {
 // Every Journey named so far — an OPEN-ENDED, growing family, not a fixed
 // set (2026-08-23 pivot — see RULES.md's Product/positioning section).
 // Center is the only one with real content today; Either/Or and Identity
-// are named catalog entries with no content yet.
-export type JourneyKey = 'center' | 'either-or' | 'identity';
+// are named catalog entries with no content yet. The keys themselves
+// come from shared/journeyKeys.mjs (backed by journeyKeys.d.ts for the
+// literal typing) — the single source of truth this union and
+// backend/models/User.js's Mongoose enum both derive from.
+export type JourneyKey = (typeof JOURNEY_KEYS)[number];
 
 // One Journey purchase — repeatable, one-time-purchase experience,
 // standalone from Your Arc (2026-08-23: generalized from the old
@@ -162,6 +167,59 @@ export interface JourneyPurchase {
   source: 'manual' | 'apple' | 'google';
   purchasedAt: string;
   seedNonce: number;
+}
+
+// One authored, fixed question in a Journey's slot sequence (see
+// docs/journeys-concept.md) — the architecture never changes; the AI is
+// only ever allowed to phrase THIS question live, referencing prior
+// answers, never invent, skip, or reorder slots.
+export interface JourneySlot {
+  id: string;
+  question: string;
+  // Only present on a slot with a non-text answer UI (e.g. Control's
+  // slot 7, the agency/influence/authorship sort) — extend as future
+  // Journeys need new primitives.
+  primitive?: 'agency-sort';
+}
+
+// One slot's persisted record for a single Journey session — mirrors
+// backend/models/JourneySession.js's slotRecordSchema exactly.
+export interface JourneySlotRecord {
+  slotIndex: number;
+  slotId: string;
+  baseQuestion: string;
+  phrasedQuestion: string;
+  answer: string | null;
+  asides: { answer: string; reply: string }[];
+  // Slot 7 only for Control today — a generic bag any future Journey's
+  // own non-text slot primitive can reuse.
+  structuredAnswer?: AgencySortResult | null;
+  answeredAt: string | null;
+}
+
+// Mirrors backend/models/JourneySession.js — one Journey attempt's worth
+// of slot-by-slot Q&A, linked to one journeyPurchases[] entry via
+// purchaseId. Resumable while in progress; immutable once completedAt is
+// set.
+export interface JourneySessionDTO {
+  id: string;
+  userId: string;
+  journey: JourneyKey;
+  purchaseId: string;
+  currentSlotIndex: number;
+  slots: JourneySlotRecord[];
+  startedAt: string;
+  completedAt: string | null;
+}
+
+// Control's slot 7 result — which of the elements the user named earlier
+// in the session belong to their own agency, their influence, or outside
+// their authorship entirely (see docs/journeys-concept.md's Control
+// section). No ranking between the three buckets.
+export interface AgencySortResult {
+  agency: string[];
+  influence: string[];
+  authorship: string[];
 }
 
 export interface UserProfile {

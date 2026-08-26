@@ -23,11 +23,7 @@ import "dotenv/config";
 import { connectDB } from "../db.js";
 import User from "../models/User.js";
 import mongoose from "mongoose";
-
-// Kept in sync by hand with User.js's journeyPurchases.journey enum — no
-// shared constant exists between backend/models and backend/scripts today,
-// same pattern the rest of this codebase's enums already follow.
-const VALID_JOURNEYS = ["center", "either-or", "identity"];
+import { JOURNEY_KEYS as VALID_JOURNEYS } from "../../shared/journeyKeys.mjs";
 
 const [, , username, journey] = process.argv;
 if (!username || !journey) {

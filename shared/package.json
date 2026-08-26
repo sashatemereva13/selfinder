@@ -1,0 +1,9 @@
+{
+  "name": "@selfinder/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "index.mjs",
+  "types": "index.d.ts",
+  "description": "Product-rule constants shared between backend/ and mobile/ — plain data, no build step. Consumed by backend via native ESM import, and by mobile via a file: dependency (Metro's default watchFolders excludes anything outside mobile/, so a real npm package under node_modules is required rather than a raw relative import outside the project root)."
+}

@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
+    "@selfinder/shared": "file:../shared",
     "@expo/metro-runtime": "~57.0.5",
     "expo": "~57.0.9",
     "expo-asset": "~57.0.8",

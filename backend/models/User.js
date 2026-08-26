@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { randomUUID } from "crypto";
+import { JOURNEY_KEYS } from "../../shared/journeyKeys.mjs";
 
 const consentLogEntrySchema = new mongoose.Schema(
   {
@@ -70,12 +71,16 @@ const userSchema = new mongoose.Schema({
   // even against unchanged history. No longer requires an active
   // arcSubscription to purchase or use — that gate was reversed in the
   // same pivot; Your Arc's role is additive (connecting Journey results
-  // longitudinally over time), not a prerequisite.
+  // longitudinally over time), not a prerequisite. `journey`'s valid keys
+  // now come from shared/journeyKeys.mjs — the single source of truth
+  // this schema and mobile/src/types/index.ts's JourneyKey union both
+  // import, instead of two (or three, counting products.tsx) independent
+  // lists.
   journeyPurchases: {
     type: [
       {
         id: { type: String, default: () => randomUUID() },
-        journey: { type: String, enum: ["center", "either-or", "identity"], required: true },
+        journey: { type: String, enum: JOURNEY_KEYS, required: true },
         source: { type: String, enum: ["manual", "apple", "google"], required: true },
         purchasedAt: { type: String, required: true },
         seedNonce: { type: Number, required: true },

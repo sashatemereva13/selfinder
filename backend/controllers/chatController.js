@@ -11,6 +11,7 @@ import {
   getFrequencyBand,
   calibrateVibrationScore,
 } from "../data/vibrationLevels.js";
+import { FREE_TRIAL_READING_LIMIT } from "../../shared/arcTrial.mjs";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -624,8 +625,10 @@ async function requestRawInterviewScores(scoringPrompt) {
 // account's history is never trimmed. Chosen deliberately over gating
 // saving itself behind a subscription from reading #1 — the purchase
 // decision becomes concrete (a real, visible Arc already exists) instead
-// of abstract (an imagined future value).
-const FREE_TRIAL_READING_LIMIT = 7;
+// of abstract (an imagined future value). FREE_TRIAL_READING_LIMIT itself
+// now lives in shared/arcTrial.mjs — the single source of truth this file
+// and mobile/src/utils/useArcTrialStatus.ts both import, instead of two
+// independently hardcoded 7s.
 
 // Best-effort — a save failure should never break the reading itself. Requires
 // both an authenticated user and explicit special-category consent (Art. 9),
