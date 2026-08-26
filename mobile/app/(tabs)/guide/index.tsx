@@ -57,10 +57,10 @@ export default function GuideScreen() {
   // Snapshot "have I met this one before" per philosopher id, so markMet
   // (fired just below) doesn't swap the first-meeting text out from under
   // the user the instant it's marked as seen. Only frozen in the
-  // false→true direction, though — an external reset (true→false, e.g. the
-  // dev "Reset onboarding state" button) is reflected immediately, since
-  // tab screens stay mounted and switching philosophers isn't guaranteed
-  // to happen before you look again.
+  // false→true direction, though — an external reset (true→false, e.g.
+  // resetMet firing on sign-out, see authStore.ts) is reflected
+  // immediately, since tab screens stay mounted and switching
+  // philosophers isn't guaranteed to happen before you look again.
   const metSnapshotRef = useRef<{ id: string; hasMet: boolean } | null>(null);
   if (philosopher) {
     const actuallyMet = metPhilosopherIds.includes(philosopher.id);

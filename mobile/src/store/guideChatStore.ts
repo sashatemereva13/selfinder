@@ -82,7 +82,8 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
     }));
   },
 
-  // Dev/testing only — see the "Reset onboarding state" button in the You tab.
+  // Used on sign-out/account-switch (see authStore.ts) so the next
+  // session never sees the previous account's conversations.
   resetAll: () => set({ conversations: {}, pendingMeasureResultId: {}, lastSavedMessageCount: {} }),
 
   setPendingMeasureResultId: (philosopherId, measureResultId) => {

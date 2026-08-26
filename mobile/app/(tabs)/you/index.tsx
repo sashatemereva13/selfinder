@@ -13,9 +13,6 @@ import { useReadingColumnWidth } from '../../../src/theme/responsive';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../../../src/store/localeStore';
 import { useReminderStore } from '../../../src/store/reminderStore';
-import { useGuideChatStore } from '../../../src/store/guideChatStore';
-import { useMeasureStore } from '../../../src/store/measureStore';
-import { useEngagementStore } from '../../../src/store/engagementStore';
 import { useAppAccentRgb } from '../../../src/utils/appAccent';
 import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
 import { AccountSection } from '../../../src/components/AccountSection';
@@ -38,7 +35,6 @@ export default function YouScreen() {
   const setThemePreference = useThemeStore((s) => s.setPreference);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [changing, setChanging] = useState(false);
-  const [resetDone, setResetDone] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   // Drives which block is actually mounted (see the setTimeout unmounts
   // below) — kept separate from `changing` itself so the outgoing block can
@@ -54,32 +50,11 @@ export default function YouScreen() {
   const columnWidth = useReadingColumnWidth();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const select = usePhilosopherStore((s) => s.select);
-  const resetMet = usePhilosopherStore((s) => s.resetMet);
-  const resetSelection = usePhilosopherStore((s) => s.resetSelection);
-  const resetGuideChats = useGuideChatStore((s) => s.resetAll);
-  const resetSavedResults = useMeasureStore((s) => s.resetSavedResults);
-  const resetEngagement = useEngagementStore((s) => s.resetAll);
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const rescheduleReminderWindow = useReminderStore((s) => s.rescheduleWindow);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
-
-  const handleResetOnboarding = () => {
-    resetMet();
-    resetGuideChats();
-    resetSavedResults();
-    resetSelection();
-    // Also resets totalMeasureCount/hasShownSecondVisit/
-    // hasShownFirstRunCarry — without this, both the second-visit special
-    // copy and the first-run Understand bloom stayed permanently
-    // disqualified after a reset, since they gate on totalMeasureCount
-    // === 1 and their own once-only flags, none of which this button
-    // used to touch.
-    resetEngagement();
-    setResetDone(true);
-    setTimeout(() => setResetDone(false), 2000);
-  };
 
   // Both directions are the same crossfade, just swapping which block is
   // "coming in" vs "going out" — the picker's ring dissolves as the restored
@@ -266,24 +241,6 @@ export default function YouScreen() {
 
         <View style={styles.divider} />
         <AccountSection />
-
-        {/* Not gated on __DEV__ (always false in an eas build --profile
-            production, the only kind testers actually install) — visible
-            in every build for now since closed testing is a developer-
-            heavy group and re-testing onboarding otherwise requires a full
-            uninstall/reinstall. Re-gate before a real public launch (see
-            RULES.md-style note: revisit once Selfinder+ has a real
-            entitlement/purchase flow and onboarding has another way to
-            reset for QA). */}
-        <View style={styles.divider} />
-        <Pressable
-          style={({ pressed }) => [styles.devResetButton, pressed && styles.devResetButtonPressed]}
-          onPress={handleResetOnboarding}
-        >
-          <Text style={styles.devResetText}>
-            {resetDone ? t('you.devResetDone') : t('you.devResetOnboarding')}
-          </Text>
-        </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -363,19 +320,6 @@ function makeStyles(colors: Colors) {
     },
     cancelButton: { alignItems: 'center', paddingVertical: spacing[4] },
     cancelLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-    devResetButton: {
-      alignItems: 'center',
-      paddingVertical: spacing[3],
-      borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.bg.border,
-      borderStyle: 'dashed',
-    },
-    devResetButtonPressed: {
-      opacity: 0.5,
-      backgroundColor: colors.bg.elevated,
-    },
-    devResetText: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     sourcesLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   });
 }

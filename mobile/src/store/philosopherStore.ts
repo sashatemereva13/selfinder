@@ -91,9 +91,9 @@ export const usePhilosopherStore = create<PhilosopherStore>((set, get) => ({
     }
   },
 
-  // Dev/testing only — see the "Reset onboarding state" button in the You
-  // tab, guarded by __DEV__. Lets first-meeting content be retested without
-  // reinstalling the app.
+  // Used on sign-out/account-switch (see authStore.ts) so a new account
+  // sees each philosopher's real first-meeting content, not the previous
+  // account's met-status.
   resetMet: async () => {
     set({ metPhilosopherIds: [] });
     try {

@@ -162,9 +162,9 @@ export const useMeasureStore = create<MeasureStore>((set, get) => ({
   }),
   resetInterview: () => set({ messages: [], qaPairs: [], sphereIndex: 0 }),
 
-  // Dev/testing only — see the "Reset onboarding state" button in the You
-  // tab. Without this, Depths keeps showing the last real reading even
-  // after Guide's met-status and conversations are cleared.
+  // Used on sign-out/account-switch (see authStore.ts) — without this,
+  // Depths keeps showing the last real reading even after Guide's
+  // met-status and conversations are cleared.
   resetSavedResults: async () => {
     set({ currentResult: null, previousResult: null, readingLog: [] });
     try {

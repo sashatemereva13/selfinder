@@ -79,10 +79,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     // Personal local data must not survive a logout — whoever uses the
     // app next (signed out, or signed in as a different account) must
     // not see the previous session's readings/conversations/philosopher
-    // choice. Same reset sequence as the You tab's "Reset onboarding
-    // state" dev button (app/(tabs)/you/index.tsx's
-    // handleResetOnboarding) — reusing an already-correct combination
-    // rather than a new one. Clearing philosopher/philosopherId means
+    // choice. Clearing philosopher/philosopherId means
     // the root layout's own redirect sends the app back to onboarding
     // right after this — intended, not a bug: it's the only way to
     // guarantee the old account's choice doesn't leak forward.
