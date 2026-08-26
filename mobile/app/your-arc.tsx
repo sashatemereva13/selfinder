@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet, TextInput, InteractionManager } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, InteractionManager } from 'react-native';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import type { Colors } from '../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
-import { spacing, radius } from '../src/theme/spacing';
+import { fonts, fontSizes } from '../src/theme/typography';
+import { spacing } from '../src/theme/spacing';
 import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
@@ -22,12 +22,17 @@ import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligi
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { SavedMeasureResult } from '../src/types';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
-import { ChatTurn } from '../src/components/ChatTurn';
 import { PagedScrollView } from '../src/components/PagedScrollView';
 import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
+import { ArcLinePage } from '../src/components/yourArcPages/ArcLinePage';
+import { ResurfacedWishPage } from '../src/components/yourArcPages/ResurfacedWishPage';
+import { DetailPage } from '../src/components/yourArcPages/DetailPage';
+import { FactsPage } from '../src/components/yourArcPages/FactsPage';
+import { ClosingPage } from '../src/components/yourArcPages/ClosingPage';
+import { WishCrossingPage } from '../src/components/yourArcPages/WishCrossingPage';
 
 // Same loose-match window your-arc.tsx already uses for qaPairs/rich-
 // history matching — Spill has no reading link (it's its own free-standing
@@ -215,25 +220,6 @@ function YourArcScreen() {
   // yet or unavailable," in which case the Cover page falls back to the
   // original static copy rather than showing nothing.
   const [arcLine, setArcLine] = useState<string | null>(null);
-  // "Try it as if it's already true" (2026-08-18) — an explicitly-named
-  // EXERCISE, not the app asserting anything as fact: the user writes
-  // their OWN present-tense, feeling-based version of their wish (e.g.
-  // "I feel calm and present with my family," never generated or
-  // rephrased by the app — see the copy in tryAsTrueExplain for the
-  // "trying it on, not claiming it" framing this whole feature depends
-  // on to stay compatible with RULES.md's anti-cosmology rule). Fully
-  // ephemeral by design (2026-08-18 decision): none of this — the
-  // present-tense line, the repeat count, anything written — is sent to
-  // the server or persisted across a visit. Resets whenever the active
-  // wish itself changes, since the practice is scoped to whichever wish
-  // is live right now.
-  const [tryAsTrueOpen, setTryAsTrueOpen] = useState(false);
-  const [presentTenseInput, setPresentTenseInput] = useState('');
-  const [presentTenseLine, setPresentTenseLine] = useState<string | null>(null);
-  const REPEAT_WRITING_TARGET = 5;
-  const [repeatWritingCount, setRepeatWritingCount] = useState(0);
-  const [repeatWritingInput, setRepeatWritingInput] = useState('');
-
   // Thread 2's closing page (docs/your-arc-expansion-plan.md) — the one
   // small optional act at the end of the pager: a single free-text
   // prompt, saved as a real Spill entry via the same explicit,
@@ -355,18 +341,6 @@ function YourArcScreen() {
     const fallback = setTimeout(() => setPagerPainted(true), FIRST_PAINT_FALLBACK_MS);
     return () => clearTimeout(fallback);
   }, []);
-
-  // "Try it as if it's already true" is scoped to whichever wish is
-  // currently active — changing the wish (handleSubmitNewWish) should
-  // never leave a stale present-tense line or repeat count sitting around
-  // for a wish that's no longer live.
-  useEffect(() => {
-    setTryAsTrueOpen(false);
-    setPresentTenseInput('');
-    setPresentTenseLine(null);
-    setRepeatWritingCount(0);
-    setRepeatWritingInput('');
-  }, [activeWish?.id]);
 
   // Generated on demand (tap "Ask [philosopher]"), not automatically on
   // page load — even though eligibility is otherwise met, the Groq call
@@ -504,28 +478,6 @@ function YourArcScreen() {
     }
   };
 
-  // Locks in the user's own present-tense line — no moderation call here
-  // (unlike the wish itself), since this text is never sent to the
-  // server or stored anywhere; it only ever lives in this screen's own
-  // state for as long as the person is looking at it. Purely their own
-  // words, exactly as they typed them — the app never rephrases this.
-  const handleSetPresentTenseLine = () => {
-    const text = presentTenseInput.trim();
-    if (!text) return;
-    setPresentTenseLine(text);
-    setPresentTenseInput('');
-  };
-
-  // Each submission just advances the count and clears the input for the
-  // next pass — nothing about WHAT was typed is inspected, compared, or
-  // kept; only that five separate, real keystroke-by-keystroke passes
-  // happened. No fail state, no timer, nothing that could read as a test.
-  const handleSubmitRepeatWriting = () => {
-    if (!repeatWritingInput.trim()) return;
-    setRepeatWritingCount((c) => Math.min(REPEAT_WRITING_TARGET, c + 1));
-    setRepeatWritingInput('');
-  };
-
   // Thread 2's closing prompt — saved as a real Spill entry (same
   // explicit, best-effort, affirmative-save convention Spill's own "keep
   // this moment" button uses; never auto-saved, silent on failure). Not
@@ -621,6 +573,15 @@ function YourArcScreen() {
   // date convention.
   const sinceDate = readingLog.length > 0 ? formatDate(readingLog[0].ts) : '';
 
+  // The closing page's own synthesis material — real, true facts about
+  // the latest reading, same as facts/fulfilledWishes above.
+  const latestReading = readingLog.length > 0 ? readingLog[readingLog.length - 1] : null;
+  const latestLevel = useMemo(
+    () => (latestReading ? VIBRATION_LEVELS.find((l) => l.slug === latestReading.levelSlug) : null),
+    [latestReading]
+  );
+  const latestLevelName = latestLevel ? getLocalizedLevelName(latestLevel, locale) : null;
+
   // Building the page list explicitly (not conditionally spread inline in
   // JSX) so PagedScrollView's dot count and the pages actually shown never
   // drift apart — a resurfaced wish or a tapped detail page changes how
@@ -645,11 +606,7 @@ function YourArcScreen() {
   // carry "this is spoken" — see that style's own comment for why not
   // real italics) and arcLine/coneFramingLine's own fallback exactly as
   // Cover used to.
-  pages.push(
-    <ScrollView key="arc-line" contentContainerStyle={styles.arcLinePageContent}>
-      <Text style={styles.coverPhilosopherLine}>{`"${arcLine ?? t('yourArc.coneFramingLine')}"`}</Text>
-    </ScrollView>
-  );
+  pages.push(<ArcLinePage key="arc-line" arcLine={arcLine} />);
 
   // Facts — the pager's second page now that the time cone has moved to
   // Center (2026-08-22, see RULES.md's Product/positioning section). Real,
@@ -657,82 +614,17 @@ function YourArcScreen() {
   // of what a pattern means (see arcFacts.ts's own header comment).
   if (facts.length > 0) {
     pages.push(
-      <ScrollView key="facts" contentContainerStyle={styles.pageContent}>
-        <Text style={styles.kicker}>{t('yourArc.factsKicker')}</Text>
-        <Text style={styles.introLine}>
-          {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
-        </Text>
-        <View style={styles.factsSection}>
-          {facts.map((fact) => {
-            if (fact.key === 'steadiest') {
-              const level = VIBRATION_LEVELS.find((l) => l.slug === fact.params.levelSlug);
-              const dotColor = level ? levelColors[level.slug] : undefined;
-              return (
-                <View key={fact.key} style={styles.factRow}>
-                  <View style={[styles.factDot, dotColor && { backgroundColor: `rgb(${dotColor})` }]} />
-                  <Text style={styles.factLine}>
-                    {t('yourArc.factSteadiest', {
-                      level: level ? getLocalizedLevelName(level, locale).toLowerCase() : fact.params.levelSlug,
-                    })}
-                  </Text>
-                </View>
-              );
-            }
-            const i18nKey =
-              fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
-              : fact.key === 'streak' ? 'yourArc.factStreak'
-              : 'yourArc.factAllTime';
-            return (
-              <View key={fact.key} style={styles.factRow}>
-                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
-                <Text style={styles.factLine}>{t(i18nKey, { count: fact.params.count })}</Text>
-              </View>
-            );
-          })}
-        </View>
-        {/* Past readings list (2026-08-20 review: "add the list of past
-            readings to this page, so they will look like the list of past
-            readings on 'You' page") — same date + level row shape as
-            AccountSection's own history list (fixed 2026-08-20 to drop
-            the bare score number there too — see that file's own
-            comment), but tapping a row here opens Your Arc's existing
-            rich Detail page instead of expanding inline, since that page
-            already holds more than just the Q&A transcript. Only shown
-            once richHistory exists (signed-in + consented) — a stricter
-            condition than the facts above it, which only need the
-            local-only readingLog. */}
-        {richHistory && richHistory.length > 0 && (
-          <View style={styles.pastReadingsSection}>
-            <Text style={styles.pastReadingsKicker}>{t('yourArc.pastReadingsHeading')}</Text>
-            {/* fullLineNote moved here from the now-removed "Every walk"
-                sparkline page (2026-08-20) — the same free-vs-paid signal
-                ("the FULL line, not just the last few") stated once,
-                quietly, on the paid screen itself. */}
-            <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
-            {/* "Detail page prominence" pass (2026-08-20) — this list's own
-                tap-to-open affordance was never stated anywhere, so a
-                first-time visitor had no reason to expect tapping a row
-                did anything. Same quiet instructional register the cone
-                page's own framing text carries its tap instructions in,
-                not a bordered callout. */}
-            <Text style={styles.pastReadingsTapHint}>{t('yourArc.pastReadingsTapHint')}</Text>
-            {[...richHistory]
-              .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
-              .map((reading) => (
-                <Pressable
-                  key={reading.id}
-                  style={styles.pastReadingRow}
-                  onPress={() => handleFactsReadingPress(reading)}
-                >
-                  <Text style={styles.pastReadingDate}>{formatDate(new Date(reading.savedAt).getTime())}</Text>
-                  <Text style={styles.pastReadingLevel}>
-                    {getLocalizedLevelName(reading.vibrationLevel, locale)}
-                  </Text>
-                </Pressable>
-              ))}
-          </View>
-        )}
-      </ScrollView>
+      <FactsPage
+        key="facts"
+        readingLog={readingLog}
+        sinceDate={sinceDate}
+        facts={facts}
+        richHistory={richHistory}
+        levelColors={levelColors}
+        accentRgb={accentRgb}
+        locale={locale}
+        onReadingPress={handleFactsReadingPress}
+      />
     );
   }
 
@@ -770,24 +662,12 @@ function YourArcScreen() {
   // wish together.
   if (resurfacedWish) {
     pages.push(
-      <ScrollView key="resurfaced-wish" contentContainerStyle={styles.pageContent}>
-        <View style={styles.wishSection}>
-          {wishRevealed ? (
-            <>
-              <Text style={styles.wishHeading}>{t('yourArc.wishResurfaceHeading')}</Text>
-              <Text style={styles.wishDate}>{formatDate(new Date(resurfacedWish.savedAt).getTime())}</Text>
-              <Text style={styles.wishText}>{resurfacedWish.text}</Text>
-              <Text style={styles.wishHint}>{t('yourArc.wishResurfaceHint')}</Text>
-            </>
-          ) : (
-            <Pressable style={styles.wishRow} onPress={handleRevealWish}>
-              <Text style={styles.wishRowText}>
-                {t('yourArc.wishResurfaceRow', { date: formatDate(new Date(resurfacedWish.savedAt).getTime()) })}
-              </Text>
-            </Pressable>
-          )}
-        </View>
-      </ScrollView>
+      <ResurfacedWishPage
+        key="resurfaced-wish"
+        resurfacedWish={resurfacedWish}
+        wishRevealed={wishRevealed}
+        onReveal={handleRevealWish}
+      />
     );
   }
 
@@ -798,237 +678,29 @@ function YourArcScreen() {
   // tapped), the active wish is shown plainly — nothing to protect it
   // from, it's what's live right now.
   pages.push(
-    <ScrollView key="wish-crossing" contentContainerStyle={styles.pageContent}>
-      <Text style={styles.kicker}>{t('yourArc.whatCallsYou')}</Text>
-      <View style={styles.wishSection}>
-        {activeWish && !wishComposerOpen && (
-          <>
-            <Text style={styles.wishText}>{activeWish.text}</Text>
-            {/* Ticking fulfilled (2026-08-19) — a real, positive claim
-                the user makes about their own wish, separate from just
-                writing a new one (see Wish.js's own comment on why this
-                isn't the same as being superseded). Reversible — tapping
-                again un-ticks, matching the app's "never a one-way,
-                high-stakes commitment" posture elsewhere. */}
-            <Pressable
-              style={styles.wishFulfillRow}
-              onPress={() => handleToggleWishFulfilled(activeWish)}
-              disabled={wishFulfillPending === activeWish.id}
-            >
-              <Text style={styles.wishFulfillText}>
-                {activeWish.fulfilledAt ? t('yourArc.wishFulfilledMark') : t('yourArc.markWishFulfilled')}
-              </Text>
-            </Pressable>
-          </>
-        )}
-        {wishComposerOpen ? (
-          <View style={styles.crossingInputRow}>
-            <TextInput
-              style={styles.crossingInput}
-              value={newWishInput}
-              onChangeText={setNewWishInput}
-              placeholder={t('measure.wishPlaceholder')}
-              placeholderTextColor={colors.text.muted}
-              multiline
-              editable={!newWishSubmitting}
-            />
-            <Pressable
-              style={[
-                styles.crossingSendButton,
-                { backgroundColor: `rgb(${accentRgb})`, opacity: newWishInput.trim() && !newWishSubmitting ? 1 : 0.4 },
-              ]}
-              onPress={handleSubmitNewWish}
-              disabled={!newWishInput.trim() || newWishSubmitting}
-            >
-              <Text style={styles.crossingSendButtonText}>↑</Text>
-            </Pressable>
-          </View>
-        ) : (
-          <Pressable style={styles.wishRow} onPress={() => setWishComposerOpen(true)}>
-            <Text style={styles.wishRowText}>
-              {activeWish ? t('yourArc.changeWish') : t('measure.wishQuestion')}
-            </Text>
-          </Pressable>
-        )}
-        <Text style={styles.wishGroundRuleNote}>{t('measure.wishGroundRule')}</Text>
-        {newWishRetryOffered && <Text style={styles.wishHint}>{t('measure.wishRetryNote')}</Text>}
-      </View>
-
-      {/* "Try it as if it's already true" (2026-08-18) — an explicitly-
-          named EXERCISE (see tryAsTrueExplain's copy), not the app
-          asserting anything as fact. Three states: closed (a quiet
-          invite, same row register as the Crossing invite below),
-          setting the present-tense line (the user's own words, once),
-          then the repeat-writing pass itself (5 fresh, typed passes,
-          no score/streak/judgment on how it went — see
-          handleSubmitRepeatWriting's own comment). Only offered once a
-          wish exists — this is explicitly about THIS wish, not a
-          generic affirmation tool. */}
-      {activeWish && !wishComposerOpen && (
-        <View style={styles.crossingSection}>
-          {!tryAsTrueOpen ? (
-            <Pressable style={styles.crossingInviteRow} onPress={() => setTryAsTrueOpen(true)}>
-              <Text style={styles.crossingInviteText}>{t('yourArc.tryAsTrueInvite')}</Text>
-            </Pressable>
-          ) : !presentTenseLine ? (
-            <>
-              <Text style={styles.wishHint}>{t('yourArc.tryAsTrueExplain')}</Text>
-              <View style={styles.crossingInputRow}>
-                <TextInput
-                  style={styles.crossingInput}
-                  value={presentTenseInput}
-                  onChangeText={setPresentTenseInput}
-                  placeholder={t('yourArc.tryAsTruePlaceholder')}
-                  placeholderTextColor={colors.text.muted}
-                  multiline
-                />
-                <Pressable
-                  style={[
-                    styles.crossingSendButton,
-                    { backgroundColor: `rgb(${accentRgb})`, opacity: presentTenseInput.trim() ? 1 : 0.4 },
-                  ]}
-                  onPress={handleSetPresentTenseLine}
-                  disabled={!presentTenseInput.trim()}
-                >
-                  <Text style={styles.crossingSendButtonText}>↑</Text>
-                </Pressable>
-              </View>
-            </>
-          ) : (
-            <>
-              <Text style={styles.crossingHeading}>{t('yourArc.repeatWritingLabel')}</Text>
-              <Text style={styles.crossingQuestion}>{presentTenseLine}</Text>
-              {repeatWritingCount >= REPEAT_WRITING_TARGET ? (
-                <>
-                  <Text style={styles.wishHint}>{t('yourArc.repeatWritingDone')}</Text>
-                  <Pressable
-                    style={styles.wishRow}
-                    onPress={() => {
-                      setRepeatWritingCount(0);
-                      setPresentTenseLine(null);
-                    }}
-                  >
-                    <Text style={styles.wishRowText}>{t('yourArc.repeatWritingRestart')}</Text>
-                  </Pressable>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.wishHint}>
-                    {t('yourArc.repeatWritingHint', { count: repeatWritingCount })}
-                  </Text>
-                  <View style={styles.crossingInputRow}>
-                    <TextInput
-                      style={styles.crossingInput}
-                      value={repeatWritingInput}
-                      onChangeText={setRepeatWritingInput}
-                      placeholder={presentTenseLine}
-                      placeholderTextColor={colors.text.muted}
-                      multiline
-                    />
-                    <Pressable
-                      style={[
-                        styles.crossingSendButton,
-                        { backgroundColor: `rgb(${accentRgb})`, opacity: repeatWritingInput.trim() ? 1 : 0.4 },
-                      ]}
-                      onPress={handleSubmitRepeatWriting}
-                      disabled={!repeatWritingInput.trim()}
-                    >
-                      <Text style={styles.crossingSendButtonText}>↑</Text>
-                    </Pressable>
-                  </View>
-                </>
-              )}
-            </>
-          )}
-        </View>
-      )}
-
-      {/* The Crossing (docs/session-result-concept.md Phase 4 / the
-          2026-08-13 "Crossing" design) — one philosopher-voiced question
-          built from the active wish, offered only once it exists and
-          nothing was generated for it yet. Not auto-fired on page load —
-          a quiet, named invitation, matching "offered, not pushed." Once
-          a Crossing exists, the philosopher's QUESTION is shown, but the
-          user's own ANSWER — not the question — is the thing that gets
-          kept; generation is idempotent per wish+reading pair (visiting
-          again never regenerates a new question). */}
-      {activeWish && !crossing && (
-        <View style={styles.crossingSection}>
-          <Pressable style={styles.crossingInviteRow} onPress={handleGenerateCrossing} disabled={crossingLoading}>
-            <Text style={styles.crossingInviteText}>
-              {crossingLoading
-                ? t('yourArc.crossingLoading')
-                : t('yourArc.crossingInvite', { name: philosopher?.name ?? '' })}
-            </Text>
-          </Pressable>
-        </View>
-      )}
-
-      {crossing && (
-        <View style={styles.crossingSection}>
-          <Text style={styles.crossingHeading}>
-            {t('yourArc.crossingHeading', { name: philosopher?.name ?? '' })}
-          </Text>
-          <Text style={styles.crossingQuestion}>{crossing.question}</Text>
-
-          {crossing.answer ? (
-            <>
-              <Text style={styles.crossingAnsweredLabel}>{t('yourArc.crossingAnsweredLabel')}</Text>
-              <Text style={styles.crossingAnswerText}>{crossing.answer}</Text>
-              <Text style={styles.crossingSendHint}>{t('yourArc.crossingSendHint')}</Text>
-            </>
-          ) : (
-            <View style={styles.crossingInputRow}>
-              <TextInput
-                style={styles.crossingInput}
-                value={crossingAnswerInput}
-                onChangeText={setCrossingAnswerInput}
-                placeholder={t('yourArc.crossingPlaceholder')}
-                placeholderTextColor={colors.text.muted}
-                multiline
-                editable={!crossingSubmitting}
-              />
-              <Pressable
-                style={[
-                  styles.crossingSendButton,
-                  { backgroundColor: `rgb(${accentRgb})`, opacity: crossingAnswerInput.trim() && !crossingSubmitting ? 1 : 0.4 },
-                ]}
-                onPress={handleSubmitCrossingAnswer}
-                disabled={!crossingAnswerInput.trim() || crossingSubmitting}
-              >
-                <Text style={styles.crossingSendButtonText}>↑</Text>
-              </Pressable>
-            </View>
-          )}
-        </View>
-      )}
-
-      {/* Fulfilled wishes (2026-08-19) — every wish in allWishes the user
-          has ticked, oldest first (savedAt order, not fulfilledAt — this
-          reads as "wishes that came true," a record of what was WISHED,
-          not a log of ticking activity). Only rendered once at least one
-          exists; a person with none ticked yet sees no empty-state
-          placeholder here, matching the rest of this screen's "a
-          section that has nothing to show just doesn't render" pattern
-          (e.g. the resurfaced-wish page). Each row can be un-ticked the
-          same way it was ticked. */}
-      {fulfilledWishes.length > 0 && (
-        <View style={styles.fulfilledWishesSection}>
-          <Text style={styles.wishHeading}>{t('yourArc.fulfilledWishesHeading')}</Text>
-          {fulfilledWishes.map((wish) => (
-            <View key={wish.id} style={styles.fulfilledWishRow}>
-              <Text style={styles.fulfilledWishText}>{wish.text}</Text>
-              <Pressable
-                onPress={() => handleToggleWishFulfilled(wish)}
-                disabled={wishFulfillPending === wish.id}
-              >
-                <Text style={styles.fulfilledWishUnmark}>{t('yourArc.wishFulfilledMark')}</Text>
-              </Pressable>
-            </View>
-          ))}
-        </View>
-      )}
-    </ScrollView>
+    <WishCrossingPage
+      key="wish-crossing"
+      activeWish={activeWish}
+      wishComposerOpen={wishComposerOpen}
+      setWishComposerOpen={setWishComposerOpen}
+      newWishInput={newWishInput}
+      setNewWishInput={setNewWishInput}
+      newWishSubmitting={newWishSubmitting}
+      newWishRetryOffered={newWishRetryOffered}
+      wishFulfillPending={wishFulfillPending}
+      crossing={crossing}
+      crossingLoading={crossingLoading}
+      crossingAnswerInput={crossingAnswerInput}
+      setCrossingAnswerInput={setCrossingAnswerInput}
+      crossingSubmitting={crossingSubmitting}
+      fulfilledWishes={fulfilledWishes}
+      philosopherName={philosopher?.name}
+      accentRgb={accentRgb}
+      onGenerateCrossing={handleGenerateCrossing}
+      onSubmitCrossingAnswer={handleSubmitCrossingAnswer}
+      onSubmitNewWish={handleSubmitNewWish}
+      onToggleWishFulfilled={handleToggleWishFulfilled}
+    />
   );
 
   // Page 5 — the closing page (docs/your-arc-expansion-plan.md, Thread 2,
@@ -1061,66 +733,24 @@ function YourArcScreen() {
   //    button) — never scored, never reflected back by the app. This is
   //    what makes the page a CLOSE rather than one more view: something
   //    done, not just read.
-  {
-    const latestReading = readingLog.length > 0 ? readingLog[readingLog.length - 1] : null;
-    const latestLevel = latestReading
-      ? VIBRATION_LEVELS.find((l) => l.slug === latestReading.levelSlug)
-      : null;
-    const latestLevelName = latestLevel ? getLocalizedLevelName(latestLevel, locale) : null;
-
-    if (latestReading) {
-      closingPageIndex = pages.length;
-      pages.push(
-        <ScrollView key="closing" contentContainerStyle={styles.pageCentered}>
-          {/* Arrival beat (2026-08-20) — closingArrivalStyle animates
-              scale+opacity from 0.94/0 to 1/1 each time closingArrivalToken
-              changes (see that state's own comment for why a token, not a
-              boolean, and why this can't just be a mount effect). Same
-              curve/duration ArcKaleidoscope's own entrance uses, so
-              reaching this page reads as arriving, matching "gather,
-              condense, become," not one more instant page swap. */}
-          <Animated.View style={closingArrivalStyle}>
-            <Text style={styles.closingSynthesis}>
-              {activeWish
-                ? t('yourArc.closingSynthesisWithWish', { level: latestLevelName, wish: activeWish.text })
-                : t('yourArc.closingSynthesisNoWish', { level: latestLevelName })}
-            </Text>
-            <Text style={styles.closingNeedLine}>{t('yourArc.closingNeedLine')}</Text>
-            {!activeWish && !wishComposerOpen && (
-              <Pressable style={styles.closingWishInvite} onPress={() => setWishComposerOpen(true)}>
-                <Text style={styles.closingWishInviteText}>{t('yourArc.closingWishInvite')}</Text>
-              </Pressable>
-            )}
-            {closingWriteSaved ? (
-              <Text style={styles.closingWriteSavedText}>{t('yourArc.closingWriteSaved')}</Text>
-            ) : (
-              <View style={styles.closingWriteSection}>
-                <Text style={styles.closingPrompt}>{t('yourArc.closingPrompt')}</Text>
-                <TextInput
-                  style={styles.closingWriteInput}
-                  value={closingWriteInput}
-                  onChangeText={setClosingWriteInput}
-                  placeholder={t('yourArc.closingPromptPlaceholder')}
-                  placeholderTextColor={colors.text.muted}
-                  multiline
-                  editable={!closingWriteSubmitting}
-                />
-                <Pressable
-                  style={[
-                    styles.closingWriteButton,
-                    { opacity: closingWriteInput.trim() && !closingWriteSubmitting ? 1 : 0.4 },
-                  ]}
-                  onPress={handleSubmitClosingWrite}
-                  disabled={!closingWriteInput.trim() || closingWriteSubmitting}
-                >
-                  <Text style={styles.closingWriteButtonText}>{t('yourArc.closingWriteButton')}</Text>
-                </Pressable>
-              </View>
-            )}
-          </Animated.View>
-        </ScrollView>
-      );
-    }
+  if (latestReading) {
+    closingPageIndex = pages.length;
+    pages.push(
+      <ClosingPage
+        key="closing"
+        activeWish={activeWish}
+        wishComposerOpen={wishComposerOpen}
+        setWishComposerOpen={setWishComposerOpen}
+        latestReading={latestReading}
+        latestLevelName={latestLevelName}
+        closingWriteSaved={closingWriteSaved}
+        closingWriteInput={closingWriteInput}
+        setClosingWriteInput={setClosingWriteInput}
+        closingWriteSubmitting={closingWriteSubmitting}
+        onSubmitClosingWrite={handleSubmitClosingWrite}
+        closingArrivalStyle={closingArrivalStyle}
+      />
+    );
   }
 
   // (Former Page 5 slot — "This month" facts page — merged into the
@@ -1147,70 +777,17 @@ function YourArcScreen() {
   // overlay).
   if (selected) {
     pages.push(
-      <ScrollView key="detail" contentContainerStyle={styles.pageContent}>
-        <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
-        {selectedRich ? (
-          <>
-            <Text style={styles.detailLevel}>
-              {getLocalizedLevelName(selectedRich.vibrationLevel, locale)}
-            </Text>
-            {selectedRich.combinationMessage && (
-              <Text style={styles.detailReflection}>{selectedRich.combinationMessage}</Text>
-            )}
-
-            {/* What you said — grouped by sphere, reusing AccountSection's
-                own question/answer rendering pattern rather than
-                inventing a second one. Purely descriptive, same as
-                everywhere else on this screen — never captioned with
-                what any of it means. */}
-            {selectedRich.qaPairs.length > 0 && (
-              <View style={styles.momentSection}>
-                <Text style={styles.momentHeading}>{t('yourArc.whatYouSaid')}</Text>
-                {selectedRich.qaPairs.map((pair, i) => (
-                  <View key={i} style={styles.momentQA}>
-                    <Text style={styles.momentQuestion}>{pair.question}</Text>
-                    <Text style={styles.momentAnswer}>{pair.answer}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* The conversation that followed, if one was saved (Selfinder+). */}
-            {loadingConversation ? null : linkedConversation && (
-              <View style={styles.momentSection}>
-                <Text style={styles.momentHeading}>{t('yourArc.whatYouTalkedAbout')}</Text>
-                {linkedConversation.messages.map((msg, i) => (
-                  <ChatTurn key={i} role={msg.role}>{msg.content}</ChatTurn>
-                ))}
-              </View>
-            )}
-
-            {/* A Spill entry kept close in time to this reading, if any —
-                see SPILL_MATCH_WINDOW_MS's own comment for why this is a
-                loose match, not a hard link. */}
-            {linkedSpillEntry && (
-              <View style={styles.momentSection}>
-                <Text style={styles.momentHeading}>{t('yourArc.whatYouWrote')}</Text>
-                <Text style={styles.momentSpillText}>{linkedSpillEntry.text}</Text>
-              </View>
-            )}
-          </>
-        ) : (
-          <>
-            <Text style={styles.detailLevel}>{selected.levelSlug}</Text>
-            {session && !richHistory && (
-              <Text style={styles.detailNote}>
-                {t('yourArc.turnOnSavingNote')}
-              </Text>
-            )}
-            {!session && (
-              <Text style={styles.detailNote}>
-                {t('yourArc.signInToSaveNote')}
-              </Text>
-            )}
-          </>
-        )}
-      </ScrollView>
+      <DetailPage
+        key="detail"
+        selected={selected}
+        selectedRich={selectedRich}
+        linkedConversation={linkedConversation}
+        loadingConversation={loadingConversation}
+        linkedSpillEntry={linkedSpillEntry}
+        hasSession={!!session}
+        hasRichHistory={!!richHistory}
+        locale={locale}
+      />
     );
   }
 
@@ -1293,69 +870,8 @@ function YourArcScreen() {
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  // Each swipeable page is its own ScrollView (per PagedScrollView's own
-  // contract — a child that needs vertical scroll wraps its own content),
-  // so there are two content-container shapes rather than one shared
-  // `content`: pageCentered vertically centers short, hero-like pages
-  // (Cover, Now) so they don't read as a tall page with content stranded
-  // at the top; pageContent is a plain top-anchored padded column for
-  // pages with more to read (What calls you, facts, Every walk, sphere
-  // history, detail).
-  pageCentered: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: spacing[6],
-    paddingBottom: spacing[12],
-  },
-  pageContent: {
-    flexGrow: 1,
-    padding: spacing[6],
-    paddingBottom: spacing[16],
-  },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
   backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  kicker: {
-    alignSelf: 'flex-start',
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  // The Arc line page's own container (2026-08-22) — deliberately just
-  // centers one line of text with generous padding, the quietest page in
-  // the whole pager on purpose (see the page's own JSX comment on pacing).
-  arcLinePageContent: {
-    flexGrow: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: spacing[8],
-  },
-  // Philosopher voice — now its own page (2026-08-22), previously opened
-  // Cover above the kaleidoscope (2026-08-20 round 3) — matches RULES.md's
-  // standing "philosopher voice, then plain clarifying line" pattern, this
-  // page's clarifying line being simply the fact that it's followed by the
-  // record itself (Facts, the cone, etc.). No fontStyle: 'italic' —
-  // dropped, it was a silent no-op on this typeface (see the JSX comment
-  // at this line's own Text element); quote marks in the string carry the
-  // "this is spoken" signal instead of a slant that was never rendering.
-  coverPhilosopherLine: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-  },
-  introLine: {
-    alignSelf: 'flex-start',
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[3],
-    marginBottom: spacing[8],
-  },
   loadingNote: {
     alignSelf: 'flex-start',
     color: colors.text.faint,
@@ -1384,393 +900,6 @@ function makeStyles(colors: Colors) {
   },
   pagerVisible: {
     flex: 1,
-  },
-  // Still real sentences, same voice as introLine (not a stat-block/badge
-  // register — no bare numbers, no label-colon-value rows) — these are
-  // the immediate answer to "what is this page," sitting before the
-  // sparkline rather than only surfacing after a tap. Pulled up slightly
-  // to sit closer to introLine than the sparkline below it (introLine's
-  // own marginBottom already provides the gap down to the sparkline when
-  // there are no facts to show). Real gap between rows (not factLine's
-  // own line-height alone) is what sets this apart from a paragraph —
-  // each fact now reads as its own noticed thing, not a continuation of
-  // the sentence above it.
-  // alignSelf: 'flex-start' — needed once this section moved onto the Now
-  // page (2026-08-18 merge), whose pageCentered container horizontally
-  // centers its children by default; without this the facts block (and
-  // each left-aligned row inside it) would float centered instead of
-  // reading as a continuation of introLine's own left-aligned column
-  // directly above it. The original standalone facts page used
-  // pageContent (already left-anchored), so this wasn't needed there.
-  // width: '100%' (not just alignSelf: 'flex-start') is load-bearing: a
-  // flex column with no explicit width shrinks to fit its content in
-  // React Native, and factLine below (flex: 1, meant to let long fact
-  // text wrap) computes to zero width inside a shrink-to-fit parent with
-  // nothing to flex against — confirmed live (2026-08-19): the dots
-  // rendered but every fact's text was invisible, collapsed to nothing,
-  // on a real device. width: '100%' gives factRow's flex: 1 children a
-  // real container width to divide.
-  factsSection: {
-    alignSelf: 'flex-start',
-    width: '100%',
-    marginTop: spacing[3],
-    marginBottom: spacing[3],
-    gap: spacing[3],
-  },
-  factRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing[2],
-  },
-  // Same restrained "a dot, colored by what's actually true" language
-  // SphereArc's own trace dots already use — steadiest takes its real
-  // level's color; the count-based facts take the page's one accent color
-  // (never a second invented hue, per aesthetic.md's "one color per
-  // screen" rule). Sized to sit level with the first line of text, not
-  // vertically centered on a wrapped two-line fact.
-  factDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-    backgroundColor: colors.text.faint,
-  },
-  factLine: {
-    flex: 1,
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  // Past readings list (2026-08-20) — same date-then-level row shape as
-  // AccountSection's own history list on the You page, no bare score
-  // (per RULES.md — see that file's own fix). No border/box per
-  // aesthetic.md's "no cards" rule; a thin top border on the section as a
-  // whole (matching AccountSection's historySection) is enough to
-  // separate this from the facts above it without boxing each row.
-  pastReadingsSection: {
-    marginTop: spacing[6],
-    paddingTop: spacing[4],
-    borderTopWidth: 1,
-    borderTopColor: colors.bg.border,
-    gap: spacing[1],
-  },
-  pastReadingsKicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginBottom: spacing[2],
-  },
-  pastReadingRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-  pastReadingDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  pastReadingLevel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  // "Held, not displayed" — the row itself is a plain sentence (an
-  // instruction/label, not a card), no border/box per aesthetic.md's
-  // "no cards" rule. Sits between the
-  // facts and the sparkline: it's its own kind of true, real information
-  // about the record, same tier as the facts above it, but distinct
-  // enough (a private, held thing rather than a public count) to get its
-  // own quiet section instead of joining the factsSection list.
-  wishSection: {
-    marginBottom: spacing[6],
-  },
-  wishRow: { paddingVertical: spacing[1] },
-  wishRowText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  // Revealed state — same visual register as momentHeading/momentSpillText
-  // below (the wish is the person's own written words, same kind of
-  // material as a kept Spill entry), not a new visual language invented
-  // just for this one row.
-  wishHeading: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  wishDate: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[1],
-  },
-  wishText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[2],
-  },
-  wishHint: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[2],
-  },
-  wishGroundRuleNote: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
-    marginTop: spacing[2],
-  },
-  // Ticking fulfilled (2026-08-19) — deliberately quiet, same weight as
-  // wishHint/wishGroundRuleNote rather than a prominent button; this is
-  // an optional, low-ceremony action, not the page's main call to action.
-  wishFulfillRow: { paddingVertical: spacing[1], marginTop: spacing[2] },
-  wishFulfillText: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-  },
-  // The fulfilled-wishes list — same "no cards" register as everything
-  // else on this page. Each row pairs the wish's own words (italic, same
-  // register as wishText — it's the same kind of material) with a small
-  // trailing un-tick control, not a checkbox/badge icon (per aesthetic.md,
-  // no new iconography for something a plain word already says).
-  fulfilledWishesSection: { marginBottom: spacing[6], gap: spacing[3] },
-  fulfilledWishRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: spacing[3],
-    marginTop: spacing[2],
-  },
-  fulfilledWishText: {
-    flex: 1,
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  fulfilledWishUnmark: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-  },
-  // The closing page (2026-08-20, Thread 2) — centered like Cover/Cone,
-  // not left-aligned like the list-style pages, since this is a single
-  // felt moment, not content to scan.
-  closingSynthesis: {
-    color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.md,
-    lineHeight: fontSizes.md * lineHeights.normal,
-    textAlign: 'center',
-  },
-  closingNeedLine: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-    marginTop: spacing[5],
-    paddingHorizontal: spacing[4],
-  },
-  closingWishInvite: { marginTop: spacing[5] },
-  closingWishInviteText: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-  },
-  closingWriteSection: { width: '100%', marginTop: spacing[8], alignItems: 'center' },
-  closingPrompt: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-    marginBottom: spacing[3],
-  },
-  closingWriteInput: {
-    width: '100%',
-    minHeight: 80,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
-    color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  },
-  closingWriteButton: { alignSelf: 'center', marginTop: spacing[3], paddingVertical: spacing[1] },
-  closingWriteButtonText: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-  },
-  closingWriteSavedText: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-    marginTop: spacing[8],
-  },
-  // The Crossing — same "no cards" register as the wish section above
-  // (a plain sentence/row, not a bordered box), until it's answered, at
-  // which point it reads as its own small moment (heading, question,
-  // saved answer) matching momentSection's own visual language.
-  crossingSection: { marginBottom: spacing[6] },
-  crossingInviteRow: { paddingVertical: spacing[1] },
-  crossingInviteText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  crossingHeading: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  crossingQuestion: {
-    color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
-    marginTop: spacing[2],
-    marginBottom: spacing[3],
-  },
-  crossingAnsweredLabel: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginTop: spacing[2],
-  },
-  crossingAnswerText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[1],
-  },
-  crossingSendHint: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[2],
-  },
-  crossingInputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
-  crossingInput: {
-    flex: 1,
-    minHeight: 44,
-    maxHeight: 120,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
-    color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    paddingHorizontal: spacing[4],
-    paddingVertical: spacing[3],
-  },
-  crossingSendButton: {
-    width: 44,
-    height: 44,
-    borderRadius: radius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  crossingSendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
-  fullLineNote: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginBottom: spacing[3],
-  },
-  pastReadingsTapHint: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginBottom: spacing[3],
-  },
-  detailSection: {
-    gap: spacing[2],
-    paddingTop: spacing[4],
-    borderTopWidth: 1,
-    borderTopColor: colors.bg.border,
-  },
-  detailDate: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textTransform: 'uppercase',
-    letterSpacing: letterSpacings.wide,
-  },
-  detailLevel: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    textTransform: 'capitalize',
-  },
-  detailReflection: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[1],
-  },
-  detailNote: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-    marginTop: spacing[1],
-  },
-  momentSection: { marginTop: spacing[5], gap: spacing[3] },
-  momentHeading: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  momentQA: { gap: spacing[1] },
-  momentQuestion: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-  },
-  momentAnswer: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  momentSpillText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
   },
   });
 }
