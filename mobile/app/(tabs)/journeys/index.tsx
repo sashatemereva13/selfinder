@@ -3,13 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColors } from '../src/theme/useThemeColors';
-import { useThemeStore } from '../src/store/themeStore';
-import type { Colors } from '../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
-import { spacing } from '../src/theme/spacing';
-import { AmbientGlow } from '../src/components/AmbientGlow';
-import { JourneyKey } from '../src/types';
+import { useThemeColors } from '../../../src/theme/useThemeColors';
+import { useThemeStore } from '../../../src/store/themeStore';
+import type { Colors } from '../../../src/theme/colors';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
+import { spacing } from '../../../src/theme/spacing';
+import { AmbientGlow } from '../../../src/components/AmbientGlow';
+import { ProfileIcon } from '../../../src/components/ProfileIcon';
+import { JourneyKey } from '../../../src/types';
 
 // The three temporal groups a Journey's own movement belongs to (see
 // docs/journeys-concept.md's "Catalog" section) — PAST -> NOW (something
@@ -101,14 +102,13 @@ export default function ProductsScreen() {
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
+    <View style={styles.rootWrap}>
+      <ProfileIcon />
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+      >
       {theme === 'dark' && <AmbientGlow />}
-      <Pressable style={styles.backRow} onPress={() => router.back()}>
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
 
       <Text style={styles.title}>{t('products.title')}</Text>
       <Text style={styles.intro}>{t('products.intro')}</Text>
@@ -145,16 +145,16 @@ export default function ProductsScreen() {
           </View>
         );
       })}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
+  rootWrap: { flex: 1, backgroundColor: colors.bg.base },
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
-  backRow: { paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   title: {
     color: colors.text.primary,
     fontFamily: fonts.medium,

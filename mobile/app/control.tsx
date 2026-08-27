@@ -15,7 +15,7 @@ import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading
 import { JourneyWizard } from '../src/components/JourneyWizard';
 import { AgencySortPrimitive } from '../src/components/AgencySortPrimitive';
 import { JourneyReflection } from '../src/components/JourneyReflection';
-import { CONTROL_SLOTS } from '../src/content/journeys/control';
+import { CONTROL_STAGES } from '../src/content/journeys/control';
 import { JourneySessionDTO } from '../src/types';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 
@@ -76,19 +76,19 @@ export default function ControlScreen() {
       ) : completedSession ? (
         <JourneyReflection
           beganLabelKey="control.reflectionBegan"
-          beganAnswer={completedSession.slots[0]?.answer ?? ''}
+          beganAnswer={completedSession.stages[0]?.finalAnswer ?? ''}
           arrivedLabelKey="control.reflectionArrived"
-          arrivedAnswer={completedSession.slots[completedSession.slots.length - 1]?.answer ?? ''}
+          arrivedAnswer={completedSession.stages[completedSession.stages.length - 1]?.finalAnswer ?? ''}
         />
       ) : (
         <JourneyWizard
           journey="control"
           purchaseId={mostRecentPurchase.id}
-          slots={CONTROL_SLOTS}
+          stages={CONTROL_STAGES}
           onComplete={setCompletedSession}
-          renderSlotInput={(slot, onSubmit, priorAnswers) => {
-            if (slot.primitive !== 'agency-sort') return null;
-            return <AgencySortPrimitive items={priorAnswers} onSubmit={onSubmit} />;
+          renderStageInput={(stage, onSubmit, priorFinalAnswers, extractedPropositions) => {
+            if (stage.primitive !== 'agency-sort') return null;
+            return <AgencySortPrimitive items={extractedPropositions ?? priorFinalAnswers} onSubmit={onSubmit} />;
           }}
         />
       )}

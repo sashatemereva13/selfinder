@@ -20,11 +20,13 @@
     "axisGrounding": "grounding",
     "tabDepths": "Depths",
     "tabGuide": "Guide",
-    "tabYou": "You"
+    "tabYou": "You",
+    "tabJourneys": "Journeys",
+    "tabYourArc": "Your Arc"
   },
   "you": {
     "howToUseLink": "How to use Selfinder →",
-    "productsLink": "Products →",
+    "productsLink": "Journeys →",
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
     "chooseWhoWalksBesideYou": "Choose who walks beside you",
@@ -111,6 +113,15 @@
   },
   "depths": {
     "kicker": "Depths",
+    "intentionPrompt": "What would you like to do with what's here?",
+    "stayWithIt": "Stay with it",
+    "stayWithItCardsOnly": "Draw a symbol",
+    "stayWithItCardsAndSpill": "Draw a symbol · Spill",
+    "understandIt": "Understand it",
+    "understandItDescription": "Talk with {{name}}",
+    "shiftIt": "Shift it",
+    "shiftItDescription": "Breathe · Tune In",
+    "exploreTheMap": "Explore the map of states →",
     "talkToAboutIt": "Talk to {{name}} about it →",
     "iJustMeasuredMyself": "I just measured myself: {{level}}, mostly in {{axis}}. Can we talk about it?",
     "mySphereJustReadAs": "My {{sphere}} just read as {{level}}. Can we talk about it?",
@@ -197,6 +208,10 @@
   "yourArc": {
     "kicker": "Your arc",
     "nowKicker": "Now",
+    "centerRowLabel": "Center",
+    "centerRowDescriptionFirst": "A kaleidoscope and light cone made from your saved history — a new result every time you get it.",
+    "centerRowDescriptionReturning_one": "You've made {{count}} of these. Get another.",
+    "centerRowDescriptionReturning_other": "You've made {{count}} of these. Get another.",
     "factsKicker": "This month",
     "pastReadingsHeading": "Every reading",
     "introLine_one": "{{count}} reading, on {{sinceDate}}.",
@@ -281,7 +296,7 @@
     "fadingOutIn": "Fading out in {{time}}"
   },
   "products": {
-    "title": "Products",
+    "title": "Journeys",
     "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record. No subscription required.",
     "groupPast": "What the past is still doing here",
     "groupPresent": "What's actually happening now",

@@ -20,9 +20,11 @@ import { spacing } from '../theme/spacing';
 // 1525 conical-spiral construction and a modern conical-helix parametric
 // plot) rather than a flat disc. The cone's wide base sits at/around the
 // aura; its narrow apex is Measure, the entry point of a session — the
-// walk descends from there through Spill, Talk about it, Cards, Your
-// Arc, Levels, Tune In, and finally dissolves into the aura's own center
-// at Breathing. This is deliberate, not just a layout choice: it's
+// walk descends from there through Spill, Talk about it, Cards, Levels,
+// Tune In, and finally dissolves into the aura's own center at Breathing
+// (Your Arc's own slot removed 2026-08-27 once it became its own bottom
+// tab — see docs/app-architecture-concept.md). This is deliberate, not
+// just a layout choice: it's
 // RULES.md's own deepest product rule ("the answers are already inside
 // the person — Selfinder never supplies them") expressed spatially — the
 // walk ends where it started, inside the person, not in the app. Same
@@ -43,12 +45,16 @@ const PHI = 1.6180339887498948;
 // point simply appears at its own already-reserved angle; a returning
 // user's spatial memory of "Tune In sits here" never gets disturbed by
 // something unrelated unlocking.
+// 'yourArc' removed from this list (2026-08-27 nav restructure, see
+// docs/app-architecture-concept.md) — Your Arc is now its own bottom tab,
+// so a spiral dot for it would be a duplicate destination. Kept as a
+// removed-not-renamed key in this comment for history; SLOT_ORDER/SLOT_H
+// below must stay the same length and order as each other.
 export type SpiralSlotKey =
   | 'measure'
   | 'spill'
   | 'talkAboutIt'
   | 'cards'
-  | 'yourArc'
   | 'levels'
   | 'tunein'
   | 'breathing';
@@ -58,7 +64,6 @@ const SLOT_ORDER: SpiralSlotKey[] = [
   'spill',
   'talkAboutIt',
   'cards',
-  'yourArc',
   'levels',
   'tunein',
   'breathing',
@@ -77,11 +82,12 @@ export const PREFIX_WALK_KEYS: SpiralSlotKey[] = ['levels', 'tunein', 'breathing
 
 // The spiral winds three full turns, not one partial sweep — each turn is
 // a theme, not just a shape: "find yourself" (Measure, Spill, Talk about
-// it, Cards — the reflective/expressive tools), "learn" (Your Arc,
-// Levels — the pattern/knowledge tools), "regulate" (Tune In, Breathing —
+// it, Cards — the reflective/expressive tools), "learn" (Levels — the
+// pattern/knowledge tool; Your Arc's own slot removed 2026-08-27, see
+// this file's own header comment), "regulate" (Tune In, Breathing —
 // the calming tools). Slot→h is a lookup table, not a formula, because
 // the three winds don't get equal shares of the curve (4 tools in the
-// first wind, 2 each in the other two) — h still runs 0..1 monotonically
+// first wind, 1 in the second, 2 in the third) — h still runs 0..1 monotonically
 // DECREASING with slot index (h=1 at slot 0/Measure, h→0 toward the
 // curve's own bare endpoint), just not evenly spaced per slot.
 //
@@ -109,16 +115,10 @@ const SLOT_H: number[] = [
   WIND_1_START - (WIND_1_START - WIND_1_END) * 0.3,          // spill
   WIND_1_START - (WIND_1_START - WIND_1_END) * 0.65,         // talkAboutIt
   WIND_1_END,                                                 // cards — end of wind 1
-  // yourArc — was the exact midpoint of wind 2 (0.5 fraction), which put
-  // its dot only ~40px from levels' own dot on a real device (well under
-  // HIT's own 44px minimum touch target, so their tap zones directly
-  // overlapped — confirmed by the direct geometry math, not just eyeballing
-  // the screenshot; see collaboration notes on IMG_3945/3946, "easy to
-  // accidentally press Levels instead of Your Arc"). 0.35 (biased toward
-  // cards instead of dead-center) opens that to ~105px from levels and
-  // ~94px from cards — both comfortably clear, and reasonably balanced
-  // between its two neighbors rather than skewed hard to one side.
-  WIND_1_END - (WIND_1_END - WIND_2_END) * 0.35,              // yourArc — biased toward cards within wind 2
+  // yourArc's own slot (formerly here, mid wind 2) removed 2026-08-27 once
+  // Your Arc became its own bottom tab — see docs/app-architecture-
+  // concept.md. Wind 2 now runs straight from cards (end of wind 1) to
+  // levels (end of wind 2) with no stop between them.
   WIND_2_END,                                                 // levels — end of wind 2
   WIND_2_END - (WIND_2_END - H_BREATHING) * 0.5,              // tunein — mid wind 3
   H_BREATHING,                                                 // breathing — just before the bare terminus
@@ -445,7 +445,7 @@ const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 interface DepthsSpiralProps {
   width: number;
   height: number;
-  points: SpiralPoint[]; // one entry per SLOT_ORDER key, always 8 long
+  points: SpiralPoint[]; // one entry per SLOT_ORDER key, same length as SLOT_ORDER
   accentRgb: string;
   onPointPress: (key: SpiralSlotKey) => void;
   // 0 → all three prefix tools untouched today, 3 → all visited today as
@@ -491,14 +491,6 @@ interface DepthsSpiralProps {
 
 const HIT = 44; // iOS/Android minimum recommended touch target
 const DOT_RADIUS = 4.5;
-// yourArc reads as an extra, not an equal peer to the other seven tools —
-// it's the Selfinder+ seed (RULES.md, Product/positioning: "a next step
-// some users are meant to genuinely adopt... gets full row weight"). Per
-// aesthetic.md's "position and size carry differentiation, not boxes or
-// color" rule, a slightly larger dot (not a new hue) is the right lever —
-// same visual language every other point already uses, just turned up on
-// this one. Modest on purpose: this is a hint, not a badge.
-const YOUR_ARC_DOT_RADIUS = DOT_RADIUS * 1.4;
 
 export function DepthsSpiral({
   width,
@@ -657,13 +649,19 @@ export function DepthsSpiral({
     return tailSamples.map((p, i) => `${i === 0 ? 'M' : 'L'}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
   }, [geometry]);
 
-  // Prefix tools sit at slots 5/6/7 (levels/tunein/breathing) — prefixCount
-  // 0..3 maps to "traced up through slot 4 (nothing)/5/6/7."
+  // Derived from SLOT_ORDER/PREFIX_WALK_KEYS rather than a hardcoded slot
+  // number — was a literal `4 + prefixCount` (assuming levels/tunein/
+  // breathing always sit at slots 5/6/7), which silently broke the day
+  // SLOT_ORDER's length changed (Your Arc's slot removed once it became
+  // its own tab — see docs/app-architecture-concept.md). prefixCount 0..N
+  // maps to "traced up through the slot right before PREFIX_WALK_KEYS[0]
+  // (nothing) / PREFIX_WALK_KEYS[0] / [1] / ... [N-1]."
+  const prefixAnchorSlot = SLOT_ORDER.indexOf(PREFIX_WALK_KEYS[0]) - 1;
   const targetLength = useMemo(() => {
     if (prefixCount <= 0) return 0;
-    const slotIndex = 4 + prefixCount; // 5, 6, or 7
+    const slotIndex = prefixAnchorSlot + prefixCount;
     return geometry.cumulativeLengthAtSlot[slotIndex] ?? 0;
-  }, [prefixCount, geometry]);
+  }, [prefixCount, geometry, prefixAnchorSlot]);
 
   const traceProgress = useSharedValue(0);
   useEffect(() => {
@@ -777,8 +775,7 @@ export function DepthsSpiral({
           // walk — that's informational, not a judgment on any one dot.
           const { x, y } = geometry.points[i];
           const { labelX, labelY, align } = layout;
-          const isYourArc = point.key === 'yourArc';
-          const dotRadius = isYourArc ? YOUR_ARC_DOT_RADIUS : DOT_RADIUS;
+          const dotRadius = DOT_RADIUS;
 
           return (
             <View key={point.key}>
@@ -811,20 +808,12 @@ export function DepthsSpiral({
                   dot's own hitSlop. */}
               <Pressable
                 onPress={() => onPointPress(point.key)}
-                hitSlop={isYourArc ? 8 : 4}
+                hitSlop={4}
                 style={[
                   styles.pointLabelHit,
-                  // yourArc's label renders at fontSizes.sm, not the
-                  // shared fontSizes.xs every other point uses (see
-                  // pointLabel below) — this Pressable's own top offset
-                  // and minHeight were still computed from xs, so the
-                  // actual rendered (larger) text could sit partly
-                  // outside its own tap zone. Confirmed on a real device:
-                  // "Your arc"'s dot worked but its label text didn't
-                  // (2026-08-13 collaboration notes) — this is why.
                   {
-                    top: labelY - (isYourArc ? fontSizes.sm : fontSizes.xs) * 0.7,
-                    minHeight: (isYourArc ? fontSizes.sm : fontSizes.xs) * 2.4,
+                    top: labelY - fontSizes.xs * 0.7,
+                    minHeight: fontSizes.xs * 2.4,
                     ...(align === 'right'
                       ? { right: width - labelX, left: undefined, width: 96 }
                       : align === 'left'
@@ -838,8 +827,8 @@ export function DepthsSpiral({
                   style={[
                     styles.pointLabel,
                     {
-                      color: isYourArc ? colors.text.primary : colors.text.secondary,
-                      fontSize: isYourArc ? fontSizes.sm : fontSizes.xs,
+                      color: colors.text.secondary,
+                      fontSize: fontSizes.xs,
                       textAlign: align,
                     },
                   ]}

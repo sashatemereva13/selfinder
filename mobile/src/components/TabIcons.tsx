@@ -33,7 +33,8 @@ export function GuideTabIcon({ color }: { color: string }) {
 
 // A reduced figure outline — head ring + shoulder line — same silhouette
 // AuraFigure uses at icon scale, but as a thin construction line rather
-// than a filled glowing body.
+// than a filled glowing body. Kept for reuse on the profile entry point
+// even though it no longer names a tab (see Phase 5 of the nav restructure).
 export function YouTabIcon({ color }: { color: string }) {
   return (
     <Svg width={24} height={24} viewBox="0 0 28 28">
@@ -45,6 +46,43 @@ export function YouTabIcon({ color }: { color: string }) {
         strokeLinecap="round"
         fill="none"
       />
+    </Svg>
+  );
+}
+
+// A small path stepping through three points — a Journey is a designed
+// sequence, not a single state, so the icon is a route rather than a ring.
+export function JourneysTabIcon({ color }: { color: string }) {
+  return (
+    <Svg width={24} height={24} viewBox="0 0 28 28">
+      <Path
+        d="M5 21 C9 21 8 12 13 12 C17 12 15 7 22 7"
+        stroke={color}
+        strokeWidth={1.4}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Circle cx={5} cy={21} r={1.6} fill={color} />
+      <Circle cx={22} cy={7} r={1.6} fill={color} />
+    </Svg>
+  );
+}
+
+// A single line rising through small marks — Your Arc is the record drawn
+// across many readings over time, not one ring or one moment.
+export function YourArcTabIcon({ color }: { color: string }) {
+  return (
+    <Svg width={24} height={24} viewBox="0 0 28 28">
+      <Path
+        d="M4 20 Q10 6 24 8"
+        stroke={color}
+        strokeWidth={1.4}
+        strokeLinecap="round"
+        fill="none"
+      />
+      <Circle cx={9} cy={13.5} r={1.4} fill={color} />
+      <Circle cx={16} cy={9.3} r={1.4} fill={color} />
+      <Circle cx={24} cy={8} r={1.4} fill={color} />
     </Svg>
   );
 }

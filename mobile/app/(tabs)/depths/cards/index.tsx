@@ -79,7 +79,7 @@ export default function CardsScreen() {
     track('cards_talk_about_it', { card: card.id });
     recordTalkAboutIt();
     sendGuideMessage(philosopher, t('cards.talkAboutItMessage', { name, line }));
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   const handleSpillAboutIt = () => {

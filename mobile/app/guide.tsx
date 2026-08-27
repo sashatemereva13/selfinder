@@ -12,21 +12,21 @@ import {
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useThemeColors } from '../../../src/theme/useThemeColors';
-import { useThemeStore } from '../../../src/store/themeStore';
-import type { Colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
-import { spacing, radius } from '../../../src/theme/spacing';
-import { useWideColumnWidth, useIsLargeScreen } from '../../../src/theme/responsive';
-import { usePhilosopherStore } from '../../../src/store/philosopherStore';
-import { useGuideChatStore } from '../../../src/store/guideChatStore';
-import { useMeasureStore } from '../../../src/store/measureStore';
-import { useEngagementStore } from '../../../src/store/engagementStore';
-import { useAppAccentRgb, useAppAccentButtonRgb } from '../../../src/utils/appAccent';
-import { getNudgeState, getNudgeCopy } from '../../../src/content/guideNudges';
-import { TypingDots } from '../../../src/components/TypingDots';
-import { AmbientGlow } from '../../../src/components/AmbientGlow';
-import { track } from '../../../src/utils/analytics';
+import { useThemeColors } from '../src/theme/useThemeColors';
+import { useThemeStore } from '../src/store/themeStore';
+import type { Colors } from '../src/theme/colors';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
+import { spacing, radius } from '../src/theme/spacing';
+import { useWideColumnWidth, useIsLargeScreen } from '../src/theme/responsive';
+import { usePhilosopherStore } from '../src/store/philosopherStore';
+import { useGuideChatStore } from '../src/store/guideChatStore';
+import { useMeasureStore } from '../src/store/measureStore';
+import { useEngagementStore } from '../src/store/engagementStore';
+import { useAppAccentRgb, useAppAccentButtonRgb } from '../src/utils/appAccent';
+import { getNudgeState, getNudgeCopy } from '../src/content/guideNudges';
+import { TypingDots } from '../src/components/TypingDots';
+import { AmbientGlow } from '../src/components/AmbientGlow';
+import { track } from '../src/utils/analytics';
 
 export default function GuideScreen() {
   const { t } = useTranslation();

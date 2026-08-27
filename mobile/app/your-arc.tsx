@@ -20,6 +20,7 @@ import { getArcLine } from '../src/api/arcLine';
 import { selectWishToResurface } from '../src/utils/wishResurfacing';
 import { findActiveWish, findExistingCrossing } from '../src/utils/crossingEligibility';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
+import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { SavedMeasureResult } from '../src/types';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { PagedScrollView } from '../src/components/PagedScrollView';
@@ -27,6 +28,7 @@ import { buildArcFacts } from '../src/utils/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
+import { ProfileIcon } from '../src/components/ProfileIcon';
 import { ArcLinePage } from '../src/components/yourArcPages/ArcLinePage';
 import { ResurfacedWishPage } from '../src/components/yourArcPages/ResurfacedWishPage';
 import { DetailPage } from '../src/components/yourArcPages/DetailPage';
@@ -127,6 +129,7 @@ function YourArcScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const session = useAuthStore((s) => s.session);
+  const centerPurchases = useJourneyPurchases('center');
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
 
@@ -624,6 +627,8 @@ function YourArcScreen() {
         accentRgb={accentRgb}
         locale={locale}
         onReadingPress={handleFactsReadingPress}
+        centerPurchaseCount={centerPurchases?.length ?? null}
+        onPressCenter={() => router.push('/center')}
       />
     );
   }
@@ -802,6 +807,7 @@ function YourArcScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
+      <ProfileIcon />
       {/* Explicit destination, not router.back() — Your Arc's only real
           entry point is Depths' "Your arc" row, but this is now a
           top-level route (see app/_layout.tsx), so router.back()'s actual

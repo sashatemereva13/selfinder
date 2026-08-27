@@ -493,29 +493,17 @@ function LoggedInAccount({
           entitlement is active — previously subscription.active was
           checked (useIsSubscribed) but never SHOWN anywhere, so even a
           real subscriber had no way to confirm it from within the app.
-          2026-08-22: split into two lines once Selfinder+ became two
-          separate products (see RULES.md) — Your Arc's own ongoing
-          status, plus Center's purchase count (plain, honest phrasing —
-          "purchased N times," never hype-y — matching this app's
-          existing copy register). 2026-08-23: journeyPurchases is now a
-          mixed-Journey array (Center is the only purchasable one today,
-          per RULES.md's Journey family) — filtered to Center specifically
-          here so this line's meaning is unchanged; a future pass can add
-          a line per Journey once more than one is actually purchasable. */}
+          2026-08-27: Center's own purchase-count line, previously here,
+          was removed once Center got a real, prominent, navigable home
+          on Your Arc's Facts page (see docs/app-architecture-concept.md,
+          "Center's home") — the connective-tissue principle that
+          restructure states is that a fact like this shouldn't live in
+          two places once one of them is an actual link, not just status
+          text. */}
       {!loadingProfile && (
-        <>
-          <Text style={styles.subscriptionStatus}>
-            {profile?.arcSubscription?.active ? t('account.arcSubscriptionActive') : t('account.arcSubscriptionInactive')}
-          </Text>
-          <Text style={styles.subscriptionStatus}>
-            {(() => {
-              const centerCount = profile?.journeyPurchases?.filter((p) => p.journey === 'center').length ?? 0;
-              return centerCount > 0
-                ? t('account.centerPurchaseCount', { count: centerCount })
-                : t('account.centerPurchaseCountNone');
-            })()}
-          </Text>
-        </>
+        <Text style={styles.subscriptionStatus}>
+          {profile?.arcSubscription?.active ? t('account.arcSubscriptionActive') : t('account.arcSubscriptionInactive')}
+        </Text>
       )}
 
       {consentGiven && (

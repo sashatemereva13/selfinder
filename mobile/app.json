@@ -2,13 +2,12 @@
   "expo": {
     "name": "Selfinder",
     "slug": "selfinder-app",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.selfinder.app",
-      "buildNumber": "2",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,7 +21,6 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.selfinder.app",
-      "versionCode": 1,
       "permissions": [
         "android.permission.MODIFY_AUDIO_SETTINGS",
         "android.permission.FOREGROUND_SERVICE",

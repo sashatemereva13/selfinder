@@ -3,7 +3,7 @@ import { fonts, fontSizes, lineHeights, letterSpacings } from '../theme/typograp
 import { useThemeColors } from '../theme/useThemeColors';
 
 // Same visual register Guide itself uses for a message bubble (see Turn in
-// app/(tabs)/guide/index.tsx) — extracted so a linked conversation shown
+// app/guide.tsx) — extracted so a linked conversation shown
 // elsewhere (Your Arc's rich re-entry) renders identically rather than
 // inventing a second chat-bubble style. Kept as its own small component
 // rather than exporting Guide's private Turn, since that one is tightly

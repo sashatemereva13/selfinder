@@ -21,6 +21,13 @@ interface FactsPageProps {
   accentRgb: string;
   locale: Locale;
   onReadingPress: (rich: SavedMeasureResult) => void; // handleFactsReadingPress
+  // Center's real primary home (2026-08-27 restructure — see
+  // docs/app-architecture-concept.md, "Center's home"). null while
+  // useJourneyPurchases('center') is still loading/signed-out — the row
+  // still shows (Center needs no purchase to open, same as the Journeys
+  // catalog's own entry), just without a "you've made N" count yet.
+  centerPurchaseCount: number | null;
+  onPressCenter: () => void;
 }
 
 function formatDate(ts: number) {
@@ -41,6 +48,8 @@ export function FactsPage({
   accentRgb,
   locale,
   onReadingPress,
+  centerPurchaseCount,
+  onPressCenter,
 }: FactsPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -53,6 +62,21 @@ export function FactsPage({
       <Text style={styles.introLine}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
+
+      {/* Center's real primary home (2026-08-27 restructure) — full row
+          weight, same as products.tsx's own catalog rows, not a footnote.
+          Center was originally part of Your Arc before spinning out into
+          its own one-time-purchase product; this is closer to a
+          reversion than a new idea — see docs/app-architecture-concept.md. */}
+      <Pressable style={styles.centerRow} onPress={onPressCenter}>
+        <Text style={styles.centerRowLabel}>{t('yourArc.centerRowLabel')}</Text>
+        <Text style={styles.centerRowDescription}>
+          {centerPurchaseCount && centerPurchaseCount > 0
+            ? t('yourArc.centerRowDescriptionReturning', { count: centerPurchaseCount })
+            : t('yourArc.centerRowDescriptionFirst')}
+        </Text>
+      </Pressable>
+
       <View style={styles.factsSection}>
         {facts.map((fact) => {
           if (fact.key === 'steadiest') {
@@ -132,6 +156,24 @@ function makeStyles(colors: Colors) {
       lineHeight: fontSizes.sm * lineHeights.normal,
       marginTop: spacing[3],
       marginBottom: spacing[8],
+    },
+    // Same row weight as products.tsx's own catalog rows (label +
+    // description, top border, no card) — this is a real entry point to a
+    // purchase, not a footnote link.
+    centerRow: {
+      alignSelf: 'stretch',
+      paddingVertical: spacing[4],
+      borderTopWidth: 1,
+      borderTopColor: colors.bg.border,
+      marginBottom: spacing[6],
+    },
+    centerRowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.md },
+    centerRowDescription: {
+      color: colors.text.secondary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      marginTop: spacing[1],
+      lineHeight: fontSizes.sm * lineHeights.normal,
     },
     factsSection: {
       alignSelf: 'flex-start',

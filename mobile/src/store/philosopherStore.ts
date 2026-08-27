@@ -79,7 +79,7 @@ export const usePhilosopherStore = create<PhilosopherStore>((set, get) => ({
 
   // Tracks which philosophers have ever produced a real first-meeting moment
   // in Guide, distinct from "conversation is currently empty" (which also
-  // happens after Clear) — see app/(tabs)/guide/index.tsx.
+  // happens after Clear) — see app/guide.tsx.
   markMet: async (id: string) => {
     if (get().metPhilosopherIds.includes(id)) return;
     const next = [...get().metPhilosopherIds, id];

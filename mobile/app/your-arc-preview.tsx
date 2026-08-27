@@ -18,6 +18,7 @@ import { track } from '../src/utils/analytics';
 import { VIBRATION_LEVELS, getLocalizedLevelName } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
 import { useArcTrialStatus } from '../src/utils/useArcTrialStatus';
+import { ProfileIcon } from '../src/components/ProfileIcon';
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -93,14 +94,16 @@ export default function YourArcPreviewScreen() {
         axis: t(AXIS_LABEL_KEYS[currentResult.dominantAxis] ?? currentResult.dominantAxis),
       }),
     );
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
+    <View style={styles.rootWrap}>
+      <ProfileIcon />
+      <ScrollView
+        style={styles.root}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
+      >
       {/* See your-arc.tsx's identical comment — explicit destination, not
           router.back(), now that this is a top-level route. */}
       <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
@@ -228,12 +231,14 @@ export default function YourArcPreviewScreen() {
       <Text style={styles.footnote}>
         {t('yourArcPreview.footnote')}
       </Text>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
+  rootWrap: { flex: 1, backgroundColor: colors.bg.base },
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },

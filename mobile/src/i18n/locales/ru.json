@@ -20,11 +20,13 @@
     "axisGrounding": "заземлённость",
     "tabDepths": "Глубины",
     "tabGuide": "Проводник",
-    "tabYou": "Вы"
+    "tabYou": "Вы",
+    "tabJourneys": "Путешествия",
+    "tabYourArc": "Ваш путь"
   },
   "you": {
     "howToUseLink": "Как пользоваться Найтись →",
-    "productsLink": "Продукты →",
+    "productsLink": "Путешествия →",
     "walkingWith": "Рядом с вами",
     "changeWhoWalksBesideYou": "Выбрать другого спутника →",
     "chooseWhoWalksBesideYou": "Выберите, кто будет рядом",
@@ -112,6 +114,15 @@
   },
   "depths": {
     "kicker": "Глубины",
+    "intentionPrompt": "Что бы вы хотели сделать с тем, что здесь есть?",
+    "stayWithIt": "Остаться с этим",
+    "stayWithItCardsOnly": "Вытянуть символ",
+    "stayWithItCardsAndSpill": "Вытянуть символ · Выговориться",
+    "understandIt": "Понять это",
+    "understandItDescription": "Поговорить с {{name}}",
+    "shiftIt": "Изменить это",
+    "shiftItDescription": "Подышать · Настроиться",
+    "exploreTheMap": "Исследовать карту состояний →",
     "talkToAboutIt": "Обсудить это с {{name}} →",
     "iJustMeasuredMyself": "Я только что прошёл «Где я»: {{level}}, в основном в {{axis}}. Можем это обсудить?",
     "mySphereJustReadAs": "Моё состояние в сфере «{{sphere}}» определилось как {{level}}. Можем это обсудить?",
@@ -198,6 +209,12 @@
   "yourArc": {
     "kicker": "Ваша траектория",
     "nowKicker": "Сейчас",
+    "centerRowLabel": "Центр",
+    "centerRowDescriptionFirst": "Калейдоскоп и световой конус, созданные из вашей сохранённой истории — каждый раз новый результат.",
+    "centerRowDescriptionReturning_one": "Вы уже делали это {{count}} раз. Сделать ещё.",
+    "centerRowDescriptionReturning_few": "Вы уже делали это {{count}} раза. Сделать ещё.",
+    "centerRowDescriptionReturning_many": "Вы уже делали это {{count}} раз. Сделать ещё.",
+    "centerRowDescriptionReturning_other": "Вы уже делали это {{count}} раз. Сделать ещё.",
     "factsKicker": "В этом месяце",
     "pastReadingsHeading": "Каждое состояние",
     "introLine_one": "{{count}} состояние, {{sinceDate}}.",
@@ -287,7 +304,7 @@
     "fadingOutIn": "Звук начнёт затихать через {{time}}"
   },
   "products": {
-    "title": "Продукты",
+    "title": "Путешествия",
     "intro": "Разовые впечатления, которые покупаются заново каждый раз — отдельно от вашей постоянной истории в «Вашей траектории». Подписка не требуется.",
     "groupPast": "Что из прошлого всё ещё здесь",
     "groupPresent": "Что происходит сейчас",

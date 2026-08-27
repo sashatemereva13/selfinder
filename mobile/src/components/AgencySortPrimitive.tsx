@@ -11,25 +11,31 @@ import { AgencySortResult } from '../types';
 type Bucket = keyof AgencySortResult;
 const BUCKETS: Bucket[] = ['agency', 'influence', 'authorship'];
 
-// Control's slot 7 primitive — "which parts of this belong to you, which
-// don't." Built Control-specific per docs/journeys-concept.md's own note
-// not to prematurely generalize a shared "3-way sort" system before a
+// Control's agency-stage primitive — "which parts of this belong to you,
+// which don't." Built Control-specific per docs/journeys-concept.md's own
+// note not to prematurely generalize a shared "3-way sort" system before a
 // second Journey actually needs one. Tap-to-assign (select a chip, tap a
 // bucket) rather than drag-and-drop — this is a categorical sort, not an
 // explorable range, so React Native drag complexity buys nothing here.
 //
-// V1: the sortable "elements" are the person's own prior answers in this
-// session (one chip per completed slot, full text) rather than
-// NLP-extracted sub-phrases — simpler and more reliable for a first pass;
-// refining to phrase-level extraction is a reasonable later step, not
-// blocking.
+// 2026-08-26: the sortable "elements" are now, when available, AI-cleaned
+// first-person propositions about agency (see journeyController.js's
+// proposition-extraction step) rather than raw prior stage answers —
+// real testing showed raw utterances mix internal states ("I'm feeling
+// confused"), process questions ("Am I trying to control or not?"), and
+// genuine agency claims ("A relationship") on the same footing, producing
+// muddy categorization. `items` itself keeps the same shape (a flat
+// string array) regardless of source — this component doesn't need to
+// know whether what it received was extracted or is the raw fallback
+// (see app/control.tsx's own `extractedPropositions ?? priorFinalAnswers`
+// selection).
 //
 // Per aesthetic.md: no ranking implied between buckets (this is a sort,
 // not a spectrum), one accent color, no cards — three plain labeled
 // sections, position/space carrying the grouping, not boxes or per-bucket
 // hues.
 interface AgencySortPrimitiveProps {
-  items: string[]; // the person's own prior answers, one per completed slot
+  items: string[]; // extracted propositions, or raw per-stage answers as a fallback
   onSubmit: (answer: string, structuredAnswer: AgencySortResult) => void;
 }
 

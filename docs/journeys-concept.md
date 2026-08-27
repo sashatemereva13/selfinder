@@ -186,6 +186,73 @@ threads shaped the slot sequence below:
 8. Recognition       — What do you see differently now?
 ```
 
+**Stages, not single questions — the mechanism that lets each slot
+absorb more than one turn (2026-08-26 redesign, added after real user
+testing):** a slot above is better understood as a fixed psychological
+*stage* with its own goal, not a single question guaranteed to be
+answered in one exchange. Real testing surfaced a concrete failure: the
+Object stage's opening question ("What are you trying to control?")
+answered with "I don't know" led the AI into "meta-reflection about
+meta-reflection" — asking increasingly abstract follow-ups about the
+person's own uncertainty rather than grounding the conversation in an
+actual situation. The fix is a genuine second AI decision, made every
+turn, separate from whether the person engaged at all: **is this stage's
+own goal now satisfied (stage complete, advance to the next stage's
+fixed opening question), or does it need one more concrete grounding
+sub-question on the SAME stage first (stage incomplete, ask again within
+this stage)?** This mechanism — stage-completion judgment, plus a
+matching decision about whether an acknowledgment reply is worth showing
+at all (see below) — is Journey-engine-level, not Control-specific;
+Control's own contribution is only the per-stage GOALS a future Journey
+using stages would need to author for itself (see
+`backend/controllers/journeyController.js`'s `STAGE_GOALS`).
+
+Concretely for Control's Object stage: the goal is landing on one
+concrete, specific thing being controlled — an actual situation,
+relationship, or outcome, never an abstract feeling or a question about
+the process itself. An answer that's vague, abstract, "I don't know," or
+about the conversation rather than the person's life does not satisfy
+the goal — the stage asks one small grounding question (capped at 3
+sub-questions even if still vague, after which whatever concrete-ish
+anchor exists is accepted) before treating itself as complete. This
+absorbs the critique's own proposed opening sub-sequence ("what
+situation brought you here," "what feels unresolved," "what would you
+like to determine") into the Object stage's own internal goal rather
+than adding a ninth stage — a separate concretization stage would have
+ended at almost the same place slot 2 (Desired outcome) already asks,
+creating redundancy rather than a genuinely new layer.
+
+**Acknowledgment gating — the second new decision, same mechanism, a
+different axis:** the AI still produces a candidate acknowledgment
+sentence internally on every turn, but only shows it when it would
+genuinely clarify, distinguish, connect, test, or deepen something the
+person just said — never when it would merely restate or paraphrase
+their own words back to them with no new element. A real acknowledgment
+that survives this test: someone says "I want the relationship to work
+but I also want to know if it will," and the reply is "Those may be two
+different wants: wanting the relationship, and wanting certainty about
+the relationship. Which one feels harder to leave unresolved?" — this
+DISTINGUISHES two things the person had fused into one. A candidate that
+does NOT survive: someone says "I don't know, I'm just confused," and
+the reply would be "I hear that confusion is standing with you right
+now" — this adds nothing they didn't already say, so it is suppressed
+entirely and the next question is asked with no lead-in sentence at all.
+This is a stricter, more specific version of the standing "ask,
+clarify, reflect — never empty affirmation" boundary (see "What
+Selfinder's AI does and doesn't do" above) — the failure mode real
+testing surfaced wasn't the AI saying something false, it was the AI
+saying something true but empty, which reads as therapeutic performance
+rather than genuine investigation. The standard, worth keeping verbatim:
+*every acknowledgment must clarify, distinguish, connect, test, or
+deepen — if it does none of those, it isn't shown.*
+
+**Progress dots represent completed stages, not raw turns.** Because a
+stage can now take several exchanges, the visible progress indicator
+only advances on a real stage completion — a person can have a longer,
+more searching exchange within one stage without the interface reading
+as stalled, since the dot for that stage simply hasn't filled yet, not
+because nothing is happening.
+
 **Responsive branching within the fixed slots** — two real walkthroughs
 of the same architecture:
 
@@ -231,8 +298,7 @@ the sequence itself is what makes it visible.
 
 **The Agency / Influence / Authorship primitive** (slot 7): a
 three-way sorting exercise, not binary "in your control / not in your
-control." The user places their own elements (drawn from what they
-said in slots 1-6) into three categories:
+control." The user places elements into three categories:
 
 - **Agency** — things I can directly choose (what I say, whether I
   leave, whether I try, where I put my attention).
@@ -250,6 +316,37 @@ Visual treatment should follow `docs/design/aesthetic.md`'s existing
 rules exactly: no ranking implied between the three buckets (this is a
 sort, not a spectrum — a closed-shape/bucket UI, not a linear scale),
 one accent color, no cards.
+
+**What gets sorted — extraction, not raw utterances (2026-08-26,
+resolved after real testing):** the elements presented for sorting are
+now AI-extracted first-person propositions about agency, not the
+person's raw prior answers verbatim. Real testing surfaced why this
+matters: raw utterances from slots 1-6 mix genuinely different
+ontological types on one shelf — an object/outcome ("A relationship"),
+an internal state ("I'm feeling confused"), and a question the person
+asked about their own process ("Am I trying to control or not?") — and
+sorting all of them into agency/influence/authorship produced muddy,
+uninterpretable categorization, since an internal state isn't a claim
+about agency at all. The fix is a dedicated extraction step (a separate
+AI call, triggered once the Underlying need stage completes, deliberately
+not merged into the same response as the next-question phrasing — mixing
+extraction and phrasing risks the same invented-content drift problem
+this document already had to solve once for slot-to-slot transitions):
+transform everything said across prior stages into 4-6 clean, first-
+person claims, each one something a person could actually place into one
+of the three buckets (an action, a decision, an outcome, or another
+person's state) — process commentary and feeling-reports are explicitly
+dropped, never forced into a bucket they don't belong in. A worked
+example: raw statements "I want this to become a relationship" / "I
+don't know what he wants" / "I keep wondering what this is" / "I want
+him to choose me" / "I feel confused" / "Am I trying to control or not?"
+extract to "Whether I tell them what I want" / "How I respond to
+uncertainty" / "Whether they want a relationship" / "Whether the
+relationship becomes one" / "What I want" — with "I feel confused" and
+"Am I trying to control or not?" correctly producing no proposition at
+all. If extraction fails for any reason, the sort falls back to raw
+per-stage answers rather than blocking the stage — a degraded but
+functional experience, never a hard failure.
 
 **The ending — the one hard constraint on every Journey's close:**
 Selfinder never resolves the tension the sequence surfaced. The closing

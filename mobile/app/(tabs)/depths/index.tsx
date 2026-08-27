@@ -26,9 +26,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/them
 import { spacing, radius } from '../../../src/theme/spacing';
 import { useWideColumnWidth } from '../../../src/theme/responsive';
 import { useMeasureStore } from '../../../src/store/measureStore';
-import { useArcSubscription } from '../../../src/utils/useArcSubscription';
 import { useAuthStore } from '../../../src/store/authStore';
-import { getMe, getMeasureHistory } from '../../../src/api/user';
 import { listMyWishes, SavedWish } from '../../../src/api/wish';
 import { usePhilosopherStore } from '../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../src/store/guideChatStore';
@@ -44,6 +42,8 @@ import { useLocaleStore } from '../../../src/store/localeStore';
 import { Sphere } from '../../../src/types';
 import { LongPressToSave } from '../../../src/components/LongPressToSave';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
+import { PhilosopherPresence } from '../../../src/components/PhilosopherPresence';
+import { ProfileIcon } from '../../../src/components/ProfileIcon';
 import {
   buildAuraFieldGeometry,
   RING_ORDER,
@@ -219,17 +219,17 @@ const DISCOVERY_NUDGES: { feature: DiscoverableFeature; labelKey: string; route:
 type Tool = { key: string; labelKey: string; descriptionKey: string; route: Href };
 
 // Depths' journey is now drawn as a spiral (see DepthsSpiral.tsx) rather
-// than a vertical list of zone groups — this maps each of the spiral's 8
-// fixed slots to its own route/copy keys. Order matches
-// DepthsSpiral.tsx's own SLOT_ORDER exactly (measure → spill →
-// talkAboutIt → cards → yourArc → levels → tunein → breathing); keep the
-// two in sync if a slot is ever added or reordered.
+// than a vertical list of zone groups — this maps each of the spiral's
+// fixed slots to its own route/copy keys. Order matches DepthsSpiral.tsx's
+// own SLOT_ORDER exactly (measure → spill → talkAboutIt → cards → levels
+// → tunein → breathing; yourArc's own slot removed 2026-08-27 once Your
+// Arc became its own bottom tab — see docs/app-architecture-concept.md);
+// keep the two in sync if a slot is ever added or reordered.
 const SLOT_META: Record<SpiralSlotKey, { labelKey: string; descriptionKey: string; route: Href }> = {
   measure: { labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
   spill: { labelKey: 'depths.spillLabel', descriptionKey: 'depths.spillDescription', route: '/(tabs)/depths/spill' },
-  talkAboutIt: { labelKey: 'depths.talkAboutIt', descriptionKey: 'depths.continueConversationWith', route: '/(tabs)/guide' },
+  talkAboutIt: { labelKey: 'depths.talkAboutIt', descriptionKey: 'depths.continueConversationWith', route: '/guide' },
   cards: { labelKey: 'depths.cardsLabel', descriptionKey: 'depths.cardsDescription', route: '/(tabs)/depths/cards' },
-  yourArc: { labelKey: 'depths.yourArc', descriptionKey: 'depths.yourArcDescription', route: '/your-arc' },
   levels: { labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
   tunein: { labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
   breathing: { labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
@@ -263,38 +263,7 @@ export default function DepthsScreen() {
   const insets = useSafeAreaInsets();
   const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
-  const readingLog = useMeasureStore((s) => s.readingLog);
-  const isSubscribed = useArcSubscription();
   const session = useAuthStore((s) => s.session);
-  // The local readingLog is per-device (SecureStore) — a signed-in,
-  // consented account can have real server-side history the "Your arc"
-  // row's visibility shouldn't miss just because this particular device
-  // hasn't locally taken 2+ Measures yet (a fresh install, a second
-  // device, storage cleared). Best-effort, mirrors the same
-  // session+consent-check pattern your-arc.tsx already uses — never
-  // blocks the row from working via the local count if this fails.
-  const [serverReadingCount, setServerReadingCount] = useState(0);
-  useEffect(() => {
-    if (!session) {
-      setServerReadingCount(0);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const profile = await getMe(session.token);
-        if (cancelled || !profile.consent?.psychologicalData?.given) return;
-        const history = await getMeasureHistory(session.token);
-        if (!cancelled) setServerReadingCount(history.length);
-      } catch {
-        // Best-effort — the local readingLog count still works without this.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
-  const hasEnoughReadingsForArc = Math.max(readingLog.length, serverReadingCount) >= 2;
 
   // The wish this reading's own — held, not displayed by default, per
   // docs/session-result-concept.md ("tucked behind a tap... never pushed
@@ -375,7 +344,7 @@ export default function DepthsScreen() {
   // markFirstRunCarryShown() below would flip hasShownFirstRunCarry
   // mid-session and the snapshot would go stale the instant AuraArrival's
   // onSettled reads it. Mirrors Guide's own secondVisitSnapshotRef
-  // exactly (see app/(tabs)/guide/index.tsx) — this is the first use of
+  // exactly (see app/guide.tsx) — this is the first use of
   // that pattern in Depths itself. totalMeasureCount === 1 means the
   // Measure that just completed and carried the user here was their
   // very first ever; by a real second completion this is structurally 2
@@ -397,26 +366,26 @@ export default function DepthsScreen() {
   // already established the core habit, not a first-timer still on Measure.
   const discoveryNudge =
     totalMeasureCount >= 2 ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature]) : undefined;
-  // The spiral's 8 fixed slots, in DepthsSpiral.tsx's own SLOT_ORDER —
-  // presence varies with reading state (spill/talkAboutIt/cards/yourArc
-  // only appear once discovered/a reading exists/2+ readings exist), but
-  // the slot itself is always reserved (see DepthsSpiral.tsx's own
-  // comment on why: unlocking a capability must never reflow the shape).
-  // measure/spill/talkAboutIt/cards/yourArc always render at full
-  // brightness (alwaysFull: true) — only levels/tunein/breathing
-  // participate in the today's-walk dimming/prefix-trace mechanic.
+  // The spiral's fixed slots, in DepthsSpiral.tsx's own SLOT_ORDER —
+  // presence varies with reading state (spill/talkAboutIt/cards only
+  // appear once discovered/a reading exists), but the slot itself is
+  // always reserved (see DepthsSpiral.tsx's own comment on why: unlocking
+  // a capability must never reflow the shape). Your Arc's own slot
+  // removed 2026-08-27 once it became its own bottom tab — see
+  // docs/app-architecture-concept.md. measure/spill/talkAboutIt/cards
+  // always render at full brightness (alwaysFull: true) — only levels/
+  // tunein/breathing participate in the today's-walk dimming/prefix-trace
+  // mechanic.
   const spiralPoints: SpiralPoint[] = useMemo(() => {
     const spillPresent = discovered.spill;
     const talkAboutItPresent = Boolean(currentResult && philosopher);
     const cardsPresent = Boolean(currentResult);
-    const yourArcPresent = hasEnoughReadingsForArc;
     const measureLabel = currentResult ? t('depths.measureAgain') : t(SLOT_META.measure.labelKey);
     return [
       { key: 'measure', label: measureLabel, isPresent: true, alwaysFull: true, visitedToday: false },
       { key: 'spill', label: t(SLOT_META.spill.labelKey), isPresent: spillPresent, alwaysFull: true, visitedToday: false },
       { key: 'talkAboutIt', label: t(SLOT_META.talkAboutIt.labelKey), isPresent: talkAboutItPresent, alwaysFull: true, visitedToday: false },
       { key: 'cards', label: t(SLOT_META.cards.labelKey), isPresent: cardsPresent, alwaysFull: true, visitedToday: false },
-      { key: 'yourArc', label: t(SLOT_META.yourArc.labelKey), isPresent: yourArcPresent, alwaysFull: true, visitedToday: false },
       {
         key: 'levels',
         label: t(SLOT_META.levels.labelKey),
@@ -439,7 +408,7 @@ export default function DepthsScreen() {
         visitedToday: isToolVisitedToday(toolLastVisitedAt, 'breathing'),
       },
     ];
-  }, [discovered.spill, currentResult, philosopher, hasEnoughReadingsForArc, toolLastVisitedAt, t]);
+  }, [discovered.spill, currentResult, philosopher, toolLastVisitedAt, t]);
 
   // Strict prefix count along PREFIX_WALK_KEYS (levels → tunein →
   // breathing) — stops at the first tool not visited today, so an
@@ -462,10 +431,6 @@ export default function DepthsScreen() {
   const handleSpiralPointPress = (key: SpiralSlotKey) => {
     if (key === 'talkAboutIt') {
       handleTalkAboutIt();
-      return;
-    }
-    if (key === 'yourArc') {
-      router.push(isSubscribed ? '/your-arc' : '/your-arc-preview');
       return;
     }
     if (key === 'levels' || key === 'tunein' || key === 'breathing' || key === 'spill') {
@@ -621,7 +586,7 @@ export default function DepthsScreen() {
         axis: t(AXIS_LABEL_KEYS[currentResult.dominantAxis] ?? currentResult.dominantAxis),
       }),
     );
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   // Distinct from handleTalkAboutIt above (whole-reading, lives under "Find
@@ -651,7 +616,7 @@ export default function DepthsScreen() {
       }),
       context,
     );
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   const entryFadeStyle = useAnimatedStyle(() => ({ opacity: entryFade.value }));
@@ -659,6 +624,7 @@ export default function DepthsScreen() {
   return (
     <View style={styles.root}>
       {theme === 'dark' && <AmbientGlow />}
+      <ProfileIcon />
       <ScrollView
         contentContainerStyle={[
           styles.content,
@@ -679,6 +645,12 @@ export default function DepthsScreen() {
             <Text style={styles.kickerTimestamp}>{formatRelativeDay(currentResult.savedAt)}</Text>
           )}
         </View>
+
+        {/* Guide's real entry point now that it's off the bottom tab bar
+            — always visible, always routes to Guide, no reading required.
+            See docs/app-architecture-concept.md, "What Guide's demotion
+            actually means." */}
+        <PhilosopherPresence />
 
         {currentResult && lastLevel ? (
           <>
@@ -866,6 +838,49 @@ export default function DepthsScreen() {
             ) : (
               <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
             )}
+
+            {/* Stay/Understand/Shift — a new layer beneath the unchanged
+                aura+spiral hero, appearing once a reading exists (see
+                docs/app-architecture-concept.md, "DEPTHS — where am I
+                now?"). Reconciles against verified existing gating rather
+                than inventing new rules: "Stay with it" (Cards, plus
+                Spill once discovered) matches Cards' own existing
+                currentResult gate; "Understand it" reuses handleTalkAboutIt
+                unchanged; "Shift it" bundles Tune In and Breathing as two
+                peer options under one intention, neither implied as more
+                correct than the other. */}
+            <View style={styles.intentionSection}>
+              <Text style={styles.intentionPrompt}>{t('depths.intentionPrompt')}</Text>
+              <View style={styles.intentionRow}>
+                <Pressable
+                  style={styles.intentionChoice}
+                  onPress={() => router.push('/(tabs)/depths/cards')}
+                >
+                  <Text style={styles.intentionChoiceTitle}>{t('depths.stayWithIt')}</Text>
+                  <Text style={styles.intentionChoiceOptions}>
+                    {discovered.spill ? t('depths.stayWithItCardsAndSpill') : t('depths.stayWithItCardsOnly')}
+                  </Text>
+                </Pressable>
+                {philosopher && (
+                  <Pressable style={styles.intentionChoice} onPress={handleTalkAboutIt}>
+                    <Text style={styles.intentionChoiceTitle}>{t('depths.understandIt')}</Text>
+                    <Text style={styles.intentionChoiceOptions}>
+                      {t('depths.understandItDescription', { name: philosopher.name })}
+                    </Text>
+                  </Pressable>
+                )}
+                <Pressable
+                  style={styles.intentionChoice}
+                  onPress={() => router.push('/(tabs)/depths/tunein')}
+                >
+                  <Text style={styles.intentionChoiceTitle}>{t('depths.shiftIt')}</Text>
+                  <Text style={styles.intentionChoiceOptions}>{t('depths.shiftItDescription')}</Text>
+                </Pressable>
+              </View>
+              <Pressable onPress={() => router.push('/(tabs)/depths/levels')}>
+                <Text style={styles.exploreMapLink}>{t('depths.exploreTheMap')}</Text>
+              </Pressable>
+            </View>
           </>
         ) : (
           <>
@@ -1591,6 +1606,47 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.normal,
     marginTop: spacing[6],
+  },
+  // Stay/Understand/Shift — a new layer beneath the aura+spiral, not a
+  // card (per aesthetic.md's "no cards" rule) — space and typography
+  // alone separate this section from the headline above it.
+  intentionSection: {
+    marginTop: spacing[10],
+    gap: spacing[5],
+  },
+  intentionPrompt: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  // Three peer choices — equal weight, per RULES.md's "never implies a
+  // vibration/method is better than another" rule applied to regulation
+  // methods, not just states. flexWrap so a narrow screen or a long
+  // philosopher name doesn't force horizontal overflow.
+  intentionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing[6],
+  },
+  intentionChoice: {
+    minWidth: 100,
+  },
+  intentionChoiceTitle: {
+    color: colors.text.primary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+  },
+  intentionChoiceOptions: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginTop: spacing[1],
+  },
+  exploreMapLink: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
   },
   // The ring (AuraField's rings) and the aura share this one center
   // point — ring renders first so the aura sits visually on top of/

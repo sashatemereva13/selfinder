@@ -4,20 +4,20 @@ import { View, Text, Pressable, ScrollView, KeyboardAvoidingView, Platform, Styl
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
-import { useThemeColors } from '../../../src/theme/useThemeColors';
-import { useThemeStore, ThemePreference } from '../../../src/store/themeStore';
-import type { Colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
-import { spacing, radius } from '../../../src/theme/spacing';
-import { useReadingColumnWidth } from '../../../src/theme/responsive';
-import { usePhilosopherStore } from '../../../src/store/philosopherStore';
-import { useLocaleStore, Locale } from '../../../src/store/localeStore';
-import { useReminderStore } from '../../../src/store/reminderStore';
-import { useAppAccentRgb } from '../../../src/utils/appAccent';
-import { PhilosopherPicker } from '../../../src/components/PhilosopherPicker';
-import { AccountSection } from '../../../src/components/AccountSection';
-import { DailyReminderSection } from '../../../src/components/DailyReminderSection';
-import { AmbientGlow } from '../../../src/components/AmbientGlow';
+import { useThemeColors } from '../src/theme/useThemeColors';
+import { useThemeStore, ThemePreference } from '../src/store/themeStore';
+import type { Colors } from '../src/theme/colors';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
+import { spacing, radius } from '../src/theme/spacing';
+import { useReadingColumnWidth } from '../src/theme/responsive';
+import { usePhilosopherStore } from '../src/store/philosopherStore';
+import { useLocaleStore, Locale } from '../src/store/localeStore';
+import { useReminderStore } from '../src/store/reminderStore';
+import { useAppAccentRgb } from '../src/utils/appAccent';
+import { PhilosopherPicker } from '../src/components/PhilosopherPicker';
+import { AccountSection } from '../src/components/AccountSection';
+import { DailyReminderSection } from '../src/components/DailyReminderSection';
+import { AmbientGlow } from '../src/components/AmbientGlow';
 
 // Both directions ride the same crossfade duration/ease as PhilosopherPicker's
 // own ring fade-in (see ownRingOpacity in PhilosopherPicker.tsx) — opening
@@ -26,7 +26,7 @@ import { AmbientGlow } from '../../../src/components/AmbientGlow';
 // should feel like the same motion, not two different speeds.
 const CROSSFADE_DURATION = 450;
 
-export default function YouScreen() {
+export default function ProfileScreen() {
   const { t } = useTranslation();
   const router = useRouter();
   const colors = useThemeColors();
@@ -230,7 +230,7 @@ export default function YouScreen() {
             one-time-purchase experiences, distinct from Your Arc's
             ongoing subscription, same row weight as the links around it. */}
         <View style={styles.divider} />
-        <Pressable onPress={() => router.push('/products')}>
+        <Pressable onPress={() => router.push('/(tabs)/journeys')}>
           <Text style={styles.sourcesLink}>{t('you.productsLink')}</Text>
         </Pressable>
 

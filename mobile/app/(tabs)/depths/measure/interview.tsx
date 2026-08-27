@@ -355,7 +355,7 @@ export default function InterviewScreen() {
 }
 
 // No bubble shape, no card — matches Guide's own Turn component (see
-// app/(tabs)/guide/index.tsx): a measure check-in is still a conversation,
+// app/guide.tsx): a measure check-in is still a conversation,
 // so it reads the same way, not as a separate "quiz" register. Turn-taking
 // is carried by alignment and color, not a bordered/filled box. The
 // philosopher's line takes the current level color (the one accent this
@@ -436,7 +436,7 @@ function makeStyles(colors: Colors) {
   scrollContentCenteredEmpty: { justifyContent: 'center' },
   exchange: { gap: spacing[3], marginBottom: spacing[3] },
   // Turn-taking carried by alignment and color, not a bubble shape — same
-  // pattern as Guide's own Turn component (app/(tabs)/guide/index.tsx),
+  // pattern as Guide's own Turn component (app/guide.tsx),
   // reused here so a Measure check-in reads as the same kind of
   // conversation, not a separate quiz-styled register.
   turnText: {

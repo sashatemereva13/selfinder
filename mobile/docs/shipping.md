@@ -79,14 +79,25 @@ instead of hardcoding it here.
 
 ## `app.json` config gotchas
 
-- **`ios.buildNumber` / `android.versionCode`** must be tracked in
-  `app.json`, not just the generated native project — `expo prebuild`
-  regenerates `ios/`/`android/` from `app.json` on every run and will
-  silently reset anything only hand-edited in the generated files
-  (this includes Xcode signing team selection too — re-set it in Xcode
-  after every prebuild if you're building locally there instead of EAS).
-  Increment `buildNumber` for every new App Store Connect submission; it
-  can't be reused, even for a rejected build.
+- **`ios.buildNumber` / `android.versionCode` are NOT tracked in
+  `app.json`** — `eas.json`'s `cli.appVersionSource: "remote"` means EAS
+  tracks both server-side and auto-increments them on every production
+  build (`build.production.autoIncrement: true`), which is why neither
+  field exists in `app.json` at all (a stale local value there is
+  actively misleading — `eas build` prints a warning and ignores it).
+  Confirm the real current values with `eas build:version:get --platform
+  ios` / `--platform android` if you ever need to know them (2026-08-26:
+  43 / 42). This still leaves Xcode's own signing-team selection exposed
+  to `expo prebuild`'s regeneration — re-set it in Xcode after every
+  prebuild if building locally there instead of EAS.
+- **`expo.version` (the marketing version string, e.g. "1.0.1") IS still
+  tracked in `app.json`, unaffected by `appVersionSource: "remote"`** —
+  that setting only covers the build number/version code, not this.
+  App Store Connect rejects submitting the same version string twice,
+  even for a build that was withdrawn/rejected/never released
+  ("You've already submitted this version of the app") — bump this by
+  hand before resubmitting under a version that's already been
+  submitted once, the same way you'd bump a semver patch version.
 - **`expo-audio`'s config plugin auto-injects
   `NSMicrophoneUsageDescription` (iOS) and `RECORD_AUDIO` (Android) by
   default**, even if the app only plays audio and never records. Disable

@@ -169,36 +169,55 @@ export interface JourneyPurchase {
   seedNonce: number;
 }
 
-// One authored, fixed question in a Journey's slot sequence (see
-// docs/journeys-concept.md) — the architecture never changes; the AI is
-// only ever allowed to phrase THIS question live, referencing prior
-// answers, never invent, skip, or reorder slots.
-export interface JourneySlot {
+// One authored, fixed STAGE in a Journey's sequence (see
+// docs/journeys-concept.md) — the sequence itself never changes, but a
+// stage can absorb several conversational turns before its own
+// psychological goal is satisfied (see backend/controllers/
+// journeyController.js's STAGE_GOALS and its stageComplete decision,
+// 2026-08-26 — this replaced an earlier one-question-per-slot model
+// where every exchange advanced immediately). The AI may ask further
+// grounding sub-questions within a stage, but is only ever allowed to
+// phrase the FIXED opening question when actually starting the next
+// stage — never invent, skip, or reorder stages.
+export interface JourneyStage {
   id: string;
-  question: string;
-  // Only present on a slot with a non-text answer UI (e.g. Control's
-  // slot 7, the agency/influence/authorship sort) — extend as future
-  // Journeys need new primitives.
+  openingQuestion: string;
+  // Only present on a stage with a non-text answer UI (e.g. Control's
+  // agency stage, the agency/influence/authorship sort) — extend as
+  // future Journeys need new primitives.
   primitive?: 'agency-sort';
 }
 
-// One slot's persisted record for a single Journey session — mirrors
-// backend/models/JourneySession.js's slotRecordSchema exactly.
-export interface JourneySlotRecord {
-  slotIndex: number;
-  slotId: string;
-  baseQuestion: string;
-  phrasedQuestion: string;
-  answer: string | null;
+// One stage's persisted record for a single Journey session — mirrors
+// backend/models/JourneySession.js's stageRecordSchema exactly.
+export interface JourneyStageRecord {
+  stageIndex: number;
+  stageId: string;
+  openingQuestion: string;
+  // Every sub-turn asked and answered within this stage, in order,
+  // including the one that satisfied the stage's goal. A stage can
+  // legitimately span multiple turns before advancing.
+  turns: { question: string; answer: string; reply: string | null; shown: boolean }[];
+  // The answer that satisfied this stage's own goal — for a stage that
+  // needed grounding (e.g. Control's "object" stage after an abstract
+  // "I don't know"), this is the concretized answer, not necessarily the
+  // person's first reply.
+  finalAnswer: string | null;
   asides: { answer: string; reply: string }[];
-  // Slot 7 only for Control today — a generic bag any future Journey's
-  // own non-text slot primitive can reuse.
+  // Agency stage only for Control today — a generic bag any future
+  // Journey's own non-text stage primitive can reuse.
   structuredAnswer?: AgencySortResult | null;
+  // Agency stage only for Control — clean, first-person propositions
+  // extracted from everything said in prior stages, fed into
+  // AgencySortPrimitive instead of raw per-stage answers (see
+  // journeyController.js's proposition-extraction step). Absent until
+  // extraction succeeds; falls back to raw finalAnswers if it never does.
+  extractedPropositions?: string[];
   answeredAt: string | null;
 }
 
 // Mirrors backend/models/JourneySession.js — one Journey attempt's worth
-// of slot-by-slot Q&A, linked to one journeyPurchases[] entry via
+// of stage-by-stage Q&A, linked to one journeyPurchases[] entry via
 // purchaseId. Resumable while in progress; immutable once completedAt is
 // set.
 export interface JourneySessionDTO {
@@ -206,16 +225,16 @@ export interface JourneySessionDTO {
   userId: string;
   journey: JourneyKey;
   purchaseId: string;
-  currentSlotIndex: number;
-  slots: JourneySlotRecord[];
+  currentStageIndex: number;
+  stages: JourneyStageRecord[];
   startedAt: string;
   completedAt: string | null;
 }
 
-// Control's slot 7 result — which of the elements the user named earlier
-// in the session belong to their own agency, their influence, or outside
-// their authorship entirely (see docs/journeys-concept.md's Control
-// section). No ranking between the three buckets.
+// Control's agency-stage result — which of the elements the user named
+// earlier in the session belong to their own agency, their influence, or
+// outside their authorship entirely (see docs/journeys-concept.md's
+// Control section). No ranking between the three buckets.
 export interface AgencySortResult {
   agency: string[];
   influence: string[];

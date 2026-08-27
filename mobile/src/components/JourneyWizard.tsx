@@ -18,39 +18,57 @@ import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
 import { useAppAccentRgb, useAppAccentButtonRgb } from '../utils/appAccent';
 import { sendJourneyExchange, getJourneySession } from '../api/journeys';
-import { JourneyKey, JourneySlot, JourneySessionDTO, AgencySortResult } from '../types';
+import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../types';
 import { TypingDots } from './TypingDots';
 import { AmbientGlow } from './AmbientGlow';
 import { useWideColumnWidth, useIsLargeScreen } from '../theme/responsive';
 
 // Generalizes measure/interview.tsx's gated-sequential pattern (see that
 // file for the original) into a reusable engine for any Journey's fixed
-// slot sequence — N slots instead of a hardcoded 4 spheres, and slot
+// STAGE sequence — N stages instead of a hardcoded 4 spheres, and stage
 // content read from a per-Journey config instead of a per-philosopher
-// one. Unlike Measure, a Journey's AI phrases each slot's question live
-// (see backend/controllers/journeyController.js) rather than reacting to
-// a static one, and there is no scoring call at the end — onComplete
-// hands off to the caller's own reflection screen instead of Measure's
+// one. A stage is a fixed psychological layer (e.g. Control's "object of
+// control") that can absorb 1-3+ real conversational turns before its own
+// goal is satisfied (2026-08-26 redesign — see backend/controllers/
+// journeyController.js's stageComplete decision) — this replaced an
+// earlier model where every exchange advanced immediately, which made
+// the progress dots (then one per fixed question) never move during a
+// long clarifying exchange and read as stalled even when real progress
+// was happening. There is no scoring call at the end — onComplete hands
+// off to the caller's own reflection screen instead of Measure's
 // fade-to-Depths exit.
 interface JourneyWizardProps {
   journey: JourneyKey;
   purchaseId: string;
-  slots: JourneySlot[];
-  // Override for a slot with a non-text answer UI (e.g. Control's slot 7,
-  // the agency/influence/authorship sort) — default is the plain
+  stages: JourneyStage[];
+  // Override for a stage with a non-text answer UI (e.g. Control's agency
+  // stage, the agency/influence/authorship sort) — default is the plain
   // TextInput+send compose bar below. Returning null falls back to the
-  // default input for that slot. `priorAnswers` is every answer given so
-  // far in this session, in order — the primitive's own raw material
-  // (e.g. Control's sort presents one chip per prior answer).
-  renderSlotInput?: (
-    slot: JourneySlot,
+  // default input for that stage. `priorFinalAnswers` is every completed
+  // stage's final answer so far, in order (the primitive's own fallback
+  // material); `extractedPropositions`, when present, is the AI-cleaned
+  // material the primitive should prefer instead.
+  renderStageInput?: (
+    stage: JourneyStage,
     onSubmit: (answer: string, structuredAnswer?: AgencySortResult) => void,
-    priorAnswers: string[]
+    priorFinalAnswers: string[],
+    extractedPropositions?: string[]
   ) => React.ReactNode | null;
   onComplete: (session: JourneySessionDTO) => void;
 }
 
-export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onComplete }: JourneyWizardProps) {
+// One entry in the on-screen transcript — a completed stage's final
+// exchange, OR a still-gathering sub-turn within the current stage. Kept
+// as one shape so the transcript renders both uniformly; `dotsAdvance`
+// distinguishes which kind it was only for internal bookkeeping (not
+// rendered), since dots must only move on real stage completions.
+interface TranscriptTurn {
+  question: string;
+  answer: string;
+  reply: string | null;
+}
+
+export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, onComplete }: JourneyWizardProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
@@ -62,27 +80,32 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
   const columnWidth = useWideColumnWidth();
   const isLargeScreen = useIsLargeScreen();
 
-  const totalSlots = slots.length;
+  const totalStages = stages.length;
   const [loadingSession, setLoadingSession] = useState(true);
-  const [slotIndex, setSlotIndex] = useState(0);
-  // Completed slots this render — {slotId, question (phrased), answer}.
-  // Mirrors measureStore's qaPairs, but kept as component state here
-  // since a Journey session's durable copy already lives server-side
-  // (see journeySessionStore.ts's own comment on why there's no second
-  // local persistence layer to keep in sync).
-  const [history, setHistory] = useState<{ slotId: string; question: string; answer: string }[]>([]);
+  const [stageIndex, setStageIndex] = useState(0);
+  // Completed STAGES only — {stageId, question (opening), answer
+  // (finalAnswer)}. Drives what's sent as `priorStages` context and what
+  // AgencySortPrimitive's fallback material is built from. Distinct from
+  // `currentStageTurns` below, which holds this stage's own in-progress
+  // sub-turns.
+  const [history, setHistory] = useState<{ stageId: string; question: string; answer: string }[]>([]);
+  // Every sub-turn asked/answered so far WITHIN the current stage,
+  // including ones whose reply was suppressed (shown: false) — kept for
+  // resend context (`priorAsideCount`-equivalent) and transcript
+  // rendering; reset to [] whenever the stage advances.
+  const [currentStageTurns, setCurrentStageTurns] = useState<TranscriptTurn[]>([]);
   const [currentPhrasedQuestion, setCurrentPhrasedQuestion] = useState<string | null>(null);
+  const [extractedPropositions, setExtractedPropositions] = useState<string[] | undefined>(undefined);
   const [input, setInput] = useState('');
-  const [acknowledgments, setAcknowledgments] = useState<string[]>([]);
-  const [asides, setAsides] = useState<{ answer: string; reply: string }[]>([]);
+  const [asides, setAsides] = useState<{ answer: string; reply: string | null }[]>([]);
   const [goBackNote, setGoBackNote] = useState<string | null>(null);
   const [isAcknowledging, setIsAcknowledging] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const isSendingRef = useRef(false);
 
-  const currentSlot = slots[slotIndex];
-  const isBeforeFirstAnswer = history.length === 0 && asides.length === 0 && !loadingSession;
+  const currentStage = stages[stageIndex];
+  const isBeforeFirstAnswer = history.length === 0 && currentStageTurns.length === 0 && asides.length === 0 && !loadingSession;
 
   // Resume an in-progress session on mount, or fetch a completed one so
   // its stored answers are available (an app restart between finishing
@@ -102,14 +125,21 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         return;
       }
       if (session) {
-        const priorSlots = session.slots.filter((s) => s.answer !== null);
-        setHistory(priorSlots.map((s) => ({ slotId: s.slotId, question: s.phrasedQuestion, answer: s.answer! })));
-        setAcknowledgments(priorSlots.map(() => ''));
-        setSlotIndex(session.currentSlotIndex);
-        const current = session.slots.find((s) => s.slotIndex === session.currentSlotIndex);
-        setCurrentPhrasedQuestion(current?.phrasedQuestion ?? slots[session.currentSlotIndex]?.question ?? null);
+        const priorStages = session.stages.filter((s) => s.finalAnswer !== null);
+        setHistory(priorStages.map((s) => ({ stageId: s.stageId, question: s.openingQuestion, answer: s.finalAnswer! })));
+        setStageIndex(session.currentStageIndex);
+        const current = session.stages.find((s) => s.stageIndex === session.currentStageIndex);
+        setCurrentPhrasedQuestion(current?.openingQuestion ?? stages[session.currentStageIndex]?.openingQuestion ?? null);
+        setExtractedPropositions(current?.extractedPropositions);
+        // Sub-turns already recorded on the in-progress current stage
+        // (e.g. a grounding exchange before an app restart) — replayed
+        // into the transcript so resuming looks identical to never having
+        // left.
+        setCurrentStageTurns(
+          (current?.turns ?? []).map((turn) => ({ question: turn.question, answer: turn.answer, reply: turn.shown ? turn.reply : null }))
+        );
       } else {
-        setCurrentPhrasedQuestion(slots[0]?.question ?? null);
+        setCurrentPhrasedQuestion(stages[0]?.openingQuestion ?? null);
       }
       setLoadingSession(false);
     })();
@@ -121,10 +151,10 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
-  }, [history.length, asides.length, isAcknowledging]);
+  }, [history.length, currentStageTurns.length, asides.length, isAcknowledging]);
 
   const submitAnswer = async (answer: string, structuredAnswer?: AgencySortResult) => {
-    if (!answer.trim() || isAcknowledging || !authToken || !currentSlot || isSendingRef.current) return;
+    if (!answer.trim() || isAcknowledging || !authToken || !currentStage || isSendingRef.current) return;
     isSendingRef.current = true;
 
     try {
@@ -133,8 +163,8 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
       setGoBackNote(null);
       setSendError(null);
 
-      const nextSlot = slots[slotIndex + 1];
-      const baseQuestion = currentPhrasedQuestion ?? currentSlot.question;
+      const nextStage = stages[stageIndex + 1];
+      const askedQuestion = currentPhrasedQuestion ?? currentStage.openingQuestion;
 
       let exchange;
       try {
@@ -142,15 +172,15 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
           {
             purchaseId,
             journey,
-            slotIndex,
-            slotId: currentSlot.id,
-            baseQuestion,
-            nextBaseQuestion: nextSlot?.question ?? null,
-            priorSlots: history.map((h) => ({ slotId: h.slotId, question: h.question, answer: h.answer })),
+            stageIndex,
+            stageId: currentStage.id,
+            openingQuestion: askedQuestion,
+            nextOpeningQuestion: nextStage?.openingQuestion ?? null,
+            priorStages: history.map((h) => ({ stageId: h.stageId, question: h.question, answer: h.answer })),
             answer: answer.trim(),
-            canGoBack: slotIndex > 0,
+            canGoBack: stageIndex > 0,
             priorAsideCount: asides.length,
-            totalSlots,
+            totalStages,
             structuredAnswer,
           },
           authToken
@@ -165,23 +195,47 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
       setIsAcknowledging(false);
 
       if (exchange.goBack) {
-        setSlotIndex((i) => Math.max(0, i - 1));
+        // Going back always returns to the PREVIOUS completed stage — a
+        // stage's own internal sub-turns are cleared, not partially
+        // rewound, since the fixed opening question is the only
+        // re-entry point the wizard needs.
+        setStageIndex((i) => Math.max(0, i - 1));
         setHistory((prev) => prev.slice(0, -1));
-        setAcknowledgments((prev) => prev.slice(0, -1));
+        setCurrentStageTurns([]);
         setAsides([]);
         setGoBackNote(exchange.reply || null);
-        const prevSlot = history[history.length - 1];
-        setCurrentPhrasedQuestion(prevSlot?.question ?? slots[Math.max(0, slotIndex - 1)]?.question ?? null);
+        const prevStage = history[history.length - 1];
+        setCurrentPhrasedQuestion(prevStage?.question ?? stages[Math.max(0, stageIndex - 1)]?.openingQuestion ?? null);
         return;
       }
 
-      if (!exchange.advance) {
+      if (!exchange.engaged) {
         setAsides((prev) => [...prev, { answer: answer.trim(), reply: exchange.reply }]);
+        if (exchange.nextQuestion) setCurrentPhrasedQuestion(exchange.nextQuestion);
         return;
       }
 
-      setHistory((prev) => [...prev, { slotId: currentSlot.id, question: baseQuestion, answer: answer.trim() }]);
-      setAcknowledgments((prev) => [...prev, exchange.reply]);
+      if (!exchange.stageComplete) {
+        // Still gathering — record as a sub-turn within the CURRENT
+        // stage. No dot movement, no stageIndex bump; this is the new
+        // third bucket distinct from both a real advance and a true
+        // non-engagement aside.
+        setCurrentStageTurns((prev) => [
+          ...prev,
+          { question: askedQuestion, answer: answer.trim(), reply: exchange.showAcknowledgment ? exchange.reply : null },
+        ]);
+        setAsides([]);
+        setCurrentPhrasedQuestion(exchange.nextQuestion ?? askedQuestion);
+        return;
+      }
+
+      // Stage complete — the answer that satisfied the stage becomes its
+      // finalAnswer; every sub-turn asked along the way (including this
+      // last one) is folded into the transcript's completed-stage entry
+      // implicitly (the completed-stage row itself is the coarse view;
+      // full turn-by-turn detail already scrolled by live).
+      setHistory((prev) => [...prev, { stageId: currentStage.id, question: askedQuestion, answer: answer.trim() }]);
+      setCurrentStageTurns([]);
       setAsides([]);
 
       if (exchange.isComplete) {
@@ -190,8 +244,16 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         return;
       }
 
-      setSlotIndex((i) => i + 1);
-      setCurrentPhrasedQuestion(exchange.nextQuestion ?? nextSlot?.question ?? null);
+      setStageIndex((i) => i + 1);
+      setCurrentPhrasedQuestion(exchange.nextQuestion ?? nextStage?.openingQuestion ?? null);
+      // A fresh session fetch is the simplest reliable way to pick up
+      // extractedPropositions the server may have just computed (e.g.
+      // when this stage completion was "underlying-need," unlocking the
+      // agency stage's propositions) — cheap, and only fires right before
+      // a stage transition, never on every keystroke.
+      const refreshed = await getJourneySession(purchaseId, authToken);
+      const newCurrent = refreshed?.stages.find((s) => s.stageIndex === stageIndex + 1);
+      setExtractedPropositions(newCurrent?.extractedPropositions);
     } finally {
       isSendingRef.current = false;
     }
@@ -200,20 +262,20 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
   const handleSend = () => submitAnswer(input);
 
   const handleGoBackManually = () => {
-    if (slotIndex === 0 || isAcknowledging) return;
-    setSlotIndex((i) => Math.max(0, i - 1));
+    if (stageIndex === 0 || isAcknowledging) return;
+    setStageIndex((i) => Math.max(0, i - 1));
     setHistory((prev) => prev.slice(0, -1));
-    setAcknowledgments((prev) => prev.slice(0, -1));
+    setCurrentStageTurns([]);
     setAsides([]);
     setGoBackNote(null);
-    const prevSlot = history[history.length - 1];
-    setCurrentPhrasedQuestion(prevSlot?.question ?? slots[Math.max(0, slotIndex - 1)]?.question ?? null);
+    const prevStage = history[history.length - 1];
+    setCurrentPhrasedQuestion(prevStage?.question ?? stages[Math.max(0, stageIndex - 1)]?.openingQuestion ?? null);
   };
 
   if (loadingSession) return null;
 
-  const customInput = currentSlot
-    ? renderSlotInput?.(currentSlot, submitAnswer, history.map((h) => h.answer))
+  const customInput = currentStage
+    ? renderStageInput?.(currentStage, submitAnswer, history.map((h) => h.answer), extractedPropositions)
     : null;
 
   return (
@@ -224,13 +286,17 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
       {theme === 'dark' && <AmbientGlow />}
 
       <View style={styles.progressRow}>
-        {slots.map((slot, i) => (
+        {stages.map((stage, i) => (
           <Text
-            key={slot.id}
+            key={stage.id}
             style={[
               styles.progressDot,
+              // A dot fills only on a real STAGE completion (history),
+              // never on a sub-turn within the current stage — this is
+              // the fix for dots that never visibly moved during a long
+              // clarifying exchange even as real progress happened.
               i < history.length && { color: accentColor, fontFamily: fonts.medium },
-              i === slotIndex && { color: accentColor },
+              i === stageIndex && { color: accentColor },
             ]}
           >
             •
@@ -238,7 +304,7 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         ))}
       </View>
 
-      {slotIndex > 0 && (
+      {stageIndex > 0 && (
         <Pressable style={styles.previousSlotRow} onPress={handleGoBackManually} disabled={isAcknowledging}>
           <Text style={styles.previousSlotText}>{t('journey.previousQuestion')}</Text>
         </Pressable>
@@ -254,14 +320,21 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         ]}
       >
         {history.map((h, i) => (
-          <View key={`${h.slotId}-${i}`} style={styles.exchange}>
+          <View key={`${h.stageId}-${i}`} style={styles.exchange}>
             <Turn color={accentColor} styles={styles}>{h.question}</Turn>
             <Turn isUser styles={styles}>{h.answer}</Turn>
-            {acknowledgments[i] ? <Turn color={accentColor} styles={styles}>{acknowledgments[i]}</Turn> : null}
           </View>
         ))}
 
-        {currentSlot && currentPhrasedQuestion && (
+        {currentStageTurns.map((turn, i) => (
+          <View key={`current-${i}`} style={styles.exchange}>
+            <Turn color={accentColor} styles={styles}>{turn.question}</Turn>
+            <Turn isUser styles={styles}>{turn.answer}</Turn>
+            {turn.reply ? <Turn color={accentColor} styles={styles}>{turn.reply}</Turn> : null}
+          </View>
+        ))}
+
+        {currentStage && currentPhrasedQuestion && (
           <Turn color={accentColor} styles={styles}>{currentPhrasedQuestion}</Turn>
         )}
 
@@ -281,7 +354,7 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         {sendError && <Text style={styles.errorText}>{sendError}</Text>}
       </ScrollView>
 
-      {currentSlot && !customInput && (
+      {currentStage && !customInput && (
         <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
           {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>
@@ -308,7 +381,7 @@ export function JourneyWizard({ journey, purchaseId, slots, renderSlotInput, onC
         </View>
       )}
 
-      {currentSlot && customInput}
+      {currentStage && customInput}
     </KeyboardAvoidingView>
   );
 }

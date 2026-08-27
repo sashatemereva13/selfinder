@@ -101,17 +101,21 @@ export default function RootLayout() {
     const inTabs = segments[0] === '(tabs)';
     // Top-level routes reachable from inside the tabs but not part of the
     // tab structure itself — sources (see its own fix), how-to-use (same
-    // reasoning, reachable from the You tab post-onboarding), products,
-    // center plus the rest of the Journey catalog (2026-08-22/23, the
-    // Journey family — reachable from the You tab's "Products →" row,
-    // same reasoning; the 2026-08-23 question-first catalog replaced the
-    // earlier either-or/identity placeholders, see
-    // docs/journeys-concept.md), and both Your Arc screens (moved out of
-    // app/(tabs)/you/ so their back link/gesture isn't tied to the you
-    // tab regardless of which tab they were opened from — see
-    // your-arc.tsx's comment).
+    // reasoning, reachable from the profile screen post-onboarding),
+    // center plus the rest of the Journey catalog beyond Journeys' own tab
+    // (2026-08-22/23, the Journey family; the 2026-08-23 question-first
+    // catalog replaced the earlier either-or/identity placeholders, see
+    // docs/journeys-concept.md), both Your Arc screens (moved out of the
+    // old you tab so their back link/gesture isn't tied to a tab
+    // regardless of which tab they were opened from — see your-arc.tsx's
+    // comment), guide (moved off the tab bar entirely — see
+    // docs/app-architecture-concept.md — reached via the philosopher-
+    // presence affordance on Depths, not a tab), and profile (the old you
+    // tab's replacement, reached via a profile icon instead of a tab).
+    // 'products' was removed from this list once it moved to
+    // app/(tabs)/journeys/ — that route now falls under inTabs instead.
     const inStandaloneRoute = [
-      'sources', 'how-to-use', 'products', 'center',
+      'sources', 'how-to-use', 'center', 'guide', 'profile',
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',

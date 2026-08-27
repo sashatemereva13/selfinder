@@ -62,7 +62,7 @@ export default function SpillRevealScreen() {
       philosopher,
       `Here's something I just wrote without thinking about it, without looking back at what I'd already written:\n\n"${text}"\n\nWhat do you notice?`
     );
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   // Spill's whole premise is "never judged" — a screen that only offers

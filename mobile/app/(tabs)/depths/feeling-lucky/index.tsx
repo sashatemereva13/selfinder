@@ -49,7 +49,7 @@ export default function FeelingLuckyScreen() {
     track('feeling_lucky_talk_about_it');
     recordTalkAboutIt();
     sendGuideMessage(philosopher, t('feelingLucky.talkAboutItMessage', { message }));
-    router.push('/(tabs)/guide');
+    router.push('/guide');
   };
 
   return (

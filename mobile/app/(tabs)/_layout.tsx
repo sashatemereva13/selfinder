@@ -2,19 +2,18 @@ import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { fonts } from '../../src/theme/typography';
-import { usePhilosopherStore } from '../../src/store/philosopherStore';
 import { useAppAccentRgb } from '../../src/utils/appAccent';
-import { DepthsTabIcon, GuideTabIcon, YouTabIcon } from '../../src/components/TabIcons';
+import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/components/TabIcons';
 
+// Guide and You no longer have bottom-tab slots — see
+// docs/app-architecture-concept.md. Guide is reached via the persistent
+// philosopher-presence affordance on Depths (Phase 2), You via the
+// profile icon (Phase 5). This tab bar is now Depths / Journeys / Your Arc.
 export default function TabsLayout() {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const { philosopher, metPhilosopherIds } = usePhilosopherStore();
   const accentRgb = useAppAccentRgb();
   const activeColor = `rgb(${accentRgb})`;
-  // A first-meeting message is waiting in Guide — the badge clears itself
-  // the moment they open it, since that's exactly when markMet fires.
-  const hasUnmetPhilosopher = !!philosopher && !metPhilosopherIds.includes(philosopher.id);
 
   return (
     <Tabs
@@ -42,25 +41,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="guide"
+        name="journeys"
         options={{
-          title: t('common.tabGuide'),
-          tabBarIcon: ({ color }) => <GuideTabIcon color={color as string} />,
-          tabBarBadge: hasUnmetPhilosopher ? '' : undefined,
-          tabBarBadgeStyle: {
-            backgroundColor: activeColor,
-            minWidth: 8,
-            height: 8,
-            borderRadius: 4,
-            marginTop: 2,
-          },
+          title: t('common.tabJourneys'),
+          tabBarIcon: ({ color }) => <JourneysTabIcon color={color as string} />,
         }}
       />
       <Tabs.Screen
-        name="you"
+        name="your-arc"
         options={{
-          title: t('common.tabYou'),
-          tabBarIcon: ({ color }) => <YouTabIcon color={color as string} />,
+          title: t('common.tabYourArc'),
+          tabBarIcon: ({ color }) => <YourArcTabIcon color={color as string} />,
         }}
       />
     </Tabs>

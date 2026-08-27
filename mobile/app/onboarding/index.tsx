@@ -1078,7 +1078,7 @@ export default function OnboardingScreen() {
     }
     await select(id);
     track("onboarding_completed", { philosopher: id });
-    router.replace("/(tabs)/guide");
+    router.replace("/guide");
   };
 
   // The fully-formed ring sits still and visible for a beat before handing
