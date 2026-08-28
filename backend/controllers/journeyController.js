@@ -2,6 +2,7 @@ import Groq from "groq-sdk";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import User from "../models/User.js";
 import JourneySession from "../models/JourneySession.js";
+import { JOURNEY_KEYS } from "../../shared/journeyKeys.mjs";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -513,4 +514,39 @@ export async function getJourneySession(req, res) {
   }
 
   res.json(session);
+}
+
+// POST /api/journeys/purchase — self-service free grant (2026-08-28,
+// Selfinder is fully free for now, see RULES.md's Product/positioning
+// section). Any signed-in user can call this to grant themselves one
+// journeyPurchases[] entry for the given journey, the same shape
+// scripts/grantJourney.js already creates for an admin comp, just with
+// source: "free" instead of "manual" so the data itself still
+// distinguishes the two. Always creates a NEW entry (never reuses an
+// existing one) — a Journey is bought again and again by design (see
+// RULES.md: "Bought again, not owned once"), so a fresh purchaseId/
+// seedNonce here matches exactly what a real repeat purchase would do,
+// just without payment behind it.
+export async function postJourneyPurchase(req, res) {
+  const { journey } = req.body;
+  if (!journey || !JOURNEY_KEYS.includes(journey)) {
+    return res.status(400).json({ error: `journey must be one of: ${JOURNEY_KEYS.join(", ")}` });
+  }
+
+  const user = await User.findOne({ id: req.user.id });
+  if (!user) {
+    return res.status(404).json({ error: "User not found" });
+  }
+
+  const purchase = {
+    journey,
+    source: "free",
+    purchasedAt: new Date().toISOString(),
+    seedNonce: Date.now(),
+  };
+  user.journeyPurchases.push(purchase);
+  await user.save();
+
+  const saved = user.journeyPurchases[user.journeyPurchases.length - 1];
+  res.json({ id: saved.id, journey: saved.journey, source: saved.source, purchasedAt: saved.purchasedAt, seedNonce: saved.seedNonce });
 }

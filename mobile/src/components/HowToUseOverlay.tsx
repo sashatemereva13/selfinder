@@ -19,7 +19,7 @@ import { AmbientGlow } from './AmbientGlow';
 // general app orientation, the AI disclosure is feature-specific and only
 // matters once Guide/Measure are actually about to be used. Content
 // (HOW_TO_USE_ENTRIES) is shared with app/how-to-use.tsx, the same
-// screen's standalone form reachable later from the You tab.
+// screen's standalone form reachable later from the profile screen.
 export function HowToUseOverlay() {
   const { t } = useTranslation();
   const colors = useThemeColors();

@@ -181,48 +181,41 @@ Full pitch, mechanisms, and business model: **[`docs/pitch.md`](docs/pitch.md)**
 flowing copy) — read before writing anything user-facing about what
 Selfinder is or why it costs money.
 
-- **Two products, two shapes (2026-08-22 split, 2026-08-23 pivot).**
-  "Selfinder+" was once a single subscription that included the light-cone
-  visualization. It first split into **Your Arc** (an ongoing subscription
-  selling *access to your own record*) and **Center** (a one-time purchase
-  selling a *generated experience*) — because these are genuinely
-  different things to buy, not two prices for the same thing. This
-  reversed this file's own prior instruction that separate paid
-  experiences were off-brief "until this file says otherwise." A second
-  pivot the next day reshaped the funnel and Center's own relationship to
-  Your Arc — see the two bullets below. Both products still answer to
-  every anti-diagnosis, anti-fabrication, and privacy constraint in this
-  document; only which product a given piece of content sits under, and
-  how the two relate, has changed.
-- **Your Arc is free-trial-then-subscribe, not gated from reading #1.**
-  Everyone's first **7 server-saved readings are free and fully real** —
-  not a teaser or preview, genuinely saved and genuinely revisitable, the
-  same as a subscriber's. Chosen deliberately over gating saving itself
-  behind a subscription from the first reading: the person experiences
-  their own Arc actually forming before ever being asked to pay, so the
-  purchase decision becomes concrete (a real, visible Arc already exists)
-  rather than abstract (an imagined future value). Past the 7th save, a
-  non-subscribed account's server history behaves as a rolling window of
-  exactly 7 — each new save permanently deletes the oldest saved reading
-  (enforced in `saveMeasureResultIfConsented`,
-  `backend/controllers/chatController.js`; real deletion, not a soft/
-  archive flag). **Subscribing at any point freezes this and keeps
-  whatever's in the window plus everything saved after** — it does not
-  retroactively recover anything already rolled off before subscribing;
-  only what's present at subscribe-time carries forward. This is what
-  Your Arc's own subscription actually removes: the free trial's rolling-
-  window limit, not access to saving at all. Every other still-true part
-  of the original "History is the product" reasoning is unchanged: the
-  full line across every reading (not a recent slice), rich re-entry into
-  any past moment, the app actively bringing a past moment back at a
-  meaningful time — not five more philosophers, not a deeper sound
-  library, and not a Journey's generated images either (Journeys are
-  deliberately *not* part of the record — see the next bullet). Two
-  things keep this legitimate rather than a dark pattern: the record was
-  always theirs (it's a mirror, not an analysis — see the GDPR/profiling
-  point above), and it must stay exportable even if someone cancels —
-  never lock someone out of their own past to punish non-payment.
-- **Journeys are one-time-purchase experiences, standalone from Your
+- **Selfinder is fully free right now, for everyone, no gates
+  (2026-08-28).** There's no legal entity yet to receive real payment —
+  Selfinder is operated by an individual, not a registered business (see
+  the privacy policy, `https://selfinder.online/privacy`) — so pretending
+  to gate depth behind a "subscription" or "purchase" that can't actually
+  be sold would be dishonest, and the free-trial mechanism that used to
+  enforce it was actively *deleting* people's own older readings once
+  they passed a cap. Both are gone: **Your Arc's full history** (every
+  saved reading, not a recent slice) and **every Journey** (Center,
+  Control, and the rest as they're built) are available to any signed-in,
+  consented user, unconditionally. A Journey is still "bought" in the
+  sense that opening one for the first time creates a real
+  `journeyPurchases[]` entry (`POST /journeys/purchase`,
+  `backend/controllers/journeyController.js`'s `postJourneyPurchase`) —
+  that mechanism (session-keying, per-account ownership checks, a fresh
+  seed each time) is unchanged and still load-bearing; only what's
+  required to *reach* it changed, from an admin-only grant to a
+  self-service free one (`source: "free"` in the data, distinct from
+  `"manual"`/`"apple"`/`"google"`, so the record itself keeps saying which
+  kind of grant it was). **Two things stay true regardless of any of
+  this**: the free trial's own original reasoning (a person experiencing
+  their own Arc actually forming, rather than an abstract promise of
+  future value) doesn't need a cap to be true — it's just how the record
+  looks with nothing hidden — and the record must stay exportable and
+  deletable per the person's own consent choice regardless of payment
+  status, same as always. **This is explicitly reversible, not
+  permanent** — `arcSubscription`, `journeyPurchases`'s `manual`/`apple`/
+  `google` sources, `grantArcSubscription.js`, `grantJourney.js`, and
+  `useJourneyPurchases.ts` all stay in the codebase, unused for gating
+  today, specifically so real payment can be turned back on later without
+  a rebuild. When a real legal entity and IAP/checkout flow exist, this
+  rule should be rewritten again, not left stale — the same fate that
+  already happened to an earlier version of this section once (see
+  collaboration history around commit `5753a0d7`).
+- **Journeys are generated experiences, standalone from Your
   Arc — an open-ended, growing family, not a fixed set.** Every Journey
   is an environment for examining what is happening within the person in
   relation to their external reality — this is the unifying definition
@@ -238,8 +231,8 @@ Selfinder is or why it costs money.
   — read that before designing or building any Journey, the same way
   `docs/pitch.md` governs outward-facing positioning. **Center** (the
   light cone + kaleidoscope, spun out of Your Arc's old Cover/Cone
-  pages, Selfinder's first non-subscription paid product) is the only
-  Journey with real content today. The next set to build toward,
+  pages, Selfinder's first Journey) is the only Journey with real
+  content today. The next set to build toward,
   framed as the question in the user's own voice rather than a feature
   name (2026-08-23, replacing the earlier placeholder Either/Or/Identity
   entries, which had no worked-through architecture): **Control** ("what
@@ -251,23 +244,24 @@ Selfinder is or why it costs money.
   more are expected over time, so nothing about a Journey's
   infrastructure (the `journey` discriminator on `User.journeyPurchases`,
   the Products catalog array, `useJourneyPurchases`) should assume
-  exactly this set. **A Journey requires no Your Arc subscription** —
-  anyone signed in can buy and complete one standalone (2026-08-23:
+  exactly this set. **A Journey requires no Your Arc dependency** —
+  anyone signed in can open and complete one standalone (2026-08-23:
   reverses the previous day's rule that Center required an active Your
   Arc subscription; that dependency turned out to be the wrong shape for
   the funnel — see the sign-in-incentive note below for what actually
   motivates an account instead).
   **Your Arc's relationship to Journeys is additive, not gatekeeping** —
-  a Journey's result stands alone whether or not the buyer has Your Arc;
-  Your Arc is what would let a Journey's result connect into a person's
-  broader longitudinal record over time (the exact connection mechanism
-  is future work, not built yet — don't imply it exists in any copy).
-  **Bought again, not owned once** — each purchase of the same Journey
-  generates a new, different result from a fresh seed (a purchase-scoped
+  a Journey's result stands alone whether or not the person has Your Arc
+  history; Your Arc is what would let a Journey's result connect into a
+  person's broader longitudinal record over time (the exact connection
+  mechanism is future work, not built yet — don't imply it exists in any
+  copy).
+  **Opened again, not owned once** — each fresh grant of the same Journey
+  generates a new, different result from a fresh seed (a grant-scoped
   nonce, see `kaleidoscopeData.ts`'s `seedFromLog` for Center) even
   against completely unchanged history, the same way returning to a
   kaleidoscope and giving it a turn produces a new pattern from the same
-  shards. Every past purchase stays individually browsable, not just the
+  shards. Every past result stays individually browsable, not just the
   latest — someone should be able to look back at an earlier Journey
   result the way they'd look back at a photo, even though it was never
   folded into "the record" Your Arc holds. Center's own content
@@ -275,74 +269,54 @@ Selfinder is or why it costs money.
   notice where you are"; the past cone as the user's own account, never
   raw fact; the future cone holding only the active wish, never a
   forecast; "you are shaping your future," never "the future calls you")
-  are unchanged by any of this — they govern content, not which product
-  or gate it sits under. Price: TBD for both Your Arc's subscription and
-  every Journey's one-time purchase — the old €7.99/month, €49.99/year
-  figures applied to the original single Selfinder+ tier and no longer
-  apply to anything live today (not yet live either way — see the no-
-  live-purchase-flow note below).
-- **Free core, two shapes of paid depth — never free features, paid
-  access.** Measure, Guide, Spill, Tune In, Breathing are free for
-  everyone, unconditionally, and stay exactly as rich as they are today —
-  free is never made to feel incomplete on purpose. Paid depth comes in
-  two distinct shapes: **Your Arc** sells depth of *history* — access
-  past the free 7-reading trial, richer ways back into an old moment.
-  **A Journey** sells a *generated experience* — a unique result made
-  from real history, bought fresh each time, never accumulated or
-  archived as part of the record. Both stay true to "a gym, not a
-  hospital, never gated like therapy" — neither gates the free core loop,
-  and neither implies the free experience is incomplete on purpose. The
-  free trial itself is real depth too, not a crippled preview — don't let
-  a growth idea erode any of this.
-- **No live purchase/subscribe flow exists yet for either product — but
-  real entitlement-gated depth does, for both.** `useArcSubscription.ts`
-  is a live `GET /user/me` check against `User.arcSubscription.active`;
-  `useArcTrialStatus.ts` layers the free-trial signal on top of the same
-  call (`savedReadingCount`, `remaining`); `useJourneyPurchases.ts`
+  are unchanged by any of this — they govern content, not payment status.
+- **Free core, and now free depth too — never free features, paid
+  access, until there's a legal entity to actually sell to.** Measure,
+  Guide, Spill, Tune In, Breathing are free for everyone, unconditionally,
+  and stay exactly as rich as they are today — free is never made to feel
+  incomplete on purpose. Your Arc's full history and every Journey are
+  now free too (see the fully-free bullet above), not because the
+  underlying value changed but because there's currently no honest way to
+  charge for it. Both still stay true to "a gym, not a hospital, never
+  gated like therapy" — neither the free core nor the now-free depth
+  layers should ever feel incomplete on purpose.
+- **How entitlement actually works today.** `useJourneyPurchases.ts`
   checks `User.journeyPurchases`, an array keyed by a `journey`
-  discriminator rather than a boolean, since a Journey is bought
-  repeatedly and each purchase browsable on its own (all three in
-  `backend/models/User.js` / `backend/controllers/userController.js`) —
-  no client-side dev toggle exists for any of them. The only way any
-  becomes real today is a manual admin grant —
-  `backend/scripts/grantArcSubscription.js <username>` for Your Arc,
-  `backend/scripts/grantJourney.js <username> <journey>` (run again for
-  another independent purchase, of the same or a different Journey) for
-  Journeys; nothing writes `source: "apple"/"google"` yet for either, so
-  there is still no real checkout. The free-trial deque itself needs no
-  purchase flow to be real — it's pure server/client logic already
-  enforced today, no payment involved. Depths' spiral (`SLOT_META.yourArc`,
-  `depths/index.tsx`) still routes to `/your-arc` if subscribed or
-  `/your-arc-preview` if not — that screen now also carries the trial's
-  own progress messaging. Journeys have their own entry point: a
-  "Products →" row on the You tab (same weight as the existing "How to
-  use Selfinder →"/"Where this comes from →" rows), opening a catalog
-  screen built to hold more Journeys as they're built. Depths' own "Talk
-  about it" row is still permanently static (always "Talk about it,"
-  never swaps copy, always opens Guide) — the upsell copy-swap
-  (`TALK_ABOUT_IT_UPSELL_THRESHOLD`, `engagementStore.ts`) still lives on
-  `your-arc-preview.tsx` itself, unaffected by either pivot. Never build a
+  discriminator rather than a boolean, since a Journey can be opened
+  repeatedly and each result stays browsable on its own
+  (`backend/models/User.js` / `backend/controllers/userController.js`).
+  A signed-in user with no existing purchase gets one self-granted
+  automatically the first time they open a Journey (`POST /journeys/
+  purchase`, `source: "free"`) — `control.tsx` does this on mount,
+  `center.tsx` does it on tapping "Get Center" (kept as an explicit tap
+  there since Center's own teaser copy is part of the experience, not
+  just a gate to skip past). `arcSubscription`/`grantArcSubscription.js`
+  still exist but gate nothing today — Your Arc's tab always shows the
+  full experience regardless (`(tabs)/your-arc/index.tsx`). Never build a
   tap target that looks like it leads to a purchase and doesn't — that
-  discipline still stands for both products. When a real IAP/checkout
-  flow is built for either, this rule should be rewritten again, not left
-  stale — the same fate that already happened to it once (see
-  collaboration history around commit `5753a0d7`).
+  discipline still stands even though nothing is actually gated right
+  now, since a fake "coming soon" dead end is exactly the pattern this
+  rule warns against, whichever direction it points.
 - **Selfinder needs a real incentive to sign in — not yet designed.**
-  Both the free-trial deque and every Journey purchase depend on being
-  signed in, but nothing in the app currently gives someone a reason to
-  create an account beyond "so these features work" — a purely
-  functional, not felt, motivation. Direction: something in the spirit of
-  belonging/membership ("join the club"), not a bare "sign in to
-  continue" prompt. This is a noted gap, not designed or built yet — a
-  future session should design where it appears, what it says, and how it
-  avoids reading as a dark pattern, rather than bolting on a generic
-  prompt.
-- **Every change should lean toward "what makes this a paid app?"** — not
-  by adding friction to the free core, but by asking whether a change adds
-  polish, a funnel-analytics touchpoint, a Your Arc seed, or a Journey
-  seed. A change that does none of these isn't wrong, but a change that
-  actively works against this (e.g. making free content feel already-
-  complete with nothing more to want) is worth a second look.
+  Both saving Your Arc history and every Journey depend on being signed
+  in, but nothing in the app currently gives someone a reason to create an
+  account beyond "so these features work" — a purely functional, not
+  felt, motivation. Direction: something in the spirit of belonging/
+  membership ("join the club"), not a bare "sign in to continue" prompt.
+  This is a noted gap, not designed or built yet — a future session
+  should design where it appears, what it says, and how it avoids reading
+  as a dark pattern, rather than bolting on a generic prompt.
+- **"What makes this a paid app?" is now a future-facing question, not a
+  present-tense one — don't let that erode the free experience while it
+  waits for an answer.** Everything is free right now, with no live
+  payment path (see the fully-free bullet above), but that's a legal/
+  business-entity gap, not a decision that depth stops mattering. Keep
+  building Your Arc and Journeys with the same care as before — polish,
+  a funnel-analytics touchpoint, richer history, a new Journey — the
+  seeds of a future paid layer are still worth planting, they just don't
+  gate anything yet. A change that makes free content feel already-
+  complete with nothing more to want is still worth a second look, same
+  as before this pivot.
 - **Never diagnose, gate, or imply urgency like a medical or gamified
   app would.** No streaks, no badges, no guilt mechanics, no "you missed a
   day" — this is explicit positioning against wellness-app fatigue (see

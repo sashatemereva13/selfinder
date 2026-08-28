@@ -1,5 +1,5 @@
 import request from './client';
-import { JourneyKey, JourneySessionDTO, AgencySortResult } from '../types';
+import { JourneyKey, JourneySessionDTO, AgencySortResult, JourneyPurchase } from '../types';
 import { useLocaleStore } from '../store/localeStore';
 
 export interface JourneyExchangeResponse {
@@ -47,6 +47,18 @@ export function sendJourneyExchange(
     { ...params, locale: useLocaleStore.getState().locale },
     { token }
   );
+}
+
+// Self-service free grant (2026-08-28 — Selfinder is fully free for now,
+// see RULES.md's Product/positioning section). Creates one new
+// journeyPurchases[] entry for the signed-in account, the same shape a
+// real purchase would — a fresh purchaseId/seedNonce each call, matching
+// "bought again, not owned once." Called once, right when a signed-in
+// user first opens a Journey with no existing purchase (see control.tsx/
+// center.tsx), not on every visit — the resulting purchase is then reused
+// via useJourneyPurchases the normal way.
+export function purchaseJourney(journey: JourneyKey, token: string): Promise<JourneyPurchase> {
+  return request<JourneyPurchase>('/journeys/purchase', { journey }, { token });
 }
 
 // Resumes an in-progress session, or fetches the stored stage answers for

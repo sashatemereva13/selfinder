@@ -48,7 +48,7 @@ interface Product {
 // content Selfinder gives the user). Built as a real array (same
 // SOURCES/HOW_TO_USE_ENTRIES pattern as sources/index.tsx and
 // howToUseEntries.ts) so a future Journey is a new entry here, not a new
-// screen. Center is the only one with real content today; the rest are
+// screen. Control is the only one with real content today; the rest are
 // named, reachable, honest "not yet available" placeholders (see each
 // route's own file, all sharing JourneyComingSoonScreen) — not dead
 // links, since a catalog entry that goes nowhere would be exactly the
@@ -71,8 +71,14 @@ interface Product {
 // docs/journeys-concept.md's own group tables; the render below groups
 // by `temporal`, not by array order alone, so the array itself doesn't
 // need to be re-sorted if a future addition lands out of group order.
+//
+// 2026-08-28: Center's own entry removed from this catalog — it moved to
+// a real, prominent home on Your Arc's own screen (2026-08-27
+// restructure, see docs/app-architecture-concept.md, "Center's home").
+// Listing it in both places read as duplication/confusion rather than
+// helpful cross-listing once tried live — Your Arc is now Center's one
+// true home, and this catalog is purely the 11-Journey question set.
 const PRODUCTS: Product[] = [
-  { key: 'center', labelKey: 'products.centerLabel', descriptionKey: 'products.centerDescription', route: '/center' },
   { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', route: '/control', temporal: 'present' },
   { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', route: '/the-choice', temporal: 'present' },
   { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', route: '/the-loop', temporal: 'past' },
@@ -111,19 +117,12 @@ export default function ProductsScreen() {
       {theme === 'dark' && <AmbientGlow />}
 
       <Text style={styles.title}>{t('products.title')}</Text>
+      {/* Standing orientation line — "why would I come here" — kept
+          distinct from the commercial-framing line just below it ("what's
+          the deal"): two different questions, same reasoning as the tab
+          explainer on Depths/Your Arc. */}
+      <Text style={styles.tabExplainer}>{t('products.tabExplainer')}</Text>
       <Text style={styles.intro}>{t('products.intro')}</Text>
-
-      {/* Center sits outside the temporal grouping entirely (it's a
-          generated visualization, not a question sequence — see
-          docs/journeys-concept.md) and is also the only Journey with
-          real content today, so it keeps top billing above the three
-          grouped sections rather than being folded into one of them. */}
-      {PRODUCTS.filter((p) => !p.temporal).map((product) => (
-        <Pressable key={product.key} style={styles.row} onPress={() => router.push(product.route)}>
-          <Text style={styles.rowLabel}>{t(product.labelKey)}</Text>
-          <Text style={styles.rowDescription}>{t(product.descriptionKey)}</Text>
-        </Pressable>
-      ))}
 
       {TEMPORAL_GROUPS.map((group) => {
         const items = PRODUCTS.filter((p) => p.temporal === group.key);
@@ -160,7 +159,14 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.medium,
     fontSize: fontSizes.xl,
     lineHeight: fontSizes.xl * lineHeights.tight,
-    marginBottom: spacing[5],
+    marginBottom: spacing[2],
+  },
+  tabExplainer: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginBottom: spacing[3],
   },
   intro: {
     color: colors.text.secondary,

@@ -1,7 +1,7 @@
 {
   "aiDisclosure": {
     "kicker": "Before you begin",
-    "body": "When you talk with a philosopher or answer a question during Measure, what you write is sent to a third-party AI provider to generate the reply or the reading. This happens every time, whether or not you have an account — see the privacy policy for details.",
+    "body": "When you talk with a philosopher or answer a question during Measure, what you write is sent to a third-party AI provider — currently Groq — to generate the reply or the reading. This happens every time, whether or not you have an account.",
     "continue": "Continue"
   },
   "common": {
@@ -25,8 +25,9 @@
     "tabYourArc": "Your Arc"
   },
   "you": {
+    "groupSelfinder": "Selfinder",
+    "groupPreferences": "Preferences",
     "howToUseLink": "How to use Selfinder →",
-    "productsLink": "Journeys →",
     "walkingWith": "Walking with",
     "changeWhoWalksBesideYou": "Change who walks beside you →",
     "chooseWhoWalksBesideYou": "Choose who walks beside you",
@@ -66,6 +67,7 @@
     "emailPlaceholder": "Email (optional)",
     "emailHelperCopy": "Used only so you can reset your password if you forget it.",
     "acceptPrivacyPolicyLabel": "I accept the privacy policy",
+    "readPrivacyPolicy": "Read the privacy policy →",
     "forgotPassword": "Forgot password?",
     "signedInAs": "Signed in as {{username}}",
     "saveReadingsToAccount": "Save my readings to my account",
@@ -74,10 +76,6 @@
     "consentOff": "Off",
     "consentGranted": "Granted",
     "consentWithdrawn": "Withdrawn",
-    "arcSubscriptionActive": "Your Arc is active on this account.",
-    "arcSubscriptionInactive": "Your Arc is not active on this account.",
-    "centerPurchaseCount_one": "Center purchased once.",
-    "centerPurchaseCount_other": "Center purchased {{count}} times.",
     "centerPurchaseCountNone": "Center hasn't been purchased on this account.",
     "yourReadings": "Your readings",
     "loading": "Loading…",
@@ -113,6 +111,7 @@
   },
   "depths": {
     "kicker": "Depths",
+    "tabExplainer": "What's happening inside you right now.",
     "intentionPrompt": "What would you like to do with what's here?",
     "stayWithIt": "Stay with it",
     "stayWithItCardsOnly": "Draw a symbol",
@@ -187,7 +186,9 @@
     "title": "Where this comes from",
     "disclaimer": "Selfinder is a self-reflection practice, not medical advice, diagnosis, or treatment. The ideas here — including the map of seventeen states and the psychological concepts referenced on each level's page — are drawn from the named sources below. If you're struggling with your mental health, please talk to a doctor or a licensed mental health professional.",
     "sectionHeading": "Sources referenced in this app",
-    "openLink": "Open source ↗"
+    "openLink": "Open source ↗",
+    "influencesHeading": "What shaped Selfinder's worldview",
+    "influencesIntro": "These aren't cited for any specific claim in the app the way the sources above are — they're the broader reading and thinking that shaped Selfinder's own tone and stance while it was being built. The five philosophers you walk with in the app (Socrates, Marcus Aurelius, Kierkegaard, Camus, Aristotle) belong here too, in spirit — they're not repeated below since they already have their own presence throughout the app."
   },
   "howToUse": {
     "title": "How to use Selfinder",
@@ -195,7 +196,11 @@
     "saveHeading": "Keep any image",
     "saveBody": "Wherever you see a glowing image or figure — the aura on Depths, a Card, Feeling Lucky's message, the kaleidoscope on Your Arc — press and hold to save it to your own photo gallery.",
     "ringHeading": "Explore the ring by dragging",
-    "ringBody": "On the Levels map, and wherever a reading's own wheel appears, drag your finger around the ring to feel your way through the states — it names whatever you're pointing at and settles on release."
+    "ringBody": "On the Levels map, and wherever a reading's own wheel appears, drag your finger around the ring to feel your way through the states — it names whatever you're pointing at and settles on release.",
+    "guideHeading": "Talk with your philosopher from Depths",
+    "guideBody": "Guide no longer has its own tab — tap your philosopher's name near the top of Depths any time to open a conversation, reading or no reading required.",
+    "profileHeading": "Find settings and your account",
+    "profileBody": "Language, theme, reminders, and your account now live behind the small figure icon in the top corner of Depths, Journeys, and Your Arc."
   },
   "guide": {
     "chooseSomeone": "Choose who walks beside you in the You tab to begin.",
@@ -207,11 +212,12 @@
   },
   "yourArc": {
     "kicker": "Your arc",
+    "tabExplainer": "What has been happening to you across time.",
     "nowKicker": "Now",
     "centerRowLabel": "Center",
-    "centerRowDescriptionFirst": "A kaleidoscope and light cone made from your saved history — a new result every time you get it.",
-    "centerRowDescriptionReturning_one": "You've made {{count}} of these. Get another.",
-    "centerRowDescriptionReturning_other": "You've made {{count}} of these. Get another.",
+    "centerRowDescriptionFirst": "A kaleidoscope and light cone made from your saved history — a new result every time you open it.",
+    "centerRowDescriptionReturning_one": "You've opened this {{count}} time. Open another.",
+    "centerRowDescriptionReturning_other": "You've opened this {{count}} times. Open another.",
     "factsKicker": "This month",
     "pastReadingsHeading": "Every reading",
     "introLine_one": "{{count}} reading, on {{sinceDate}}.",
@@ -297,7 +303,8 @@
   },
   "products": {
     "title": "Journeys",
-    "intro": "One-time experiences, bought fresh each time — separate from Your Arc's ongoing record. No subscription required.",
+    "tabExplainer": "Something you wish you understood — and want an answer to now.",
+    "intro": "A generated experience, made fresh each time you open it — separate from Your Arc's ongoing record.",
     "groupPast": "What the past is still doing here",
     "groupPresent": "What's actually happening now",
     "groupFuture": "What the future is already doing here",
@@ -335,8 +342,6 @@
     "previousQuestion": "Back to the previous question",
     "inputPlaceholder": "Write what's true for you",
     "somethingWentWrong": "Something went wrong. Try again.",
-    "notPurchasedTitle": "You haven't started this Journey yet",
-    "notPurchasedBody": "This is a one-time purchase — check back once purchasing is available.",
     "signInTitle": "Sign in to begin",
     "signInBody": "This Journey is tied to your account, so it can be picked up right where you left it."
   },
@@ -359,24 +364,9 @@
     "repeatLine": "Get Center again for a new one — the same real history, a different result every time.",
     "signInLine": "Center is generated from your own saved reading history — sign in to see it.",
     "getCenter": "Get Center",
-    "comingSoonTitle": "Not yet available",
-    "comingSoonBody": "Purchasing isn't live yet — check back soon."
-  },
-  "yourArcPreview": {
-    "kicker": "Your arc",
-    "title": "The line you're already drawing",
-    "introLine": "Every reading you take is a point. This is the real shape they trace so far.",
-    "trialProgress": "Your Arc is taking shape — {{count}} of {{limit}} free readings saved.",
-    "trialExhausted": "You've used your free readings — saving your next one will let go of your oldest saved one. Subscribe to keep everything.",
-    "whatSelfinderPlusAdds": "What Selfinder+ adds",
-    "fullLine": "The full line, not just your last {{count}} readings — every walk you've ever taken, in order.",
-    "tapAnyPoint": "Tap any point on it to open that day again: what it read as, and what your philosopher said about it.",
-    "keepConversationGoing": "Keep the conversation going",
-    "keepConversationDescription": "You've come back to this a few times — Selfinder+ keeps the whole conversation with {{name}} going, not just one reading at a time.",
-    "footnote": "Everything you already have — Measure, Guide, Spill, Tune In, Breathing — stays free. This is about keeping the whole line, not a better version of the daily practice itself.",
-    "pointDate": "{{date}}",
-    "pointLevel": "Read as {{level}}",
-    "pointUnlockHint": "Subscribe to Selfinder+ to see what you said and what your philosopher reflected back that day →"
+    "getCenterBusy": "Generating…",
+    "getCenterErrorTitle": "Something went wrong",
+    "getCenterErrorBody": "Couldn't generate Center right now — try again in a moment."
   },
   "breathing": {
     "title": "Change your state through breath",

@@ -113,6 +113,16 @@ export default function ProfileScreen() {
         // firing — consistent with taps being eaten by keyboard dismissal.
         keyboardShouldPersistTaps="handled"
       >
+        {/* Now a top-level route reached from all three tabs via the
+            shared ProfileIcon (see docs/app-architecture-concept.md),
+            not a tab itself — router.back() is correct here (unlike
+            your-arc.tsx's explicit destination), since this is always
+            PUSHED from wherever the icon was tapped, so popping the
+            stack genuinely returns there. */}
+        <Pressable style={styles.backRow} onPress={() => router.back()}>
+          <Text style={styles.backLink}>{t('common.back')}</Text>
+        </Pressable>
+
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →
             Walk with Socrates), and this label keeps it going. */}
@@ -146,99 +156,102 @@ export default function ProfileScreen() {
 
         {!changing && (
           <>
+            {/* Grouped into the four sections docs/app-architecture-
+                concept.md specified for this screen ("You becomes a
+                profile page, not a tab") — Your guide (above) / Selfinder
+                / Preferences / Account — reorganized 2026-08-28 from a
+                flat, ungrouped list of rows into these labeled sections,
+                and with the now-redundant "Journeys →" row removed (it
+                only mattered before Journeys had its own bottom tab). */}
             <View style={styles.divider} />
-            {/* Not nested inside AccountSection, and not gated on being
-                signed in — most usage doesn't require an account, and a
-                language preference is meaningful before someone ever
-                creates one. Placed as its own top-level section so it's
-                never hidden behind login. */}
-            <View style={styles.languageSection}>
-              <Text style={styles.languageKicker}>{t('you.language')}</Text>
-              <View style={styles.languageRow}>
-                {(['en', 'ru'] as Locale[]).map((option) => (
-                  <Pressable
-                    key={option}
-                    style={[
-                      styles.languageOption,
-                      locale === option && { backgroundColor: colors.accent.buttonFill },
-                    ]}
-                    onPress={() => {
-                      setLocale(option);
-                      // Already-scheduled reminder notifications bake their
-                      // body text in at schedule time (see dailyReminder.ts),
-                      // so a language switch needs a real reschedule, not
-                      // just the next cold-start top-up, or pending
-                      // notifications keep firing in the old language.
-                      if (philosopher) rescheduleReminderWindow(philosopher);
-                    }}
-                  >
-                    <Text
-                      style={[
-                        styles.languageOptionText,
-                        locale === option && { color: colors.onAccent },
-                      ]}
-                    >
-                      {option === 'en' ? t('you.languageEnglish') : t('you.languageRussian')}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
+            <View style={styles.groupSection}>
+              <Text style={styles.groupKicker}>{t('you.groupSelfinder')}</Text>
+              <Pressable onPress={() => router.push('/how-to-use')}>
+                <Text style={styles.sourcesLink}>{t('you.howToUseLink')}</Text>
+              </Pressable>
+              <Pressable onPress={() => router.push('/sources')}>
+                <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>
+              </Pressable>
             </View>
 
             <View style={styles.divider} />
-            <View style={styles.themeSection}>
-              <Text style={styles.themeKicker}>{t('you.theme')}</Text>
-              <View style={styles.themeRow}>
-                {(['system', 'light', 'dark'] as ThemePreference[]).map((option) => (
-                  <Pressable
-                    key={option}
-                    style={[
-                      styles.themeOption,
-                      themePreference === option && { backgroundColor: colors.accent.buttonFill },
-                    ]}
-                    onPress={() => setThemePreference(option)}
-                  >
-                    <Text
+            <View style={styles.groupSection}>
+              <Text style={styles.groupKicker}>{t('you.groupPreferences')}</Text>
+              {/* Not nested inside AccountSection, and not gated on being
+                  signed in — most usage doesn't require an account, and a
+                  language preference is meaningful before someone ever
+                  creates one. */}
+              <View style={styles.languageSection}>
+                <Text style={styles.languageKicker}>{t('you.language')}</Text>
+                <View style={styles.languageRow}>
+                  {(['en', 'ru'] as Locale[]).map((option) => (
+                    <Pressable
+                      key={option}
                       style={[
-                        styles.themeOptionText,
-                        themePreference === option && { color: colors.onAccent },
+                        styles.languageOption,
+                        locale === option && { backgroundColor: colors.accent.buttonFill },
                       ]}
+                      onPress={() => {
+                        setLocale(option);
+                        // Already-scheduled reminder notifications bake their
+                        // body text in at schedule time (see dailyReminder.ts),
+                        // so a language switch needs a real reschedule, not
+                        // just the next cold-start top-up, or pending
+                        // notifications keep firing in the old language.
+                        if (philosopher) rescheduleReminderWindow(philosopher);
+                      }}
                     >
-                      {option === 'system'
-                        ? t('you.themeSystem')
-                        : option === 'light'
-                          ? t('you.themeLight')
-                          : t('you.themeDark')}
-                    </Text>
-                  </Pressable>
-                ))}
+                      <Text
+                        style={[
+                          styles.languageOptionText,
+                          locale === option && { color: colors.onAccent },
+                        ]}
+                      >
+                        {option === 'en' ? t('you.languageEnglish') : t('you.languageRussian')}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
               </View>
-            </View>
 
-            <View style={styles.divider} />
-            <DailyReminderSection />
+              <View style={styles.themeSection}>
+                <Text style={styles.themeKicker}>{t('you.theme')}</Text>
+                <View style={styles.themeRow}>
+                  {(['system', 'light', 'dark'] as ThemePreference[]).map((option) => (
+                    <Pressable
+                      key={option}
+                      style={[
+                        styles.themeOption,
+                        themePreference === option && { backgroundColor: colors.accent.buttonFill },
+                      ]}
+                      onPress={() => setThemePreference(option)}
+                    >
+                      <Text
+                        style={[
+                          styles.themeOptionText,
+                          themePreference === option && { color: colors.onAccent },
+                        ]}
+                      >
+                        {option === 'system'
+                          ? t('you.themeSystem')
+                          : option === 'light'
+                            ? t('you.themeLight')
+                            : t('you.themeDark')}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              <DailyReminderSection />
+            </View>
           </>
         )}
 
-        <View style={styles.divider} />
-        <Pressable onPress={() => router.push('/how-to-use')}>
-          <Text style={styles.sourcesLink}>{t('you.howToUseLink')}</Text>
-        </Pressable>
-
-        {/* Center's entry point (2026-08-22, the Your Arc + Center split
-            — see RULES.md's Product/positioning section) — a catalog of
-            one-time-purchase experiences, distinct from Your Arc's
-            ongoing subscription, same row weight as the links around it. */}
-        <View style={styles.divider} />
-        <Pressable onPress={() => router.push('/(tabs)/journeys')}>
-          <Text style={styles.sourcesLink}>{t('you.productsLink')}</Text>
-        </Pressable>
-
-        <View style={styles.divider} />
-        <Pressable onPress={() => router.push('/sources')}>
-          <Text style={styles.sourcesLink}>{t('level.sourcesLink')}</Text>
-        </Pressable>
-
+        {/* No wrapping groupKicker here, unlike the two sections above —
+            AccountSection already renders its own "Account" kicker
+            internally (account.kicker), so adding a second one directly
+            above it would read as the same label twice in a row. */}
         <View style={styles.divider} />
         <AccountSection />
       </ScrollView>
@@ -251,6 +264,14 @@ function makeStyles(colors: Colors) {
     root: { flex: 1, backgroundColor: colors.bg.base },
     scroll: { flex: 1 },
     content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[6] },
+    groupSection: { gap: spacing[5] },
+    groupKicker: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
     languageSection: { gap: spacing[3] },
     languageKicker: {
       color: colors.text.muted,
@@ -286,6 +307,8 @@ function makeStyles(colors: Colors) {
       backgroundColor: colors.bg.elevated,
     },
     themeOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+    backRow: { alignSelf: 'flex-start', paddingBottom: spacing[6] },
+    backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     kicker: {
       color: colors.text.muted,
       fontFamily: fonts.medium,

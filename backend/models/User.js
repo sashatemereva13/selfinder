@@ -81,7 +81,16 @@ const userSchema = new mongoose.Schema({
       {
         id: { type: String, default: () => randomUUID() },
         journey: { type: String, enum: JOURNEY_KEYS, required: true },
-        source: { type: String, enum: ["manual", "apple", "google"], required: true },
+        // "free" added 2026-08-28 — Selfinder is fully free for now (no
+        // legal entity yet to receive real payment, see RULES.md's
+        // Product/positioning section), so a signed-in user self-grants
+        // a "purchase" entry the first time they open a Journey (see
+        // journeyController.js's postJourneyPurchase) rather than an
+        // admin running grantJourney.js on their behalf. Kept distinct
+        // from "manual" so the data itself still tells the difference
+        // between an admin comp and normal free-tier usage once real
+        // payment exists again.
+        source: { type: String, enum: ["manual", "apple", "google", "free"], required: true },
         purchasedAt: { type: String, required: true },
         seedNonce: { type: Number, required: true },
       },

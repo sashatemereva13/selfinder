@@ -122,46 +122,51 @@ backend must actually be live at that URL before submitting, since App
 Store reviewers will exercise real network calls (chat, etc.) and a
 dead/local-only backend is a common rejection cause.
 
-## Subscriptions / Your Arc / Journeys
+## Your Arc / Journeys — fully free for now
 
-No real purchase flow exists yet for either product, but a real
-entitlement source of truth does for both — 2026-08-22: the old single
-`User.subscription` field split in two once Selfinder+ became two
-differently-shaped products (an ongoing subscription and a repeatable
-one-time purchase); 2026-08-23: a further pivot made Your Arc free-
-trial-then-subscribe and generalized the one-time-purchase side into an
-open-ended "Journey" family, no longer gated behind Your Arc (see
-`RULES.md`'s Product/positioning section for the full reasoning on both):
+**Selfinder is fully free right now, for everyone** (2026-08-28 — see
+`RULES.md`'s Product/positioning section for the full reasoning). There's
+no legal entity yet to receive real payment, so Your Arc's full history
+and every Journey are available to any signed-in, consented user with no
+gate. The entitlement fields/scripts below still exist and still work
+exactly as described — they're just unused for gating today, kept so real
+payment can come back later without a rebuild:
 
-- **Your Arc** — `User.arcSubscription` (`backend/models/User.js`),
-  checked client-side via `src/utils/useArcSubscription.ts` (a live
-  `GET /user/me` call, not local device state). The only way
-  `arcSubscription.active` gets set to `true` today is a manual admin
-  grant — run `node backend/scripts/grantArcSubscription.js <username>`
-  from `backend/` (add `--revoke` to undo). A signed-out session, or a
-  signed-in account with no grant, sees the free `your-arc-preview`
-  experience, which now also shows real free-trial progress via
-  `src/utils/useArcTrialStatus.ts` (backed by `getMe`'s new
-  `savedReadingCount` field). The trial itself — 7 free server-saved
-  readings, oldest permanently deleted past that for a non-subscribed
-  account — is enforced server-side in
-  `backend/controllers/chatController.js`'s `saveMeasureResultIfConsented`,
-  not just reflected client-side.
+- **Your Arc** — `User.arcSubscription` (`backend/models/User.js`) is
+  never checked anywhere anymore; `(tabs)/your-arc/index.tsx` always
+  renders the full `your-arc.tsx` experience. `useArcSubscription.ts`,
+  `useArcTrialStatus.ts`, and `your-arc-preview.tsx` were deleted
+  2026-08-28 once there was nothing left to gate or preview toward. The
+  old free-trial cap (7 server-saved readings, oldest deleted past that)
+  is gone from `saveMeasureResultIfConsented`
+  (`backend/controllers/chatController.js`) — every consented save is
+  kept. `grantArcSubscription.js` still works if you want to test what a
+  real subscription flag would look like once gating returns, but nothing
+  in the app reads it right now.
 - **Journeys** — `User.journeyPurchases` (an array, not a boolean — each
-  purchase is its own entry with its own `journey` key and `seedNonce`,
-  since a Journey is bought again and again, never just "owned"), checked
+  entry is its own record with its own `journey` key and `seedNonce`,
+  since a Journey is opened again and again, never just "owned"), checked
   client-side via `src/utils/useJourneyPurchases.ts` (optionally filtered
-  to one Journey, e.g. `useJourneyPurchases('center')`). Grant one
-  purchase with `node backend/scripts/grantJourney.js <username>
-  <journey>` (`center`/`either-or`/`identity`) — run it again for a
-  second, independent purchase of the same or a different Journey (no
-  `--revoke`; there's nothing to undo about a past generated result). No
-  Your Arc subscription is required to grant or use any Journey.
+  to one Journey, e.g. `useJourneyPurchases('center')`). A signed-in user
+  with no existing entry for a Journey gets one self-granted automatically
+  via `POST /journeys/purchase` (`backend/controllers/
+  journeyController.js`'s `postJourneyPurchase`, `source: "free"`) —
+  `control.tsx` calls this on mount, `center.tsx` on tapping "Get
+  Center." `node backend/scripts/grantJourney.js <username> <journey>`
+  still works too (grants with `source: "manual"` instead, for an admin
+  comp distinct from the free-tier self-grant) — run it again for a
+  second, independent entry of the same or a different Journey (no
+  `--revoke`; there's nothing to undo about a past generated result).
 
-There is no local dev toggle for either. When real IAP is added,
-StoreKit/Play Billing receipt sync should write to these same fields
-(`source: 'apple'`/`'google'` instead of `'manual'`) rather than
-introducing a separate entitlement mechanism — Your Arc as an
-auto-renewing subscription product, each Journey as Apple's "Consumable"
-IAP product type (the correct category for a repeatable, non-restoring
-purchase, distinct from "Non-Consumable").
+There is no local dev toggle for either — the free-tier self-grant above
+is the real, always-on path, not a dev-only shortcut. When real IAP is
+added and gating comes back, StoreKit/Play Billing receipt sync should
+write to these same fields (`source: 'apple'`/`'google'` instead of
+`'manual'`/`'free'`) rather than introducing a separate entitlement
+mechanism — Your Arc as an auto-renewing subscription product, each
+Journey as Apple's "Consumable" IAP product type (the correct category
+for a repeatable, non-restoring purchase, distinct from
+"Non-Consumable"). Re-add a check in `(tabs)/your-arc/index.tsx`
+(`useArcSubscription`-equivalent) and in `control.tsx`/`center.tsx`
+(skip the auto-grant, show a real paywall instead) at that point — this
+section should be rewritten again then, not left stale.

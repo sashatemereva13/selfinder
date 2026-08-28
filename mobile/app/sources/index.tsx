@@ -17,6 +17,11 @@ interface Source {
   url?: string;
 }
 
+interface Influence {
+  name: string;
+  note: string;
+}
+
 // One entry per named person/framework actually referenced in the app's
 // level content (src/content/levelsContent.ts) — added in response to
 // Apple App Review Guideline 1.4.1, which flagged referenced psychological/
@@ -63,6 +68,43 @@ const SOURCES: Source[] = [
   },
 ];
 
+// A second, deliberately separate list — not citations for a specific
+// claim in the level copy (that's what SOURCES above is for, and mixing
+// the two would make that list less honest, not more complete), but the
+// broader philosophical/spiritual reading that shaped Selfinder's own
+// worldview and tone while it was being built. The five walking
+// philosophers (Socrates, Marcus Aurelius, Kierkegaard, Camus,
+// Aristotle — see philosophers.ts) already have their own presence
+// throughout the app and aren't repeated here; this list is everything
+// else that shaped the project without being quoted or attributed
+// anywhere in the product itself.
+const INFLUENCES: Influence[] = [
+  {
+    name: 'Jean-Paul Sartre',
+    note: 'Existentialist thought on freedom, responsibility, and the project of choosing who you are — present in the app\'s underlying stance that no reading, level, or philosopher hands you an answer; you\'re the one who has to live the choice.',
+  },
+  {
+    name: 'Simone de Beauvoir',
+    note: 'Her account of becoming — that who you are is made through lived choices, not fixed by nature — informed the spirit of Your Arc: a record of a life still being formed, not a verdict on who someone already is.',
+  },
+  {
+    name: 'Henry Miller',
+    note: 'His insistence on writing from direct, unfiltered experience rather than received wisdom shaped Spill\'s own premise: free-writing with nothing softened, nothing performed, and no judgment waiting on the other side.',
+  },
+  {
+    name: 'Anaïs Nin',
+    note: 'Her diaries — a life examined in its own words, over years, kept for herself before anyone else — are close in spirit to what Your Arc is trying to become: a record kept because it matters to the person keeping it.',
+  },
+  {
+    name: 'Taoism',
+    note: 'The idea of moving with what is, rather than forcing or resisting it, runs through Selfinder\'s core stance that no state is better or worse than another — only more or less where you currently are.',
+  },
+  {
+    name: 'Buddhism',
+    note: 'Practices of sitting with what\'s present without immediately trying to fix or escape it — closer to witnessing a state than judging it — shaped the app\'s anti-diagnosis stance and Tune In / Breathing\'s own quiet, non-interpretive design.',
+  },
+];
+
 export default function SourcesScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -97,6 +139,22 @@ export default function SourcesScreen() {
               <Text style={styles.sourceLink}>{source.url}</Text>
             </Pressable>
           )}
+        </View>
+      ))}
+
+      {/* A separate, clearly-distinguished section — not citations for a
+          specific claim (the list above is), but the broader reading that
+          shaped Selfinder's own worldview while it was being built. Kept
+          visually distinct (its own heading + a preceding divider) so it
+          never reads as more of the same citation list above it. */}
+      <View style={styles.influencesDivider} />
+      <Text style={styles.sectionHeading}>{t('sources.influencesHeading')}</Text>
+      <Text style={styles.influencesIntro}>{t('sources.influencesIntro')}</Text>
+
+      {INFLUENCES.map((influence) => (
+        <View key={influence.name} style={styles.sourceBlock}>
+          <Text style={styles.sourceName}>{influence.name}</Text>
+          <Text style={styles.sourceNote}>{influence.note}</Text>
         </View>
       ))}
     </ScrollView>
@@ -157,6 +215,19 @@ function makeStyles(colors: Colors) {
     color: colors.accent.ivory,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
+  },
+  influencesDivider: {
+    height: 1,
+    backgroundColor: colors.bg.border,
+    marginTop: spacing[4],
+    marginBottom: spacing[8],
+  },
+  influencesIntro: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginBottom: spacing[6],
   },
   });
 }

@@ -558,9 +558,10 @@ export default function DepthsScreen() {
   // Was reveal's own action, keyed to the reading that had just finished;
   // here it just reads off currentResult directly, since that's always the
   // most recent reading regardless of how someone arrived at this screen.
-  // Always sends to Guide now, regardless of how many times it's been used —
-  // the past-threshold upsell nudge moved to the not-subscribed Your Arc
-  // preview screen (see TALK_ABOUT_IT_UPSELL_THRESHOLD's own comment).
+  // Always sends to Guide, plain and unnudged — the past-threshold upsell
+  // nudge that used to live on the not-subscribed Your Arc preview screen
+  // was removed 2026-08-28 along with that screen, once Selfinder went
+  // fully free and there was nothing left to nudge toward.
   const AXIS_LABEL_KEYS: Record<string, string> = {
     calm: 'common.axisCalm',
     clarity: 'common.axisClarity',
@@ -631,20 +632,16 @@ export default function DepthsScreen() {
           { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
         ]}
       >
-        {/* Timestamp sits beside the kicker, not in the content flow below —
-            chrome (like a status bar clock), not something the ring's
-            symbolic register needs to make room for. It used to be a full
-            sentence ("yesterday, you read as love") directly under the
-            ring/aura/name block; that dropped back into literal description
-            right where the screen had just established a purely symbolic
-            one (position, color, the aura itself). The information itself
-            (when) still matters — this is where it lives now. */}
         <View style={styles.kickerRow}>
           <Text style={styles.kicker}>{t('depths.kicker')}</Text>
-          {currentResult && (
-            <Text style={styles.kickerTimestamp}>{formatRelativeDay(currentResult.savedAt)}</Text>
-          )}
         </View>
+        {/* Standing, always-visible orientation line for the tab itself —
+            not a first-time-only nudge (those already exist elsewhere,
+            e.g. discoveryNudge below) — so a returning user still has a
+            quiet answer to "what is this place for" without needing to
+            remember it. Same one-liner register the other two tabs use
+            (Journeys' products.intro, Your Arc's own arc-line page). */}
+        <Text style={styles.tabExplainer}>{t('depths.tabExplainer')}</Text>
 
         {/* Guide's real entry point now that it's off the bottom tab bar
             — always visible, always routes to Guide, no reading required.
@@ -774,6 +771,16 @@ export default function DepthsScreen() {
                   </Pressable>
                 ))}
               </View>
+
+              {/* Moved here from beside the top kicker (2026-08-28) — the
+                  ProfileIcon now sits in that same top-right corner, and
+                  the two were crowding/overlapping each other. This is
+                  still chrome (a status-bar-clock register, not part of
+                  the ring's symbolic content below it), just relocated to
+                  a part of the screen nothing else claims. */}
+              {currentResult && (
+                <Text style={styles.readingTimestamp}>{formatRelativeDay(currentResult.savedAt)}</Text>
+              )}
             </ArrivalReveal>
 
             {/* A reference on the reading itself, not a next step — sits
@@ -1513,7 +1520,6 @@ function makeStyles(colors: Colors) {
   },
   kickerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
   },
   kicker: {
@@ -1523,13 +1529,23 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.kicker,
     textTransform: 'uppercase',
   },
-  // Same visual weight as the kicker, opposite corner — chrome, not
-  // content, so it reads as a timestamp/status line rather than a sentence
-  // competing with the ring's own symbolic register below.
-  kickerTimestamp: {
+  tabExplainer: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[2],
+  },
+  // Relocated here (2026-08-28) from beside the top kicker, where it was
+  // sitting in the same corner ProfileIcon now occupies. Still chrome —
+  // same faint weight as before, just under the sphere buttons instead of
+  // up top, in a part of the screen nothing else claims.
+  readingTimestamp: {
     color: colors.text.faint,
     fontFamily: fonts.light,
     fontSize: fontSizes.xs,
+    textAlign: 'center',
+    marginTop: spacing[4],
   },
   sectionDivider: {
     height: 1,
@@ -1622,15 +1638,16 @@ function makeStyles(colors: Colors) {
   },
   // Three peer choices — equal weight, per RULES.md's "never implies a
   // vibration/method is better than another" rule applied to regulation
-  // methods, not just states. flexWrap so a narrow screen or a long
-  // philosopher name doesn't force horizontal overflow.
+  // methods, not just states. Stacked in one column (2026-08-28, was a
+  // wrapping row) — three rows read as three genuinely separate choices
+  // to weigh in turn, where a 2-then-1 wrap (the row's own width forced
+  // an uneven break on a real device) read as an accidental layout
+  // glitch rather than a deliberate grouping.
   intentionRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing[6],
+    gap: spacing[5],
   },
   intentionChoice: {
-    minWidth: 100,
+    alignSelf: 'flex-start',
   },
   intentionChoiceTitle: {
     color: colors.text.primary,

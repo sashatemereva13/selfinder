@@ -39,11 +39,11 @@ export default function PrivacyPolicyContent({ titleId }) {
           <h3>Conversations with your philosopher</h3>
           <p>
             We treat anything you say to your guide as sensitive personal
-            data. As part of Selfinder+, a signed-in account that has
-            separately granted explicit consent in account settings — the
-            same standard that already applies to your assessment results
-            below — has its Guide conversations saved to our servers, so
-            you can return to them later as part of your history. If a
+            data. A signed-in account that has separately granted explicit
+            consent in account settings — the same standard that already
+            applies to your assessment results below — has its Guide
+            conversations saved to our servers, so you can return to them
+            later as part of your history. If a
             conversation followed one of your readings, we also note
             which reading it followed, so you can find your way back to
             it from there. Without that consent, or if you're not signed
@@ -145,7 +145,7 @@ export default function PrivacyPolicyContent({ titleId }) {
             consent history, conversations, assessment results, and any
             free-writing entries you've chosen to keep — as
             a JSON file at any time from your account settings (Your Space
-            on web, the You tab on mobile). You can also
+            on web, the profile screen on mobile). You can also
             permanently delete your account, which cascades to remove
             your conversations, assessment results, kept free-writing
             entries, and feedback, not

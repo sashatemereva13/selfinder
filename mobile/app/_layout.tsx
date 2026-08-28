@@ -105,21 +105,22 @@ export default function RootLayout() {
     // center plus the rest of the Journey catalog beyond Journeys' own tab
     // (2026-08-22/23, the Journey family; the 2026-08-23 question-first
     // catalog replaced the earlier either-or/identity placeholders, see
-    // docs/journeys-concept.md), both Your Arc screens (moved out of the
-    // old you tab so their back link/gesture isn't tied to a tab
-    // regardless of which tab they were opened from — see your-arc.tsx's
-    // comment), guide (moved off the tab bar entirely — see
-    // docs/app-architecture-concept.md — reached via the philosopher-
-    // presence affordance on Depths, not a tab), and profile (the old you
-    // tab's replacement, reached via a profile icon instead of a tab).
-    // 'products' was removed from this list once it moved to
+    // docs/journeys-concept.md), your-arc (moved out of the old you tab so
+    // its back link/gesture isn't tied to a tab regardless of which tab it
+    // was opened from — see your-arc.tsx's comment; your-arc-preview.tsx
+    // deleted 2026-08-28 once Selfinder went fully free and there was
+    // nothing left to preview toward), guide (moved off the tab bar
+    // entirely — see docs/app-architecture-concept.md — reached via the
+    // philosopher-presence affordance on Depths, not a tab), and profile
+    // (the old you tab's replacement, reached via a profile icon instead
+    // of a tab). 'products' was removed from this list once it moved to
     // app/(tabs)/journeys/ — that route now falls under inTabs instead.
     const inStandaloneRoute = [
       'sources', 'how-to-use', 'center', 'guide', 'profile',
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'your-arc-preview', 'crisis-support',
+      'your-arc', 'crisis-support',
     ].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
@@ -170,7 +171,6 @@ export default function RootLayout() {
           <Stack.Screen name="possible-selves" />
           <Stack.Screen name="enough"     />
           <Stack.Screen name="your-arc"   />
-          <Stack.Screen name="your-arc-preview" />
           <Stack.Screen name="crisis-support" />
         </Stack>
         {showHowToUse && <HowToUseOverlay />}

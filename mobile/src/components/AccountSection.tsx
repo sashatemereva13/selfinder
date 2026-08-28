@@ -1,17 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import { View, Text, TextInput, Pressable, ActivityIndicator, Share, StyleSheet } from 'react-native';
+import { View, Text, TextInput, Pressable, ActivityIndicator, Share, Linking, StyleSheet } from 'react-native';
 import { useThemeColors } from '../theme/useThemeColors';
 import type { Colors } from '../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../theme/typography';
 import { spacing, radius } from '../theme/spacing';
 import { useAuthStore } from '../store/authStore';
 import { useLocaleStore } from '../store/localeStore';
-import { getMe, grantConsent, withdrawConsent, getMeasureHistory, exportMyData, deleteAccount, updateEmail } from '../api/user';
-import { getLocalizedLevelName } from '../content/measureConfig';
+import { getMe, grantConsent, withdrawConsent, exportMyData, deleteAccount, updateEmail } from '../api/user';
 import { changePassword as changePasswordApi, requestPasswordReset, resetPassword } from '../api/auth';
-import { AuthSession, UserProfile, SavedMeasureResult } from '../types';
-import { track } from '../utils/analytics';
+import { AuthSession, UserProfile } from '../types';
+import { PRIVACY_POLICY_URL } from '../utils/privacyPolicy';
 
 // Was hardcoded to 'en-GB' — meant every date rendered in British-English
 // format regardless of the app's own language, the one date-formatting
@@ -285,10 +284,20 @@ function AuthForm({
       )}
 
       {mode === 'register' && (
-        <Pressable style={styles.consentRow} onPress={() => setAccepted((a) => !a)}>
-          <View style={[styles.checkbox, accepted && { backgroundColor: colors.accent.ivory, borderColor: colors.accent.ivory }]} />
-          <Text style={styles.consentRowText}>{t('account.acceptPrivacyPolicyLabel')}</Text>
-        </Pressable>
+        <View style={styles.consentBlock}>
+          <Pressable style={styles.consentRow} onPress={() => setAccepted((a) => !a)}>
+            <View style={[styles.checkbox, accepted && { backgroundColor: colors.accent.ivory, borderColor: colors.accent.ivory }]} />
+            <Text style={styles.consentRowText}>{t('account.acceptPrivacyPolicyLabel')}</Text>
+          </Pressable>
+          {/* A real, tappable link to what's actually being accepted — the
+              checkbox label alone used to promise "the privacy policy"
+              with no way to reach it from the app. Its own Pressable, not
+              nested inside the checkbox's, so tapping the link doesn't
+              also toggle acceptance. */}
+          <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+            <Text style={styles.consentLinkText}>{t('account.readPrivacyPolicy')}</Text>
+          </Pressable>
+        </View>
       )}
 
       {error && <Text style={styles.errorText}>{error}</Text>}
@@ -326,10 +335,7 @@ function LoggedInAccount({
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [history, setHistory] = useState<SavedMeasureResult[]>([]);
   const [loadingProfile, setLoadingProfile] = useState(true);
-  const [loadingHistory, setLoadingHistory] = useState(false);
-  const [expandedReadingId, setExpandedReadingId] = useState<string | null>(null);
   const [consentBusy, setConsentBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
@@ -368,15 +374,6 @@ function LoggedInAccount({
   useEffect(() => {
     refreshProfile();
   }, [session.token]);
-
-  useEffect(() => {
-    if (!consentGiven) return;
-    setLoadingHistory(true);
-    getMeasureHistory(session.token)
-      .then(setHistory)
-      .catch(() => {})
-      .finally(() => setLoadingHistory(false));
-  }, [consentGiven, session.token]);
 
   const toggleConsent = async () => {
     setConsentBusy(true);
@@ -489,80 +486,6 @@ function LoggedInAccount({
         </Text>
       )}
 
-      {/* The only in-app confirmation a real subscriber has that their
-          entitlement is active — previously subscription.active was
-          checked (useIsSubscribed) but never SHOWN anywhere, so even a
-          real subscriber had no way to confirm it from within the app.
-          2026-08-27: Center's own purchase-count line, previously here,
-          was removed once Center got a real, prominent, navigable home
-          on Your Arc's Facts page (see docs/app-architecture-concept.md,
-          "Center's home") — the connective-tissue principle that
-          restructure states is that a fact like this shouldn't live in
-          two places once one of them is an actual link, not just status
-          text. */}
-      {!loadingProfile && (
-        <Text style={styles.subscriptionStatus}>
-          {profile?.arcSubscription?.active ? t('account.arcSubscriptionActive') : t('account.arcSubscriptionInactive')}
-        </Text>
-      )}
-
-      {consentGiven && (
-        <View style={styles.historySection}>
-          <Text style={styles.historyKicker}>{t('account.yourReadings')}</Text>
-          {loadingHistory ? (
-            <Text style={styles.historyEmpty}>{t('account.loading')}</Text>
-          ) : history.length === 0 ? (
-            <Text style={styles.historyEmpty}>
-              {t('account.noReadingsYet')}
-            </Text>
-          ) : (
-            history.map((reading) => {
-              const hasTranscript = reading.qaPairs && reading.qaPairs.length > 0;
-              const isExpanded = expandedReadingId === reading.id;
-              return (
-                <View key={reading.id}>
-                  <Pressable
-                    style={styles.historyRow}
-                    onPress={() => {
-                      if (!hasTranscript) return;
-                      const next = isExpanded ? null : reading.id;
-                      setExpandedReadingId(next);
-                      if (next) track('history_transcript_viewed');
-                    }}
-                  >
-                    <View>
-                      <Text style={styles.historyDate}>{formatDate(reading.savedAt, locale)}</Text>
-                      {/* No bare score next to the level name (2026-08-20
-                          fix — this violated RULES.md's own standing rule:
-                          "never show a bare numeric score next to a level
-                          name," previously read here as "Fear · 412"). The
-                          level name alone is the real information. */}
-                      <Text style={styles.historyLabel}>
-                        {getLocalizedLevelName(reading.vibrationLevel, locale)}
-                      </Text>
-                    </View>
-                    {hasTranscript && (
-                      <Text style={styles.historyChevron}>{isExpanded ? '↑' : '↓'}</Text>
-                    )}
-                  </Pressable>
-
-                  {isExpanded && hasTranscript && (
-                    <View style={styles.historyDetail}>
-                      {reading.qaPairs.map((pair, i) => (
-                        <View key={i} style={styles.historyQA}>
-                          <Text style={styles.historyQuestion}>{pair.question}</Text>
-                          <Text style={styles.historyAnswer}>{pair.answer}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-                </View>
-              );
-            })
-          )}
-        </View>
-      )}
-
       <View style={styles.dataSection}>
         <Text style={styles.dataKicker}>{t('account.accountSecurity')}</Text>
 
@@ -616,6 +539,13 @@ function LoggedInAccount({
 
       <View style={styles.dataSection}>
         <Text style={styles.dataKicker}>{t('account.dataAndPrivacy')}</Text>
+
+        {/* The real policy, reachable from the one section someone would
+            actually check when wondering what Selfinder does with their
+            data — same URL as the registration checkbox's own link. */}
+        <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+          <Text style={styles.dataRowText}>{t('account.readPrivacyPolicy')}</Text>
+        </Pressable>
 
         <View style={styles.dataRow}>
           <Text style={styles.dataRowText}>
@@ -757,6 +687,7 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.medium,
     fontSize: fontSizes.xs,
   },
+  consentBlock: { gap: spacing[2] },
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   checkbox: {
     width: 18,
@@ -766,6 +697,12 @@ function makeStyles(colors: Colors) {
     borderColor: colors.bg.border,
   },
   consentRowText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
+  consentLinkText: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginLeft: 18 + spacing[3], // aligns under consentRowText, past the checkbox
+  },
   errorText: { color: colors.accent.ivory, fontFamily: fonts.light, fontSize: fontSizes.sm },
   noticeText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   forgotLink: {
@@ -805,46 +742,6 @@ function makeStyles(colors: Colors) {
     backgroundColor: colors.bg.elevated,
   },
   consentToggleButtonText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
-  historySection: { gap: spacing[2], paddingTop: spacing[2], borderTopWidth: 1, borderTopColor: colors.bg.border },
-  historyKicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    textTransform: 'uppercase',
-    letterSpacing: letterSpacings.wide,
-  },
-  historyEmpty: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  historyRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-  historyDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-  historyLabel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  historyChevron: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  historyDetail: {
-    gap: spacing[3],
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[3],
-    marginBottom: spacing[2],
-    borderRadius: radius.md,
-    backgroundColor: colors.bg.base,
-  },
-  historyQA: { gap: spacing[1] },
-  historyQuestion: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-  },
-  historyAnswer: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
   consentTimestamp: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs, marginTop: -spacing[1] },
   consentDescription: {
     color: colors.text.muted,
@@ -852,12 +749,6 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,
     marginTop: -spacing[1],
-  },
-  subscriptionStatus: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    marginTop: spacing[3],
   },
   dataSection: {
     gap: spacing[3],

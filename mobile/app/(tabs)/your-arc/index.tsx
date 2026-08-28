@@ -1,19 +1,13 @@
-import { useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import { useArcSubscription } from '../../../src/utils/useArcSubscription';
+import YourArcRoute from '../../your-arc';
 
-// Thin router — Your Arc's real content still lives at the top-level
-// your-arc.tsx / your-arc-preview.tsx routes (unchanged this phase; see
-// docs/app-architecture-concept.md Phase 1). This tab just reproduces the
-// branch depths/index.tsx's old spiral slot used to make at click time,
-// so landing on the tab behaves identically to tapping that slot did.
+// Renders Your Arc's full content directly inside the tab (see
+// app/your-arc.tsx). No branch on subscription status — Selfinder is
+// fully free for now (no legal entity yet to receive real payment, see
+// RULES.md's Product/positioning section), so everyone signed in and
+// consented sees the same full history. The old redirect to
+// your-arc-preview.tsx (the not-subscribed teaser) was removed
+// 2026-08-28 along with that screen entirely, once there was nothing
+// left to preview toward.
 export default function YourArcTabEntry() {
-  const router = useRouter();
-  const isSubscribed = useArcSubscription();
-
-  useEffect(() => {
-    router.replace(isSubscribed ? '/your-arc' : '/your-arc-preview');
-  }, [isSubscribed]);
-
-  return null;
+  return <YourArcRoute />;
 }

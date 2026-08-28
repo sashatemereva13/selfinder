@@ -23,6 +23,7 @@ import { PagedScrollView } from '../src/components/PagedScrollView';
 import { AmbientGlow } from '../src/components/AmbientGlow';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
+import { purchaseJourney } from '../src/api/journeys';
 import { useTimeConeGeometry } from '../src/utils/useTimeConeGeometry';
 import { useReadingColumnWidth } from '../src/theme/responsive';
 import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
@@ -100,7 +101,15 @@ function CenterScreen() {
   const session = useAuthStore((s) => s.session);
   const columnWidth = useReadingColumnWidth();
   const accentRgb = useAppAccentRgb();
-  const purchases = useJourneyPurchases('center');
+  const hookPurchases = useJourneyPurchases('center');
+  // Selfinder is fully free for now (see RULES.md's Product/positioning
+  // section) — "getting Center" self-grants a free purchase instead of
+  // going through real IAP. useJourneyPurchases only fetches once per
+  // session, so a freshly self-granted purchase is tracked here and
+  // merged in locally rather than waiting on a refetch.
+  const [extraPurchases, setExtraPurchases] = useState<JourneyPurchase[]>([]);
+  const purchases = hookPurchases === null ? null : [...hookPurchases, ...extraPurchases];
+  const [purchasing, setPurchasing] = useState(false);
 
   // The server-saved record — fetched for any signed-in session, no Your
   // Arc subscription required (see this file's own header comment for the
@@ -181,13 +190,24 @@ function CenterScreen() {
     }
   };
 
-  // Pre-real-IAP (Phase 4, deferred — see RULES.md) — honest "not yet
-  // available" rather than a dead tap target or a hidden button, per this
-  // project's own standing "never build a tap target that looks like a
-  // purchase and doesn't" discipline, applied here as "look like a
-  // purchase and say so plainly" instead of pretending it isn't a button.
-  const handleGetCenter = () => {
-    Alert.alert(t('center.comingSoonTitle'), t('center.comingSoonBody'));
+  // Selfinder is fully free for now (see RULES.md's Product/positioning
+  // section) — self-grants a real journeyPurchases[] entry via the same
+  // POST /journeys/purchase endpoint control.tsx uses, rather than
+  // showing the old "not yet available" Alert. Each call genuinely
+  // creates a NEW purchase (fresh seedNonce), matching "bought again, not
+  // owned once" — pressing this a second time produces a new, different
+  // result, exactly like a real repeat purchase would.
+  const handleGetCenter = async () => {
+    if (!session || purchasing) return;
+    setPurchasing(true);
+    try {
+      const purchase = await purchaseJourney('center', session.token);
+      setExtraPurchases((prev) => [...prev, purchase]);
+    } catch {
+      Alert.alert(t('center.getCenterErrorTitle'), t('center.getCenterErrorBody'));
+    } finally {
+      setPurchasing(false);
+    }
   };
 
   const kaleidoscopeSize = columnWidth - KALEIDOSCOPE_PADDING * 2;
@@ -295,8 +315,8 @@ function CenterScreen() {
           <Text style={styles.title}>{t('center.title')}</Text>
           <Text style={styles.introLine}>{t('center.introLine')}</Text>
           <Text style={styles.introLine}>{t('center.repeatLine')}</Text>
-          <Pressable style={styles.getButton} onPress={handleGetCenter}>
-            <Text style={styles.getButtonText}>{t('center.getCenter')}</Text>
+          <Pressable style={[styles.getButton, purchasing && { opacity: 0.5 }]} onPress={handleGetCenter} disabled={purchasing}>
+            <Text style={styles.getButtonText}>{purchasing ? t('center.getCenterBusy') : t('center.getCenter')}</Text>
           </Pressable>
         </ScrollView>
       ) : (

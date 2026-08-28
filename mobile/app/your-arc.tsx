@@ -615,23 +615,33 @@ function YourArcScreen() {
   // Center (2026-08-22, see RULES.md's Product/positioning section). Real,
   // true facts about this person's OWN record — never an interpretation
   // of what a pattern means (see arcFacts.ts's own header comment).
-  if (facts.length > 0) {
-    pages.push(
-      <FactsPage
-        key="facts"
-        readingLog={readingLog}
-        sinceDate={sinceDate}
-        facts={facts}
-        richHistory={richHistory}
-        levelColors={levelColors}
-        accentRgb={accentRgb}
-        locale={locale}
-        onReadingPress={handleFactsReadingPress}
-        centerPurchaseCount={centerPurchases?.length ?? null}
-        onPressCenter={() => router.push('/center')}
-      />
-    );
-  }
+  //
+  // Always pushed now (2026-08-28 fix), not gated on facts.length > 0 —
+  // this page is also Center's real primary home (2026-08-27 restructure,
+  // see docs/app-architecture-concept.md), and Center needs zero reading
+  // history to open (it's generated fresh from whatever's there). Gating
+  // the whole page on facts existing meant Center was invisible for
+  // anyone whose local readingLog was empty (a fresh device, a second
+  // device, or simply zero readings yet) even with a real server-side
+  // history — the bug the "I don't see Center on Your Arc" report was
+  // actually catching. FactsPage itself already renders facts.length ===
+  // 0 gracefully (the stat rows are conditional on individual facts, not
+  // the array as a whole).
+  pages.push(
+    <FactsPage
+      key="facts"
+      readingLog={readingLog}
+      sinceDate={sinceDate}
+      facts={facts}
+      richHistory={richHistory}
+      levelColors={levelColors}
+      accentRgb={accentRgb}
+      locale={locale}
+      onReadingPress={handleFactsReadingPress}
+      centerPurchaseCount={centerPurchases?.length ?? null}
+      onPressCenter={() => router.push('/center')}
+    />
+  );
 
   // "Every walk" (the sparkline page) REMOVED entirely 2026-08-20 —
   // review: "it shows a graph with ups and downs but it goes against my
@@ -808,16 +818,6 @@ function YourArcScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <ProfileIcon />
-      {/* Explicit destination, not router.back() — Your Arc's only real
-          entry point is Depths' "Your arc" row, but this is now a
-          top-level route (see app/_layout.tsx), so router.back()'s actual
-          target depends on navigation-stack internals rather than where
-          the user thinks they came from. Same fix as /sources. Sits above
-          the pager, fixed, so it stays reachable from every page rather
-          than only the first one. */}
-      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
       {/* Quiet signal that the facts/sphere-history/wish/Crossing pages
           are still coming, not just absent — previously this gap was
           silent (nothing rendered until the whole 5-call fetch resolved,
@@ -876,8 +876,6 @@ function YourArcScreen() {
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.bg.base },
-  backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   loadingNote: {
     alignSelf: 'flex-start',
     color: colors.text.faint,

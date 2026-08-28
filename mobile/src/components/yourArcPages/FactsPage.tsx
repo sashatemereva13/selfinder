@@ -59,6 +59,11 @@ export function FactsPage({
   return (
     <ScrollView contentContainerStyle={sharedStyles.pageContent}>
       <Text style={styles.kicker}>{t('yourArc.factsKicker')}</Text>
+      {/* Standing orientation line — same "why would I come here" register
+          as Depths/Journeys' own tab explainers — distinct from introLine
+          just below it, which speaks in the app's own voice about the
+          record itself. */}
+      <Text style={styles.tabExplainer}>{t('yourArc.tabExplainer')}</Text>
       <Text style={styles.introLine}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
@@ -148,13 +153,21 @@ function makeStyles(colors: Colors) {
       letterSpacing: letterSpacings.kicker,
       textTransform: 'uppercase',
     },
+    tabExplainer: {
+      alignSelf: 'flex-start',
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
+      marginTop: spacing[3],
+    },
     introLine: {
       alignSelf: 'flex-start',
       color: colors.text.secondary,
       fontFamily: fonts.light,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
-      marginTop: spacing[3],
+      marginTop: spacing[1],
       marginBottom: spacing[8],
     },
     // Same row weight as products.tsx's own catalog rows (label +

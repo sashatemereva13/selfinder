@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, Linking, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../theme/useThemeColors';
 import { useThemeStore } from '../store/themeStore';
@@ -10,6 +10,7 @@ import { spacing, radius } from '../theme/spacing';
 import { useReadingColumnWidth } from '../theme/responsive';
 import { useAIDisclosureStore } from '../store/aiDisclosureStore';
 import { AmbientGlow } from './AmbientGlow';
+import { PRIVACY_POLICY_URL } from '../utils/privacyPolicy';
 
 // Shown once, before any feature that sends a user's own words to the
 // third-party AI provider (Guide, Measure) — mounted at the root layout so
@@ -37,6 +38,14 @@ export function AIDisclosureOverlay() {
       >
         <Text style={styles.kicker}>{t('aiDisclosure.kicker')}</Text>
         <Text style={styles.body}>{t('aiDisclosure.body')}</Text>
+        {/* A real link where the body copy above already promises one —
+            "see the privacy policy for details" used to have nowhere to
+            actually go from this overlay, which is often the ONLY
+            privacy-relevant text a signed-out user (the primary path,
+            see this file's own header comment) ever sees. */}
+        <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+          <Text style={styles.linkText}>{t('account.readPrivacyPolicy')}</Text>
+        </Pressable>
         <Pressable style={styles.button} onPress={acknowledge}>
           <Text style={styles.buttonText}>{t('aiDisclosure.continue')}</Text>
         </Pressable>
@@ -70,6 +79,11 @@ function makeStyles(colors: Colors) {
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
     lineHeight: fontSizes.base * lineHeights.loose,
+  },
+  linkText: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
   },
   button: {
     alignSelf: 'flex-start',

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -10,13 +10,14 @@ import { fonts, fontSizes } from '../src/theme/typography';
 import { spacing } from '../src/theme/spacing';
 import { useAuthStore } from '../src/store/authStore';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
+import { purchaseJourney } from '../src/api/journeys';
 import { AmbientGlow } from '../src/components/AmbientGlow';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { JourneyWizard } from '../src/components/JourneyWizard';
 import { AgencySortPrimitive } from '../src/components/AgencySortPrimitive';
 import { JourneyReflection } from '../src/components/JourneyReflection';
 import { CONTROL_STAGES } from '../src/content/journeys/control';
-import { JourneySessionDTO } from '../src/types';
+import { JourneySessionDTO, JourneyPurchase } from '../src/types';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 
 const KALEIDOSCOPE_LOADING_SIZE = 300;
@@ -40,10 +41,27 @@ export default function ControlScreen() {
   const purchases = useJourneyPurchases('control');
   const accentRgb = useAppAccentRgb();
   const [completedSession, setCompletedSession] = useState<JourneySessionDTO | null>(null);
+  // Selfinder is fully free for now (see RULES.md's Product/positioning
+  // section) — a signed-in user with no existing Control purchase gets
+  // one self-granted automatically, rather than seeing a "not purchased
+  // yet" teaser. Tracked locally so the freshly-granted purchase is used
+  // immediately, without waiting on a second useJourneyPurchases refetch.
+  const [freeGrant, setFreeGrant] = useState<JourneyPurchase | null>(null);
+  const grantRequestedRef = useRef(false);
 
   const mostRecentPurchase = purchases && purchases.length > 0
     ? [...purchases].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0]
-    : null;
+    : freeGrant;
+
+  useEffect(() => {
+    if (!session || purchases === null || mostRecentPurchase || grantRequestedRef.current) return;
+    grantRequestedRef.current = true;
+    purchaseJourney('control', session.token)
+      .then(setFreeGrant)
+      .catch(() => {
+        grantRequestedRef.current = false; // allow a retry on the next render if this failed
+      });
+  }, [session, purchases, mostRecentPurchase]);
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
@@ -59,20 +77,13 @@ export default function ControlScreen() {
           <Text style={styles.title}>{t('products.controlLabel')}</Text>
           <Text style={styles.introLine}>{t('journey.signInBody')}</Text>
         </ScrollView>
-      ) : purchases === null ? (
+      ) : purchases === null || !mostRecentPurchase ? (
+        // Either still loading, or the free-grant request above is still
+        // in flight — both read the same to the user (a brief spinner,
+        // never a "not purchased" dead end now that everything's free).
         <View style={styles.centerFill}>
           <ArcKaleidoscopeLoading size={KALEIDOSCOPE_LOADING_SIZE * 0.6} accentRgb={accentRgb} />
         </View>
-      ) : !mostRecentPurchase ? (
-        // Signed in, never purchased — honest "not purchased yet," distinct
-        // from JourneyComingSoonScreen's "not built yet" (this Journey is
-        // built; there's simply no live purchase flow yet, matching every
-        // other Journey's current entitlement status).
-        <ScrollView contentContainerStyle={styles.teaserContent}>
-          <Text style={styles.title}>{t('products.controlLabel')}</Text>
-          <Text style={styles.introLine}>{t('products.controlDescription')}</Text>
-          <Text style={styles.introLine}>{t('journey.notPurchasedBody')}</Text>
-        </ScrollView>
       ) : completedSession ? (
         <JourneyReflection
           beganLabelKey="control.reflectionBegan"

@@ -164,7 +164,11 @@ export type JourneyKey = (typeof JOURNEY_KEYS)[number];
 export interface JourneyPurchase {
   id: string;
   journey: JourneyKey;
-  source: 'manual' | 'apple' | 'google';
+  // 'free' added 2026-08-28 — Selfinder is fully free for now (see
+  // RULES.md's Product/positioning section); a signed-in user self-grants
+  // this via POST /journeys/purchase (journeys.ts's purchaseJourney)
+  // instead of an admin running grantJourney.js on their behalf.
+  source: 'manual' | 'apple' | 'google' | 'free';
   purchasedAt: string;
   seedNonce: number;
 }
@@ -250,12 +254,16 @@ export interface UserProfile {
   consent: { psychologicalData: ConsentState };
   // Renamed from the old single `subscription` field (2026-08-22) once
   // Selfinder+ split into two differently-shaped products — see
-  // journeyPurchases below for the other one.
+  // journeyPurchases below for the other one. Unused for gating anywhere
+  // in the app today (Selfinder is fully free for now, 2026-08-28 — see
+  // RULES.md's Product/positioning section); kept in the schema/response
+  // so real gating can come back later without a rebuild.
   arcSubscription: SubscriptionState;
-  // Real count, not the full history — backs the free-trial progress
-  // display (useArcTrialStatus.ts). See backend/controllers/
-  // userController.js's own comment for why this is a cheap count query,
-  // not a byproduct of a full getMeasureHistory fetch.
+  // Real count, not the full history — cheap to compute (see
+  // backend/controllers/userController.js's own comment). Was used by
+  // the now-deleted useArcTrialStatus.ts for free-trial progress display;
+  // no current caller, kept in the response for the same
+  // future-re-gating reason as arcSubscription above.
   savedReadingCount: number;
   journeyPurchases: JourneyPurchase[];
 }

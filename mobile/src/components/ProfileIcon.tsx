@@ -2,21 +2,28 @@ import { Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme/spacing';
-import { useThemeColors } from '../theme/useThemeColors';
+import { useAppAccentRgb } from '../utils/appAccent';
 import { YouTabIcon } from './TabIcons';
 
 // You's replacement now that it's off the bottom tab bar — reachable from
 // all three tabs (Depths/Journeys/Your Arc), not just one, since settings
 // should be reachable from wherever someone is (see
 // docs/app-architecture-concept.md, "You becomes a profile page, not a
-// tab"). A quiet, consistently-positioned top-right icon, absolutely
-// positioned above each screen's own scroll content — same position on
-// every tab so it reads as one persistent affordance, not three different
-// buttons that happen to look alike.
+// tab"). A consistently-positioned top-right icon, absolutely positioned
+// above each screen's own scroll content — same position on every tab so
+// it reads as one persistent affordance, not three different buttons that
+// happen to look alike.
+//
+// Colored via useAppAccentRgb — the same app-wide accent rule everywhere
+// else uses (ivory before a first reading, that reading's own level color
+// after, see appAccent.ts). Originally rendered in colors.text.muted
+// (2026-08-27), which read as too faint to notice as a real tap target —
+// switched to the full accent color (2026-08-28) for real visibility,
+// not just theme-correctness.
 export function ProfileIcon() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const colors = useThemeColors();
+  const accentRgb = useAppAccentRgb();
 
   return (
     <Pressable
@@ -24,7 +31,7 @@ export function ProfileIcon() {
       onPress={() => router.push('/profile')}
       hitSlop={8}
     >
-      <YouTabIcon color={colors.text.muted} />
+      <YouTabIcon color={`rgb(${accentRgb})`} />
     </Pressable>
   );
 }

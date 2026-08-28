@@ -12,10 +12,10 @@ import { AmbientGlow } from '../src/components/AmbientGlow';
 import { HOW_TO_USE_ENTRIES } from '../src/content/howToUseEntries';
 
 // Reachable from onboarding (once, via HowToUseOverlay.tsx right after
-// choosing a philosopher) and from the You tab (any time after, same
-// weight as "Where this comes from" — see you/index.tsx's own sourcesLink
-// row, which this screen's own link is modeled on directly). See
-// howToUseEntries.ts for why the content list is shared rather than
+// choosing a philosopher) and from the profile screen (any time after,
+// same weight as "Where this comes from" — see profile.tsx's own
+// sourcesLink row, which this screen's own link is modeled on directly).
+// See howToUseEntries.ts for why the content list is shared rather than
 // duplicated between this screen and the overlay.
 export default function HowToUseScreen() {
   const { t } = useTranslation();

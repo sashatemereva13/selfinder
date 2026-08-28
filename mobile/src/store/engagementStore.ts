@@ -32,18 +32,6 @@ interface RecentReading {
   savedAt: string;
 }
 
-// How many times someone has tapped "Talk about it" (continuing a past
-// reading's conversation) before the not-subscribed Your Arc preview screen
-// (app/your-arc-preview.tsx) starts showing a "Keep the
-// conversation going" Selfinder+ nudge. Depths' own "Talk about it" row
-// stays one plain, always-tappable action regardless of this count — the
-// nudge lives on the screen someone visits to see what subscribing would
-// add, not on the row that's just trying to open Guide. There's no real
-// purchase flow in the app yet, so this is a soft, honest nudge, not an
-// actual paywall/checkout gate — and never shown to a subscribed user, who
-// has nothing left to be nudged toward.
-export const TALK_ABOUT_IT_UPSELL_THRESHOLD = 3;
-
 interface EngagementState {
   totalMeasureCount: number;
   firstMeasureAt: string | null;
