@@ -172,131 +172,169 @@ threads shaped the slot sequence below:
   be able to end at "this is something I actually can act on," not just
   at release.
 
-**The fixed slot architecture:**
+**The fixed stage architecture (rewritten 2026-08-29):**
 
 ```
-1. Object            — What are you trying to control?
-2. Desired outcome   — What exactly would you like to determine?
-3. Certainty         — If you knew with certainty this would happen,
-                        what would change for you?
-4. Feared alternative — Now imagine you cannot know. What appears?
-5. Meaning           — What is that fear about?
-6. Underlying need   — And what would that mean to you?
-7. Agency            — Which parts of this belong to you? Which don't?
-8. Recognition       — What do you see differently now?
+1. Name          — What are you trying to control?
+2. Observable    — What would tell you that was happening?
+3. Represents    — If that happened, what would it give you?
+4. Separate      — [an authored reveal, not a question — see below]
+                    Leave their choice out of it for a moment — if it
+                    stayed exactly as it is, what would still be yours
+                    to change?
+5. Agency (sort) — Place what you've said into where it actually
+                    belongs.
+6. Recognition   — What do you see differently now?
 ```
 
-**Stages, not single questions — the mechanism that lets each slot
-absorb more than one turn (2026-08-26 redesign, added after real user
-testing):** a slot above is better understood as a fixed psychological
-*stage* with its own goal, not a single question guaranteed to be
-answered in one exchange. Real testing surfaced a concrete failure: the
-Object stage's opening question ("What are you trying to control?")
-answered with "I don't know" led the AI into "meta-reflection about
-meta-reflection" — asking increasingly abstract follow-ups about the
-person's own uncertainty rather than grounding the conversation in an
-actual situation. The fix is a genuine second AI decision, made every
-turn, separate from whether the person engaged at all: **is this stage's
-own goal now satisfied (stage complete, advance to the next stage's
-fixed opening question), or does it need one more concrete grounding
-sub-question on the SAME stage first (stage incomplete, ask again within
-this stage)?** This mechanism — stage-completion judgment, plus a
-matching decision about whether an acknowledgment reply is worth showing
-at all (see below) — is Journey-engine-level, not Control-specific;
-Control's own contribution is only the per-stage GOALS a future Journey
-using stages would need to author for itself (see
-`backend/controllers/journeyController.js`'s `STAGE_GOALS`).
+**Why this replaced the original 8-stage version:** a real on-device
+test (screenshots reviewed directly) found the original architecture —
+Object / Desired outcome / Certainty / Feared alternative / Meaning /
+Underlying need / Agency / Recognition — running 20+ exchanges when it
+should run 6-9. Most stages had no hard ceiling on sub-questions (only
+Object's own goal text capped at 3); an uncapped stage kept
+"manufacturing depth rather than discovering it," e.g. Certainty alone
+running five consecutive abstraction hops ("certain knowing" →
+"steadiness" → "calm interior" → "timing/alignment" → "safety/
+belonging") before the model let go. Worse, the same test caught the
+model *inventing* content the person never said and then interrogating
+them about its own invention — the person said "Happiness" (one word)
+and the reply was "Happiness feels like a bright, steady light in your
+chest, a sense of ease..."; the person said "That I'm better and bigger
+than I think I am" and the reply added "...suggesting a boost in
+self-worth and competence," a trait the person never named. This is a
+direct violation of the app's own deepest rule (the answers are already
+inside the person — Selfinder never supplies them) that the original
+`JOURNEY_SYSTEM_PROMPT` already claimed to forbid in soft prose but
+wasn't reliably honoring in practice.
 
-Concretely for Control's Object stage: the goal is landing on one
-concrete, specific thing being controlled — an actual situation,
-relationship, or outcome, never an abstract feeling or a question about
-the process itself. An answer that's vague, abstract, "I don't know," or
-about the conversation rather than the person's life does not satisfy
-the goal — the stage asks one small grounding question (capped at 3
-sub-questions even if still vague, after which whatever concrete-ish
-anchor exists is accepted) before treating itself as complete. This
-absorbs the critique's own proposed opening sub-sequence ("what
-situation brought you here," "what feels unresolved," "what would you
-like to determine") into the Object stage's own internal goal rather
-than adding a ninth stage — a separate concretization stage would have
-ended at almost the same place slot 2 (Desired outcome) already asks,
-creating redundancy rather than a genuinely new layer.
+**Stages, not single questions — still the underlying mechanism, now
+mechanically enforced, not just prompt-requested.** A stage is still a
+fixed psychological layer with its own goal that can absorb more than
+one turn before advancing (see `backend/controllers/
+journeyController.js`'s `STAGE_GOALS`) — this part of the architecture,
+Journey-engine-level not Control-specific, is unchanged. What changed:
+every Control stage now carries its own explicit sub-question cap in its
+goal text (Name: 3, unchanged; Observable/Represents/Separate/
+Recognition: 1 each — down from most having no cap at all), AND that cap
+is now enforced in code (`STAGE_SUBQUESTION_CAP`), not just requested in
+prose. Confirmed live (throwaway verification script, since this project
+has already learned once that prompt review alone misses real drift):
+even with the goal text explicitly capping a stage at 1 sub-question, a
+deliberately vague test answer pushed the model to keep asking past
+that cap on its own judgment three turns in a row. The code-level
+override forces `stageComplete: true` once the recorded turn count for
+that stage meets its cap, regardless of what the model itself decided —
+the same "a soft rule needs a hard backstop" lesson this document's own
+`isTopicDrift` mechanism already taught once for invented next-questions,
+now applied to invented extra depth.
 
-**Acknowledgment gating — the second new decision, same mechanism, a
-different axis:** the AI still produces a candidate acknowledgment
-sentence internally on every turn, but only shows it when it would
-genuinely clarify, distinguish, connect, test, or deepen something the
-person just said — never when it would merely restate or paraphrase
-their own words back to them with no new element. A real acknowledgment
-that survives this test: someone says "I want the relationship to work
-but I also want to know if it will," and the reply is "Those may be two
-different wants: wanting the relationship, and wanting certainty about
-the relationship. Which one feels harder to leave unresolved?" — this
-DISTINGUISHES two things the person had fused into one. A candidate that
-does NOT survive: someone says "I don't know, I'm just confused," and
-the reply would be "I hear that confusion is standing with you right
-now" — this adds nothing they didn't already say, so it is suppressed
-entirely and the next question is asked with no lead-in sentence at all.
-This is a stricter, more specific version of the standing "ask,
-clarify, reflect — never empty affirmation" boundary (see "What
-Selfinder's AI does and doesn't do" above) — the failure mode real
-testing surfaced wasn't the AI saying something false, it was the AI
-saying something true but empty, which reads as therapeutic performance
-rather than genuine investigation. The standard, worth keeping verbatim:
-*every acknowledgment must clarify, distinguish, connect, test, or
-deepen — if it does none of those, it isn't shown.*
+**The anti-invention rule — mechanical, not just requested.**
+`JOURNEY_SYSTEM_PROMPT` now states, with a worked WRONG/RIGHT contrast
+pair (the exact two failures the on-device test caught), that a
+reflection may ONLY use words, images, or bodily language the person
+themselves already used — never a metaphor, a body location, a
+feeling-word, or a trait the model supplies on its own. This sits
+alongside the existing "never state anything about them as true that
+isn't already in their own words" line, made concrete enough to actually
+constrain behavior rather than being aspirational prose the model can
+satisfy while still inventing detail, as it was doing before this pass.
+
+**Stage 4, "Separate" — a fixed, authored reveal, not a fourth
+open-ended conversational stage.** This replaces the old Feared
+alternative / Meaning / Underlying need trio — three separate
+conversational stages, each individually vulnerable to the same
+over-probing problem. Instead, the moment Represents completes, the
+engine builds a deterministic reveal from the ALREADY-COLLECTED
+Observable and Represents answers — pure string interpolation
+(`buildSeparateReveal` in `journeyController.js`), no AI call involved,
+so it can never invent anything:
+
+> "You want {observable}. Underneath it, you want to {represents}.
+> Which of those can you author?"
+
+only then followed by the one grounded follow-up question ("Leave their
+choice out of it for a moment — if it stayed exactly as it is, what
+would still be yours to change?"), which does go through the normal
+conversational exchange (capped at 1 sub-question, same as every other
+non-Name stage). This is the "reflect → contrast → classify → move on"
+pattern in place of open-ended probing — the app states the split back
+to the person directly instead of trying to walk them there through
+several more rounds of questions.
+
+**Acknowledgment gating — unchanged mechanism, same standard.** The AI
+still produces a candidate acknowledgment sentence internally on every
+turn, but only shows it when it would genuinely clarify, distinguish,
+connect, test, or deepen something the person just said — never when it
+would merely restate or paraphrase their own words back to them with no
+new element. A real acknowledgment that survives this test: someone says
+"I want the relationship to work but I also want to know if it will,"
+and the reply is "Those may be two different wants: wanting the
+relationship, and wanting certainty about the relationship. Which one
+feels harder to leave unresolved?" — this DISTINGUISHES two things the
+person had fused into one. A candidate that does NOT survive: someone
+says "I don't know, I'm just confused," and the reply would be "I hear
+that confusion is standing with you right now" — this adds nothing they
+didn't already say, so it is suppressed entirely and the next question
+is asked with no lead-in sentence at all. The standard, worth keeping
+verbatim: *every acknowledgment must clarify, distinguish, connect,
+test, or deepen — if it does none of those, it isn't shown.*
 
 **Progress dots represent completed stages, not raw turns.** Because a
-stage can now take several exchanges, the visible progress indicator
-only advances on a real stage completion — a person can have a longer,
-more searching exchange within one stage without the interface reading
-as stalled, since the dot for that stage simply hasn't filled yet, not
-because nothing is happening.
+stage can still take more than one exchange (up to its own cap), the
+visible progress indicator only advances on a real stage completion — a
+person can have a short clarifying exchange within one stage without the
+interface reading as stalled, since the dot for that stage simply hasn't
+filled yet, not because nothing is happening. With only 6 stages now
+(down from 8) and every stage capped at 1-3 sub-questions, a full
+Journey should complete in roughly 6-9 real exchanges, not 20+.
 
-**Responsive branching within the fixed slots** — two real walkthroughs
+**Responsive branching within the fixed stages** — two real walkthroughs
 of the same architecture:
 
 > "I'm trying to control what my boyfriend thinks about me."
-> → slot 2 references *what my boyfriend thinks*, specifically, not a
-> generic "what outcome do you want."
+> → stage 2 references *what my boyfriend thinks*, specifically, not a
+> generic "what would tell you."
 
 > "I'm trying to control whether my company succeeds."
-> → same slot 2, same underlying architecture, a different question
+> → same stage 2, same underlying architecture, a different question
 > that references *the company* — the conversation feels entirely
-> different even though both are walking slots 1→8 in the same order.
+> different even though both are walking stages 1→6 in the same order.
 
-**A full slot-by-slot pass, showing how the object of control shifts
+**A full stage-by-stage pass, showing how the object of control shifts
 under questioning** (this is the mechanic worth protecting — it's the
 reason a single direct question can't produce this, only a sequence
 can):
 
 ```
 1. What are you trying to control?
-   "I need the launch to succeed."
-2. What exactly would you like to determine?
-   "That people download it."
-3. Imagine you could know with certainty that this happens.
-   What changes?
-   "I relax."
-4. Now imagine you cannot know. What appears?
-   "Fear."
-5. What is the fear about?
-   "That nobody wants what I've made."
-6. And what would that mean to you?
-   "That maybe I'm not capable."
-7. Which parts of this belong to you? Which don't?
-   [user places elements — see "Agency/Influence/Authorship" below]
-8. What do you see differently now?
+   "Whether he thinks about me."
+2. What would tell you that was happening?
+   "He would message me."
+3. If that happened, what would it give you?
+   "I'd feel important and confident."
+4. [authored reveal] You want him to message you. Underneath it, you
+   want to feel important and confident. Which of those can you
+   author? Leave his choice out of it for a moment — if it stayed
+   exactly as it is, what would still be yours to change?
+   "I could make the video I've been putting off, talk to people."
+5. [sort] "Whether he messages me" → not mine to author.
+   "Making the video, talking to people" → mine to choose.
+6. What do you see differently now?
    [user's own words]
 ```
 
-The object of control visibly moves — external outcome (launch
-succeeding) → certainty (knowing in advance) → protection from a
-specific feeling (not being capable) — entirely through the user's own
-answers. Selfinder never names this movement or asserts it happened;
-the sequence itself is what makes it visible.
+The object of control visibly moves — his attention (an outcome outside
+the person) → the feeling underneath it (importance, confidence) → what
+actually remains theirs once his choice is set aside (the video, the
+conversations) — entirely through the user's own answers, with the
+authored reveal at stage 4 making the desire/need split explicit
+*before* the sort, rather than letting the person discover it only
+implicitly by the end. Selfinder never names this movement as an
+interpretation of who the person is; it only ever restates what they
+themselves already said.
 
-**The Agency / Influence / Authorship primitive** (slot 7): a
+**The Agency / Influence / Authorship primitive** (stage 5): a
 three-way sorting exercise, not binary "in your control / not in your
 control." The user places elements into three categories:
 

@@ -217,6 +217,12 @@ export interface JourneyStageRecord {
   // journeyController.js's proposition-extraction step). Absent until
   // extraction succeeds; falls back to raw finalAnswers if it never does.
   extractedPropositions?: string[];
+  // "separate" stage only for Control — the fixed, authored desire/need
+  // split shown when this stage opens (see journeyController.js's
+  // buildSeparateReveal), never AI-generated. Used by the closing
+  // reflection screen instead of raw stage answers. Absent on every other
+  // stage.
+  revealText?: string | null;
   answeredAt: string | null;
 }
 

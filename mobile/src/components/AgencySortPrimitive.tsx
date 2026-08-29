@@ -1,6 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSequence, withTiming, withDelay, Easing } from 'react-native-reanimated';
 import { useThemeColors } from '../theme/useThemeColors';
 import type { Colors } from '../theme/colors';
 import { fonts, fontSizes } from '../theme/typography';
@@ -10,6 +11,7 @@ import { AgencySortResult } from '../types';
 
 type Bucket = keyof AgencySortResult;
 const BUCKETS: Bucket[] = ['agency', 'influence', 'authorship'];
+const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 
 // Control's agency-stage primitive — "which parts of this belong to you,
 // which don't." Built Control-specific per docs/journeys-concept.md's own
@@ -30,10 +32,28 @@ const BUCKETS: Bucket[] = ['agency', 'influence', 'authorship'];
 // (see app/control.tsx's own `extractedPropositions ?? priorFinalAnswers`
 // selection).
 //
-// Per aesthetic.md: no ranking implied between buckets (this is a sort,
-// not a spectrum), one accent color, no cards — three plain labeled
-// sections, position/space carrying the grouping, not boxes or per-bucket
-// hues.
+// 2026-08-29 redesign: a real on-device test found this screen's
+// instructions unclear on first use. Root causes, both fixed here:
+// (1) this component used to show its OWN static instruction line
+// ("Place what you've said into where it actually belongs") stacked
+// directly below the AI-phrased question JourneyWizard's transcript
+// already shows above it — two differently-worded instructions for one
+// action. That own-instruction line is removed; the AI-phrased question
+// above is the only instruction now.
+// (2) nothing showed the tap-a-chip-then-tap-a-bucket mechanic before
+// you'd already done it once. A one-time animated demo (the first chip
+// nudges toward the first bucket and back) now plays on mount, and the
+// three bucket borders pulse in the accent color the instant any chip is
+// selected, making "these three are where this goes" visually obvious.
+//
+// Explicitly did NOT move to a concentric-ring layout (closer-to-center =
+// more agency) despite early exploration — distance-from-center as a
+// stand-in for "how much of this is yours" is the same gradient-bar/
+// ranking problem docs/design/aesthetic.md forbids elsewhere ("no
+// gradient bars... a 'bad -> good' visual convention"). Treating "not
+// mine to author" as a lesser/further category would imply it's a worse
+// answer than "mine to choose," which contradicts the anti-diagnosis
+// rule. The three buckets stay genuinely equal-weight peers.
 interface AgencySortPrimitiveProps {
   items: string[]; // extracted propositions, or raw per-stage answers as a fallback
   onSubmit: (answer: string, structuredAnswer: AgencySortResult) => void;
@@ -49,6 +69,48 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, Bucket>>({});
 
+  // One-time demo — plays once per mount of this primitive (i.e. once per
+  // Journey session reaching this stage), never repeats once a real
+  // assignment has happened. Not persisted — a fresh demo each time this
+  // screen is genuinely reached is fine, since it's brief and only shown
+  // before any real interaction.
+  const hasAssignedRef = useRef(false);
+  const demoChipX = useSharedValue(0);
+  const demoChipY = useSharedValue(0);
+  const demoChipOpacity = useSharedValue(0.5);
+
+  useEffect(() => {
+    if (items.length === 0) return;
+    // A short nudge toward "down and slightly right" (roughly where the
+    // first bucket row sits relative to the chip row above it) and back —
+    // "gather, condense, become," never a bounce/spring, per aesthetic.md's
+    // motion language.
+    demoChipOpacity.value = withDelay(400, withTiming(1, { duration: 300, easing: SOFT_EASE }));
+    demoChipY.value = withDelay(
+      400,
+      withSequence(
+        withTiming(14, { duration: 500, easing: SOFT_EASE }),
+        withTiming(0, { duration: 500, easing: SOFT_EASE })
+      )
+    );
+    demoChipOpacity.value = withDelay(400 + 1000, withTiming(0.5, { duration: 300, easing: SOFT_EASE }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.length > 0]);
+
+  const demoChipStyle = useAnimatedStyle(() => ({
+    opacity: demoChipOpacity.value,
+    transform: [{ translateY: demoChipY.value }],
+  }));
+
+  const bucketPulse = useSharedValue(0);
+  useEffect(() => {
+    bucketPulse.value = withTiming(selectedItem ? 1 : 0, { duration: 250, easing: SOFT_EASE });
+  }, [selectedItem, bucketPulse]);
+  const bucketPulseStyle = useAnimatedStyle(() => ({
+    borderColor: bucketPulse.value > 0.5 ? accentColor : colors.bg.border,
+    opacity: 0.4 + bucketPulse.value * 0.6,
+  }));
+
   const bucketLabels: Record<Bucket, string> = {
     agency: t('control.agencyBucket'),
     influence: t('control.influenceBucket'),
@@ -59,6 +121,7 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
     if (!selectedItem) return;
     setAssignments((prev) => ({ ...prev, [selectedItem]: bucket }));
     setSelectedItem(null);
+    hasAssignedRef.current = true;
   };
 
   const allAssigned = items.length > 0 && items.every((item) => assignments[item]);
@@ -77,44 +140,41 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
 
   return (
     <View style={styles.root}>
-      <Text style={styles.instruction}>{t('control.agencySortInstruction')}</Text>
-
       <View style={styles.chipRow}>
-        {items.map((item) => {
+        {items.map((item, i) => {
           const assignedTo = assignments[item];
           const isSelected = selectedItem === item;
+          const isDemoTarget = i === 0 && !hasAssignedRef.current;
           return (
-            <Pressable
-              key={item}
-              style={[
-                styles.chip,
-                isSelected && { borderColor: accentColor },
-                assignedTo && styles.chipAssigned,
-              ]}
-              onPress={() => setSelectedItem(isSelected ? null : item)}
-            >
-              <Text style={[styles.chipText, isSelected && { color: accentColor }]} numberOfLines={2}>
-                {item}
-              </Text>
-              {assignedTo && <Text style={styles.chipBucketLabel}>{bucketLabels[assignedTo]}</Text>}
-            </Pressable>
+            <Animated.View key={item} style={isDemoTarget ? demoChipStyle : undefined}>
+              <Pressable
+                style={[
+                  styles.chip,
+                  isSelected && { borderColor: accentColor },
+                  assignedTo && styles.chipAssigned,
+                ]}
+                onPress={() => setSelectedItem(isSelected ? null : item)}
+              >
+                <Text style={[styles.chipText, isSelected && { color: accentColor }]} numberOfLines={2}>
+                  {item}
+                </Text>
+                {assignedTo && <Text style={styles.chipBucketLabel}>{bucketLabels[assignedTo]}</Text>}
+              </Pressable>
+            </Animated.View>
           );
         })}
       </View>
 
       <View style={styles.buckets}>
         {BUCKETS.map((bucket) => (
-          <Pressable
-            key={bucket}
-            style={styles.bucketRow}
-            onPress={() => handleAssign(bucket)}
-            disabled={!selectedItem}
-          >
-            <Text style={[styles.bucketLabel, selectedItem && { color: accentColor }]}>
-              {bucketLabels[bucket]}
-            </Text>
-            <Text style={styles.bucketHint}>{t(`control.${bucket}Hint`)}</Text>
-          </Pressable>
+          <Animated.View key={bucket} style={[styles.bucketRow, bucketPulseStyle]}>
+            <Pressable style={styles.bucketRowInner} onPress={() => handleAssign(bucket)} disabled={!selectedItem}>
+              <Text style={[styles.bucketLabel, selectedItem && { color: accentColor }]}>
+                {bucketLabels[bucket]}
+              </Text>
+              <Text style={styles.bucketHint}>{t(`control.${bucket}Hint`)}</Text>
+            </Pressable>
+          </Animated.View>
         ))}
       </View>
 
@@ -132,12 +192,6 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
     root: { paddingHorizontal: spacing[5], paddingBottom: spacing[4], gap: spacing[5] },
-    instruction: {
-      color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      textAlign: 'center',
-    },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], justifyContent: 'center' },
     chip: {
       borderWidth: 1,
@@ -156,8 +210,20 @@ function makeStyles(colors: Colors) {
       fontStyle: 'italic',
       marginTop: spacing[1],
     },
-    buckets: { gap: spacing[4] },
-    bucketRow: { alignItems: 'center', paddingVertical: spacing[2] },
+    // Increased from spacing[4] — more breathing room reads as "this is
+    // its own distinct zone," part of fixing the same first-use clarity
+    // gap the border pulse and demo animation address.
+    buckets: { gap: spacing[6] },
+    // The border itself now lives here (was plain, undecorated) so the
+    // bucketPulseStyle animated border color has something to animate —
+    // a 1px border, quiet by default (colors.bg.border, low opacity),
+    // brightening to the accent color while a chip is selected.
+    bucketRow: {
+      borderWidth: 1,
+      borderColor: colors.bg.border,
+      borderRadius: radius.md,
+    },
+    bucketRowInner: { alignItems: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[3] },
     bucketLabel: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
     bucketHint: {
       color: colors.text.faint,

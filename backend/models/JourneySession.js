@@ -59,6 +59,16 @@ const stageRecordSchema = new mongoose.Schema(
     // journeyController.js's EXTRACTION_PROMPT. Absent on every other
     // stage and on the agency stage itself until extraction succeeds.
     extractedPropositions: { type: [String], default: undefined },
+    // "separate" stage only (Control) — the fixed, AUTHORED reveal text
+    // shown when this stage opens (see journeyController.js's
+    // buildSeparateReveal), interpolated from the "observable"/"represents"
+    // stages' own finalAnswer text, never AI-generated. Persisted
+    // separately from openingQuestion (which stays the plain fixed
+    // question, "Leave their choice out of it...") so the reflection
+    // screen can quote the actual desire/need split back to the user
+    // instead of raw stage-1/stage-6 answers with nothing synthesizing
+    // them. Absent on every other stage.
+    revealText: { type: String, default: null },
     answeredAt: { type: String, default: null },
   },
   { _id: false }

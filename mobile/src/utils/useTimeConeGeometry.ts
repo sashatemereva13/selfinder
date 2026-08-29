@@ -16,9 +16,13 @@ import { useThemeColors } from '../theme/useThemeColors';
 // carries no real information itself (see TimeConePoint's own comment).
 //
 // Extracted from your-arc.tsx (2026-08-22, the Center spin-off — see
-// RULES.md's Product/positioning section) into a shared hook so both Your
-// Arc (if any teaser remains) and Center — the new home for this content —
-// can compute it without duplicating the geometry logic.
+// RULES.md's Product/positioning section) into a shared hook. Used to
+// only be called from Center after that spin-off; 2026-08-29 the cone
+// itself moved back to a real page on Your Arc (TimeConePage.tsx — see
+// its own header comment for why) while Center kept just the
+// kaleidoscope, so this hook now has exactly one caller again — kept as
+// its own module regardless, since the geometry logic is substantial
+// enough to warrant staying separate from the page component itself.
 export function useTimeConeGeometry(
   readingLog: ReadingLogEntry[],
   allWishes: SavedWish[],

@@ -88,6 +88,8 @@ export default function ControlScreen() {
         <JourneyReflection
           beganLabelKey="control.reflectionBegan"
           beganAnswer={completedSession.stages[0]?.finalAnswer ?? ''}
+          shiftLabelKey={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ? 'control.reflectionShift' : undefined}
+          shiftText={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ?? undefined}
           arrivedLabelKey="control.reflectionArrived"
           arrivedAnswer={completedSession.stages[completedSession.stages.length - 1]?.finalAnswer ?? ''}
         />

@@ -19,11 +19,22 @@ import { spacing } from '../theme/spacing';
 interface JourneyReflectionProps {
   beganLabelKey: string;
   beganAnswer: string;
+  // Optional middle slot — a Journey's own AUTHORED synthesis text (never
+  // AI-generated; see e.g. journeyController.js's buildSeparateReveal for
+  // Control), shown between began/arrived when the Journey has one. Added
+  // 2026-08-29 after a real on-device test found the plain began→arrived
+  // quote-back reading as a non sequitur ("I want him to think of me a
+  // lot" → "Move to a new flat and have lots of money") with nothing
+  // showing the actual insight in between. Omit for a Journey with no
+  // such synthesis step — the component falls back to the original
+  // two-quote layout unchanged.
+  shiftLabelKey?: string;
+  shiftText?: string;
   arrivedLabelKey: string;
   arrivedAnswer: string;
 }
 
-export function JourneyReflection({ beganLabelKey, beganAnswer, arrivedLabelKey, arrivedAnswer }: JourneyReflectionProps) {
+export function JourneyReflection({ beganLabelKey, beganAnswer, shiftLabelKey, shiftText, arrivedLabelKey, arrivedAnswer }: JourneyReflectionProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -32,6 +43,17 @@ export function JourneyReflection({ beganLabelKey, beganAnswer, arrivedLabelKey,
     <ScrollView contentContainerStyle={styles.content}>
       <Text style={styles.label}>{t(beganLabelKey)}</Text>
       <Text style={styles.quote}>{`"${beganAnswer}"`}</Text>
+
+      {shiftLabelKey && shiftText && (
+        <>
+          <Text style={[styles.label, styles.secondLabel]}>{t(shiftLabelKey)}</Text>
+          {/* Not italicized/quoted like the two answers above — this is
+              the app's own authored synthesis line, not a quote of the
+              user's own words, so it deliberately reads in a different
+              register (plain, not "spoken"). */}
+          <Text style={styles.shiftText}>{shiftText}</Text>
+        </>
+      )}
 
       <Text style={[styles.label, styles.secondLabel]}>{t(arrivedLabelKey)}</Text>
       <Text style={styles.quote}>{`"${arrivedAnswer}"`}</Text>
@@ -61,6 +83,13 @@ function makeStyles(colors: Colors) {
       fontStyle: 'italic',
       fontSize: fontSizes.md,
       lineHeight: fontSizes.md * lineHeights.normal,
+      textAlign: 'center',
+    },
+    shiftText: {
+      color: colors.text.secondary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
       textAlign: 'center',
     },
   });

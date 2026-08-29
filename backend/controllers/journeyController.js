@@ -60,6 +60,8 @@ You may: ask, clarify, reflect a feeling back in your own words, reconnect somet
 
 You may never: diagnose them, interpret an unconscious motive as fact, tell them what they feel or think, tell them what they should do, or state anything about them as true that isn't already contained in their own words above. The discovery belongs entirely to them — your only job is to ask well and listen.
 
+A reflection may ONLY use words, images, or bodily language the person themselves already used — this is a hard, mechanical rule, not a matter of degree. If they say one word ("Happiness"), your acknowledgment may restate that word or ask about it — it may NOT invent a metaphor, a body location, a feeling-word, or a trait (like "self-worth" or "competence") they didn't say themselves. WRONG: they say "Happiness" → you say "Happiness feels like a bright, steady light in your chest." RIGHT: they say "Happiness" → you ask "What does happiness feel like in your body right now?" and wait for THEM to answer, or you say nothing and move straight to the next question. WRONG: they say "That I'm better and bigger than I think I am" → you say "You notice that feeling of being bigger and better, suggesting a boost in self-worth and competence." RIGHT: you either quote their own words back exactly, or ask a question that invites THEM to say more — never supply the interpretation yourself.
+
 You are also disciplined about when to speak at all: an acknowledgment sentence is only worth showing if it clarifies, distinguishes, connects, tests, or deepens something they just said. A reply that only restates or paraphrases what they already said adds nothing — in that case you say nothing and simply ask the next question. Sounding like an instrument for thought, not a therapist performing empathy, is the standard.`;
 
 // Local copy of chatController.js's JSON-extraction pattern (already
@@ -120,6 +122,24 @@ function isTopicDrift(candidate, fixed) {
   return ![...fixedWords].some((w) => candidateWords.has(w));
 }
 
+// Control's "separate" stage opens with a fixed, AUTHORED reveal — not a
+// model-generated reply — built directly from the "observable" and
+// "represents" stages' own already-collected finalAnswer text. No Groq
+// call is involved in producing this text at all: it's pure string
+// interpolation, so it can never invent a metaphor or a trait the person
+// didn't say (the exact failure mode a real on-device test caught: "I
+// don't know" -> the model supplying "steadiness", "self-worth and
+// competence", a bodily "bright, steady light in your chest" the person
+// never said). This implements the "reflect -> contrast -> classify ->
+// move on" pattern in place of the three open-ended conversational stages
+// (feared-alternative/meaning/underlying-need) it replaces.
+function buildSeparateReveal(priorStages) {
+  const observable = priorStages?.find((s) => s.stageId === "observable")?.answer?.trim();
+  const represents = priorStages?.find((s) => s.stageId === "represents")?.answer?.trim();
+  if (!observable || !represents) return null; // missing prior material — fall back to the plain fixed question, no reveal
+  return `You want ${observable}. Underneath it, you want to ${represents}. Which of those can you author?`;
+}
+
 // Control's own stage goals — used to judge STAGE COMPLETE, i.e. whether
 // enough material now exists to advance to the next stage, as opposed to
 // ENGAGED, which only judges whether this one reply was a real answer at
@@ -129,14 +149,34 @@ function isTopicDrift(candidate, fixed) {
 // so adding one is additive, not a rewrite of this file's structure.
 const STAGE_GOALS = {
   control: {
-    object: 'Land on ONE concrete, specific thing they are trying to control — an actual situation, relationship, or outcome, not an abstract feeling or a meta-question about the process. If their answer is vague, abstract, "I don\'t know," or about the conversation itself rather than their life, you do NOT have enough yet — ask one small, concrete grounding question (e.g. "What situation is this about?") before treating the stage as complete. Do not ask more than 3 sub-questions total even if still vague — after 3, accept whatever concrete-ish anchor exists and move on.',
-    "desired-outcome": "A specific thing they would like to know or have determined, phrased as an outcome, not a feeling.",
-    certainty: "What would concretely change for them if they had certainty — a real shift, not just \"I'd feel better.\"",
-    "feared-alternative": "What actually appears when they imagine not knowing — an image, thought, or feeling, named specifically.",
-    meaning: "What the fear is actually about — connects to something more specific than \"bad things.\"",
-    "underlying-need": "What that would mean to them at a level below the immediate fear — self-worth, safety, belonging, competence, etc., in their own words.",
+    name: 'Land on ONE concrete, specific thing they are trying to control — an actual situation, relationship, or outcome, not an abstract feeling or a meta-question about the process. If their answer is vague, abstract, "I don\'t know," or about the conversation itself rather than their life, you do NOT have enough yet — ask one small, concrete grounding question (e.g. "What situation is this about?") before treating the stage as complete. Do not ask more than 3 sub-questions total even if still vague — after 3, accept whatever concrete-ish anchor exists and move on.',
+    observable: 'ONE concrete, observable sign that would tell them the thing they named is actually happening — something they could see, hear, or point to, not a feeling. Do not ask more than 1 sub-question — if their first answer is already a concrete sign (an action, an event, a specific thing someone would say or do), the stage is complete immediately; only ask once, to turn a vague answer into a concrete one, then move on regardless.',
+    represents: 'The ONE feeling or internal state that observable sign would give them if it happened — what it would mean to them, not a second observable fact. Do not ask more than 1 sub-question — accept their first real feeling-word or short phrase and move on; this stage exists to name ONE thing, not to explore it.',
+    separate: 'One grounded thing that would still be theirs to change even with the other person/outside factor\'s choice left out of it entirely. Do not ask more than 1 sub-question — accept whatever concrete thing they name and move on; this stage is testing whether they can locate a real answer, not exhausting the topic.',
     agency: "The elements they place into each bucket during the sort — this stage completes as soon as the sort itself is submitted, not through conversation.",
-    recognition: "Something that feels different or newly visible to them now, in their own words.",
+    recognition: "Something that feels different or newly visible to them now, in their own words. Do not ask more than 1 sub-question — this is the closing stage; accept their first real answer and let the Journey end.",
+  },
+};
+
+// Mechanical, code-enforced ceiling on sub-questions per stage — NOT just
+// the soft "do not ask more than N" language already embedded in each
+// STAGE_GOALS entry above. Confirmed live (2026-08-29, throwaway
+// scripts/test-control-redesign.mjs) that the prompt-only cap is not
+// reliably obeyed on its own: a deliberately vague answer pushed a
+// "1 sub-question max" stage to 3+ turns before the model finally marked
+// stageComplete. This map is the real backstop — once a stage's turn
+// count (turns already recorded, BEFORE this reply) reaches the cap, the
+// stage is forced complete regardless of what the model returned,
+// matching this project's own standing "a soft prompt rule needs a hard
+// backstop, not just better wording" lesson (see isTopicDrift's own
+// history).
+const STAGE_SUBQUESTION_CAP = {
+  control: {
+    name: 3,
+    observable: 1,
+    represents: 1,
+    separate: 1,
+    recognition: 1,
   },
 };
 
@@ -147,12 +187,10 @@ const STAGE_GOALS = {
 // needs its own minimal nudge.
 const STAGE_FALLBACK_NUDGE = {
   control: {
-    object: "What situation is this actually about?",
-    "desired-outcome": "What's the one thing you'd most want to know?",
-    certainty: "What would feel different, even in a small way?",
-    "feared-alternative": "What's the first thing that comes to mind?",
-    meaning: "What does that fear point to?",
-    "underlying-need": "What would that change about how you see things?",
+    name: "What situation is this actually about?",
+    observable: "What's one thing you'd see or hear that would tell you?",
+    represents: "What would that give you, in one word?",
+    separate: "Leaving that aside — what's still yours here?",
     recognition: "What stands out to you right now?",
   },
 };
@@ -247,6 +285,13 @@ export async function postJourneyExchange(req, res) {
   const currentStageTurnsText = currentStage?.turns?.length
     ? currentStage.turns.map((t) => `"${t.question}" → "${t.answer}"`).join("\n")
     : "(no sub-questions asked yet this stage)";
+  // Mechanical cap — see STAGE_SUBQUESTION_CAP's own comment for why this
+  // exists on top of (not instead of) the prompt's own soft language.
+  // currentStage.turns.length is how many sub-questions have ALREADY been
+  // asked and answered before this reply — once that meets the cap, this
+  // reply is forced to complete the stage no matter what the model says.
+  const subQuestionCap = STAGE_SUBQUESTION_CAP[journey]?.[stageId];
+  const forceStageComplete = typeof subQuestionCap === "number" && (currentStage?.turns?.length ?? 0) >= subQuestionCap;
   const priorStagesText = Array.isArray(priorStages) && priorStages.length > 0
     ? priorStages.map((s) => `"${s.question}" → "${s.answer}"`).join("\n")
     : "(this is the first stage of the Journey)";
@@ -318,7 +363,11 @@ Ground everything only in what they actually wrote ("${answer}"), stay under 60 
 
     const engaged = parsed.engaged !== false;
     const goBack = goBackPossible && parsed.goBack === true;
-    const stageComplete = engaged && !goBack && parsed.stageComplete === true;
+    // forceStageComplete overrides the model's own stageComplete decision
+    // once the mechanical cap is hit — see STAGE_SUBQUESTION_CAP's comment.
+    // Still gated on engaged/!goBack, same as the model-driven path: a
+    // non-engaged or go-back reply is never forced complete.
+    const stageComplete = engaged && !goBack && (parsed.stageComplete === true || forceStageComplete);
     const showAcknowledgment = !goBack && parsed.showAcknowledgment !== false;
     const reply = showAcknowledgment && typeof parsed.reply === "string" && !isPlaceholderText(parsed.reply)
       ? parsed.reply.trim()
@@ -331,17 +380,29 @@ Ground everything only in what they actually wrote ("${answer}"), stay under 60 
       throw new Error("showAcknowledgment true but no usable reply text");
     }
 
+    const separateReveal = (stageComplete && journey === "control" && stageId === "represents")
+      ? buildSeparateReveal(priorStages)
+      : null;
+
     let nextQuestion = null;
     if (goBack) {
       nextQuestion = null;
     } else if (!engaged) {
       nextQuestion = null; // the sub-question lives in `reply` for non-engagement, per the prompt
     } else if (stageComplete) {
-      nextQuestion = isLastStage
-        ? null
-        : (typeof parsed.nextQuestion === "string" && !isPlaceholderText(parsed.nextQuestion) && nextOpeningQuestion && !isTopicDrift(parsed.nextQuestion, nextOpeningQuestion)
-            ? parsed.nextQuestion.trim()
-            : nextOpeningQuestion);
+      if (isLastStage) {
+        nextQuestion = null;
+      } else if (separateReveal !== null || (journey === "control" && stageId === "represents")) {
+        // "separate" opens with the authored reveal, not the AI's own
+        // phrasing — see buildSeparateReveal's own comment. The model
+        // isn't even asked to phrase this transition (no drift risk
+        // possible since nothing here is generated).
+        nextQuestion = separateReveal ? `${separateReveal} ${nextOpeningQuestion}` : nextOpeningQuestion;
+      } else {
+        nextQuestion = typeof parsed.nextQuestion === "string" && !isPlaceholderText(parsed.nextQuestion) && nextOpeningQuestion && !isTopicDrift(parsed.nextQuestion, nextOpeningQuestion)
+          ? parsed.nextQuestion.trim()
+          : nextOpeningQuestion;
+      }
     } else {
       // Still gathering — a genuine sub-question, no fixed text exists to
       // compare it against (see STAGE_FALLBACK_NUDGE's own comment).
@@ -353,13 +414,14 @@ Ground everything only in what they actually wrote ("${answer}"), stay under 60 
     const isComplete = stageComplete && isLastStage;
 
     let extractedPropositions = null;
-    if (stageComplete && stageId === "underlying-need") {
+    if (stageComplete && stageId === "separate") {
       extractedPropositions = await tryExtractPropositions({ session, journey, locale, answer, stageIndex });
     }
 
     await persistExchange({
       session, stageIndex, stageId, openingQuestion, nextOpeningQuestion, answer, structuredAnswer,
       engaged, stageComplete, goBack, showAcknowledgment, reply, nextQuestion, isComplete, extractedPropositions,
+      nextStageRevealText: separateReveal,
     });
 
     return res.json({ engaged, goBack, stageComplete, showAcknowledgment, reply, nextQuestion, isComplete });
@@ -373,24 +435,30 @@ Ground everything only in what they actually wrote ("${answer}"), stay under 60 
     const engaged = true;
     const stageComplete = true;
     const isComplete = isLastStage;
-    const nextQuestion = isLastStage ? null : nextOpeningQuestion ?? null;
+    const failOpenReveal = (journey === "control" && stageId === "represents") ? buildSeparateReveal(priorStages) : null;
+    const nextQuestion = isLastStage
+      ? null
+      : failOpenReveal
+        ? `${failOpenReveal} ${nextOpeningQuestion}`
+        : nextOpeningQuestion ?? null;
     await persistExchange({
       session, stageIndex, stageId, openingQuestion, nextOpeningQuestion, answer, structuredAnswer,
       engaged, stageComplete, goBack: false, showAcknowledgment: false, reply: null, nextQuestion, isComplete,
+      nextStageRevealText: failOpenReveal,
     });
     return res.json({ engaged, goBack: false, stageComplete, showAcknowledgment: false, reply: null, nextQuestion, isComplete });
   }
 }
 
 // Extracts clean, first-person propositions-about-agency from everything
-// said across all prior stages, once "underlying-need" (the stage
-// immediately before "agency") completes — a SEPARATE Groq call, not
-// merged into the same JSON blob as the exchange decision above, since
-// mixing "phrase the next question" and "extract propositions" into one
-// response risks the same drift problem the reduction-test mechanism
-// above already had to solve once. Fails open to null (the caller falls
-// back to raw per-stage answers, matching the original V1 behavior) on
-// any error — this must never block a stage transition.
+// said across all prior stages, once "separate" (the stage immediately
+// before "agency") completes — a SEPARATE Groq call, not merged into the
+// same JSON blob as the exchange decision above, since mixing "phrase the
+// next question" and "extract propositions" into one response risks the
+// same drift problem the reduction-test mechanism above already had to
+// solve once. Fails open to null (the caller falls back to raw per-stage
+// answers, matching the original V1 behavior) on any error — this must
+// never block a stage transition.
 async function tryExtractPropositions({ session, journey, locale, answer }) {
   if (journey !== "control") return null; // agency-sort is Control-specific for now
   try {
@@ -398,7 +466,7 @@ async function tryExtractPropositions({ session, journey, locale, answer }) {
       ...session.stages
         .filter((s) => s.finalAnswer)
         .map((s) => `"${s.openingQuestion}" → "${s.finalAnswer}"`),
-      `"underlying-need" → "${answer}"`, // the answer that just completed this stage, not yet persisted
+      `"separate" → "${answer}"`, // the answer that just completed this stage, not yet persisted
     ].join("\n");
 
     const extractionPrompt = `Everything this person has said so far in this Journey about what they're trying to control, in order:
@@ -440,7 +508,7 @@ Respond with ONLY valid JSON: {"propositions": ["...", "...", ...]}`;
   }
 }
 
-async function persistExchange({ session, stageIndex, stageId, openingQuestion, nextOpeningQuestion, answer, structuredAnswer, engaged, stageComplete, goBack, showAcknowledgment, reply, nextQuestion, isComplete, extractedPropositions }) {
+async function persistExchange({ session, stageIndex, stageId, openingQuestion, nextOpeningQuestion, answer, structuredAnswer, engaged, stageComplete, goBack, showAcknowledgment, reply, nextQuestion, isComplete, extractedPropositions, nextStageRevealText }) {
   // goBack is never persisted server-side, matching Measure's own
   // goToPreviousSphere (pure client Zustand state, no server call) —
   // mobile fully owns "which stage is displayed." Worst case of a goBack
@@ -487,6 +555,7 @@ async function persistExchange({ session, stageIndex, stageId, openingQuestion, 
       openingQuestion: nextOpeningQuestion ?? "",
     };
     if (extractedPropositions) nextStage.extractedPropositions = extractedPropositions;
+    if (nextStageRevealText) nextStage.revealText = nextStageRevealText;
     session.stages.push(nextStage);
     session.currentStageIndex = stageIndex + 1;
   }

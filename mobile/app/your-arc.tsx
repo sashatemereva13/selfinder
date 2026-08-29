@@ -33,6 +33,7 @@ import { ArcLinePage } from '../src/components/yourArcPages/ArcLinePage';
 import { ResurfacedWishPage } from '../src/components/yourArcPages/ResurfacedWishPage';
 import { DetailPage } from '../src/components/yourArcPages/DetailPage';
 import { FactsPage } from '../src/components/yourArcPages/FactsPage';
+import { TimeConePage } from '../src/components/yourArcPages/TimeConePage';
 import { ClosingPage } from '../src/components/yourArcPages/ClosingPage';
 import { WishCrossingPage } from '../src/components/yourArcPages/WishCrossingPage';
 
@@ -643,6 +644,22 @@ function YourArcScreen() {
     />
   );
 
+  // The light cone — split out of Center 2026-08-29 (see TimeConePage.tsx's
+  // own header comment for the full reasoning: the cone is drawn from real
+  // history, unlike Center's kaleidoscope, which is generated fresh each
+  // time and never part of the record). Right after Facts, matching this
+  // page's own job — "every reading, unranked, as a shape" — as the
+  // natural sequel to Facts' own "browse in order" list.
+  pages.push(
+    <TimeConePage
+      key="time-cone"
+      readingLog={readingLog}
+      allWishes={allWishes}
+      activeWish={activeWish}
+      locale={locale}
+    />
+  );
+
   // "Every walk" (the sparkline page) REMOVED entirely 2026-08-20 —
   // review: "it shows a graph with ups and downs but it goes against my
   // intentional design that vibrations aren't better or worse one
@@ -651,12 +668,11 @@ function YourArcScreen() {
   // violation of RULES.md/aesthetic.md's own anti-ranking rule ("never
   // show a bare numeric score," "no gradient bars... up=better, down=
   // worse"), not just a styling issue. What it did is now covered two
-  // other ways, neither of which encodes a ranking: the cone's own
-  // rotate-to-face-a-rim view (TimeConeRing, see that file's header
-  // comment) for "every reading, unranked, as a shape," and the Facts
-  // page's own past-readings list (date + level, chronological, tap for
-  // detail) for "browse in order." fullLineNote (the free-vs-paid "the
-  // FULL line, not just the last few" signal) moved onto that list.
+  // other ways, neither of which encodes a ranking: TimeConePage above
+  // ("every reading, unranked, as a shape") and the Facts page's own
+  // past-readings list (date + level, chronological, tap for detail) for
+  // "browse in order." fullLineNote (the free-vs-paid "the FULL line, not
+  // just the last few" signal) moved onto that list.
 
   // Page 3 — A wish from before. Pure resurfacing (docs/session-result-
   // concept.md, Phase 4), offered quietly, not pushed — only exists as its

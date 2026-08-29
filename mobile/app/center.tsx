@@ -11,11 +11,6 @@ import { spacing } from '../src/theme/spacing';
 import { ReadingLogEntry } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { getMeasureHistory } from '../src/api/user';
-import { listMyWishes, SavedWish } from '../src/api/wish';
-import { findActiveWish } from '../src/utils/crossingEligibility';
-import { TimeCone } from '../src/components/TimeCone';
-import { TimeConeRing } from '../src/components/TimeConeRing';
-import { CrossfadeSwitcher } from '../src/components/CrossfadeSwitcher';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
@@ -24,20 +19,23 @@ import { AmbientGlow } from '../src/components/AmbientGlow';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { purchaseJourney } from '../src/api/journeys';
-import { useTimeConeGeometry } from '../src/utils/useTimeConeGeometry';
 import { useReadingColumnWidth } from '../src/theme/responsive';
-import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
-import { useLocaleStore } from '../src/store/localeStore';
 import { JourneyPurchase } from '../src/types';
 
 // Center — Selfinder's first Journey: a one-time-purchase, repeatable
-// experience (the light cone + kaleidoscope, spun out of what used to be
-// Your Arc's Cover/Cone pages; see RULES.md's Product/positioning
-// section). Unlike Your Arc, this is NOT part of the record — each
-// purchase generates its own, genuinely different result (a fresh
-// seedNonce folded into kaleidoscopeData.ts's seedFromLog), and every
-// past purchase stays individually browsable rather than being replaced
-// by the latest one.
+// experience (the kaleidoscope, spun out of what used to be Your Arc's
+// Cover page; see RULES.md's Product/positioning section). Unlike Your
+// Arc, this is NOT part of the record — each purchase generates its own,
+// genuinely different result (a fresh seedNonce folded into
+// kaleidoscopeData.ts's seedFromLog), and every past purchase stays
+// individually browsable rather than being replaced by the latest one.
+//
+// 2026-08-29: the light cone (previously shown right below the
+// kaleidoscope on this screen) moved to its own page on Your Arc
+// (TimeConePage.tsx) — the cone is drawn from real saved history, the
+// opposite kind of thing from a bought-again generated result, and
+// belongs with Your Arc's other record pages, not bundled into Center.
+// See TimeConePage.tsx's own header comment for the full reasoning.
 //
 // 2026-08-23 pivot: Center no longer requires an active Your Arc
 // subscription — that gate was reversed once Center generalized into the
@@ -52,11 +50,9 @@ import { JourneyPurchase } from '../src/types';
 //
 // Same "just the kaleidoscope and a header" reference-image treatment
 // Cover used (see your-arc.tsx's own history) — the kaleidoscope fills
-// nearly the whole column width, the cone gets real room below it, no
-// competing text blocks.
+// nearly the whole column width, no competing text blocks.
 const KALEIDOSCOPE_LOADING_SIZE = 300;
 const KALEIDOSCOPE_PADDING = 24;
-const CONE_SIZE = 260;
 
 function formatDate(ts: number) {
   return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
@@ -64,11 +60,11 @@ function formatDate(ts: number) {
 
 // Thin wrapper mounted by the router — same requestAnimationFrame-deferred
 // pattern your-arc.tsx's own YourArcRoute uses, for the same reason: the
-// real screen below mounts ArcKaleidoscope/TimeCone synchronously, and
-// without deferring past the FIRST render, the Depths/You-tab → Center
-// route transition itself would freeze rather than paint instantly. See
-// your-arc.tsx's YourArcRoute for the full history of why this pattern
-// exists (a real, confirmed ~9.8s hang was the original motivation).
+// real screen below mounts ArcKaleidoscope synchronously, and without
+// deferring past the FIRST render, the route transition into Center
+// itself would freeze rather than paint instantly. See your-arc.tsx's
+// YourArcRoute for the full history of why this pattern exists (a real,
+// confirmed ~9.8s hang was the original motivation).
 export default function CenterRoute() {
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
@@ -95,7 +91,6 @@ function CenterScreen() {
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const session = useAuthStore((s) => s.session);
@@ -115,31 +110,27 @@ function CenterScreen() {
   // Arc subscription required (see this file's own header comment for the
   // 2026-08-23 gate reversal). A fully signed-out visitor never reaches
   // this fetch at all (getMeasureHistory requires auth) — see the
-  // `!session` branch in the render below.
+  // `!session` branch in the render below. Wishes are no longer fetched
+  // here — they only ever fed the light cone, which moved to Your Arc's
+  // own TimeConePage.tsx (2026-08-29).
   const [serverReadingLog, setServerReadingLog] = useState<ReadingLogEntry[]>([]);
-  const [allWishes, setAllWishes] = useState<SavedWish[]>([]);
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
     (async () => {
       try {
-        const [history, wishes] = await Promise.all([
-          getMeasureHistory(session.token),
-          listMyWishes(session.token),
-        ]);
+        const history = await getMeasureHistory(session.token);
         if (cancelled) return;
         // SavedMeasureResult (server shape: vibrationLevel.slug, savedAt as
         // an ISO string) → ReadingLogEntry (local shape: levelSlug, ts as a
-        // number) — the shape every consumer here (ArcKaleidoscope,
-        // useTimeConeGeometry) already expects, oldest-first to match
-        // measureStore's own readingLog convention.
+        // number) — the shape ArcKaleidoscope already expects, oldest-first
+        // to match measureStore's own readingLog convention.
         const mapped: ReadingLogEntry[] = history
           .map((r) => ({ ts: new Date(r.savedAt).getTime(), score: r.vibrationScore, levelSlug: r.vibrationLevel.slug }))
           .sort((a, b) => a.ts - b.ts);
         setServerReadingLog(mapped);
-        setAllWishes(wishes);
       } catch {
-        // Best-effort — an empty cone/kaleidoscope is still an honest
+        // Best-effort — an empty kaleidoscope is still an honest
         // reflection of "nothing loaded," not a crash.
       }
     })();
@@ -147,48 +138,6 @@ function CenterScreen() {
       cancelled = true;
     };
   }, [session]);
-  const activeWish = findActiveWish(allWishes);
-
-  const timeConeGeometry = useTimeConeGeometry(serverReadingLog, allWishes, activeWish);
-
-  // Long-press preview + tap summary — same interaction shape Your Arc's
-  // own cone page used, minus "Open full reading": that link jumped to
-  // Your Arc's own Detail page, a different, subscription-gated product
-  // now, with nowhere appropriate to send a Center-only viewer. Center's
-  // tap summary shows date + level only — the richer per-reading
-  // reflection (combinationMessage) is a separate, heavier fetch Your
-  // Arc's own record pages do; Center never needed it, since a plain
-  // date+level summary is enough for a quick in-place look at one point.
-  const [conePreview, setConePreview] = useState<{ date: string; label: string } | null>(null);
-  const [coneFacing, setConeFacing] = useState<'past' | 'future' | null>(null);
-  const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
-
-  const handleConePointPress = (pointId: string) => {
-    if (!pointId.startsWith('reading-')) return;
-    const ts = Number(pointId.slice('reading-'.length));
-    const entry = serverReadingLog.find((e) => e.ts === ts);
-    if (entry) setSelected(entry);
-  };
-
-  const handleConePointLongPress = (pointId: string) => {
-    if (pointId.startsWith('reading-')) {
-      const ts = Number(pointId.slice('reading-'.length));
-      const entry = serverReadingLog.find((e) => e.ts === ts);
-      if (!entry) return;
-      const level = VIBRATION_LEVELS.find((l) => l.slug === entry.levelSlug);
-      setConePreview({
-        date: formatDate(entry.ts),
-        label: level ? getLocalizedLevelName(level, locale) : entry.levelSlug,
-      });
-      setTimeout(() => setConePreview(null), 4000);
-    } else if (pointId.startsWith('wish-')) {
-      const id = pointId.slice('wish-'.length);
-      const wish = allWishes.find((w) => w.id === id);
-      if (!wish) return;
-      setConePreview({ date: formatDate(new Date(wish.savedAt).getTime()), label: t('yourArc.coneLegendWishLabel') });
-      setTimeout(() => setConePreview(null), 4000);
-    }
-  };
 
   // Selfinder is fully free for now (see RULES.md's Product/positioning
   // section) — self-grants a real journeyPurchases[] entry via the same
@@ -219,62 +168,6 @@ function CenterScreen() {
           <ArcKaleidoscope readingLog={serverReadingLog} size={kaleidoscopeSize} seed={purchase?.seedNonce} />
         </View>
       </LongPressToSave>
-      <View style={styles.timeConeWrap}>
-        <CrossfadeSwitcher
-          showSecond={coneFacing !== null}
-          first={
-            <TimeCone
-              width={CONE_SIZE}
-              height={CONE_SIZE * 1.3}
-              pastPoints={timeConeGeometry.pastPoints}
-              futurePoints={timeConeGeometry.futurePoints}
-            />
-          }
-          second={
-            <TimeConeRing
-              size={CONE_SIZE}
-              points={coneFacing === 'future' ? timeConeGeometry.futurePoints : timeConeGeometry.pastPoints}
-              onPointPress={coneFacing === 'past' ? handleConePointPress : undefined}
-              onPointLongPress={coneFacing === 'past' ? handleConePointLongPress : undefined}
-            />
-          }
-        />
-        <View style={styles.coneArrowLayer} pointerEvents="box-none">
-          {timeConeGeometry.futurePoints.length > 0 && (
-            <Pressable
-              hitSlop={16}
-              style={styles.coneArrowUp}
-              onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}
-            >
-              <Text style={[styles.coneArrow, coneFacing === 'future' && styles.coneArrowActive]}>↑</Text>
-            </Pressable>
-          )}
-          {timeConeGeometry.pastPoints.length > 0 && (
-            <Pressable
-              hitSlop={16}
-              style={styles.coneArrowDown}
-              onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}
-            >
-              <Text style={[styles.coneArrow, coneFacing === 'past' && styles.coneArrowActive]}>↓</Text>
-            </Pressable>
-          )}
-        </View>
-      </View>
-      {conePreview && (
-        <Text style={styles.conePreviewText}>
-          {conePreview.date} — {conePreview.label}
-        </Text>
-      )}
-      {selected && (
-        <View style={styles.conePointSummary}>
-          <Text style={styles.conePointSummaryDate}>{formatDate(selected.ts)}</Text>
-          <Text style={styles.conePointSummaryLevel}>
-            {VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)
-              ? getLocalizedLevelName(VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)!, locale)
-              : selected.levelSlug}
-          </Text>
-        </View>
-      )}
     </View>
   );
 
@@ -392,41 +285,6 @@ function makeStyles(colors: Colors) {
   },
   experienceBlock: { alignItems: 'center', width: '100%' },
   kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
-  timeConeWrap: {
-    alignSelf: 'center',
-    width: CONE_SIZE,
-    marginBottom: spacing[3],
-    height: CONE_SIZE * 1.3,
-    justifyContent: 'center',
-    position: 'relative',
-  },
-  coneArrowLayer: { ...StyleSheet.absoluteFill, justifyContent: 'center', alignItems: 'center' },
-  coneArrowUp: { position: 'absolute', top: CONE_SIZE * 0.65 - 18 },
-  coneArrowDown: { position: 'absolute', top: CONE_SIZE * 0.65 + 18 },
-  coneArrow: { color: colors.text.muted, fontSize: fontSizes.lg },
-  coneArrowActive: { color: colors.text.primary },
-  conePreviewText: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-    marginTop: spacing[3],
-  },
-  conePointSummary: { alignItems: 'center', marginTop: spacing[4] },
-  conePointSummaryDate: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textTransform: 'uppercase',
-    letterSpacing: letterSpacings.wide,
-  },
-  conePointSummaryLevel: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    textTransform: 'capitalize',
-    marginTop: spacing[1],
-  },
   getButton: {
     alignSelf: 'flex-start',
     marginTop: spacing[5],

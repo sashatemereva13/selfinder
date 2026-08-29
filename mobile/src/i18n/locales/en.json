@@ -242,6 +242,8 @@
     "wishResurfaceHeading": "What you wished for",
     "wishResurfaceHint": "Your own words, unchanged",
     "coneFramingLine": "Here is where you are. Here is how you've told it. Here is what's calling you forward.",
+    "coneKicker": "The shape of it",
+    "coneIntroLine": "Every reading, unranked, as a shape — the past below, the one wish you've named reaching forward above. Tap the arrows to turn and face either side; tap or hold a point on the past for what it was.",
     "coneLegendWishLabel": "A wish",
     "closingSynthesisWithWish": "{{level}} is still close. So is what you wished for. Both are here, in this moment, the way a held note is still sounding after the ones before it.",
     "closingSynthesisNoWish": "{{level}} is still close, here in this moment, the way a held note is still sounding after the ones before it.",
@@ -346,7 +348,6 @@
     "signInBody": "This Journey is tied to your account, so it can be picked up right where you left it."
   },
   "control": {
-    "agencySortInstruction": "Place what you've said into where it actually belongs.",
     "agencyBucket": "Mine to choose",
     "influenceBucket": "I can affect, not decide",
     "authorshipBucket": "Not mine to author",
@@ -355,6 +356,7 @@
     "authorshipHint": "Something with causes beyond you.",
     "agencySortDone": "Done",
     "reflectionBegan": "You began with:",
+    "reflectionShift": "What you found:",
     "reflectionArrived": "You arrived at:"
   },
   "center": {

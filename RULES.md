@@ -230,9 +230,13 @@ Selfinder is or why it costs money.
   worked example) lives in **[`docs/journeys-concept.md`](docs/journeys-concept.md)**
   — read that before designing or building any Journey, the same way
   `docs/pitch.md` governs outward-facing positioning. **Center** (the
-  light cone + kaleidoscope, spun out of Your Arc's old Cover/Cone
-  pages, Selfinder's first Journey) is the only Journey with real
-  content today. The next set to build toward,
+  kaleidoscope, spun out of Your Arc's old Cover page, Selfinder's first
+  Journey) is the only Journey with real content today. The light cone —
+  Center's other half until 2026-08-29 — moved to a real page of its own
+  on Your Arc (`TimeConePage.tsx`): it's drawn from real saved history,
+  the opposite kind of thing from Center's bought-again generated result,
+  so it belongs with Your Arc's other record pages now, not bundled into
+  a Journey. The next set to build toward,
   framed as the question in the user's own voice rather than a feature
   name (2026-08-23, replacing the earlier placeholder Either/Or/Identity
   entries, which had no worked-through architecture): **Control** ("what
