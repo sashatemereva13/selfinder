@@ -7,8 +7,45 @@ import { spacing } from '../../theme/spacing';
 // separate from each page's own makeStyles (rather than merged into one
 // object) so shared-vs-page-owned stays visible at each call site. See
 // RULES.md/aesthetic.md for the underlying visual rules these implement.
+//
+// 2026-08-29 hierarchy pass: every page was leaning on the same sm/light/
+// secondary style for 4-5 different content roles (a stat, a description,
+// an answer, a wish) with no distinct "this is the headline" treatment —
+// read as flat. Fix is size/color only, per RULES.md's "one typeface,
+// hierarchy via size not weight" (fonts.light and fonts.medium are
+// currently the same file, so weight was never a real lever anyway).
+// Three registers now apply consistently across every page in the pager:
+//   kicker   — xs/muted/uppercase/kicker-spacing (page or section label)
+//   headline — md/primary (the one thing this page exists to show —
+//              DetailPage's own detailLevel/TimeConePage's
+//              conePointSummaryLevel already used this; now shared here
+//              so every page reaches for the same recipe instead of each
+//              inventing its own)
+//   body     — sm/secondary (the main supporting prose)
+//   aside    — xs/faint (secondary/incidental: hints, disclaimers,
+//              metadata that isn't the page's own date/kicker)
+// Dates specifically use dateLabel (xs/muted/uppercase/wide) everywhere —
+// previously DetailPage/TimeConePage styled dates this way while
+// FactsPage/ResurfacedWishPage used two other, inconsistent treatments.
 export function makeSharedArcPageStyles(colors: Colors) {
   return StyleSheet.create({
+    headline: {
+      color: colors.text.primary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.md,
+    },
+    dateLabel: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      textTransform: 'uppercase',
+      letterSpacing: letterSpacings.wide,
+    },
+    aside: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+    },
     // Each swipeable page is its own ScrollView (per PagedScrollView's own
     // contract), so there are two content-container shapes: pageCentered
     // vertically centers short, hero-like pages (Closing) so they don't
@@ -54,10 +91,15 @@ export function makeSharedArcPageStyles(colors: Colors) {
       letterSpacing: letterSpacings.kicker,
       textTransform: 'uppercase',
     },
+    // Same recipe as the shared dateLabel above (xs/muted/uppercase/wide)
+    // — was previously xs/faint/no-letterspacing, the one date treatment
+    // in the whole pager that didn't match DetailPage/TimeConePage's.
     wishDate: {
-      color: colors.text.faint,
+      color: colors.text.muted,
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
+      textTransform: 'uppercase',
+      letterSpacing: letterSpacings.wide,
       marginTop: spacing[1],
     },
     wishText: {

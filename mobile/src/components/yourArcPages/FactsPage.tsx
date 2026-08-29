@@ -64,7 +64,11 @@ export function FactsPage({
           just below it, which speaks in the app's own voice about the
           record itself. */}
       <Text style={styles.tabExplainer}>{t('yourArc.tabExplainer')}</Text>
-      <Text style={styles.introLine}>
+      {/* This page's real headline — the personalized record summary is
+          the whole reason to open Facts, so it gets the shared headline
+          treatment (md/primary) rather than the same sm/secondary weight
+          as the plain fact/description rows below it. */}
+      <Text style={[sharedStyles.headline, styles.introLine]}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
 
@@ -121,8 +125,8 @@ export function FactsPage({
           <Text style={styles.pastReadingsKicker}>{t('yourArc.pastReadingsHeading')}</Text>
           {/* The same free-vs-paid signal ("the FULL line, not just the
               last few") stated once, quietly, on the paid screen itself. */}
-          <Text style={styles.fullLineNote}>{t('yourArc.fullLineNote')}</Text>
-          <Text style={styles.pastReadingsTapHint}>{t('yourArc.pastReadingsTapHint')}</Text>
+          <Text style={[sharedStyles.aside, styles.asideSpacing]}>{t('yourArc.fullLineNote')}</Text>
+          <Text style={[sharedStyles.aside, styles.asideSpacing]}>{t('yourArc.pastReadingsTapHint')}</Text>
           {[...richHistory]
             .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
             .map((reading) => (
@@ -131,7 +135,7 @@ export function FactsPage({
                 style={styles.pastReadingRow}
                 onPress={() => onReadingPress(reading)}
               >
-                <Text style={styles.pastReadingDate}>{formatDate(new Date(reading.savedAt).getTime())}</Text>
+                <Text style={sharedStyles.dateLabel}>{formatDate(new Date(reading.savedAt).getTime())}</Text>
                 <Text style={styles.pastReadingLevel}>
                   {getLocalizedLevelName(reading.vibrationLevel, locale)}
                 </Text>
@@ -153,21 +157,22 @@ function makeStyles(colors: Colors) {
       letterSpacing: letterSpacings.kicker,
       textTransform: 'uppercase',
     },
+    // xs/muted rather than the previous sm/muted hybrid — now a clear
+    // step below the headline (introLine) instead of sitting ambiguously
+    // between the kicker and the headline in size.
     tabExplainer: {
       alignSelf: 'flex-start',
       color: colors.text.muted,
       fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      lineHeight: fontSizes.sm * lineHeights.normal,
+      fontSize: fontSizes.xs,
+      lineHeight: fontSizes.xs * lineHeights.normal,
       marginTop: spacing[3],
     },
+    // Size/color come from sharedStyles.headline; this just adds layout.
     introLine: {
       alignSelf: 'flex-start',
-      color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      lineHeight: fontSizes.sm * lineHeights.normal,
-      marginTop: spacing[1],
+      lineHeight: fontSizes.md * lineHeights.normal,
+      marginTop: spacing[3],
       marginBottom: spacing[8],
     },
     // Same row weight as products.tsx's own catalog rows (label +
@@ -235,19 +240,10 @@ function makeStyles(colors: Colors) {
       alignItems: 'center',
       paddingVertical: spacing[2],
     },
-    pastReadingDate: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
     pastReadingLevel: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.sm },
-    fullLineNote: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.xs,
-      marginBottom: spacing[3],
-    },
-    pastReadingsTapHint: {
-      color: colors.text.faint,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.xs,
-      marginBottom: spacing[3],
-    },
+    // Layout-only — color/size now come from sharedStyles.aside at the
+    // call site (both were xs/muted-or-faint asides beneath the section
+    // kicker; unifying them onto the shared aside register).
+    asideSpacing: { marginBottom: spacing[3] },
   });
 }

@@ -22,6 +22,7 @@ interface ClosingPageProps {
   closingWriteSubmitting: boolean;
   onSubmitClosingWrite: () => void;
   closingArrivalStyle: ReturnType<typeof useAnimatedStyle>;
+  accentRgb: string;
 }
 
 // The closing page (docs/your-arc-expansion-plan.md, Thread 2). Positioned
@@ -44,6 +45,7 @@ export function ClosingPage({
   closingWriteSubmitting,
   onSubmitClosingWrite,
   closingArrivalStyle,
+  accentRgb,
 }: ClosingPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -90,7 +92,9 @@ export function ClosingPage({
               onPress={onSubmitClosingWrite}
               disabled={!closingWriteInput.trim() || closingWriteSubmitting}
             >
-              <Text style={styles.closingWriteButtonText}>{t('yourArc.closingWriteButton')}</Text>
+              <Text style={[styles.closingWriteButtonText, { color: `rgb(${accentRgb})` }]}>
+                {t('yourArc.closingWriteButton')}
+              </Text>
             </Pressable>
           </View>
         )}
@@ -101,11 +105,18 @@ export function ClosingPage({
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
+    // 2026-08-29: bumped from md to lg — this is the pager's closing,
+    // emotional-peak line, and at md it sat only 1pt above its own
+    // closingNeedLine (sm) directly below, reading as barely more
+    // prominent than its own supporting text. lg gives it real separation
+    // while every other page's headline (level name, cone summary) stays
+    // at md, since those sit alongside more surrounding content and don't
+    // need to carry a whole page's arrival beat alone the way this does.
     closingSynthesis: {
       color: colors.text.primary,
       fontFamily: fonts.light,
-      fontSize: fontSizes.md,
-      lineHeight: fontSizes.md * lineHeights.normal,
+      fontSize: fontSizes.lg,
+      lineHeight: fontSizes.lg * lineHeights.normal,
       textAlign: 'center',
     },
     closingNeedLine: {
@@ -147,8 +158,12 @@ function makeStyles(colors: Colors) {
       paddingVertical: spacing[3],
     },
     closingWriteButton: { alignSelf: 'center', marginTop: spacing[3], paddingVertical: spacing[1] },
+    // Color set per-instance via accentRgb (see call site) rather than a
+    // fixed token — this is the pager's actual CTA, so it takes the same
+    // reading-aware accent FactsPage's Center row and WishCrossingPage's
+    // send buttons already use, instead of the plain text.primary that
+    // made it visually indistinguishable from a static body sentence.
     closingWriteButtonText: {
-      color: colors.text.primary,
       fontFamily: fonts.medium,
       fontSize: fontSizes.sm,
     },

@@ -132,8 +132,8 @@ export function TimeConePage({ readingLog, allWishes, activeWish, locale }: Time
       )}
       {selected && (
         <View style={styles.conePointSummary}>
-          <Text style={styles.conePointSummaryDate}>{formatDate(selected.ts)}</Text>
-          <Text style={styles.conePointSummaryLevel}>
+          <Text style={sharedStyles.dateLabel}>{formatDate(selected.ts)}</Text>
+          <Text style={[sharedStyles.headline, styles.conePointSummaryLevel]}>
             {VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)
               ? getLocalizedLevelName(VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug)!, locale)
               : selected.levelSlug}
@@ -185,17 +185,9 @@ function makeStyles(colors: Colors) {
       marginTop: spacing[3],
     },
     conePointSummary: { alignItems: 'center', marginTop: spacing[4] },
-    conePointSummaryDate: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.xs,
-      textTransform: 'uppercase',
-      letterSpacing: letterSpacings.wide,
-    },
+    // Size/color come from sharedStyles.headline/dateLabel; this just adds
+    // the page-specific capitalize transform + spacing.
     conePointSummaryLevel: {
-      color: colors.text.primary,
-      fontFamily: fonts.medium,
-      fontSize: fontSizes.md,
       textTransform: 'capitalize',
       marginTop: spacing[1],
     },

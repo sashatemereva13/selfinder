@@ -54,10 +54,10 @@ export function DetailPage({
 
   return (
     <ScrollView contentContainerStyle={sharedStyles.pageContent}>
-      <Text style={styles.detailDate}>{formatDate(selected.ts)}</Text>
+      <Text style={sharedStyles.dateLabel}>{formatDate(selected.ts)}</Text>
       {selectedRich ? (
         <>
-          <Text style={styles.detailLevel}>
+          <Text style={[sharedStyles.headline, styles.detailLevel]}>
             {getLocalizedLevelName(selectedRich.vibrationLevel, locale)}
           </Text>
           {selectedRich.combinationMessage && (
@@ -100,7 +100,7 @@ export function DetailPage({
         </>
       ) : (
         <>
-          <Text style={styles.detailLevel}>{selected.levelSlug}</Text>
+          <Text style={[sharedStyles.headline, styles.detailLevel]}>{selected.levelSlug}</Text>
           {hasSession && !hasRichHistory && (
             <Text style={styles.detailNote}>{t('yourArc.turnOnSavingNote')}</Text>
           )}
@@ -115,17 +115,9 @@ export function DetailPage({
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
-    detailDate: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.xs,
-      textTransform: 'uppercase',
-      letterSpacing: letterSpacings.wide,
-    },
+    // Size/color come from sharedStyles.headline; this just adds the
+    // page-specific capitalize transform.
     detailLevel: {
-      color: colors.text.primary,
-      fontFamily: fonts.medium,
-      fontSize: fontSizes.md,
       textTransform: 'capitalize',
     },
     detailReflection: {

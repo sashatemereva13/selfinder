@@ -39,11 +39,17 @@ function makeStyles(colors: Colors) {
     // Philosopher voice — no fontStyle: 'italic' (a silent no-op on this
     // typeface); quote marks in the string carry the "this is spoken"
     // signal instead of a slant that was never rendering.
+    //
+    // 2026-08-29: bumped from sm/secondary (the same weight every other
+    // page uses for plain body text) to base/primary — this line is the
+    // entire content of the page, not an aside, so it should read as this
+    // page's headline even though the page stays visually quiet overall
+    // (no kicker, generous whitespace) per its own opening-breath role.
     coverPhilosopherLine: {
-      color: colors.text.secondary,
+      color: colors.text.primary,
       fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      lineHeight: fontSizes.sm * lineHeights.normal,
+      fontSize: fontSizes.base,
+      lineHeight: fontSizes.base * lineHeights.normal,
       textAlign: 'center',
     },
   });

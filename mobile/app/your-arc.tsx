@@ -780,6 +780,7 @@ function YourArcScreen() {
         closingWriteSubmitting={closingWriteSubmitting}
         onSubmitClosingWrite={handleSubmitClosingWrite}
         closingArrivalStyle={closingArrivalStyle}
+        accentRgb={accentRgb}
       />
     );
   }

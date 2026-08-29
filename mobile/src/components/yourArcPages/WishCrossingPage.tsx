@@ -112,7 +112,11 @@ export function WishCrossingPage({
       <View style={sharedStyles.wishSection}>
         {activeWish && !wishComposerOpen && (
           <>
-            <Text style={sharedStyles.wishText}>{activeWish.text}</Text>
+            {/* The active wish is this page's real headline — what the
+                whole page exists to hold — so it gets the same size/color
+                register as crossingQuestion below, not the same sm/
+                secondary weight as the "change wish" row beneath it. */}
+            <Text style={styles.activeWishText}>{activeWish.text}</Text>
             {/* Ticking fulfilled (2026-08-19) — a real, positive claim the
                 user makes about their own wish. Reversible — tapping again
                 un-ticks. */}
@@ -156,8 +160,8 @@ export function WishCrossingPage({
             </Text>
           </Pressable>
         )}
-        <Text style={sharedStyles.wishGroundRuleNote}>{t('measure.wishGroundRule')}</Text>
-        {newWishRetryOffered && <Text style={sharedStyles.wishHint}>{t('measure.wishRetryNote')}</Text>}
+        <Text style={[sharedStyles.aside, styles.italicAside]}>{t('measure.wishGroundRule')}</Text>
+        {newWishRetryOffered && <Text style={sharedStyles.aside}>{t('measure.wishRetryNote')}</Text>}
       </View>
 
       {/* "Try it as if it's already true" (2026-08-18) — three states:
@@ -337,6 +341,19 @@ function makeStyles(colors: Colors) {
       letterSpacing: letterSpacings.kicker,
       textTransform: 'uppercase',
     },
+    // 2026-08-29: the active wish is this page's headline content — same
+    // register as crossingQuestion below (base/primary/italic) rather
+    // than the sm/secondary weight shared by the "change wish" row,
+    // ground-rule note, and every other minor row on this page.
+    activeWishText: {
+      color: colors.text.primary,
+      fontFamily: fonts.light,
+      fontStyle: 'italic',
+      fontSize: fontSizes.base,
+      lineHeight: fontSizes.base * lineHeights.normal,
+      marginTop: spacing[2],
+    },
+    italicAside: { fontStyle: 'italic' },
     wishFulfillRow: { paddingVertical: spacing[1], marginTop: spacing[2] },
     wishFulfillText: {
       color: colors.text.faint,
