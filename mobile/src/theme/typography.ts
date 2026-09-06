@@ -13,6 +13,16 @@ export const fonts = {
   // change while it's being evaluated live.
   light: "EtudeNoire-Medium",
   medium: "EtudeNoire-Medium",
+  // 2026-09-02 — the REAL Light face, added specifically for Depths'
+  // sphere labels (unselected state needs to read as genuinely lighter
+  // than the selected one — see that screen's own comment on why
+  // synthetic fontWeight alone didn't work against fonts.light/medium,
+  // which are both really Medium under the hood). Deliberately a
+  // separate key, not a change to fonts.light itself — fonts.light is
+  // used everywhere in the app per RULES.md's "one typeface" rule, and
+  // swapping ITS mapping to true Light would change every screen at
+  // once, not just this one deliberate contrast.
+  trueLight: "EtudeNoire-Light",
 } as const;
 
 export const fontSizes = {

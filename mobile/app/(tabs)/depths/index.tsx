@@ -1,11 +1,19 @@
-import { View, Text, Pressable, ScrollView, StyleSheet, Image, Platform, Dimensions } from 'react-native';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useRouter, Href } from 'expo-router';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Ellipse as SvgEllipse } from 'react-native-svg';
-import * as Haptics from 'expo-haptics';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Image,
+  Platform,
+  Dimensions,
+} from "react-native";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useRouter, Href } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Svg, { Ellipse as SvgEllipse } from "react-native-svg";
+import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -18,77 +26,138 @@ import Animated, {
   cancelAnimation,
   Easing,
   type SharedValue,
-} from 'react-native-reanimated';
-import { useThemeColors } from '../../../src/theme/useThemeColors';
-import { useThemeStore } from '../../../src/store/themeStore';
-import { hexToRgba, type Colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
-import { spacing, radius } from '../../../src/theme/spacing';
-import { useWideColumnWidth } from '../../../src/theme/responsive';
-import { useMeasureStore } from '../../../src/store/measureStore';
-import { useAuthStore } from '../../../src/store/authStore';
-import { listMyWishes, SavedWish } from '../../../src/api/wish';
-import { usePhilosopherStore } from '../../../src/store/philosopherStore';
-import { useGuideChatStore } from '../../../src/store/guideChatStore';
+} from "react-native-reanimated";
+import { useThemeColors } from "../../../src/theme/useThemeColors";
+import { useThemeStore } from "../../../src/store/themeStore";
+import { type Colors } from "../../../src/theme/colors";
+import {
+  fonts,
+  fontSizes,
+  letterSpacings,
+  lineHeights,
+} from "../../../src/theme/typography";
+import { spacing } from "../../../src/theme/spacing";
+import { useWideColumnWidth } from "../../../src/theme/responsive";
+import { useMeasureStore } from "../../../src/store/measureStore";
+import { usePhilosopherStore } from "../../../src/store/philosopherStore";
+import { useGuideChatStore } from "../../../src/store/guideChatStore";
 import {
   useEngagementStore,
   DiscoverableFeature,
-  BreadcrumbTool,
-  isToolVisitedToday,
-} from '../../../src/store/engagementStore';
-import { getLevelBySlug, getLocalizedLevel } from '../../../src/content/levelsContent';
-import { useLevelColors, getLocalizedLevelName } from '../../../src/content/measureConfig';
-import { useLocaleStore } from '../../../src/store/localeStore';
-import { Sphere } from '../../../src/types';
-import { LongPressToSave } from '../../../src/components/LongPressToSave';
-import { AmbientGlow } from '../../../src/components/AmbientGlow';
-import { PhilosopherPresence } from '../../../src/components/PhilosopherPresence';
-import { ProfileIcon } from '../../../src/components/ProfileIcon';
+} from "../../../src/store/engagementStore";
+import {
+  getLevelBySlug,
+  getLocalizedLevel,
+} from "../../../src/content/levelsContent";
+import {
+  useLevelColors,
+  getLocalizedLevelName,
+} from "../../../src/content/measureConfig";
+import { useLocaleStore } from "../../../src/store/localeStore";
+import { Sphere } from "../../../src/types";
+import { LongPressToSave } from "../../../src/components/LongPressToSave";
+import { AmbientGlow } from "../../../src/components/AmbientGlow";
+import { PhilosopherPresence } from "../../../src/components/PhilosopherPresence";
+import { PhilosopherEnergy } from "../../../src/components/PhilosopherEnergy";
+import { ProfileIcon } from "../../../src/components/ProfileIcon";
 import {
   buildAuraFieldGeometry,
   RING_ORDER,
   type SphereKey,
-} from '../../../src/components/AuraField';
+} from "../../../src/components/AuraField";
 import {
   getAuraFigureMetrics,
   AURA_NEUTRAL_COLOR,
-} from '../../../src/components/AuraFigure';
+} from "../../../src/components/AuraFigure";
 import {
   AURA_LEVEL_IMAGES,
   AURA_NEUTRAL_IMAGE,
   AURA_LEVEL_IMAGES_LIGHT,
   AURA_NEUTRAL_IMAGE_LIGHT,
-} from '../../../src/content/auraLevelImages';
-import { useAppAccentRgb } from '../../../src/utils/appAccent';
-import { track } from '../../../src/utils/analytics';
-import { formatRelativeDay } from '../../../src/utils/relativeTime';
-import { DepthsSpiral, PREFIX_WALK_KEYS, type SpiralPoint, type SpiralSlotKey } from '../../../src/components/DepthsSpiral';
+} from "../../../src/content/auraLevelImages";
+import { useAppAccentRgb } from "../../../src/utils/appAccent";
+import { track } from "../../../src/utils/analytics";
+import { formatRelativeDay } from "../../../src/utils/relativeTime";
+import { DepthsSpiralCore } from "../../../src/components/DepthsSpiralCore";
+import { DepthsSpiralMenu } from "../../../src/components/DepthsSpiralMenu";
+import {
+  SLOT_ORDER,
+  H_CUT,
+  H_MAX,
+  WHEEL_SIZE,
+  TOP_LOOP_TARGET_PX,
+  TOP_MARGIN,
+  type SpiralSpherePoint,
+  type SpiralActionPoint,
+  type SpiralActionKey,
+  type SpiralShiftSubPoint,
+  type SpiralShiftSubKey,
+} from "../../../src/components/depthsSpiralGeometry";
 
 // Pre-baked assets, not the live AuraFigure component — react-native-svg's
 // filter engine doesn't reproduce the same result on-device, leaving the
 // body visibly tinted (see auraLevelImages.ts).
-const AURA_DISPLAY_SIZE = 130;
-const AURA_METRICS = getAuraFigureMetrics(AURA_DISPLAY_SIZE);
-// AuraField's own rings render absolutely-positioned (pulled out of normal
-// layout flow, so they can center on the aura's feet rather than its
-// geometric center — see AuraField's own groundNudge comment: the aura
-// stands inside the rings like a figure standing in a summoning circle,
-// not wrapped waist-high by them), which means ringWrap has nothing left
-// in normal flow to size itself against except the aura image alone —
-// smaller than the full ring set. Without an explicit height here,
-// ringWrap collapsed to the aura's own size and everything below it (the
-// level name, the sphere buttons) started overlapping the rings' own
-// lower half instead of clearing them.
-const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
+// 130 — briefly shrunk to 108 on 2026-08-29 as part of a same-day compact-
+// first-viewport pass, restored 2026-08-30 once the spiral itself went
+// back to its original 3-turn shape (see DepthsSpiral.tsx's own header
+// comment) and the compactness goal was dropped in favor of that shape's
+// own elegance — the freed vertical room is used to spread other text out
+// instead, not fought against. Shrunk again to 108 (2026-09-01, fixed/
+// scroll split) — this time the goal is different: the fixed zone can no
+// longer scroll or trim itself, so a genuinely smaller aura+ring
+// composition (not just reclaimed empty margin) is what actually buys
+// scrollZone more real, permanent screen space below it.
+// BASE_AURA_DISPLAY_SIZE (was AURA_DISPLAY_SIZE, a flat module-level
+// constant) — the TUNED, full-scale value; still the number every comment
+// in this file referring to "108" describes. 2026-09-01: renamed and
+// demoted from "the" size to "the base size a live scale factor multiplies"
+// once the CSS-transform-scale shrink mechanism (see fixedZoneScale's own
+// comment, further down) turned out not to work — react-native-web's
+// `transform: scale()` does not reliably resize a plain <Image>'s own
+// rendered box (confirmed via direct getBoundingClientRect measurement:
+// the aura image's position/size was pixel-identical at two different
+// scales). The fix is to make the actual GEOMETRY reactive to a computed
+// scale (buildDepthsGeometry, below) instead of visually squashing
+// already-fixed-size content after the fact — this constant is now only
+// the scale-1 anchor that computation starts from, never rendered
+// directly.
+// 2026-09-02 — shrunk from 108, at the user's own request ("further
+// away from the viewer... would literally just look like they are
+// smaller") — the whole composition (aura + concentric rings + spiral)
+// scales together from this one anchor. The user's own screenshot at
+// the old size also showed the outermost ring clipped by the device's
+// own bottom edge — belowFeetClearance (below) already derives its
+// margin from the rings' real footprint (spiralAuraHalfHeight, matched
+// to AuraField's own ring geometry, not just the aura silhouette), so
+// this wasn't a clearance-math bug — the composition was simply taller
+// than the visible viewport at that scale. Shrinking it here is the
+// direct fix.
+const BASE_AURA_DISPLAY_SIZE = 93;
+// 2026-09-02 — how much of the spiral's own topmost region (curve +
+// wheel, whichever sits highest) is allowed to render past the fixed
+// zone's own visible top edge and get cropped there — at the user's own
+// request, framed as a deliberate visual metaphor ("the energy that goes
+// outside the app"), not a bug to prevent. Fixed/constant on every
+// screen size (the user's explicit choice: "always clip a fixed
+// amount," not just on tall screens with spare room) — never derived
+// from rootHeight/SPIRAL_HEIGHT_STRETCH/naturalContentHeight. Module-
+// level (not a component-local const) since both the component body
+// (the onLayout measurement fix) and makeStyles (auraCoreWrap's own
+// negative marginTop) need it, and makeStyles is a separate top-level
+// function, not a closure over the component's own locals.
+const BLEED_AMOUNT_PX = 10;
 // The composition's own canvas — width fills a real 390px phone's content
 // budget (columnWidth minus horizontal padding) the same way the old flat
 // spiral did, so the shape itself reads as a real, spacious presence
 // rather than a small diagram. Height is now taller than width (the cone
-// rises above the aura's ground plane) — allowed to scroll naturally
-// within Depths' own ScrollView rather than being compressed to fit one
-// screen. Point labels are allowed to extend slightly past this box
-// (React Native doesn't clip children unless told to) — auraSpiralWrap
-// has no overflow:hidden, so a label near the canvas edge isn't cut off.
+// rises above the aura's ground plane) — DepthsSpiralCore's own canvas
+// (h∈[0, H_CUT]) sits in Depths' fixed zone, never scrolls; the rest of
+// the cone (h∈[H_CUT, H_MAX], DepthsSpiralMenu) lives in the
+// independently-scrollable zone below it (2026-09-01 fixed/scroll split
+// — see this screen's own render comment). Point labels are allowed to
+// extend slightly past this box (React Native doesn't clip children
+// unless told to) — auraCoreWrap has no overflow:hidden, so a label near
+// the canvas edge isn't cut off.
 // Was a flat 342 — confirmed on a real device (iPhone-class, ~430pt
 // logical width) that the four ground rings (AuraField, paired with this
 // constant via SPIRAL_AURA_HALF_WIDTH below) sat with noticeably less
@@ -104,51 +173,301 @@ const AURA_FIELD_GEOMETRY = buildAuraFieldGeometry(AURA_DISPLAY_SIZE);
 // choice for a wallpaper-capture target, not a content column) rather
 // than useWindowDimensions — this composition doesn't need to react
 // live to rotation, so a static read avoids converting ~40 downstream
-// geometry constants (AURA_FIELD_GEOMETRY, DEPTHS_COMPOSITION_GEOMETRY,
+// geometry constants (AURA_FIELD_GEOMETRY, CORE_GEOMETRY, MENU_GEOMETRY,
 // the arrival-animation timing) from module-level to per-render values,
 // a much larger refactor than this fix warrants. Clamped between 327
 // (SE's real safe budget) and 380 (a generous cap for large phones,
 // paired with AuraField's own GROUND_RX_RATIO bump to 1.65) so every
 // device gets a canvas that both fits its own screen AND gives the rings
 // real room, rather than one flat number that was wrong at both ends.
-const SCREEN_WIDTH = Dimensions.get('window').width;
-const SPIRAL_WIDTH = Math.min(Math.max(SCREEN_WIDTH - spacing[6] * 2, 327), 380);
-const SPIRAL_TOTAL_HEIGHT = SPIRAL_WIDTH * 1.8;
+const SCREEN_WIDTH = Dimensions.get("window").width;
+const SPIRAL_WIDTH = Math.min(
+  Math.max(SCREEN_WIDTH - spacing[6] * 2, 327),
+  380,
+);
+// 1.8 — briefly dropped to 1.1 on 2026-08-29 when the spiral collapsed to
+// a 1-turn/4-sphere-point shape, then restored to 1.8 later that day once
+// the spiral went back to its original 3-turn geometry (see
+// DepthsSpiral.tsx's own header comment). Squeezed to 1.5 (2026-08-30,
+// same day) at the user's own request — "shorter, but not by cutting it,
+// squeezing it": every turn/point still exists (TOTAL_TURNS/SLOT_H in
+// DepthsSpiral.tsx are unchanged), the windings just pack into less
+// vertical room, an accordion compression rather than a truncation. Grown
+// to 1.95, then 2.15, then 2.5, then 2.65 later the same day to fit the
+// spiral's new h>1 action-point extension (DepthsSpiral.tsx's H_MAX,
+// itself grown 1.5→1.9→2.05 the same day — the last bump specifically to
+// widen the sphere/action gap for a meaningfully bigger vibration wheel,
+// WHEEL_SIZE). Grown once more to 3.1 (2026-08-31) alongside H_MAX's own
+// push to 2.55 — the user wanted the spiral to read as genuinely longer/
+// taller, not just tighter-packed at the same scale. Grown once more to
+// 3.6 the same day when H_MAX grew again (to 3.53) to fit a small closed
+// loop past "Measure again" (DepthsSpiral.tsx's TOP_LOOP_*). Grown once
+// more to 3.8 the same day when TOP_LOOP_TARGET_PX itself grew (55→100px)
+// so the loop's own top edge would reach the quote bubble that used to sit
+// above it (QuoteBubble.tsx, dropped 2026-09-01 — the top loop itself is
+// kept, just decorative now, see DepthsSpiral.tsx's own TOP_LOOP_TARGET_PX
+// comment) — see BASE_SPIRAL_TOTAL_HEIGHT below for why this growth does
+// NOT also stretch riseHeight/chestY.
+// 2026-09-01 — the single tall canvas (h∈[0, H_MAX]) was split into two:
+// DepthsSpiralCore's own canvas (h∈[0, H_CUT], the aura/sphere/wheel zone,
+// rendered in Depths' new FIXED middle zone) and DepthsSpiralMenu's own
+// canvas (h∈[H_CUT, H_MAX], the action-point/top-loop zone, rendered as
+// the first thing in Depths' new independently-SCROLLABLE bottom zone).
+// See DepthsSpiralMenu.tsx's own header comment for the full seam-
+// continuity derivation this geometry implements.
+//
+// This canvas used to be sized off a separate width-derived vertical
+// BUDGET constant (baseSpiralTotalHeight, itself descended from the old
+// single-canvas SPIRAL_TOTAL_HEIGHT), tuned independently of riseHeight —
+// which drifted out of sync once riseHeight stopped being derived from
+// that same budget (2026-09-02: riseHeight is now solved directly from
+// feetToHeadSpan/H_CUT, see spiralRiseHeight's own comment below) and
+// became a large unused excess once the curve itself got dramatically
+// more compact — confirmed on-device as real empty canvas above the
+// wheel that no margin-only fix could remove, since the excess lived in
+// this budget constant, not in any single margin. The budget constant is
+// gone; groundY/coreTotalHeight (below) are now built directly from what
+// the content actually needs — see groundY's own comment.
 // The spiral's inner clearance (and now also the cone's own base-ellipse
-// dimensions — see DepthsSpiral.tsx) is an ELLIPSE, not a circle,
+// dimensions — see depthsSpiralGeometry.ts) is an ELLIPSE, not a circle,
 // matching AuraField's real footprint (its four concentric sphere-rings,
 // which only render once a reading exists — the larger, safer case to
 // clear; the plain neutral aura alone is smaller). A flat margin on top
 // so the spiral's own base winding sits visibly outside the body/rings,
-// not flush against their edge. See DepthsSpiral.tsx's ellipticalClearance
-// for why an ellipse: the aura figure is tall and narrow, so a single
-// scalar radius was either too tight sideways or too loose vertically.
-const AURA_CLEARANCE_MARGIN = 6;
-const SPIRAL_AURA_HALF_WIDTH = AURA_FIELD_GEOMETRY.svgWidth / 2 + AURA_CLEARANCE_MARGIN;
-const SPIRAL_AURA_HALF_HEIGHT = AURA_FIELD_GEOMETRY.svgHeight / 2 + AURA_CLEARANCE_MARGIN;
-// The single shared coordinate system both the spiral's own base ellipse
-// and the aura's positioning read from — replaces two independently
-// flex-centered boxes (the old auraSpiralWrap fixed square + a separately
-// centered ringWrap) that only visually coincided because both centered
-// the same way. groundY sits near the bottom of the tall canvas, leaving
-// riseHeight worth of room above it for the cone to climb through.
-const DEPTHS_COMPOSITION_GEOMETRY = {
-  width: SPIRAL_WIDTH,
-  totalHeight: SPIRAL_TOTAL_HEIGHT,
-  groundY: SPIRAL_TOTAL_HEIGHT - SPIRAL_AURA_HALF_HEIGHT - spacing[8],
-  // The curve's own true destination (h=0) is the aura's glowing CHEST
-  // point, not the ring/feet level — confirmed directly: the ring stays
-  // at the feet (a ground plane), but the spiral itself should visibly
-  // rise up out of that ring and dissolve into the figure's actual bright
-  // focal point. AURA_METRICS.chestY is measured from the TOP of the aura
-  // image; the aura's own bottom (feet) sits at groundY (see
-  // arrivalSkipWrap/groundWrap's own `top` computation, which pins the
-  // aura box's bottom there) — so chestY in this shared coordinate space
-  // is groundY minus the distance from chest to feet.
-  get chestY() {
-    return this.groundY - (AURA_METRICS.height - AURA_METRICS.chestY);
-  },
-};
+// not flush against their edge. See depthsSpiralGeometry.ts's own
+// ellipticalClearance for why an ellipse: the aura figure is tall and
+// narrow, so a single scalar radius was either too tight sideways or too
+// loose vertically.
+const AURA_CLEARANCE_MARGIN = 45;
+
+// buildDepthsGeometry — 2026-09-02: the entire AURA_METRICS/AURA_FIELD_
+// GEOMETRY/SPIRAL_AURA_HALF_*/SPIRAL_RISE_HEIGHT/CORE_*/MENU_* constant
+// chain above used to be flat module-level consts, all derived (directly
+// or transitively) from the single fixed BASE_AURA_DISPLAY_SIZE. That
+// worked as long as the composition always rendered at one true size and
+// any needed shrink was applied visually afterward (CSS transform:
+// scale on a wrapping View). That visual-only shrink turned out not to
+// work: react-native-web's transform:scale does not resize a plain
+// <Image>'s own rendered box (confirmed via direct DOM measurement — the
+// aura <img>'s getBoundingClientRect stayed pixel-identical at two very
+// different computed scales), so on a short screen the aura kept
+// rendering at full size regardless and clipped past the fixed zone's
+// own bottom edge / under the tab bar.
+//
+// The fix: make the composition's actual SIZE reactive to a scale factor
+// — everything below is now a pure function of one input,
+// `auraDisplaySize` (BASE_AURA_DISPLAY_SIZE * a computed scale, see
+// fixedZoneScale further down this file), called from inside the
+// component via useMemo, not evaluated once at module load. SPIRAL_WIDTH
+// stays OUTSIDE this function, unchanged, on purpose — it's derived from
+// screen WIDTH, a completely separate axis from the aura's own display
+// size, and the width axis never had a shrink problem (only vertical
+// content, driven by the aura's height, could overflow). baseSpiralTotal
+// Height, despite its width-derived formula (SPIRAL_WIDTH * 1.5), is NOT
+// hoisted out the same way — it's the vertical canvas BUDGET the rest of
+// this function fits into, and a first pass at this fix that left it
+// fixed while only auraDisplaySize shrank was itself a bug (confirmed:
+// spiralRiseHeight actually GREW as the aura shrank, since fewer pixels
+// were needed for the aura's own clearance/margin terms, leaving MORE of
+// the fixed budget for the curve to spend — the composition got TALLER,
+// not shorter). All the
+// derivation comments that used to sit beside each flat constant
+// (SPIRAL_AURA_HALF_*, SPIRAL_RISE_HEIGHT, CORE_HEIGHT_GROWTH/
+// CORE_TOTAL_HEIGHT, CORE_GEOMETRY's own groundY/chestY, MENU_TOTAL_
+// HEIGHT, MENU_RISE_HEIGHT's flipped sign, MENU_GEOMETRY's own chestY
+// derivation) are preserved verbatim inside this function — none of that
+// MATH changed, only that it now runs per-scale instead of once.
+function buildDepthsGeometry(auraDisplaySize: number) {
+  const auraMetrics = getAuraFigureMetrics(auraDisplaySize);
+  // AuraField's own rings render absolutely-positioned (pulled out of
+  // normal layout flow, so they can center on the aura's feet rather
+  // than its geometric center — see AuraField's own groundNudge comment:
+  // the aura stands inside the rings like a figure standing in a
+  // summoning circle, not wrapped waist-high by them), which means
+  // ringWrap has nothing left in normal flow to size itself against
+  // except the aura image alone — smaller than the full ring set.
+  // Without an explicit height here, ringWrap collapsed to the aura's
+  // own size and everything below it (the level name, the sphere
+  // buttons) started overlapping the rings' own lower half instead of
+  // clearing them.
+  const auraFieldGeometry = buildAuraFieldGeometry(auraDisplaySize);
+  // The spiral's inner clearance (and now also the cone's own base-
+  // ellipse dimensions — see depthsSpiralGeometry.ts) is an ELLIPSE, not
+  // a circle, matching AuraField's real footprint (its four concentric
+  // sphere-rings, which only render once a reading exists — the larger,
+  // safer case to clear; the plain neutral aura alone is smaller). A
+  // flat margin on top so the spiral's own base winding sits visibly
+  // outside the body/rings, not flush against their edge. See
+  // depthsSpiralGeometry.ts's own ellipticalClearance for why an
+  // ellipse: the aura figure is tall and narrow, so a single scalar
+  // radius was either too tight sideways or too loose vertically.
+  const spiralAuraHalfWidth =
+    auraFieldGeometry.svgWidth / 2 + AURA_CLEARANCE_MARGIN;
+  const spiralAuraHalfHeight =
+    auraFieldGeometry.svgHeight / 2 + AURA_CLEARANCE_MARGIN;
+  // 2026-09-02 — the spiral's own h=0 destination moved from the aura's
+  // CHEST to its FEET, and riseHeight is now derived directly from a
+  // pixel TARGET (h=H_CUT should land at the aura's own HEAD) rather than
+  // from a width-derived vertical budget (baseSpiralTotalHeight, still
+  // used elsewhere — e.g. groundY below — but no longer what determines
+  // riseHeight). At the user's own request: "make it start at the bottom
+  // of aura-body and end at the head of the aura-body" — the curve should
+  // occupy exactly the aura figure's own head-to-feet span, not several
+  // times that. Measured before this change: the spiral canvas was
+  // ~475px tall against an aura only ~227px tall (AURA_DISPLAY_SIZE=108)
+  // — over 2x the figure's own height, the single largest reclaimable
+  // chunk of the fixed zone found in this pass. feetToHeadSpan is exactly
+  // that target span; spiralRiseHeight is solved so pointForH(H_CUT, ...)
+  // lands there.
+  const feetToHeadSpan = auraMetrics.legsBottomY - auraMetrics.headY;
+  // SPIRAL_HEIGHT_STRETCH (2026-09-02, at the user's own request — "I
+  // would increase the spiral's height too") — grows the curve's own
+  // climb rate WITHOUT growing the aura figure itself (a separate ask
+  // from BASE_AURA_DISPLAY_SIZE above, which scales the whole figure and
+  // was tried first but clipped "Body" off the right edge at the size
+  // needed to reach the top of the screen). 1 = feetToHeadSpan exactly
+  // (today's default, the curve reaches exactly the aura's own head);
+  // >1 = the curve keeps climbing past the head by that multiple,
+  // reaching further up the fixed zone while the aura's own size and the
+  // wheel's own h-position (WHEEL_H, unchanged) stay exactly where they
+  // are — only the RATE the curve climbs at changes, so the wheel now
+  // sits further from the feet in real pixels, giving the composition
+  // more presence without the aura itself growing or Body's dot clipping.
+  const SPIRAL_HEIGHT_STRETCH = 3.2;
+  const spiralRiseHeight = (feetToHeadSpan * SPIRAL_HEIGHT_STRETCH) / H_CUT;
+  // The wheel's own pixel diameter, scaled down together with the rest
+  // of the composition (2026-09-02) — WHEEL_SIZE is a fixed constant
+  // (170px) sized for BASE_AURA_DISPLAY_SIZE; scaling it by the same
+  // ratio auraDisplaySize itself is scaled by is what keeps the wheel's
+  // own required headroom (below) consistent with the rest of this
+  // function's math at any scale, including when Depths' own shrink-to-
+  // fit mechanism calls this with a smaller auraDisplaySize. Without
+  // this, the wheel stayed full-size while riseHeight shrank around it,
+  // producing a real, confirmed broken layout (see wheelSize's own prop
+  // comment in DepthsSpiralCore.tsx for the exact failure).
+  const auraScale = auraDisplaySize / BASE_AURA_DISPLAY_SIZE;
+  const wheelSize = WHEEL_SIZE * auraScale;
+  // The ring/base-ellipse clearance the aura itself needs BELOW its own
+  // feet, inside the canvas's own bottom margin (auraCoreWrap's negative
+  // marginBottom below reclaims everything past this, back up to the
+  // canvas's true bottom edge — see that style's own comment). Not to be
+  // confused with groundY (below), which is measured from the canvas's
+  // TOP edge instead — 2026-09-02 found and fixed a real bug where these
+  // two were briefly conflated (groundY was set equal to this value,
+  // which is far too small to contain the curve above it — pointForH's
+  // own yCenter went NEGATIVE at h=H_CUT, meaning the curve, and the
+  // wheel along with it, rendered above the canvas's own top edge no
+  // matter how tall coreTotalHeight grew, since the real problem was
+  // groundY's value, not the canvas's total size).
+  const belowFeetClearance = spiralAuraHalfHeight + spacing[8];
+  // How much room DepthsSpiralCore's own canvas needs above the feet.
+  // Used to take whichever was taller of (a) H_CUT's own curve extent or
+  // (b) the WHEEL's own full bounding circle straight above WHEEL_H —
+  // back when the wheel needed to stay fully on-screen, clipping it was
+  // a hard bug. 2026-09-02: the wheel is now DELIBERATELY bled/cropped
+  // (only its bottom-left quarter ever visible — see DepthsSpiralCore
+  // .tsx's own wheelPos/WHEEL_LIFT_RATIO comment), so reserving its full
+  // bounding-circle headroom here is no longer correct — it was
+  // reserving real vertical space for a wheel extent that's supposed to
+  // be cropped, not shown, producing a large dead gap between the quote
+  // and the curve (confirmed via the user's own screenshot). Sized off
+  // the curve's own extent alone now; the wheel's bleed is fixedZone's
+  // own overflow:'hidden' to handle, not this canvas's height.
+  const coreHeightGrowth = H_CUT * spiralRiseHeight + TOP_MARGIN;
+  const coreTotalHeight = belowFeetClearance + coreHeightGrowth;
+  // groundY — the aura's own feet position within the canvas, measured
+  // DOWN from the canvas's own top edge — is coreHeightGrowth itself, NOT
+  // belowFeetClearance (a real bug found and fixed 2026-09-02: an earlier
+  // draft of this function set groundY = belowFeetClearance, the
+  // clearance BELOW the feet — the wrong quantity entirely, small enough
+  // that pointForH's own yCenter = chestY - h·riseHeight went NEGATIVE at
+  // h=H_CUT, meaning the curve's own canvas-top point, and the wheel
+  // along with it, rendered ABOVE y=0 regardless of coreTotalHeight —
+  // confirmed via direct DOM measurement, a wheel SVG box at top:-2px
+  // that never moved no matter how much coreHeightGrowth grew, since the
+  // real problem was groundY's own value, not the canvas's total size).
+  // groundY must be exactly how far the canvas's own top edge sits above
+  // the feet — which is precisely what coreHeightGrowth (above) already
+  // computes.
+  const groundY = coreHeightGrowth;
+  const coreGeometry = {
+    width: SPIRAL_WIDTH,
+    totalHeight: coreTotalHeight,
+    groundY,
+    // The curve's own true destination (h=0) is now the aura's own FEET
+    // — groundY itself — not the chest (2026-09-02, see feetToHeadSpan's
+    // own comment above for why). The ring/feet level and the curve's own
+    // base both land at exactly the same point now, by construction.
+    chestY: groundY,
+    riseHeight: spiralRiseHeight,
+    wheelSize,
+  };
+  // DepthsSpiralMenu's own canvas — h∈[H_CUT, H_MAX], rendered as the
+  // first child of Depths' scrollable bottom zone, immediately below
+  // CORE_GEOMETRY's own canvas in the fixed zone above it. Sized to
+  // comfortably contain that h-span (riseHeight * (H_MAX - H_CUT)
+  // pixels) plus the top loop's own radius (TOP_LOOP_TARGET_PX, since
+  // the loop is a ~100px-radius circle centered at h=H_MAX, not a point)
+  // and a small margin on both ends.
+  const menuTotalHeight =
+    spiralRiseHeight * (H_MAX - H_CUT) + TOP_LOOP_TARGET_PX + TOP_MARGIN * 2;
+  // riseHeight's SIGN is deliberately flipped from Core's own (negative,
+  // not +spiralRiseHeight) — same MAGNITUDE (keeping the curve's rate-of-
+  // climb visually consistent across the seam, per the plan this
+  // implements), but the opposite orientation, because Menu's canvas
+  // sits BELOW Core in DOM/scroll order while the curve's h keeps
+  // climbing (visually "up") past H_CUT. For the seam to look
+  // continuous, whatever renders at MENU's own DOM-TOP (physically
+  // adjacent to Core's own DOM-bottom) must be h=H_CUT — the same h
+  // Core's own bottom already is. In Core's own convention (yCenter =
+  // chestY - h·riseHeight, riseHeight>0), increasing h means DECREASING
+  // y (rising up the screen) — reusing that same sign for Menu would put
+  // h=H_CUT (the smaller of Menu's two h bounds) at a LARGER y than
+  // h=H_MAX, i.e. H_CUT would land near Menu's own DOM-BOTTOM, not its
+  // top — exactly backwards, confirmed visually (an earlier version of
+  // this file had unflipped riseHeight here, and the seam showed a large
+  // gap: Core's bottom met empty canvas space, not Menu's own H_CUT
+  // point, until scrolling all the way past the action points to Menu's
+  // own far bottom edge). Flipping the sign makes y increase WITH h in
+  // Menu's own local space instead — h=H_CUT at local y≈0 (Menu's
+  // DOM-top, meeting Core's bottom), h=H_MAX (the top loop) at local
+  // y≈menuTotalHeight (Menu's own DOM-bottom, reached only after
+  // scrolling past the action points) — which also reads naturally as
+  // UX: the action points (h just above H_CUT) appear first, right
+  // after Core, and the purely decorative loop (h=H_MAX) is the last
+  // thing reached.
+  const menuRiseHeight = -spiralRiseHeight;
+  const menuGeometry = {
+    width: SPIRAL_WIDTH,
+    height: menuTotalHeight,
+    riseHeight: menuRiseHeight,
+    // Solves menuChestY so pointForH(H_CUT, ..., menuChestY,
+    // menuRiseHeight, ...)'s own yCenter lands at local y=0 (this
+    // canvas's own top edge, right where Core's bottom edge sits
+    // immediately above it):
+    //   yCenter(H_CUT) = menuChestY - H_CUT·menuRiseHeight
+    //                  = menuChestY + H_CUT·spiralRiseHeight  (want = 0)
+    //     => menuChestY = -H_CUT · spiralRiseHeight
+    // (Not coreGeometry.chestY-derived at all — chestY here is this
+    // canvas's own LOCAL virtual "h=0" reference point, unrelated to
+    // Core's own chestY value; only riseHeight's shared MAGNITUDE and
+    // matching h at the shared boundary matter for continuity, not any
+    // direct arithmetic relationship between the two chestY values
+    // themselves.)
+    chestY: -H_CUT * spiralRiseHeight,
+  };
+  return {
+    auraDisplaySize,
+    auraMetrics,
+    auraFieldGeometry,
+    spiralAuraHalfWidth,
+    spiralAuraHalfHeight,
+    core: coreGeometry,
+    menu: menuGeometry,
+  };
+}
+
+type DepthsGeometry = ReturnType<typeof buildDepthsGeometry>;
 
 // Same slow-decelerate easing as onboarding's own "gather, condense,
 // become" motion (see app/onboarding/index.tsx's SOFT_EASE) — reused here
@@ -195,14 +514,24 @@ const CONTENT_DURATION_MS = 800;
 // AuraArrival's internal per-ring shared values) can time its own fade-in
 // off the same numbers without needing them passed down as a prop.
 const RING_COUNT = 4;
-const ALL_RINGS_GROWN_MS = (RING_COUNT - 1) * RING_GROW_STAGGER_MS + RING_GROW_DURATION_MS;
+const ALL_RINGS_GROWN_MS =
+  (RING_COUNT - 1) * RING_GROW_STAGGER_MS + RING_GROW_DURATION_MS;
 const COLOR_START_MS = ALL_RINGS_GROWN_MS + ANTICIPATION_DURATION_MS;
-const LAST_RING_COLOR_SETTLED_MS = COLOR_START_MS + (RING_COUNT - 1) * RING_COLOR_STAGGER_MS + RING_COLOR_DURATION_MS;
-const CONTENT_DELAY_MS = Math.max(LAST_RING_COLOR_SETTLED_MS, COLOR_START_MS + COLOR_SETTLE_DURATION_MS);
+const LAST_RING_COLOR_SETTLED_MS =
+  COLOR_START_MS +
+  (RING_COUNT - 1) * RING_COLOR_STAGGER_MS +
+  RING_COLOR_DURATION_MS;
+const CONTENT_DELAY_MS = Math.max(
+  LAST_RING_COLOR_SETTLED_MS,
+  COLOR_START_MS + COLOR_SETTLE_DURATION_MS,
+);
 
-// Order for the four sphere buttons under the ring — mind first, then
-// spirit, heart, body.
-const SPHERE_DISPLAY_ORDER: Sphere[] = ['mind', 'spirit', 'heart', 'body'];
+const SPHERE_LABEL_KEYS: Record<string, string> = {
+  body: "common.sphereBody",
+  mind: "common.sphereMind",
+  heart: "common.sphereHeart",
+  spirit: "common.sphereSpirit",
+};
 
 // Never Spill here, deliberately — it already has its two dedicated homes
 // (the fork on Measure's entry screen, and Guide's rare invitation); adding
@@ -210,29 +539,51 @@ const SPHERE_DISPLAY_ORDER: Sphere[] = ['mind', 'spirit', 'heart', 'body'];
 // positioning fix that gave it those two instead. Priority order matters:
 // understanding what a level means is more foundational than a regulation
 // tool, so it's offered first.
-const DISCOVERY_NUDGES: { feature: DiscoverableFeature; labelKey: string; route: Href }[] = [
-  { feature: 'levels', labelKey: 'depths.nudgeLevels', route: '/(tabs)/depths/levels' },
-  { feature: 'tuneIn', labelKey: 'depths.nudgeTuneIn', route: '/(tabs)/depths/tunein' },
-  { feature: 'breathing', labelKey: 'depths.nudgeBreathing', route: '/(tabs)/depths/breathing' },
+const DISCOVERY_NUDGES: {
+  feature: DiscoverableFeature;
+  labelKey: string;
+  route: Href;
+}[] = [
+  {
+    feature: "levels",
+    labelKey: "depths.nudgeLevels",
+    route: "/(tabs)/depths/levels",
+  },
+  {
+    feature: "tuneIn",
+    labelKey: "depths.nudgeTuneIn",
+    route: "/(tabs)/depths/tunein",
+  },
+  {
+    feature: "breathing",
+    labelKey: "depths.nudgeBreathing",
+    route: "/(tabs)/depths/breathing",
+  },
 ];
 
-type Tool = { key: string; labelKey: string; descriptionKey: string; route: Href };
+type Tool = {
+  key: string;
+  labelKey: string;
+  descriptionKey: string;
+  route: Href;
+};
 
-// Depths' journey is now drawn as a spiral (see DepthsSpiral.tsx) rather
-// than a vertical list of zone groups — this maps each of the spiral's
-// fixed slots to its own route/copy keys. Order matches DepthsSpiral.tsx's
-// own SLOT_ORDER exactly (measure → spill → talkAboutIt → cards → levels
-// → tunein → breathing; yourArc's own slot removed 2026-08-27 once Your
-// Arc became its own bottom tab — see docs/app-architecture-concept.md);
-// keep the two in sync if a slot is ever added or reordered.
-const SLOT_META: Record<SpiralSlotKey, { labelKey: string; descriptionKey: string; route: Href }> = {
-  measure: { labelKey: 'depths.measureLabel', descriptionKey: 'depths.measureDescription', route: '/(tabs)/depths/measure' },
-  spill: { labelKey: 'depths.spillLabel', descriptionKey: 'depths.spillDescription', route: '/(tabs)/depths/spill' },
-  talkAboutIt: { labelKey: 'depths.talkAboutIt', descriptionKey: 'depths.continueConversationWith', route: '/guide' },
-  cards: { labelKey: 'depths.cardsLabel', descriptionKey: 'depths.cardsDescription', route: '/(tabs)/depths/cards' },
-  levels: { labelKey: 'depths.levelsLabel', descriptionKey: 'depths.levelsDescription', route: '/(tabs)/depths/levels' },
-  tunein: { labelKey: 'depths.tuneInLabel', descriptionKey: 'depths.tuneInDescription', route: '/(tabs)/depths/tunein' },
-  breathing: { labelKey: 'depths.breathingLabel', descriptionKey: 'depths.breathingDescription', route: '/(tabs)/depths/breathing' },
+// 2026-08-29: the spiral no longer does navigation (see DepthsSpiral.tsx's
+// own header comment — it's sphere-only now). Tool routes still live here,
+// just no longer framed as "spiral slots" — they're read directly by
+// intentionSection's own rows below (Measure's new dedicated row, Shift's
+// expanded Tune In/Breathing choice) and by Talk about it's own handler.
+const TOOL_META = {
+  measure: {
+    labelKey: "depths.measureLabel",
+    descriptionKey: "depths.measureDescription",
+    route: "/(tabs)/depths/measure" as Href,
+  },
+  breathing: {
+    labelKey: "depths.breathingLabel",
+    descriptionKey: "depths.breathingDescription",
+    route: "/(tabs)/depths/breathing" as Href,
+  },
 };
 // Moon ('Understand your timing') is deliberately pulled out of the current
 // flow, not deleted — its actual value (and a possible Sun/planets
@@ -246,10 +597,10 @@ const SLOT_META: Record<SpiralSlotKey, { labelKey: string; descriptionKey: strin
 // idiom that didn't belong in this world; this says the same thing in
 // Selfinder's own voice.
 const FEELING_LUCKY: Tool = {
-  key: 'feeling-lucky',
-  labelKey: 'depths.feelingLuckyLabel',
-  descriptionKey: 'depths.feelingLuckyDescription',
-  route: '/(tabs)/depths/feeling-lucky',
+  key: "feeling-lucky",
+  labelKey: "depths.feelingLuckyLabel",
+  descriptionKey: "depths.feelingLuckyDescription",
+  route: "/(tabs)/depths/feeling-lucky",
 };
 
 export default function DepthsScreen() {
@@ -257,61 +608,29 @@ export default function DepthsScreen() {
   const colors = useThemeColors();
   const levelColors = useLevelColors();
   const theme = useThemeStore((s) => s.theme);
-  const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
-  const session = useAuthStore((s) => s.session);
-
-  // The wish this reading's own — held, not displayed by default, per
-  // docs/session-result-concept.md ("tucked behind a tap... never pushed
-  // back in front of them uninvited"). A wish is saved with
-  // measureResultId: null (that id only exists once scoring itself
-  // returns it — see interview.tsx's handleWishSubmit), so it's matched
-  // to currentResult by loose timestamp proximity instead, same "loose
-  // match, not a hard link" pattern your-arc.tsx already uses for Spill
-  // entries (SPILL_MATCH_WINDOW_MS).
-  const [linkedWish, setLinkedWish] = useState<SavedWish | null>(null);
-  useEffect(() => {
-    if (!session || !currentResult) {
-      setLinkedWish(null);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      const wishes = await listMyWishes(session.token);
-      if (cancelled) return;
-      const resultTs = new Date(currentResult.savedAt).getTime();
-      const WISH_MATCH_WINDOW_MS = 30 * 60 * 1000;
-      const match = wishes.find((w) => Math.abs(new Date(w.savedAt).getTime() - resultTs) < WISH_MATCH_WINDOW_MS);
-      setLinkedWish(match ?? null);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session, currentResult]);
-  const [showWish, setShowWish] = useState(false);
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
   const discovered = useEngagementStore((s) => s.discovered);
-  const toolLastVisitedAt = useEngagementStore((s) => s.toolLastVisitedAt);
-  const markToolVisited = useEngagementStore((s) => s.markToolVisited);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
-  const hasShownFirstRunCarry = useEngagementStore((s) => s.hasShownFirstRunCarry);
-  const markFirstRunCarryShown = useEngagementStore((s) => s.markFirstRunCarryShown);
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const sendGuideMessage = useGuideChatStore((s) => s.send);
-  const setPendingMeasureResultId = useGuideChatStore((s) => s.setPendingMeasureResultId);
-  const [showConversation, setShowConversation] = useState(false);
+  const setPendingMeasureResultId = useGuideChatStore(
+    (s) => s.setPendingMeasureResultId,
+  );
   // Read synchronously (safe — no store mutation) so the very first paint
   // already starts hidden/scaled-down when arriving; the flag itself is
   // cleared in the effect below, not here, since calling the store's set()
   // during render (inside a useState initializer) trips React's "cannot
   // update a component while rendering a different component" check.
-  const [isArriving, setIsArriving] = useState(() => useMeasureStore.getState().justCompleted);
+  const [isArriving, setIsArriving] = useState(
+    () => useMeasureStore.getState().justCompleted,
+  );
   // Set true by a tap anywhere on the reveal — tells AuraArrival/
   // ArrivalReveal to cancel their in-flight timelines and jump straight to
   // the settled end state, then reset back to false once onSettled fires
@@ -326,128 +645,40 @@ export default function DepthsScreen() {
   // stillness from the other side. A normal revisit (isArriving false)
   // never carries this — it stays fully transparent from frame one.
   const entryFade = useSharedValue(isArriving ? 1 : 0);
-  // The spiral's own once-only first-run "look here next" emphasis (a
-  // marker traveling aura → Levels, see DepthsSpiral.tsx) is driven by
-  // showFirstRunCarry directly as a prop — no local shared value needed
-  // here, unlike the old understandBloomScale this replaced.
-  const [firstRunTravelDone, setFirstRunTravelDone] = useState(false);
   useEffect(() => {
     if (isArriving) useMeasureStore.getState().consumeJustCompleted();
     if (entryFade.value > 0) {
-      entryFade.value = withTiming(0, { duration: 500, easing: Easing.out(Easing.quad) });
+      entryFade.value = withTiming(0, {
+        duration: 500,
+        easing: Easing.out(Easing.quad),
+      });
     }
     // Only ever needs to run once, right after mount — isArriving flipping
     // back to false later (via onSettled) shouldn't re-fire this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // Computed once per mount, not re-derived — otherwise calling
-  // markFirstRunCarryShown() below would flip hasShownFirstRunCarry
-  // mid-session and the snapshot would go stale the instant AuraArrival's
-  // onSettled reads it. Mirrors Guide's own secondVisitSnapshotRef
-  // exactly (see app/guide.tsx) — this is the first use of
-  // that pattern in Depths itself. totalMeasureCount === 1 means the
-  // Measure that just completed and carried the user here was their
-  // very first ever; by a real second completion this is structurally 2
-  // (recordMeasure increments it before Depths is ever reached), so this
-  // can't accidentally replay — hasShownFirstRunCarry is the second,
-  // persisted guard regardless.
-  const firstRunCarrySnapshotRef = useRef<boolean | null>(null);
-  if (firstRunCarrySnapshotRef.current === null) {
-    firstRunCarrySnapshotRef.current = Boolean(
-      isArriving && totalMeasureCount === 1 && !hasShownFirstRunCarry
-    );
-  }
-  const showFirstRunCarry = firstRunCarrySnapshotRef.current;
-  useEffect(() => {
-    if (showFirstRunCarry) markFirstRunCarryShown();
-  }, [showFirstRunCarry]);
   // At most one nudge, for the highest-priority thing not yet found — never
   // stacked, never repeated once discovered. Only surfaced for someone who's
   // already established the core habit, not a first-timer still on Measure.
   const discoveryNudge =
-    totalMeasureCount >= 2 ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature]) : undefined;
-  // The spiral's fixed slots, in DepthsSpiral.tsx's own SLOT_ORDER —
-  // presence varies with reading state (spill/talkAboutIt/cards only
-  // appear once discovered/a reading exists), but the slot itself is
-  // always reserved (see DepthsSpiral.tsx's own comment on why: unlocking
-  // a capability must never reflow the shape). Your Arc's own slot
-  // removed 2026-08-27 once it became its own bottom tab — see
-  // docs/app-architecture-concept.md. measure/spill/talkAboutIt/cards
-  // always render at full brightness (alwaysFull: true) — only levels/
-  // tunein/breathing participate in the today's-walk dimming/prefix-trace
-  // mechanic.
-  const spiralPoints: SpiralPoint[] = useMemo(() => {
-    const spillPresent = discovered.spill;
-    const talkAboutItPresent = Boolean(currentResult && philosopher);
-    const cardsPresent = Boolean(currentResult);
-    const measureLabel = currentResult ? t('depths.measureAgain') : t(SLOT_META.measure.labelKey);
-    return [
-      { key: 'measure', label: measureLabel, isPresent: true, alwaysFull: true, visitedToday: false },
-      { key: 'spill', label: t(SLOT_META.spill.labelKey), isPresent: spillPresent, alwaysFull: true, visitedToday: false },
-      { key: 'talkAboutIt', label: t(SLOT_META.talkAboutIt.labelKey), isPresent: talkAboutItPresent, alwaysFull: true, visitedToday: false },
-      { key: 'cards', label: t(SLOT_META.cards.labelKey), isPresent: cardsPresent, alwaysFull: true, visitedToday: false },
-      {
-        key: 'levels',
-        label: t(SLOT_META.levels.labelKey),
-        isPresent: true,
-        alwaysFull: false,
-        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'levels'),
-      },
-      {
-        key: 'tunein',
-        label: t(SLOT_META.tunein.labelKey),
-        isPresent: true,
-        alwaysFull: false,
-        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'tunein'),
-      },
-      {
-        key: 'breathing',
-        label: t(SLOT_META.breathing.labelKey),
-        isPresent: true,
-        alwaysFull: false,
-        visitedToday: isToolVisitedToday(toolLastVisitedAt, 'breathing'),
-      },
-    ];
-  }, [discovered.spill, currentResult, philosopher, toolLastVisitedAt, t]);
-
-  // Strict prefix count along PREFIX_WALK_KEYS (levels → tunein →
-  // breathing) — stops at the first tool not visited today, so an
-  // out-of-order visit (e.g. Tune In before Levels) lights up that one
-  // tool's own dot (via visitedToday above) without extending the solid
-  // trace past the gap. This is the one piece of "today's walk" state
-  // DepthsSpiral itself doesn't compute — it only knows how to draw a
-  // given prefixCount, not derive one.
-  const prefixCount = useMemo(() => {
-    let count = 0;
-    for (const key of PREFIX_WALK_KEYS) {
-      if (isToolVisitedToday(toolLastVisitedAt, key as BreadcrumbTool)) count++;
-      else break;
-    }
-    return count;
-  }, [toolLastVisitedAt]);
-
-  const playFirstRunTravel = showFirstRunCarry && !isArriving && !firstRunTravelDone;
-
-  const handleSpiralPointPress = (key: SpiralSlotKey) => {
-    if (key === 'talkAboutIt') {
-      handleTalkAboutIt();
-      return;
-    }
-    if (key === 'levels' || key === 'tunein' || key === 'breathing' || key === 'spill') {
-      markToolVisited(key as BreadcrumbTool);
-    }
-    router.push(SLOT_META[key].route);
-  };
-
-  const rawLastLevel = currentResult ? getLevelBySlug(currentResult.vibrationLevel.slug) : undefined;
-  const lastLevel = rawLastLevel ? getLocalizedLevel(rawLastLevel, locale) : undefined;
+    totalMeasureCount >= 2
+      ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature])
+      : undefined;
+  const rawLastLevel = currentResult
+    ? getLevelBySlug(currentResult.vibrationLevel.slug)
+    : undefined;
+  const lastLevel = rawLastLevel
+    ? getLocalizedLevel(rawLastLevel, locale)
+    : undefined;
   // ONE accent color for the whole screen — the current level's, same as
   // everywhere else in the app since the per-philosopher/per-axis color
   // system was retired. The four sphere readings below used to each carry
   // their own LEVEL_COLORS hue (four different colors competing in one
   // screen); they're neutral text now, this single color is what's "yours"
   // here.
-  const levelRgb = lastLevel ? levelColors[lastLevel.slug] ?? accentRgb : accentRgb;
+  const levelRgb = lastLevel
+    ? (levelColors[lastLevel.slug] ?? accentRgb)
+    : accentRgb;
   const levelColor = `rgb(${levelRgb})`;
   // combinationMessage was also shown again on the old reveal screen — that
   // was the literal duplicate (this is its one home now). The reveal
@@ -457,24 +688,11 @@ export default function DepthsScreen() {
   // just saying aloud what the rows already show — the wheel is the "actions
   // speak louder than words" version of that idea, not a sentence.
   const headlineMessage = lastLevel
-    ? currentResult?.combinationMessage ?? lastLevel.personalFrame ?? lastLevel.frame
+    ? (currentResult?.combinationMessage ??
+      lastLevel.personalFrame ??
+      lastLevel.frame)
     : undefined;
-  const hasTranscript = Boolean(currentResult?.qaPairs && currentResult.qaPairs.length > 0);
 
-  // Mind first, then top-to-bottom down the figure — mind (head), spirit
-  // (aura outer edge), heart (chest), body (torso/legs). Display order only
-  // (also used to order the sphere buttons below the ring); currentResult
-  // .lines itself stays in the backend's own order since other consumers
-  // may depend on it.
-  const displayLines = useMemo(
-    () =>
-      currentResult
-        ? [...currentResult.lines].sort(
-            (a, b) => SPHERE_DISPLAY_ORDER.indexOf(a.key) - SPHERE_DISPLAY_ORDER.indexOf(b.key),
-          )
-        : [],
-    [currentResult],
-  );
   // Depths' aura field (AuraField/AuraArrival) only ever shows THIS
   // reading's four sphere colors — one concentric ring per sphere,
   // colored by that sphere's own LEVEL_COLORS hue — not the shared
@@ -484,14 +702,15 @@ export default function DepthsScreen() {
   // given sphere's line is somehow missing.
   const sphereColors: Record<SphereKey, string> = useMemo(() => {
     const colorFor = (key: SphereKey) => {
-      const slug = currentResult?.lines.find((l) => l.key === key)?.vibrationLevel.slug;
+      const slug = currentResult?.lines.find((l) => l.key === key)
+        ?.vibrationLevel.slug;
       return `rgb(${(slug && levelColors[slug]) ?? accentRgb})`;
     };
     return {
-      spirit: colorFor('spirit'),
-      mind: colorFor('mind'),
-      heart: colorFor('heart'),
-      body: colorFor('body'),
+      spirit: colorFor("spirit"),
+      mind: colorFor("mind"),
+      heart: colorFor("heart"),
+      body: colorFor("body"),
     };
   }, [currentResult, accentRgb]);
   // Each sphere's own numeric vibrationScore — drives that ring's grow-in
@@ -509,12 +728,13 @@ export default function DepthsScreen() {
   // finishes settling it holds perfectly still — the frequency only ever
   // shapes the entrance, never a perpetual idle wobble.
   const sphereScores: Record<SphereKey, number> = useMemo(() => {
-    const scoreFor = (key: SphereKey) => currentResult?.lines.find((l) => l.key === key)?.vibrationScore ?? 400;
+    const scoreFor = (key: SphereKey) =>
+      currentResult?.lines.find((l) => l.key === key)?.vibrationScore ?? 400;
     return {
-      spirit: scoreFor('spirit'),
-      mind: scoreFor('mind'),
-      heart: scoreFor('heart'),
-      body: scoreFor('body'),
+      spirit: scoreFor("spirit"),
+      mind: scoreFor("mind"),
+      heart: scoreFor("heart"),
+      body: scoreFor("body"),
     };
   }, [currentResult]);
 
@@ -524,35 +744,242 @@ export default function DepthsScreen() {
   // that sphere's own level; there's only ever one marker on the ring at a
   // time, not the overall reading plus a second highlight.
   const [selectedSphere, setSelectedSphere] = useState<Sphere | null>(null);
-  const selectedLine = currentResult?.lines.find((l) => l.key === selectedSphere);
-  const ringLevelSlug = selectedLine ? selectedLine.vibrationLevel.slug : currentResult?.vibrationLevel.slug;
-  const ringLevel = selectedLine ? selectedLine.vibrationLevel : currentResult?.vibrationLevel;
-  const ringLevelName = ringLevel ? getLocalizedLevelName(ringLevel, locale) : undefined;
-  // The aura's own image/glow/dots follow whichever level is currently
-  // shown on the ring (the sphere you're pointing at, or the overall
-  // reading when none is selected) — previously fixed to the overall
-  // reading's color regardless of which sphere button was active, which
-  // read as broken once the ring itself started responding to selection.
-  // levelColor (below) stays the screen's one ACCENT color (headline,
-  // Save/Share, the selected button's own text) — a different role that
-  // should stay tied to the overall reading, not swap with the ring.
-  const ringLevelRgb = ringLevelSlug ? levelColors[ringLevelSlug] ?? accentRgb : accentRgb;
-  const ringLevelColor = `rgb(${ringLevelRgb})`;
+  const selectedLine = currentResult?.lines.find(
+    (l) => l.key === selectedSphere,
+  );
+  const ringLevelSlug = selectedLine
+    ? selectedLine.vibrationLevel.slug
+    : currentResult?.vibrationLevel.slug;
+  // For DepthsSpiral's own 17-level wheel (see its own header comment) —
+  // 2026-09-01: now the SAME fallback pattern as ringLevelSlug/Name above
+  // (was: null when no sphere selected, keeping the wheel hidden). The
+  // wheel is a permanent landmark now, not a reveal-on-tap — with no
+  // sphere selected it shows the overall/combined reading, exactly like
+  // the aura's own ring does, rather than going blank.
+  const wheelLevelSlug = selectedLine
+    ? selectedLine.vibrationLevel.slug
+    : (currentResult?.vibrationLevel.slug ?? null);
+  // lastLevel?.title, NOT lastLevel?.name — LevelContent (levelsContent.ts)
+  // keeps two separate fields: `name` is the lowercase internal slug-like
+  // identifier ("neutrality"), `title` is the real capitalized display
+  // string ("Neutrality"), same distinction VibrationLevel/measureConfig.ts
+  // doesn't have (its own .name IS the display string there, just also
+  // lowercase — getLocalizedLevelName's own English branch returns it
+  // as-is). Using .name here was a real, confirmed bug: every OTHER level
+  // name on this screen displays capitalized via .title somewhere else
+  // in that same content object, except this one fallback path, which
+  // read the wrong field and showed the raw lowercase identifier instead
+  // (confirmed by the user's own screenshot: "neutrality" was the one
+  // level reading lowercase while all 16 others were capitalized).
+  const wheelLevelName = selectedLine
+    ? getLocalizedLevelName(selectedLine.vibrationLevel, locale)
+    : (lastLevel?.title ?? null);
+  // 2026-08-29: the spiral's own points, now the four spheres (see
+  // DepthsSpiral.tsx's own header comment) — built in SLOT_ORDER, NOT
+  // RING_ORDER: DepthsSpiral consumes `points` POSITIONALLY (points[i]
+  // pairs with its own geometry.points[i], built from SLOT_ORDER[i]'s own
+  // h-slot), so this array's order must match SLOT_ORDER exactly, not
+  // AuraField's own ring draw-order (RING_ORDER — a different ordering,
+  // on purpose, since 2026-08-31: Heart/Mind/Spirit/Body on the spiral vs
+  // Heart/Mind/Body/Spirit on the rings). Labels use the same
+  // SPHERE_LABEL_KEYS translation the button row used to (see below) —
+  // there is no separate spiral-specific copy anymore.
+  const spherePoints: SpiralSpherePoint[] = useMemo(
+    () =>
+      SLOT_ORDER.map((key) => ({
+        key,
+        label: t(SPHERE_LABEL_KEYS[key] ?? key),
+        color: sphereColors[key],
+        isSelected: selectedSphere === key,
+      })),
+    [sphereColors, selectedSphere, t],
+  );
+
+  // Pre-reading equivalent — points still render (position continuity with
+  // the post-reading render), just neutral-colored and non-interactive,
+  // since no per-sphere data exists yet. `color`/`isSelected` are unused by
+  // DepthsSpiral when `interactive` is false (it falls back to the accent
+  // color and a flat dim opacity itself), kept here only to satisfy the
+  // prop type.
+  const neutralSpherePoints: SpiralSpherePoint[] = useMemo(
+    () =>
+      SLOT_ORDER.map((key) => ({
+        key,
+        label: t(SPHERE_LABEL_KEYS[key] ?? key),
+        color: accentColor,
+        isSelected: false,
+      })),
+    [t, accentColor],
+  );
+
+  // A quick confirmation pulse plays from the tapped point down into the
+  // aura's chest, THEN selectedSphere toggles (see onPulseSettled below) —
+  // so AuraField's ring-dimming reads as caused by the pulse landing, not
+  // simultaneous-but-unrelated (causality over coincidence, per aesthetic.
+  // md's own motion rule). Cleared once the pulse settles.
+  const [pulsingSphere, setPulsingSphere] = useState<SphereKey | null>(null);
+  const handleSpherePointPress = (key: SphereKey) => {
+    if (pulsingSphere) return; // one pulse at a time
+    setPulsingSphere(key);
+  };
+  const handlePulseSettled = () => {
+    setSelectedSphere((s) => (s === pulsingSphere ? null : pulsingSphere));
+    setPulsingSphere(null);
+  };
+
+  // The former intentionSection rows (Stay/Understand/Shift/Measure again),
+  // folded onto the spiral's own upper h>1 extension 2026-08-30 — see
+  // DepthsSpiral.tsx's SpiralActionKey. "Understand" only appears once a
+  // philosopher is set, mirroring the old intentionRow's own guard.
+  const actionSpiralPoints: SpiralActionPoint[] = useMemo(() => {
+    const list: SpiralActionPoint[] = [
+      {
+        key: "stay",
+        label: t("depths.stayWithIt"),
+        description: discovered.spill
+          ? t("depths.stayWithItCardsAndSpill")
+          : t("depths.stayWithItCardsOnly"),
+        // 2026-09-03 — symbolId wires up DepthsMenuSymbol's own
+        // already-designed "stay" glyph (stayPath in that file), which
+        // existed but was never actually rendered as a dot until now.
+        symbolId: "stay",
+      },
+    ];
+    if (philosopher) {
+      list.push({
+        key: "understand",
+        label: t("depths.understandIt"),
+        description: t("depths.understandItDescription", {
+          name: philosopher.name,
+        }),
+        // "Understand it" reuses the current philosopher's OWN
+        // PhilosopherObject mark, not a DepthsMenuSymbol glyph — this
+        // row literally means "talk with them," so its own symbol
+        // should BE them (see DepthsMenuSymbol.tsx's own header comment,
+        // which documented this exact plan when the symbol set was
+        // first designed).
+        philosopherId: philosopher.id,
+      });
+    }
+    list.push(
+      {
+        key: "shift",
+        label: t("depths.shiftIt"),
+        description: t("depths.shiftItDescription"),
+        symbolId: "shift",
+      },
+      {
+        key: "measure",
+        label: t("depths.measureAgain"),
+        description: t("depths.measureAgainDescription"),
+        symbolId: "measure",
+      },
+      // 2026-09-02 — moved onto the curve from their own plain wideMenuRow
+      // rows (now removed), at the user's own request: everything else on
+      // this screen has the spiral's own visual language, and these two
+      // read as a generic settings-style list by comparison. Same exact
+      // translated strings, just relocated. (2026-09-03: every point now
+      // has its own symbol, not just these two — see stay/understand/
+      // shift/measure above — but exploreMap/feelingLucky's own symbols
+      // still mark a genuinely different CATEGORY, open-ended exploration
+      // rather than this reading's own next steps.)
+      {
+        key: "exploreMap",
+        label: t("depths.exploreTheMap"),
+        description: t("depths.exploreTheMapDescription"),
+        symbolId: "exploreMap",
+      },
+      {
+        key: "feelingLucky",
+        label: t(FEELING_LUCKY.labelKey),
+        description: t(FEELING_LUCKY.descriptionKey),
+        symbolId: "feelingLucky",
+      },
+    );
+    return list;
+  }, [t, discovered.spill, philosopher]);
+
+  const shiftSubSpiralPoints: SpiralShiftSubPoint[] = useMemo(
+    () => [
+      {
+        key: "tuneIn",
+        label: t("depths.tuneInLabel"),
+        description: t("depths.tuneInDescription"),
+      },
+      {
+        key: "breathing",
+        label: t(TOOL_META.breathing.labelKey),
+        description: t(TOOL_META.breathing.descriptionKey),
+      },
+    ],
+    [t],
+  );
+
+  const [pulsingAction, setPulsingAction] = useState<
+    SpiralActionKey | SpiralShiftSubKey | null
+  >(null);
+  const [shiftRevealed, setShiftRevealed] = useState(false);
+
+  const handleActionPress = (key: SpiralActionKey) => {
+    if (pulsingAction) return;
+    if (key === "shift") {
+      setShiftRevealed((r) => !r);
+      return;
+    }
+    setPulsingAction(key);
+  };
+  const handleShiftSubPress = (key: SpiralShiftSubKey) => {
+    if (pulsingAction) return;
+    setPulsingAction(key);
+  };
+  const handleActionPulseSettled = () => {
+    const settled = pulsingAction;
+    setPulsingAction(null);
+    setShiftRevealed(false);
+    switch (settled) {
+      case "stay":
+        router.push("/(tabs)/depths/cards");
+        break;
+      case "understand":
+        handleTalkAboutIt();
+        break;
+      case "measure":
+        router.push(TOOL_META.measure.route);
+        break;
+      case "exploreMap":
+        router.push("/(tabs)/depths/levels");
+        break;
+      case "feelingLucky":
+        router.push(FEELING_LUCKY.route);
+        break;
+      case "tuneIn":
+        router.push("/(tabs)/depths/tunein");
+        break;
+      case "breathing":
+        router.push(TOOL_META.breathing.route);
+        break;
+      default:
+        break;
+    }
+  };
+
+  // Traveling arrival-descent marker (see DepthsSpiral.tsx's own
+  // playArrivalDescent prop) — plays once, right after a reading completes,
+  // timed to land exactly as the aura body finishes forming (COLOR_START_MS
+  // /ARRIVAL_DURATION_MS, the same instant/duration AuraArrival's own body
+  // animation uses below). Gated on isArriving alone — the same flag that
+  // already governs "fresh arrival only, never replay on revisit" for the
+  // rest of the reveal, so no separate first-run-only guard is needed here
+  // (this plays on EVERY fresh arrival now, not just someone's very first
+  // reading ever, which is what the old aura→Levels travel marker was
+  // gated on).
+  const playArrivalDescent = isArriving && !skipArrival;
 
   const goToLevel = (slug: string) => {
-    router.push({ pathname: '/(tabs)/depths/level/[id]', params: { id: slug } });
-  };
-
-  const toggleConversation = () => {
-    const next = !showConversation;
-    setShowConversation(next);
-    if (next) track('history_transcript_viewed');
-  };
-
-  const toggleWish = () => {
-    const next = !showWish;
-    setShowWish(next);
-    if (next) track('wish_viewed');
+    router.push({
+      pathname: "/(tabs)/depths/level/[id]",
+      params: { id: slug },
+    });
   };
 
   // Was reveal's own action, keyed to the reading that had just finished;
@@ -563,398 +990,581 @@ export default function DepthsScreen() {
   // was removed 2026-08-28 along with that screen, once Selfinder went
   // fully free and there was nothing left to nudge toward.
   const AXIS_LABEL_KEYS: Record<string, string> = {
-    calm: 'common.axisCalm',
-    clarity: 'common.axisClarity',
-    intensity: 'common.axisIntensity',
-    grounding: 'common.axisGrounding',
-  };
-  const SPHERE_LABEL_KEYS: Record<string, string> = {
-    body: 'common.sphereBody',
-    mind: 'common.sphereMind',
-    heart: 'common.sphereHeart',
-    spirit: 'common.sphereSpirit',
+    calm: "common.axisCalm",
+    clarity: "common.axisClarity",
+    intensity: "common.axisIntensity",
+    grounding: "common.axisGrounding",
   };
 
   const handleTalkAboutIt = () => {
     if (!philosopher || !currentResult) return;
-    track('reveal_talk_about_it');
+    track("reveal_talk_about_it");
     recordTalkAboutIt();
     setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
     sendGuideMessage(
       philosopher,
-      t('depths.iJustMeasuredMyself', {
-        level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
-        axis: t(AXIS_LABEL_KEYS[currentResult.dominantAxis] ?? currentResult.dominantAxis),
+      t("depths.iJustMeasuredMyself", {
+        level: getLocalizedLevelName(
+          currentResult.vibrationLevel,
+          locale,
+        ).toLowerCase(),
+        axis: t(
+          AXIS_LABEL_KEYS[currentResult.dominantAxis] ??
+            currentResult.dominantAxis,
+        ),
       }),
     );
-    router.push('/guide');
-  };
-
-  // Distinct from handleTalkAboutIt above (whole-reading, lives under "Find
-  // out where you are") — this one lives right under the ring, only shows
-  // once a sphere is selected, and talks about THAT sphere specifically.
-  // The visible opening message stays a clean, short line; the actual
-  // Measure Q&A for that sphere rides along as invisible system-prompt
-  // context (see guideChatStore.send's additionalContext) so the
-  // philosopher's first reply can explain what's going on for THIS person,
-  // not recite the generic level description — a static description can't
-  // know "my heart reads as Anger" means suppressed resentment for one
-  // person and something else entirely for another.
-  const handleTalkAboutSphere = () => {
-    if (!philosopher || !currentResult || !selectedLine) return;
-    track('depths_sphere_talk_about_it', { sphere: selectedLine.key });
-    recordTalkAboutIt();
-    setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
-    const qa = currentResult.qaPairs?.find((p) => p.sphere === selectedLine.key);
-    const context = qa
-      ? `They just tapped to talk about their ${selectedLine.key} reading, which came out as ${selectedLine.vibrationLevel.name}. When asked "${qa.question}" during their check-in, they answered: "${qa.answer}". Use this to speak to what's actually going on for THEM specifically — do not just describe what ${selectedLine.vibrationLevel.name} means in general, they can already read that on the level's own page. If their answer doesn't give you enough to go on, ask a clarifying question rather than generalizing. If it feels like there's real weight underneath they haven't said yet, you can invite them to Spill it out first, in your own voice.`
-      : `They just tapped to talk about their ${selectedLine.key} reading, which came out as ${selectedLine.vibrationLevel.name}. There's no recorded answer for this sphere from their check-in to draw on. Don't just describe what ${selectedLine.vibrationLevel.name} means in general — ask them directly what's going on with their ${selectedLine.key} right now, so you have something real to respond to.`;
-    sendGuideMessage(
-      philosopher,
-      t('depths.mySphereJustReadAs', {
-        sphere: t(SPHERE_LABEL_KEYS[selectedLine.key] ?? selectedLine.key),
-        level: getLocalizedLevelName(selectedLine.vibrationLevel, locale).toLowerCase(),
-      }),
-      context,
-    );
-    router.push('/guide');
+    router.push("/guide");
   };
 
   const entryFadeStyle = useAnimatedStyle(() => ({ opacity: entryFade.value }));
 
+  // 2026-09-02 — fixedZone (the fixed/scroll split's own never-scrolling
+  // zone) can no longer shrink or scroll its own content, unlike the old
+  // single ScrollView. Its natural height (kicker + PhilosopherPresence +
+  // quote + core geometry's own canvas) comfortably fits taller phones,
+  // but on the shortest supported device (iPhone SE, 667pt) it exceeds
+  // the screen's own available height entirely, clipping behind the tab
+  // bar with zero room left for scrollZone underneath (confirmed via a
+  // 375×667 web viewport test — the fixed zone alone needed more height
+  // than the whole screen had).
+  //
+  // A first version of this fix applied a CSS `transform: scale()` to a
+  // wrapping View around the already-full-size content, the same trick a
+  // photo/map view uses to fit-to-viewport. That did NOT work: confirmed
+  // via direct DOM measurement (getBoundingClientRect on the aura <img>
+  // element) that react-native-web's transform:scale does not resize a
+  // plain <Image>'s own rendered box — the aura kept rendering at full,
+  // untransformed size and clipped regardless of the computed scale. The
+  // fix here instead makes the underlying GEOMETRY genuinely reactive to
+  // a computed scale (buildDepthsGeometry, see its own header comment) —
+  // not a visual squash applied after the fact.
+  //
+  // Two-pass measurement, not an analytical estimate: this screen's own
+  // natural content height depends on the philosopher's quote text (its
+  // length, and therefore its wrapped line count, varies per reading),
+  // which can't be predicted from constants alone without a fragile
+  // character-count/line-height guess. So the first render pass renders
+  // at the BASE (unscaled, tuned) size, measures its true natural height
+  // via onLayout (same technique this file already used before this
+  // change), computes the scale needed to fit, and — only if that scale
+  // is < 1 — a second render pass rebuilds the geometry at the scaled
+  // size via useMemo. React re-rendering here is cheap and expected (the
+  // codebase already uses this measure-then-recompute pattern elsewhere,
+  // e.g. useWideColumnWidth), and avoids a fragile analytical height
+  // estimate. The one-frame flash this could cause on a short device
+  // (natural size, then a snap down to scaled size) is a strictly better
+  // failure mode than the bug being fixed (content permanently clipped
+  // behind the tab bar) and is not visible in practice since it resolves
+  // within the same layout pass before paint on both web and native.
+  const [rootHeight, setRootHeight] = useState(0);
+  const [naturalContentHeight, setNaturalContentHeight] = useState(0);
+  const MIN_SCROLL_ZONE_HEIGHT = 120;
+  // Natural (scale-1) geometry — always built, used both for the first
+  // measurement pass and as the render output whenever no shrink is
+  // needed (the common case: taller phones never touch the branch
+  // below).
+  const naturalGeometry = useMemo(
+    () => buildDepthsGeometry(BASE_AURA_DISPLAY_SIZE),
+    [],
+  );
+  const fixedZoneScale =
+    rootHeight > 0 && naturalContentHeight > 0
+      ? Math.min(
+          1,
+          (rootHeight - MIN_SCROLL_ZONE_HEIGHT) / naturalContentHeight,
+        )
+      : 1;
+  // Guards the onLayout below from a feedback loop: once a shrink has
+  // been applied, the measured View is rendering SCALED content (not
+  // natural/scale-1 content anymore), so its own onLayout would report a
+  // smaller-than-natural height — feeding that back in would compute an
+  // even smaller scale next render, snowballing the aura toward zero
+  // over a few renders. Only the first (always-natural-scale) pass is
+  // allowed to write naturalContentHeight; once fixedZoneScale has
+  // committed to a value below 1, it's frozen for the rest of this
+  // screen's lifetime (a rotation/font-scale change would need a fresh
+  // mount to re-measure, same limitation the old transform-based
+  // version already had via its own one-shot fixedContentHeight state).
+  const hasShrunkRef = useRef(false);
+  useEffect(() => {
+    if (fixedZoneScale < 1) hasShrunkRef.current = true;
+  }, [fixedZoneScale]);
+  // Only recompute a second, scaled geometry object once a real shrink is
+  // actually needed — on every taller device this just returns
+  // naturalGeometry again (fixedZoneScale === 1), so there's no
+  // second object identity churn on the common path.
+  const geometry = useMemo(
+    () =>
+      fixedZoneScale < 1
+        ? buildDepthsGeometry(BASE_AURA_DISPLAY_SIZE * fixedZoneScale)
+        : naturalGeometry,
+    [fixedZoneScale, naturalGeometry],
+  );
+  const CORE_GEOMETRY = geometry.core;
+  const MENU_GEOMETRY = geometry.menu;
+  const AURA_METRICS = geometry.auraMetrics;
+  const SPIRAL_AURA_HALF_WIDTH = geometry.spiralAuraHalfWidth;
+  const SPIRAL_AURA_HALF_HEIGHT = geometry.spiralAuraHalfHeight;
+  // Depends on `geometry` now too (not just `colors`) — several styles
+  // below (auraCoreWrap, arrivalSkipWrap, groundWrap, menuWrap, ringWrap)
+  // are sized/positioned directly off CORE_GEOMETRY/MENU_GEOMETRY/
+  // AURA_METRICS, which are no longer fixed module constants once a
+  // short screen shrinks them (see buildDepthsGeometry's own header
+  // comment) — re-memo whenever either input changes.
+  const styles = useMemo(
+    () => makeStyles(colors, geometry),
+    [colors, geometry],
+  );
+
   return (
-    <View style={styles.root}>
-      {theme === 'dark' && <AmbientGlow />}
+    <View
+      style={styles.root}
+      onLayout={(e) => setRootHeight(e.nativeEvent.layout.height)}
+    >
+      {theme === "dark" && <AmbientGlow />}
       <ProfileIcon />
-      <ScrollView
-        contentContainerStyle={[
-          styles.content,
-          { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
+      {/* 2026-09-01 — replaces the old single root ScrollView with a
+          fixed/scroll split (see the plan this implements: "the aura
+          figure — 'the main event' — always on screen, never scrolled
+          away, while the action menu below it scrolls independently
+          underneath it"). fixedZone holds the quote and
+          DepthsSpiralCore's own canvas (aura curve, 4 sphere dots, the
+          always-on wheel) — NEVER scrolls. scrollZone holds everything
+          else, starting with DepthsSpiralMenu's own canvas (action
+          points + top loop) so the two canvases sit visually flush at
+          scroll position 0 (see MENU_GEOMETRY's own chestY comment for
+          why that flushness is what the seam math depends on).
+          2026-09-02 — fixedZone no longer visually scales via CSS
+          transform (see fixedZoneScale's own comment above for why that
+          didn't work); its content now genuinely IS the right size
+          (built from `geometry`, itself built at a shrunk
+          auraDisplaySize when needed), so this View just measures its
+          own natural height and renders at that real size — no
+          transform needed since there's no oversized content being
+          visually squeezed into an undersized box anymore.
+          overflow:'hidden' WAS removed at that point for the same
+          reason, but came back later the same day (see fixedZone's own
+          style comment) for a deliberate, unrelated purpose: cropping
+          the spiral's own top-bleed effect, not squeezing oversized
+          content — a real, current need, not a leftover. */}
+      <View
+        style={[
+          styles.fixedZone,
+          {
+            width: columnWidth,
+            alignSelf: "center",
+          },
         ]}
       >
-        <View style={styles.kickerRow}>
-          <Text style={styles.kicker}>{t('depths.kicker')}</Text>
-        </View>
-        {/* Standing, always-visible orientation line for the tab itself —
-            not a first-time-only nudge (those already exist elsewhere,
-            e.g. discoveryNudge below) — so a returning user still has a
-            quiet answer to "what is this place for" without needing to
-            remember it. Same one-liner register the other two tabs use
-            (Journeys' products.intro, Your Arc's own arc-line page). */}
-        <Text style={styles.tabExplainer}>{t('depths.tabExplainer')}</Text>
+        <View
+          onLayout={(e) => {
+            // See hasShrunkRef's own comment above — ignore any layout
+            // report once this zone has already committed to rendering
+            // at a shrunk scale, so a scaled render's own (smaller)
+            // height never gets mistaken for a new "natural" height.
+            if (hasShrunkRef.current) return;
+            // Subtracting BLEED_AMOUNT_PX here (not resizing the actual
+            // View) is what stops the shrink mechanism from fighting the
+            // deliberate top-bleed — without this, letting the spiral
+            // bleed upward would just make this measurement taller,
+            // triggering MORE shrinking to compensate, canceling the
+            // bleed out. This tells fixedZoneScale "pretend the content
+            // is this much shorter," which is exactly true once that
+            // same amount is meant to render past the visible top edge
+            // instead of pushing the rest of the zone down.
+            setNaturalContentHeight(
+              Math.max(0, e.nativeEvent.layout.height - BLEED_AMOUNT_PX),
+            );
+          }}
+          style={{
+            // insets.top is a hardware safe-area constraint, kept fixed
+            // at any scale — shrinking it would let content sit under
+            // the real notch/status-bar area, which isn't a "smaller"
+            // composition, just a broken one. Only the spacing[4]
+            // breathing-room portion scales down with the rest of the
+            // zone (2026-09-01 fix, preserved here): at fixedZoneScale=1
+            // this is identical to insets.top + spacing[4] as before; as
+            // the zone shrinks, the gap between the status bar and
+            // "DEPTHS" shrinks proportionally with it instead of staying
+            // fixed-size and reading as a big, wrong-looking gap on a
+            // short device.
+            paddingTop: insets.top + spacing[4] * fixedZoneScale,
+          }}
+        >
+          <View style={styles.kickerRow}>
+            <Text style={styles.kicker}>{t("depths.kicker")}</Text>
+          </View>
+          {/* The standing orientation line ("What's happening inside you
+            right now.") was removed 2026-08-30 — the goal now is for the
+            screen itself (the spiral, the aura, the sphere points) to
+            communicate what this place is without needing words to
+            explain it; see the same reasoning applied to Journeys'
+            products.intro/products.groupPresentDescription below. */}
 
-        {/* Guide's real entry point now that it's off the bottom tab bar
+          {/* Guide's real entry point now that it's off the bottom tab bar
             — always visible, always routes to Guide, no reading required.
             See docs/app-architecture-concept.md, "What Guide's demotion
             actually means." */}
-        <PhilosopherPresence />
+          <PhilosopherPresence />
 
-        {currentResult && lastLevel ? (
-          <>
-            {/* The aura figure lives inside AuraField's four concentric
+          {currentResult && lastLevel ? (
+            <>
+              {/* The philosopher's own reflection — moved here, to the very
+                top of the screen, 2026-08-30 (was down near the bottom of
+                the aura/spiral block, after the transcript/wish toggles).
+                This is the philosopher speaking about THIS reading; it now
+                reads first, before the visualization itself, rather than
+                being buried under everything else on the page. Long-press
+                to save it (2026-08-20 — replaces the old visible Save/
+                Share buttons app-wide, see LongPressToSave's own header
+                comment) — unchanged. */}
+              {/* The bubble ring that used to sit around this quote
+                (QuoteBubble.tsx) was dropped 2026-09-01 — the user didn't
+                like how it looked. The "story continues from the top of
+                the page" feeling it was reaching for is still carried by
+                PhilosopherEnergy's own small spirals just above (see its
+                render further down this screen), so nothing replaces it
+                here. */}
+              {/* The reading's own timestamp — moved here 2026-09-02 from a
+                lone row far below the aura (past the whole spiral), where
+                it read as an orphaned caption disconnected from the
+                reflection it actually describes. A timestamp belongs next
+                to the message it dates, the same relationship a chat
+                thread's own timestamp has to the message beneath it — not
+                as a separate "chrome" row elsewhere on the page. Small and
+                quiet (faint, not part of the reading's own reflection),
+                same register the old standalone row used. 2026-09-03 —
+                moved AGAIN, from its own full-width line directly above
+                readingRow, into readingRow itself (above the quote text,
+                inside quoteBubbleWrap) — the user noticed its own line was
+                reading as extra empty vertical space above the quote/wheel
+                row, since a short faint date line still claims a full line
+                height even at this small font. Folding it into the same
+                column as the quote keeps the "dates the message beneath
+                it" relationship this move originally established, just
+                without a whole separate row's worth of height. */}
+              {/* 2026-09-03 — the quote and DepthsSpiralCore's own canvas now
+                sit in the SAME row (quote left, wheel right — see the
+                curve's own new bend toward the wheel in
+                depthsSpiralGeometry.ts/DepthsSpiralCore.tsx), instead of
+                the canvas starting in normal flow below the quote. The
+                quote's own height is capped (numberOfLines on `title`
+                below) rather than measured, deliberately avoiding a two-
+                pass measure-then-layout approach — see this file's own
+                header comments on buildDepthsGeometry for why that pattern
+                caused real, confirmed bugs earlier this session. auraCoreWrap
+                keeps its existing full width (still needs room for the
+                sphere labels on both sides) and simply starts at this row's
+                own top instead of below the quote — the quote column sits
+                narrower, in front of/beside the same canvas, not squeezing
+                it. */}
+              <View style={styles.readingRow}>
+                {/* The aura figure lives inside AuraField's four concentric
                 rings — one per sphere, sharing the aura's own chest as
                 their center, colored by that sphere's own reading (see
                 AuraField.tsx). Idle, all four are equally visible; tapping
-                a Body/Mind/Heart/Spirit button dims the other three while
-                that sphere's own ring (and the aura image itself) stays
-                bright — echoing the same "one thing highlighted, rest
-                recede" pattern the sphere buttons already use elsewhere
-                on this screen. */}
-            {/* Tapping anywhere on the reveal while it's still arriving jumps
+                a spiral point pulses into the figure and dims the other
+                three rings while that sphere's own ring (and the aura
+                image itself) stays bright — see handleSpherePointPress. */}
+                {/* Tapping anywhere on the reveal while it's still arriving jumps
                 every stage straight to its settled state — a way out for
                 anyone who doesn't want to sit through the ~5s ritual every
                 time, without adding a visible "skip" button that would
                 compete with the reveal itself. No-op once settled (the
                 Pressable stops intercepting taps via pointerEvents below). */}
-            <View style={styles.auraSpiralWrap}>
-              <View style={styles.spiralOverlay} pointerEvents="box-none">
-                <DepthsSpiral
-                  width={DEPTHS_COMPOSITION_GEOMETRY.width}
-                  height={DEPTHS_COMPOSITION_GEOMETRY.totalHeight}
-                  points={spiralPoints}
-                  accentRgb={accentRgb}
-                  onPointPress={handleSpiralPointPress}
-                  prefixCount={prefixCount}
-                  playFirstRunTravel={playFirstRunTravel}
-                  onFirstRunTravelSettled={() => setFirstRunTravelDone(true)}
-                  auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
-                  auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
-                  auraFigureHeight={AURA_METRICS.height}
-                  chestY={DEPTHS_COMPOSITION_GEOMETRY.chestY}
-                />
-              </View>
-            <Pressable
-              style={styles.arrivalSkipWrap}
-              pointerEvents={isArriving ? 'auto' : 'none'}
-              onPress={() => setSkipArrival(true)}
-            >
-              <AuraArrival
-                arriving={isArriving}
-                skip={skipArrival}
-                onSettled={() => {
-                  setIsArriving(false);
-                  setSkipArrival(false);
-                  // The spiral's own traveling marker (aura → Levels)
-                  // picks up showFirstRunCarry as a prop directly — see
-                  // the DepthsSpiral render below — nothing to trigger
-                  // here beyond letting arrival settle first.
-                }}
-                ringOnlySlugs={sphereColors}
-                sphereScores={sphereScores}
-                selectedSphere={selectedSphere}
-                neutralAura={
-                  <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
-                }
-                settledAura={
-                  <AuraWithDots
-                    source={
-                      theme === 'light'
-                        ? AURA_LEVEL_IMAGES_LIGHT[ringLevelSlug!] ?? AURA_LEVEL_IMAGES_LIGHT[lastLevel.slug]
-                        : AURA_LEVEL_IMAGES[ringLevelSlug!] ?? AURA_LEVEL_IMAGES[lastLevel.slug]
-                    }
-                    overlay
-                  />
-                }
-              />
-            </Pressable>
-            </View>
-
-            <ArrivalReveal arriving={isArriving} skip={skipArrival}>
-              {/* Tappable — the level's own detail page (what this vibration
-                  actually is), same destination the old per-row wheel rows
-                  used to link to before they were replaced by this ring. */}
-              <Pressable onPress={() => goToLevel(ringLevelSlug!)}>
-                <Text style={[styles.ringLevelName, { color: ringLevelColor }]}>{ringLevelName}</Text>
-              </Pressable>
-
-              {/* Only once a sphere is selected — right here, not a scroll
-                  away, because the impulse to ask about a specific reading
-                  (e.g. "why did my heart read as Anger?") happens the moment
-                  you see it, not after scrolling past the reflection and
-                  Save/Share down to "Find out where you are". Distinct job
-                  from that row's "Talk about it": this one is always about
-                  THIS sphere specifically, that one is always the whole
-                  reading — see handleTalkAboutSphere.
-                  Always mounted (not conditionally rendered) with a fixed-
-                  height wrapper — toggling opacity instead of mount/unmount
-                  means this row's space is reserved whether or not it's
-                  showing, so everything below it (the sphere buttons) no
-                  longer shifts down the instant a sphere is tapped. */}
-              <View style={styles.sphereTalkLinkWrap} pointerEvents={selectedSphere && philosopher ? 'auto' : 'none'}>
-                <Pressable onPress={handleTalkAboutSphere}>
-                  <Text
-                    style={[
-                      styles.sphereTalkLink,
-                      { color: ringLevelColor, opacity: selectedSphere && philosopher ? 1 : 0 },
-                    ]}
-                  >
-                    {t('depths.talkToAboutIt', { name: philosopher?.name })}
-                  </Text>
-                </Pressable>
-              </View>
-
-              <View style={styles.sphereButtonRow}>
-                {displayLines.map((line) => (
+                <View style={styles.auraCoreWrap}>
+                  <View style={styles.spiralOverlay} pointerEvents="box-none">
+                    <DepthsSpiralCore
+                      width={CORE_GEOMETRY.width}
+                      height={CORE_GEOMETRY.totalHeight}
+                      points={spherePoints}
+                      accentRgb={accentRgb}
+                      onPointPress={handleSpherePointPress}
+                      interactive
+                      playArrivalDescent={playArrivalDescent}
+                      arrivalDescentDelayMs={COLOR_START_MS}
+                      arrivalDescentDurationMs={ARRIVAL_DURATION_MS}
+                      pulseToSphere={pulsingSphere}
+                      onPulseSettled={handlePulseSettled}
+                      auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
+                      auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+                      auraFigureHeight={AURA_METRICS.height}
+                      auraChestOffsetFromTop={AURA_METRICS.chestY}
+                      chestY={CORE_GEOMETRY.chestY}
+                      riseHeight={CORE_GEOMETRY.riseHeight}
+                      wheelSize={CORE_GEOMETRY.wheelSize}
+                      selectedWheelLevelSlug={wheelLevelSlug}
+                      selectedWheelLevelName={wheelLevelName}
+                      onWheelLevelPress={
+                        wheelLevelSlug
+                          ? () => goToLevel(wheelLevelSlug)
+                          : undefined
+                      }
+                    />
+                  </View>
                   <Pressable
-                    key={line.key}
-                    style={styles.sphereButton}
-                    onPress={() => setSelectedSphere((s) => (s === line.key ? null : line.key))}
+                    style={styles.arrivalSkipWrap}
+                    pointerEvents={isArriving ? "auto" : "none"}
+                    onPress={() => setSkipArrival(true)}
                   >
-                    <Text
-                      style={[
-                        styles.sphereButtonText,
-                        selectedSphere === line.key && { color: levelColor },
-                      ]}
+                    <AuraArrival
+                      arriving={isArriving}
+                      skip={skipArrival}
+                      onSettled={() => {
+                        setIsArriving(false);
+                        setSkipArrival(false);
+                      }}
+                      ringOnlySlugs={sphereColors}
+                      sphereScores={sphereScores}
+                      selectedSphere={selectedSphere}
+                      geometry={geometry}
+                      neutralAura={
+                        <AuraWithDots
+                          source={
+                            theme === "light"
+                              ? AURA_NEUTRAL_IMAGE_LIGHT
+                              : AURA_NEUTRAL_IMAGE
+                          }
+                          overlay
+                          geometry={geometry}
+                        />
+                      }
+                      settledAura={
+                        <AuraWithDots
+                          source={
+                            theme === "light"
+                              ? (AURA_LEVEL_IMAGES_LIGHT[ringLevelSlug!] ??
+                                AURA_LEVEL_IMAGES_LIGHT[lastLevel.slug])
+                              : (AURA_LEVEL_IMAGES[ringLevelSlug!] ??
+                                AURA_LEVEL_IMAGES[lastLevel.slug])
+                          }
+                          overlay
+                          geometry={geometry}
+                        />
+                      }
+                    />
+                  </Pressable>
+                </View>
+                {/* The quote overlays the canvas's own top-left, in front of
+                  it (rendered after auraCoreWrap so it paints on top) —
+                  confined to a flat left-side column (quoteBubbleWrap's
+                  own width) so it reads as its own contained block, not
+                  full-width sprawl, now that it no longer needs to dodge
+                  the wheel's exact position (2026-09-02: the wheel is
+                  much bigger now and bleeds mostly off the canvas's
+                  right/top edges, leaving only its bottom-left quarter
+                  visible — see DepthsSpiralCore.tsx's own wheelPos
+                  comment). */}
+                <View style={styles.quoteBubbleWrap} pointerEvents="box-none">
+                  {headlineMessage ? (
+                    <LongPressToSave
+                      message={headlineMessage}
+                      accentRgb={levelRgb}
                     >
-                      {t(SPHERE_LABEL_KEYS[line.key] ?? line.label)}
+                      <Text
+                        numberOfLines={4}
+                        style={[styles.title, { color: levelColor }]}
+                      >
+                        {headlineMessage}
+                      </Text>
+                    </LongPressToSave>
+                  ) : (
+                    <Text
+                      numberOfLines={4}
+                      style={[styles.title, { color: levelColor }]}
+                    >
+                      {headlineMessage}
                     </Text>
-                  </Pressable>
-                ))}
+                  )}
+                </View>
               </View>
-
-              {/* Moved here from beside the top kicker (2026-08-28) — the
-                  ProfileIcon now sits in that same top-right corner, and
-                  the two were crowding/overlapping each other. This is
-                  still chrome (a status-bar-clock register, not part of
-                  the ring's symbolic content below it), just relocated to
-                  a part of the screen nothing else claims. */}
-              {currentResult && (
-                <Text style={styles.readingTimestamp}>{formatRelativeDay(currentResult.savedAt)}</Text>
-              )}
-            </ArrivalReveal>
-
-            {/* A reference on the reading itself, not a next step — sits
-                right under the aura/sphere-rows block it's the raw material
-                for, ahead of the philosopher's reflection on it (title/
-                Save-Share below), which is once removed from the reading
-                itself. Not down by the tool list where "Talk to X" and
-                "Measure again" (things to DO next) live. */}
-            {hasTranscript && (
-              <View style={styles.conversationSection}>
-                <Pressable style={styles.conversationToggle} onPress={toggleConversation}>
-                  <Text style={styles.conversationToggleText}>
-                    {showConversation ? t('depths.hideConversation') : t('depths.showConversation')}
-                  </Text>
-                  <Text style={styles.conversationChevron}>{showConversation ? '↑' : '↓'}</Text>
-                </Pressable>
-
-                {showConversation && (
-                  <View style={styles.conversationDetail}>
-                    {currentResult.qaPairs!.map((pair, i) => (
-                      <View key={i} style={styles.conversationQA}>
-                        <Text style={styles.conversationQuestion}>{pair.question}</Text>
-                        <Text style={styles.conversationAnswer}>{pair.answer}</Text>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* The wish's own disclosure — structurally its own row, NOT
-                merged into conversationDetail's qaPairs loop above, since
-                the wish must stay held/hidden even from that already-
-                opened transcript (see docs/session-result-concept.md's
-                "held, not displayed" rule). Same tap-to-reveal mechanism
-                as the transcript toggle above it — same "what was said"
-                material grouping, just a separate disclosure. */}
-            {linkedWish && (
-              <View style={styles.conversationSection}>
-                <Pressable style={styles.conversationToggle} onPress={toggleWish}>
-                  <Text style={styles.conversationToggleText}>
-                    {showWish ? t('depths.hideWish') : t('depths.showWish')}
-                  </Text>
-                  <Text style={styles.conversationChevron}>{showWish ? '↑' : '↓'}</Text>
-                </Pressable>
-
-                {showWish && (
-                  <View style={styles.conversationDetail}>
-                    <Text style={styles.conversationAnswer}>{linkedWish.text}</Text>
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* Long-press the headline to save it (2026-08-20 — replaces
-                the old visible Save/Share buttons app-wide, see
-                LongPressToSave's own header comment). */}
-            {headlineMessage ? (
-              <LongPressToSave message={headlineMessage} accentRgb={levelRgb}>
-                <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
-              </LongPressToSave>
-            ) : (
-              <Text style={[styles.title, { color: levelColor }]}>{headlineMessage}</Text>
-            )}
-
-            {/* Stay/Understand/Shift — a new layer beneath the unchanged
-                aura+spiral hero, appearing once a reading exists (see
-                docs/app-architecture-concept.md, "DEPTHS — where am I
-                now?"). Reconciles against verified existing gating rather
-                than inventing new rules: "Stay with it" (Cards, plus
-                Spill once discovered) matches Cards' own existing
-                currentResult gate; "Understand it" reuses handleTalkAboutIt
-                unchanged; "Shift it" bundles Tune In and Breathing as two
-                peer options under one intention, neither implied as more
-                correct than the other. */}
-            <View style={styles.intentionSection}>
-              <Text style={styles.intentionPrompt}>{t('depths.intentionPrompt')}</Text>
-              <View style={styles.intentionRow}>
-                <Pressable
-                  style={styles.intentionChoice}
-                  onPress={() => router.push('/(tabs)/depths/cards')}
-                >
-                  <Text style={styles.intentionChoiceTitle}>{t('depths.stayWithIt')}</Text>
-                  <Text style={styles.intentionChoiceOptions}>
-                    {discovered.spill ? t('depths.stayWithItCardsAndSpill') : t('depths.stayWithItCardsOnly')}
-                  </Text>
-                </Pressable>
-                {philosopher && (
-                  <Pressable style={styles.intentionChoice} onPress={handleTalkAboutIt}>
-                    <Text style={styles.intentionChoiceTitle}>{t('depths.understandIt')}</Text>
-                    <Text style={styles.intentionChoiceOptions}>
-                      {t('depths.understandItDescription', { name: philosopher.name })}
-                    </Text>
-                  </Pressable>
-                )}
-                <Pressable
-                  style={styles.intentionChoice}
-                  onPress={() => router.push('/(tabs)/depths/tunein')}
-                >
-                  <Text style={styles.intentionChoiceTitle}>{t('depths.shiftIt')}</Text>
-                  <Text style={styles.intentionChoiceOptions}>{t('depths.shiftItDescription')}</Text>
-                </Pressable>
-              </View>
-              <Pressable onPress={() => router.push('/(tabs)/depths/levels')}>
-                <Text style={styles.exploreMapLink}>{t('depths.exploreTheMap')}</Text>
-              </Pressable>
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.lastReadingLabel}>{t('depths.beforeFirstReading')}</Text>
-            {/* Same overlay approach as the reading branch above — the
+            </>
+          ) : (
+            <>
+              <Text style={styles.lastReadingLabel}>
+                {t("depths.beforeFirstReading")}
+              </Text>
+              {/* Same overlay approach as the reading branch above — the
                 spiral is absolutely positioned inside a wrapper sized/
                 positioned identically to how AuraWithDots itself sits
-                (both pinned to DEPTHS_COMPOSITION_GEOMETRY.groundY), so
-                both branches' spiral coincides with the aura's own
-                center by construction, not by measurement. */}
-            <View style={styles.auraSpiralWrap}>
-              <View style={styles.spiralOverlay} pointerEvents="box-none">
-                <DepthsSpiral
-                  width={DEPTHS_COMPOSITION_GEOMETRY.width}
-                  height={DEPTHS_COMPOSITION_GEOMETRY.totalHeight}
-                  points={spiralPoints}
-                  accentRgb={accentRgb}
-                  onPointPress={handleSpiralPointPress}
-                  prefixCount={prefixCount}
-                  playFirstRunTravel={false}
-                  auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
-                  auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
-                  auraFigureHeight={AURA_METRICS.height}
-                  chestY={DEPTHS_COMPOSITION_GEOMETRY.chestY}
-                />
+                (both pinned to CORE_GEOMETRY.groundY), so both branches'
+                spiral coincides with the aura's own center by
+                construction, not by measurement. */}
+              <View style={styles.auraCoreWrap}>
+                <View style={styles.spiralOverlay} pointerEvents="box-none">
+                  <DepthsSpiralCore
+                    width={CORE_GEOMETRY.width}
+                    height={CORE_GEOMETRY.totalHeight}
+                    points={neutralSpherePoints}
+                    accentRgb={accentRgb}
+                    onPointPress={() => {}}
+                    interactive={false}
+                    playArrivalDescent={false}
+                    arrivalDescentDelayMs={0}
+                    arrivalDescentDurationMs={0}
+                    pulseToSphere={null}
+                    auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
+                    auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+                    auraFigureHeight={AURA_METRICS.height}
+                    auraChestOffsetFromTop={AURA_METRICS.chestY}
+                    chestY={CORE_GEOMETRY.chestY}
+                    riseHeight={CORE_GEOMETRY.riseHeight}
+                    wheelSize={CORE_GEOMETRY.wheelSize}
+                    selectedWheelLevelSlug={null}
+                    selectedWheelLevelName={null}
+                  />
+                </View>
+                <View style={styles.groundWrap}>
+                  <AuraWithDots
+                    source={
+                      theme === "light"
+                        ? AURA_NEUTRAL_IMAGE_LIGHT
+                        : AURA_NEUTRAL_IMAGE
+                    }
+                    overlay
+                    geometry={geometry}
+                  />
+                </View>
               </View>
-              <View style={styles.groundWrap}>
-                <AuraWithDots source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE} overlay />
-              </View>
-            </View>
-            <Text style={styles.title}>
-              {t('depths.firstReadingCopy')}
-            </Text>
-          </>
-        )}
+              <Text style={styles.title}>{t("depths.firstReadingCopy")}</Text>
+            </>
+          )}
+        </View>
+      </View>
+
+      <ScrollView
+        style={styles.scrollZone}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { width: columnWidth, alignSelf: "center" },
+        ]}
+      >
+        {/* DepthsSpiralMenu — the action points (Stay/Understand/Shift/
+            Measure again) + the decorative top loop, h∈[H_CUT, H_MAX].
+            Deliberately the FIRST thing in the scroll content (both
+            branches — pre-reading action points are already independent
+            of reading state, see actionSpiralPoints' own comment) so it
+            sits visually flush against DepthsSpiralCore's own canvas
+            directly above it in the fixed zone, at scroll position 0 —
+            see MENU_GEOMETRY's own header comment for why that flushness
+            is exactly what the seam-continuity math assumes. The
+            timestamp/explore-map/wish rows (below) come AFTER this, not
+            before — they're "what happened"/"what's elsewhere" content,
+            not part of the curve, so they belong under the visual join,
+            not wedged between the two halves of it. */}
+        <View style={styles.menuWrap}>
+          <DepthsSpiralMenu
+            width={MENU_GEOMETRY.width}
+            height={MENU_GEOMETRY.height}
+            chestY={MENU_GEOMETRY.chestY}
+            riseHeight={MENU_GEOMETRY.riseHeight}
+            auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
+            auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+            accentRgb={accentRgb}
+            actionPoints={actionSpiralPoints}
+            onActionPress={handleActionPress}
+            shiftRevealed={shiftRevealed}
+            shiftSubPoints={shiftSubSpiralPoints}
+            onShiftSubPress={handleShiftSubPress}
+            pulseKey={pulsingAction}
+            onPulseSettled={handleActionPulseSettled}
+          />
+        </View>
 
         <View style={styles.sectionDivider} />
 
+        {/* 2026-09-02 — the unified "what to do next" menu: the 4 curve
+            points above (Stay/Understand/Shift/Measure again — this
+            reading's own next steps) plus a second, visually distinct
+            group for open-ended exploration not tied to this specific
+            reading (Explore the map, Feeling lucky). Both groups now
+            share the SAME row weight (label + description, left-aligned)
+            as the curve points, rather than the second group reading as
+            a smaller afterthought/footer — a deliberate hierarchy choice
+            (see this session's own design discussion): one continuous
+            hub of real choices, not a menu plus three different kinds of
+            footnote. "Explore the map" moved here from a small link
+            right under the quote (a real duplication risk once discussed
+            with "Show conversation," see the old comment history) — this
+            is its first appearance as a full menu row. The wish
+            disclosure that used to sit near here was removed the same
+            day: it duplicated what Your Arc's own DetailPage already
+            shows for this reading (see aesthetic.md's "one reading, one
+            screen" reasoning — the same logic that already removed
+            "Show conversation" from this spot applies here too). */}
         <View style={styles.stack}>
           {discoveryNudge && (
-            <Pressable style={styles.discoveryNudge} onPress={() => router.push(discoveryNudge.route)}>
-              <Text style={styles.discoveryNudgeText}>{t(discoveryNudge.labelKey)}</Text>
+            <Pressable
+              style={styles.discoveryNudge}
+              onPress={() => router.push(discoveryNudge.route)}
+            >
+              <Text style={styles.discoveryNudgeText}>
+                {t(discoveryNudge.labelKey)}
+              </Text>
             </Pressable>
           )}
 
-          <View style={styles.luckyWrap}>
-            <Text style={styles.luckyDivider}>· · ·</Text>
-            <Pressable style={styles.luckyRow} onPress={() => router.push(FEELING_LUCKY.route)}>
-              <Text style={styles.luckyLabel}>{t(FEELING_LUCKY.labelKey)}</Text>
-              <Text style={styles.luckyDescription}>{t(FEELING_LUCKY.descriptionKey)}</Text>
-            </Pressable>
-          </View>
+          {/* 2026-09-03 — a quiet closing line, so the scroll ends on a
+              deliberate moment of stillness instead of trailing off into
+              genuinely empty space. Before this, once discoveryNudge had
+              nothing to show (most returning visits — see its own "at most
+              one, for the highest-priority thing not yet found" gating)
+              and Explore the Map/Feeling Lucky had already moved onto the
+              curve above (2026-09-02), this whole stack could render
+              completely empty: sectionDivider, then nothing. Never a
+              call-to-action or a summary of what's above — just a plain
+              permission to leave, same register as firstReadingCopy
+              ("whatever you're feeling right now is information, not a
+              problem to fix"): no diagnosis, no "you should," nothing
+              claimed about this specific person's state. */}
+          <Text style={styles.closingLine}>{t("depths.closingLine")}</Text>
+
+          {/* Explore the map / Feeling Lucky moved onto the curve itself
+              (2026-09-02, see actionSpiralPoints' own comment) — no
+              longer separate wideMenuRow rows here. */}
+
+          {/* Bottom energy spirals — commented out for now (2026-08-30),
+              pending further review; kept intact (bottomEnergyWrap style,
+              the PhilosopherEnergy import) so this is a one-line restore.
+              Was meant to bookend PhilosopherPresence's own descending
+              spirals at the top of the page — same motif, flipped to rise
+              rather than descend. See PhilosopherEnergy's own header
+              comment. */}
+          {/* {philosopher && (
+            <View style={styles.bottomEnergyWrap} pointerEvents="none">
+              <PhilosopherEnergy
+                seed={philosopher.id}
+                width={SCREEN_WIDTH}
+                height={38}
+                color={`rgb(${accentRgb})`}
+                spiralCount={9}
+                direction="up"
+              />
+            </View>
+          )} */}
         </View>
       </ScrollView>
 
-      <LinearGradient
-        colors={[colors.bg.base, hexToRgba(colors.bg.base, 0)]}
-        style={[styles.topFade, { height: insets.top + spacing[8] }]}
-        pointerEvents="none"
-      />
+      {/* topFade (the gradient that used to cover content sliding under
+          the status bar/notch from behind) was removed 2026-09-01, once
+          the fixed/scroll split landed: the kicker/quote/aura now live in
+          fixedZone, which never scrolls — nothing slides up under the
+          status bar from behind it anymore (fixedZone's own paddingTop
+          already reserves the safe-area inset as static space, not
+          scroll content that could pass underneath it). scrollZone's own
+          content starts BELOW fixedZone's bottom edge, nowhere near the
+          notch, so there's nothing left for a top fade to cover. */}
 
       {/* Only opaque when arriving fresh from Measure — see entryFade's
           own comment. Sits above everything (including topFade), covering
           the whole screen on the very first frame, then fades away to
           complete the beat of stillness interview.tsx's own exit fade
           started. */}
-      <Animated.View style={[styles.entryFade, entryFadeStyle]} pointerEvents="none" />
+      <Animated.View
+        style={[styles.entryFade, entryFadeStyle]}
+        pointerEvents="none"
+      />
     </View>
   );
 }
@@ -983,6 +1593,7 @@ function AuraArrival({
   neutralAura,
   settledAura,
   selectedSphere,
+  geometry,
 }: {
   arriving: boolean;
   // Flips true on a tap anywhere on the reveal (see the wrapping Pressable
@@ -1001,9 +1612,18 @@ function AuraArrival({
   neutralAura: React.ReactNode;
   settledAura: React.ReactNode;
   selectedSphere: SphereKey | null;
+  // 2026-09-02 — the live (possibly shrunk) geometry, threaded down from
+  // the screen's own useMemo rather than read off a module constant, so
+  // the ring/aura genuinely resize on a short screen (see
+  // buildDepthsGeometry's own header comment for why a CSS transform
+  // could not do this instead).
+  geometry: DepthsGeometry;
 }) {
   const colors = useThemeColors();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(
+    () => makeStyles(colors, geometry),
+    [colors, geometry],
+  );
   // Unlike the other progress values, anticipation has no "settled" state
   // to hold at — it's a one-shot dip that always starts and ends at 0,
   // whether or not arriving is true, so a non-arriving render never
@@ -1036,10 +1656,16 @@ function AuraArrival({
   const colorBody = useSharedValue(arriving ? 0 : 1);
   const colorSpirit = useSharedValue(arriving ? 0 : 1);
   const growValues: Record<SphereKey, SharedValue<number>> = {
-    heart: growHeart, mind: growMind, body: growBody, spirit: growSpirit,
+    heart: growHeart,
+    mind: growMind,
+    body: growBody,
+    spirit: growSpirit,
   };
   const colorValues: Record<SphereKey, SharedValue<number>> = {
-    heart: colorHeart, mind: colorMind, body: colorBody, spirit: colorSpirit,
+    heart: colorHeart,
+    mind: colorMind,
+    body: colorBody,
+    spirit: colorSpirit,
   };
   const doneTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -1058,7 +1684,7 @@ function AuraArrival({
       growValues[key].value = withDelay(
         i * RING_GROW_STAGGER_MS,
         buildRingGrowSequence(sphereScores[key], () => {
-          if (Platform.OS !== 'web') runOnJS(fireTickHaptic)();
+          if (Platform.OS !== "web") runOnJS(fireTickHaptic)();
         }),
       );
     });
@@ -1073,20 +1699,30 @@ function AuraArrival({
     anticipation.value = withDelay(
       ALL_RINGS_GROWN_MS,
       withSequence(
-        withTiming(1, { duration: ANTICIPATION_DURATION_MS * 0.6, easing: Easing.in(Easing.quad) }),
-        withTiming(0, { duration: ANTICIPATION_DURATION_MS * 0.4, easing: Easing.out(Easing.quad) }),
+        withTiming(1, {
+          duration: ANTICIPATION_DURATION_MS * 0.6,
+          easing: Easing.in(Easing.quad),
+        }),
+        withTiming(0, {
+          duration: ANTICIPATION_DURATION_MS * 0.4,
+          easing: Easing.out(Easing.quad),
+        }),
       ),
     );
     RING_ORDER.forEach((key, i) => {
       const isLast = i === RING_ORDER.length - 1;
       colorValues[key].value = withDelay(
         COLOR_START_MS + i * RING_COLOR_STAGGER_MS,
-        withTiming(1, { duration: RING_COLOR_DURATION_MS, easing: SOFT_EASE }, (finished) => {
-          if (!finished || Platform.OS === 'web') return;
-          // Soft tick as each ring settles into color; a firmer one at
-          // the last ring, marking the whole picture as complete.
-          runOnJS(isLast ? fireSettleHaptic : fireTickHaptic)();
-        }),
+        withTiming(
+          1,
+          { duration: RING_COLOR_DURATION_MS, easing: SOFT_EASE },
+          (finished) => {
+            if (!finished || Platform.OS === "web") return;
+            // Soft tick as each ring settles into color; a firmer one at
+            // the last ring, marking the whole picture as complete.
+            runOnJS(isLast ? fireSettleHaptic : fireTickHaptic)();
+          },
+        ),
       );
     });
 
@@ -1101,7 +1737,10 @@ function AuraArrival({
       COLOR_START_MS,
       withTiming(1, { duration: COLOR_SETTLE_DURATION_MS, easing: SOFT_EASE }),
     );
-    doneTimerRef.current = setTimeout(onSettled, CONTENT_DELAY_MS + CONTENT_DURATION_MS * 0.3);
+    doneTimerRef.current = setTimeout(
+      onSettled,
+      CONTENT_DELAY_MS + CONTENT_DURATION_MS * 0.3,
+    );
     return () => {
       if (doneTimerRef.current) clearTimeout(doneTimerRef.current);
     };
@@ -1117,8 +1756,13 @@ function AuraArrival({
   useEffect(() => {
     if (!skip) return;
     if (doneTimerRef.current) clearTimeout(doneTimerRef.current);
-    [anticipation, bodyProgress, colorProgress, ...RING_ORDER.map((k) => growValues[k]), ...RING_ORDER.map((k) => colorValues[k])]
-      .forEach((v) => cancelAnimation(v));
+    [
+      anticipation,
+      bodyProgress,
+      colorProgress,
+      ...RING_ORDER.map((k) => growValues[k]),
+      ...RING_ORDER.map((k) => colorValues[k]),
+    ].forEach((v) => cancelAnimation(v));
     anticipation.value = 0;
     bodyProgress.value = 1;
     colorProgress.value = 1;
@@ -1142,27 +1786,38 @@ function AuraArrival({
     transform: [
       { perspective: 600 },
       { translateY: (1 - bodyProgress.value) * 36 + anticipation.value * 4 },
-      { scale: (0.5 + bodyProgress.value * 0.5) * (1 - anticipation.value * 0.08) },
+      {
+        scale:
+          (0.5 + bodyProgress.value * 0.5) * (1 - anticipation.value * 0.08),
+      },
       { rotateY: `${(1 - bodyProgress.value) * 100}deg` },
     ],
   }));
-  const neutralStyle = useAnimatedStyle(() => ({ opacity: 1 - colorProgress.value }));
+  const neutralStyle = useAnimatedStyle(() => ({
+    opacity: 1 - colorProgress.value,
+  }));
   // Neutral and settled images crossfade — the level-colored version fades
   // in exactly as the neutral one fades out.
-  const settledStyle = useAnimatedStyle(() => ({ opacity: colorProgress.value }));
+  const settledStyle = useAnimatedStyle(() => ({
+    opacity: colorProgress.value,
+  }));
 
   return (
     <View style={styles.ringWrap}>
       <AnimatedAuraField
-        size={AURA_DISPLAY_SIZE}
+        size={geometry.auraDisplaySize}
         colors={ringOnlySlugs}
         selectedSphere={selectedSphere}
         growValues={growValues}
         colorValues={colorValues}
       />
       <Animated.View style={[styles.auraArrivalBody, bodyStyle]}>
-        <Animated.View style={[styles.auraArrivalLayer, neutralStyle]}>{neutralAura}</Animated.View>
-        <Animated.View style={[styles.auraArrivalLayer, settledStyle]}>{settledAura}</Animated.View>
+        <Animated.View style={[styles.auraArrivalLayer, neutralStyle]}>
+          {neutralAura}
+        </Animated.View>
+        <Animated.View style={[styles.auraArrivalLayer, settledStyle]}>
+          {settledAura}
+        </Animated.View>
       </Animated.View>
     </View>
   );
@@ -1222,10 +1877,17 @@ function buildRingGrowSequence(score: number, onDone: () => void) {
   return withSequence(
     ...steps.map((target, i) =>
       i === steps.length - 1
-        ? withTiming(target, { duration: legDuration, easing: Easing.out(Easing.quad) }, (finished) => {
-            if (finished) runOnJS(onDone)();
-          })
-        : withTiming(target, { duration: legDuration, easing: Easing.inOut(Easing.quad) }),
+        ? withTiming(
+            target,
+            { duration: legDuration, easing: Easing.out(Easing.quad) },
+            (finished) => {
+              if (finished) runOnJS(onDone)();
+            },
+          )
+        : withTiming(target, {
+            duration: legDuration,
+            easing: Easing.inOut(Easing.quad),
+          }),
     ),
   );
 }
@@ -1243,12 +1905,20 @@ function AnimatedAuraField({
   growValues: Record<SphereKey, SharedValue<number>>;
   colorValues: Record<SphereKey, SharedValue<number>>;
 }) {
-  const { svgWidth, svgHeight, svgCenterX, svgCenterY, groundUpOffset, ryFor, rxFor } = buildAuraFieldGeometry(size);
+  const {
+    svgWidth,
+    svgHeight,
+    svgCenterX,
+    svgCenterY,
+    groundUpOffset,
+    ryFor,
+    rxFor,
+  } = buildAuraFieldGeometry(size);
   return (
     <Svg
       width={svgWidth}
       height={svgHeight}
-      style={{ position: 'absolute', bottom: groundUpOffset - svgHeight / 2 }}
+      style={{ position: "absolute", bottom: groundUpOffset - svgHeight / 2 }}
       pointerEvents="none"
     >
       {RING_ORDER.map((key, i) => {
@@ -1405,14 +2075,27 @@ function ArrivalReveal({
 function AuraWithDots({
   source,
   overlay = false,
+  geometry,
 }: {
   source: number;
   overlay?: boolean;
+  // 2026-09-02 — see AuraArrival's own `geometry` prop comment: the aura
+  // image's own box must genuinely shrink on a short screen, not just
+  // get visually squashed by a parent transform, so its size now comes
+  // from the live geometry object rather than a fixed module constant.
+  geometry: DepthsGeometry;
 }) {
   const colors = useThemeColors();
-  const styles = useMemo(() => makeStyles(colors), [colors]);
+  const styles = useMemo(
+    () => makeStyles(colors, geometry),
+    [colors, geometry],
+  );
+  const AURA_METRICS = geometry.auraMetrics;
   return (
-    <View style={[styles.auraWrap, overlay && styles.auraWrapOverlay]} pointerEvents="none">
+    <View
+      style={[styles.auraWrap, overlay && styles.auraWrapOverlay]}
+      pointerEvents="none"
+    >
       <View style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}>
         <Image
           source={source}
@@ -1424,390 +2107,403 @@ function AuraWithDots({
   );
 }
 
-function makeStyles(colors: Colors) {
+function makeStyles(colors: Colors, geometry: DepthsGeometry) {
+  const CORE_GEOMETRY = geometry.core;
+  const MENU_GEOMETRY = geometry.menu;
+  const AURA_METRICS = geometry.auraMetrics;
   return StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.bg.base,
-  },
-  // Absolutely fills the same area ringWrap occupies (see ringWrap's own
-  // `top` computed from groundY) rather than sizing itself from normal
-  // flow — ringWrap is itself absolutely positioned now (the aura sits at
-  // the base of a much taller composition, not centered in it), so
-  // without this the Pressable's own hit area would collapse to nothing.
-  // Sized to the AURA IMAGE's own height (not the ring's — the ring is
-  // now a small flat ellipse anchored at the feet, always smaller than
-  // the standing figure it surrounds), with its BOTTOM edge — not its
-  // center — pinned to groundY, so the aura's own feet land on the
-  // ground the ring/cone are also built from, and the figure stands
-  // normally above that line rather than being bisected by it.
-  arrivalSkipWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_METRICS.height,
-    height: AURA_METRICS.height,
-    alignItems: 'center',
-  },
-  // Pre-reading branch's own equivalent of arrivalSkipWrap/ringWrap — no
-  // AuraArrival/AnimatedAuraField here (nothing to animate in before a
-  // first reading exists), just AuraWithDots pinned to the same groundY
-  // so both branches' aura lands at the identical point the spiral's own
-  // base ellipse is built from.
-  groundWrap: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: DEPTHS_COMPOSITION_GEOMETRY.groundY - AURA_METRICS.height,
-    height: AURA_METRICS.height,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  // Shared positioning parent for both branches' aura + the spiral
-  // overlay — sized to the spiral's own canvas so spiralOverlay (below)
-  // can center within it and land on the exact same point the aura
-  // itself is centered on, by construction rather than measurement.
-  auraSpiralWrap: {
-    width: DEPTHS_COMPOSITION_GEOMETRY.width,
-    height: DEPTHS_COMPOSITION_GEOMETRY.totalHeight,
-    alignSelf: 'center',
-    // Gives the topmost point's label (Measure, at the apex) real
-    // breathing room from the kicker row above — spacing[8] alone still
-    // read as crowded on-device once the composition moved to its current
-    // taller/3-turn form, so this is more generous than the original
-    // single-turn version needed.
-    marginTop: spacing[12],
-    // Negative — auraSpiralWrap's own height reserves the FULL rising-cone
-    // canvas (SPIRAL_TOTAL_HEIGHT), but the aura/rings only occupy the
-    // bottom portion of it (they sit at groundY, well above the box's own
-    // bottom edge) — so a positive margin here stacks on top of dead
-    // space that's already baked into the box, not on top of visible
-    // content. On-device this read as the level name floating far below
-    // the rings rather than sitting near them (see collaboration notes).
-    // Pulls the level name up to sit close to the rings instead.
-    marginBottom: -spacing[10],
-  },
-  // Fills the whole tall wrapper — DepthsSpiral's own width/height match
-  // this exactly, so its base ellipse lands at
-  // DEPTHS_COMPOSITION_GEOMETRY.groundY by construction, not by measuring
-  // this View. No alignItems/justifyContent centering here (unlike the
-  // old flat/square version): the cone is NOT vertically centered in this
-  // box, it rises from the bottom, so centering would float it wrong.
-  spiralOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  content: {
-    paddingHorizontal: spacing[6],
-    paddingBottom: spacing[12],
-  },
-  topFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-  },
-  entryFade: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.bg.base,
-  },
-  kickerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  kicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
-  tabExplainer: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[2],
-  },
-  // Relocated here (2026-08-28) from beside the top kicker, where it was
-  // sitting in the same corner ProfileIcon now occupies. Still chrome —
-  // same faint weight as before, just under the sphere buttons instead of
-  // up top, in a part of the screen nothing else claims.
-  readingTimestamp: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
-    marginTop: spacing[4],
-  },
-  sectionDivider: {
-    height: 1,
-    backgroundColor: colors.bg.border,
-    marginTop: spacing[10],
-    marginBottom: spacing[8],
-  },
-  // A sentence, styled like one — warm ivory (AURA_NEUTRAL_COLOR, the same
-  // tone onboarding uses for "you feel" / "is an experience" before any
-  // reading gives the app its accent color) rather than colors.text's
-  // lavender-tinted gray, so this line reads as continuous with the first
-  // screens instead of the app's generic UI-chrome color.
-  lastReadingLabel: {
-    color: AURA_NEUTRAL_COLOR,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginTop: spacing[2],
-  },
-  // Absolutely positioned over the ring (ringWrap's own center), not laid
-  // out beside it — the figure sits INSIDE the ring, not next to it.
-  auraWrap: { alignItems: 'center', marginVertical: spacing[8] },
-  // Only applied when layered over ringWrap's ring — see AuraWithDots'
-  // `overlay` prop. Fills and centers within the nearest positioned
-  // ancestor rather than relying on inherited flex centering from
-  // whatever wraps it — AuraArrival nests this inside extra Animated.View
-  // layers for the arrival animation, none of which set alignItems, so a
-  // bare `position: absolute` (no top/left/right/bottom) previously left
-  // it pinned to its flex-computed position in an unpositioned ancestor
-  // instead of centered, which is what put the aura in the wrong place.
-  auraWrapOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // The animated body wrapper AuraArrival scales/fades/rotates as a whole —
-  // fills and centers over the ring the same way auraWrapOverlay does, so
-  // its own children (the neutral/settled aura layers) have a positioning
-  // context to resolve against.
-  auraArrivalBody: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Stacks the settled (level-colored) aura directly on top of the neutral
-  // one during arrival, both filling/centering over auraArrivalBody, so
-  // crossfading their opacity reads as one figure changing color rather
-  // than two figures swapping places.
-  auraArrivalLayer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  // Deliberately not styled as a heading — this is the philosopher speaking,
-  // a reflection to read, not a screen title to scan. Lighter weight and
-  // smaller size than a real title (see lastReadingLabel/kicker above it)
-  // keeps it quiet and personal rather than declarative — a large bold
-  // headline here read as closer to a verdict than a reflection.
-  title: {
-    color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
-    marginTop: spacing[6],
-  },
-  // Stay/Understand/Shift — a new layer beneath the aura+spiral, not a
-  // card (per aesthetic.md's "no cards" rule) — space and typography
-  // alone separate this section from the headline above it.
-  intentionSection: {
-    marginTop: spacing[10],
-    gap: spacing[5],
-  },
-  intentionPrompt: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  // Three peer choices — equal weight, per RULES.md's "never implies a
-  // vibration/method is better than another" rule applied to regulation
-  // methods, not just states. Stacked in one column (2026-08-28, was a
-  // wrapping row) — three rows read as three genuinely separate choices
-  // to weigh in turn, where a 2-then-1 wrap (the row's own width forced
-  // an uneven break on a real device) read as an accidental layout
-  // glitch rather than a deliberate grouping.
-  intentionRow: {
-    gap: spacing[5],
-  },
-  intentionChoice: {
-    alignSelf: 'flex-start',
-  },
-  intentionChoiceTitle: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-  },
-  intentionChoiceOptions: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[1],
-  },
-  exploreMapLink: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-  },
-  // The ring (AuraField's rings) and the aura share this one center
-  // point — ring renders first so the aura sits visually on top of/
-  // inside it. `position: 'relative'` makes this the positioning context
-  // the aura's `overlay` (position: 'absolute') resolves against —
-  // AuraArrival nests the aura inside two extra Animated.View layers (for
-  // the arrival animation) that carry no positioning of their own, so
-  // without this the "nearest positioned ancestor" search skips straight
-  // past ringWrap to whatever wraps it further up, landing the aura
-  // somewhere else on the page entirely instead of centered on the ring.
-  // Fills its parent (arrivalSkipWrap — sized/positioned so its own
-  // BOTTOM edge lands at DEPTHS_COMPOSITION_GEOMETRY.groundY) rather than
-  // centering within the FULL tall auraSpiralWrap (the old approach,
-  // which would float the aura in the middle of the whole rising-cone
-  // composition instead of at its base). justifyContent 'flex-end' (not
-  // 'center') so the aura image's own bottom edge — its feet — lands
-  // exactly on groundY, with the ring/cone's shared ground plane, rather
-  // than the aura's geometric center landing there and bisecting the
-  // figure.
-  ringWrap: {
-    position: 'relative',
-    width: '100%',
-    height: AURA_METRICS.height,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  // Shown whether or not a sphere button is selected — the overall
-  // reading's name by default, that sphere's own name once tapped — so
-  // this line is never blank and the ring's marker always has a name
-  // agreeing with it right underneath.
-  // Dotted underline, same tap affordance the old per-row wheel rows used
-  // for their level names — this is where that link lives now.
-  ringLevelName: {
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    textAlign: 'center',
-    marginTop: spacing[4],
-    textDecorationLine: 'underline',
-    textDecorationStyle: 'dotted',
-    textDecorationColor: colors.text.muted,
-  },
-  // Fixed height (not just content-sized) so this row always occupies the
-  // same space whether or not selectedSphere is set — see the JSX's own
-  // comment for why this stopped the sphere buttons below from shifting
-  // down each time a sphere was tapped.
-  sphereTalkLinkWrap: {
-    height: 20,
-    marginTop: spacing[2],
-    justifyContent: 'center',
-  },
-  // Small and quiet on purpose — a next step you can reach for immediately,
-  // not a second headline competing with the ring/name above it.
-  sphereTalkLink: {
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
-  },
-  // Four equal buttons, not a card each — same "no bordered box to mean
-  // tappable" register as the rest of the app; weight (medium vs light)
-  // and the accent color on the selected one carry the affordance instead.
-  sphereButtonRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing[6],
-    marginTop: spacing[5],
-  },
-  sphereButton: { paddingVertical: spacing[2] },
-  sphereButtonText: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-  },
-  conversationSection: {
-    gap: spacing[2],
-    marginTop: spacing[6],
-    paddingTop: spacing[3],
-    borderTopWidth: 1,
-    borderTopColor: colors.bg.border,
-  },
-  conversationToggle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: spacing[2],
-  },
-  conversationToggleText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
-  conversationChevron: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
-  conversationDetail: { gap: spacing[3] },
-  conversationQA: {
-    gap: spacing[1],
-    padding: spacing[3],
-    borderRadius: radius.md,
-    backgroundColor: colors.bg.elevated,
-  },
-  conversationQuestion: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-  },
-  conversationAnswer: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  // Still used by discoveryNudge/luckyWrap below the spiral.
-  stack: {},
-  discoveryNudge: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-    marginBottom: spacing[4],
-  },
-  discoveryNudgeText: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-  },
-  luckyWrap: {
-    alignItems: 'center',
-    gap: spacing[4],
-  },
-  luckyDivider: {
-    color: colors.text.faint,
-    fontSize: fontSizes.sm,
-    letterSpacing: letterSpacings.wide,
-  },
-  luckyRow: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-  },
-  luckyLabel: {
-    color: colors.text.secondary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.base,
-  },
-  luckyDescription: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    marginTop: spacing[1],
-    textAlign: 'center',
-  },
+    root: {
+      flex: 1,
+      backgroundColor: colors.bg.base,
+    },
+    // 2026-09-01 — the fixed-zone half of the new fixed/scroll split (see
+    // this screen's own render comment). Never scrolls: the kicker,
+    // PhilosopherPresence, the reading's quote, and DepthsSpiralCore's own
+    // canvas (aura + sphere dots + wheel) all live here, permanently on
+    // screen. A plain View, not a ScrollView — height comes from its own
+    // content (the quote's text height plus CORE_GEOMETRY.totalHeight),
+    // same as any normal flex column.
+    fixedZone: {
+      paddingHorizontal: spacing[6],
+      // 2026-09-02 — overflow:hidden so the spiral's own deliberate top
+      // bleed (auraCoreWrap's own negative marginTop, BLEED_AMOUNT_PX)
+      // actually crops at this zone's own visible top edge instead of
+      // just rendering past it uncropped (RN's own default is
+      // overflow:visible). Scoped to fixedZone specifically, not root —
+      // root also contains scrollZone/the tab bar below, which must never
+      // be clipped by this.
+      overflow: "hidden",
+      // A thin line marking the fixed/scroll seam — signals "this part
+      // scrolls" without a generic scroll-indicator widget or a fade at
+      // the edge (the user explicitly didn't want a fade: the curve
+      // itself visibly continues from the scrollable menu up into the
+      // aura's own body, "the source of energy," and a fade would read
+      // as cutting that connection rather than just marking a boundary
+      // it passes through). Same colors.bg.border stroke already used
+      // for the wheel's own ring outline (VibrationSpectrum.tsx) — one
+      // shared thin-line register, not a new one. Deliberately NOT a
+      // gradient/fade — a flat 1px line the curve crosses over, same as
+      // any other line it crosses on its way down.
+      borderBottomWidth: 1,
+      borderBottomColor: colors.bg.border,
+    },
+    // The independently-scrollable bottom zone — DepthsSpiralMenu's own
+    // canvas (action points + top loop), then the timestamp/explore-map/
+    // wish rows, discovery nudge, and Feeling Lucky. flex:1 so it fills
+    // whatever vertical space fixedZone doesn't claim, and scrolls its own
+    // content independently of fixedZone above it.
+    scrollZone: {
+      flex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: spacing[6],
+      paddingBottom: spacing[12],
+    },
+    // Absolutely fills the same area ringWrap occupies (see ringWrap's own
+    // `top` computed from groundY) rather than sizing itself from normal
+    // flow — ringWrap is itself absolutely positioned now (the aura sits at
+    // the base of a much taller composition, not centered in it), so
+    // without this the Pressable's own hit area would collapse to nothing.
+    // Sized to the AURA IMAGE's own height (not the ring's — the ring is
+    // now a small flat ellipse anchored at the feet, always smaller than
+    // the standing figure it surrounds), with its BOTTOM edge — not its
+    // center — pinned to groundY, so the aura's own feet land on the
+    // ground the ring/cone are also built from, and the figure stands
+    // normally above that line rather than being bisected by it.
+    arrivalSkipWrap: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: CORE_GEOMETRY.groundY - AURA_METRICS.height,
+      height: AURA_METRICS.height,
+      alignItems: "center",
+    },
+    // Pre-reading branch's own equivalent of arrivalSkipWrap/ringWrap — no
+    // AuraArrival/AnimatedAuraField here (nothing to animate in before a
+    // first reading exists), just AuraWithDots pinned to the same groundY
+    // so both branches' aura lands at the identical point the spiral's own
+    // base ellipse is built from.
+    groundWrap: {
+      position: "absolute",
+      left: 0,
+      right: 0,
+      top: CORE_GEOMETRY.groundY - AURA_METRICS.height,
+      height: AURA_METRICS.height,
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
+    // Shared positioning parent for both branches' aura + DepthsSpiralCore's
+    // own canvas overlay — sized to that canvas exactly (CORE_GEOMETRY, not
+    // the old full-height DEPTHS_COMPOSITION_GEOMETRY) so spiralOverlay
+    // (below) can center within it and land on the exact same point the
+    // aura itself is centered on, by construction rather than measurement.
+    // Renamed from auraSpiralWrap (2026-09-01) — now specifically the
+    // CORE canvas's own wrapper, distinct from DepthsSpiralMenu's own
+    // menuWrap further down in the scroll zone.
+    // 2026-09-03 — the quote and this canvas now sit in the SAME row (see
+    // this screen's own render comment above the quote), so the top margin
+    // that used to live on auraCoreWrap itself (below) moved up to the row
+    // wrapper instead — it was always "breathing room above this whole
+    // block," not something specific to the canvas, and a row's own two
+    // children need to share one top edge, not each carry their own
+    // separate offset. flexDirection: 'row' with a flexed quote column on
+    // the left and this canvas anchored full-width on the right — width
+    // stays the full canvas width (still needs room for both sphere-label
+    // sides), only its starting Y moved up to align with the quote's own
+    // top instead of stacking below it.
+    readingRow: {
+      position: "relative",
+      marginTop: spacing[2],
+    },
+    auraCoreWrap: {
+      width: CORE_GEOMETRY.width,
+      height: CORE_GEOMETRY.totalHeight,
+      // 2026-09-02 — shifts the WHOLE canvas (curve + wheel + aura) up by
+      // BLEED_AMOUNT_PX so that amount of its own topmost region (the
+      // wheel/curve, since nothing else in this canvas extends that high)
+      // renders past fixedZone's own visible top edge and gets cropped
+      // there (fixedZone now has overflow:'hidden', see its own comment) —
+      // the deliberate "energy extends beyond the app" effect, at the
+      // user's own request. quoteBubbleWrap (the sibling absolutely
+      // positioned over readingRow, top:0) is UNAFFECTED by this — it's
+      // not in the same flow position, so it stays exactly where it is;
+      // only this canvas moves. Paired with the onLayout measurement fix
+      // above (naturalContentHeight subtracts this same amount) so the
+      // shrink-to-fit mechanism doesn't fight this by shrinking everything
+      // else to compensate.
+      marginTop: -BLEED_AMOUNT_PX,
+      // Negative — auraCoreWrap's own height reserves the full CORE canvas
+      // (CORE_GEOMETRY.totalHeight), but nothing ever renders below the
+      // aura's own feet (groundY) — no h<0 content exists — so everything
+      // from groundY down to the canvas's own bottom edge is genuinely
+      // empty, reclaimable space, not visible content this margin could
+      // clip. Was -spacing[10] (partial reclaim, tuned pre-split when the
+      // canvas held the WHOLE h∈[0,H_MAX] curve and this space was cheap to
+      // leave alone); widened to reclaim the full empty span
+      // (2026-09-01, fixed/scroll split) because fixedZone can no longer
+      // scroll — every pixel of true dead space left in its own canvas is
+      // now permanently-visible screen real estate taken away from
+      // scrollZone below, confirmed on-device (an 844pt-tall viewport left
+      // scrollZone with under 30px of visible height without this).
+      marginBottom: -(CORE_GEOMETRY.totalHeight - CORE_GEOMETRY.groundY - 5),
+    },
+    // Fills the whole tall wrapper — DepthsSpiralCore's own width/height
+    // match this exactly, so its base ellipse lands at
+    // CORE_GEOMETRY.groundY by construction, not by measuring this View. No
+    // alignItems/justifyContent centering here (unlike the old flat/square
+    // version): the cone is NOT vertically centered in this box, it rises
+    // from the bottom, so centering would float it wrong.
+    spiralOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+    },
+    // DepthsSpiralMenu's own wrapper — the first thing in scrollZone's
+    // content, sized to MENU_GEOMETRY exactly so the seam-continuity math
+    // (see MENU_GEOMETRY's own chestY comment) holds: no extra
+    // margin/padding above this View, so it renders flush against
+    // auraCoreWrap's own bottom edge at scroll position 0.
+    menuWrap: {
+      width: MENU_GEOMETRY.width,
+      height: MENU_GEOMETRY.height,
+      alignSelf: "center",
+    },
+    entryFade: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.bg.base,
+    },
+    kickerRow: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    kicker: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: "uppercase",
+    },
+    // Relocated here (2026-08-28) from beside the top kicker, where it was
+    // sitting in the same corner ProfileIcon now occupies. Still chrome —
+    // same faint weight as before, just under the sphere buttons instead of
+    // up top, in a part of the screen nothing else claims.
+    // 2026-09-03 — was centered, full device width, its own line directly
+    // above readingRow (a real cost: a whole line height of vertical space
+    // for a short faint date, confirmed as visible "extra empty space" on
+    // real device). Now sits inside quoteBubbleWrap itself, above the
+    // quote text, in the same left-aligned column — no more marginTop
+    // (readingRow's own marginTop already provides the gap above this
+    // whole block; a second top margin here would just re-add space back).
+    readingTimestamp: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+    },
+    sectionDivider: {
+      height: 1,
+      backgroundColor: colors.bg.border,
+      marginTop: spacing[10],
+      marginBottom: spacing[8],
+    },
+    // A sentence, styled like one — warm ivory (AURA_NEUTRAL_COLOR, the same
+    // tone onboarding uses for "you feel" / "is an experience" before any
+    // reading gives the app its accent color) rather than colors.text's
+    // lavender-tinted gray, so this line reads as continuous with the first
+    // screens instead of the app's generic UI-chrome color.
+    lastReadingLabel: {
+      color: AURA_NEUTRAL_COLOR,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
+      marginTop: spacing[2],
+    },
+    // Absolutely positioned over the ring (ringWrap's own center), not laid
+    // out beside it — the figure sits INSIDE the ring, not next to it.
+    auraWrap: { alignItems: "center", marginVertical: spacing[8] },
+    // Only applied when layered over ringWrap's ring — see AuraWithDots'
+    // `overlay` prop. Fills and centers within the nearest positioned
+    // ancestor rather than relying on inherited flex centering from
+    // whatever wraps it — AuraArrival nests this inside extra Animated.View
+    // layers for the arrival animation, none of which set alignItems, so a
+    // bare `position: absolute` (no top/left/right/bottom) previously left
+    // it pinned to its flex-computed position in an unpositioned ancestor
+    // instead of centered, which is what put the aura in the wrong place.
+    auraWrapOverlay: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    // The animated body wrapper AuraArrival scales/fades/rotates as a whole —
+    // fills and centers over the ring the same way auraWrapOverlay does, so
+    // its own children (the neutral/settled aura layers) have a positioning
+    // context to resolve against.
+    auraArrivalBody: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    // Stacks the settled (level-colored) aura directly on top of the neutral
+    // one during arrival, both filling/centering over auraArrivalBody, so
+    // crossfading their opacity reads as one figure changing color rather
+    // than two figures swapping places.
+    auraArrivalLayer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    // 2026-09-02 — a flat left-side column again, not full-width and not
+    // derived from the wheel's own exact geometry (that fragile
+    // wheelLeftEdge/quoteColumnWidth math was removed once the wheel
+    // stopped sharing horizontal space with the quote at all — see the
+    // wheel's own bleed, DepthsSpiralCore.tsx's wheelPos comment). Full-
+    // width read wrong regardless of the wheel not overlapping it — the
+    // user's own request: the quote should stay confined to the screen's
+    // LEFT side so it reads as its own contained block, not sprawl edge-
+    // to-edge. A plain, static percentage (tuned by the user directly to
+    // 45%) — no per-render computation, no dependency on wheel size/
+    // position.
+    quoteBubbleWrap: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      width: "45%",
+      alignItems: "flex-start",
+      justifyContent: "flex-start",
+    },
+    // Deliberately not styled as a heading — this is the philosopher speaking,
+    // a reflection to read, not a screen title to scan. Lighter weight and
+    // smaller size than a real title (see lastReadingLabel/kicker above it)
+    // keeps it quiet and personal rather than declarative — a large bold
+    // headline here read as closer to a verdict than a reflection.
+    // 2026-09-03 — was fontSizes.sm (14px). Shrunk one more step (the user's
+    // own framing: "the quote doesn't need to be bold and the font size can
+    // be smaller") to free real horizontal room in the quote's own column —
+    // this is part of making space for the reading's date to sit in the gap
+    // between the quote and the wheel, without narrowing the column itself
+    // (a real column-width cut was the other option considered, but this
+    // reads as gentler: same words fit in less width at a smaller size,
+    // rather than the same size wrapping onto more lines in a tighter box).
+    title: {
+      color: colors.text.primary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      lineHeight: fontSizes.xs * lineHeights.normal,
+      marginTop: spacing[2],
+    },
+    // The ring (AuraField's rings) and the aura share this one center
+    // point — ring renders first so the aura sits visually on top of/
+    // inside it. `position: 'relative'` makes this the positioning context
+    // the aura's `overlay` (position: 'absolute') resolves against —
+    // AuraArrival nests the aura inside two extra Animated.View layers (for
+    // the arrival animation) that carry no positioning of their own, so
+    // without this the "nearest positioned ancestor" search skips straight
+    // past ringWrap to whatever wraps it further up, landing the aura
+    // somewhere else on the page entirely instead of centered on the ring.
+    // Fills its parent (arrivalSkipWrap — sized/positioned so its own
+    // BOTTOM edge lands at CORE_GEOMETRY.groundY) rather than centering
+    // within the FULL tall auraCoreWrap (the old approach, which would
+    // float the aura in the middle of the whole rising-cone composition
+    // instead of at its base). justifyContent 'flex-end' (not
+    // 'center') so the aura image's own bottom edge — its feet — lands
+    // exactly on groundY, with the ring/cone's shared ground plane, rather
+    // than the aura's geometric center landing there and bisecting the
+    // figure.
+    ringWrap: {
+      position: "relative",
+      width: "100%",
+      height: AURA_METRICS.height,
+      alignItems: "center",
+      justifyContent: "flex-end",
+    },
+    // Still used by discoveryNudge/the wide menu rows below the spiral. position:
+    // relative so bottomEnergyWrap (below) can break out to the full
+    // screen width rather than being clipped to content's own padding.
+    stack: { position: "relative" },
+    // Breaks out of content's paddingHorizontal (spacing[6]) the same way
+    // PhilosopherPresence's own energyWrap does at the top of the page —
+    // the spirals should span the full device width, not just luckyWrap's
+    // own narrow column.
+    bottomEnergyWrap: {
+      position: "relative",
+      left: -spacing[6],
+      width: SCREEN_WIDTH,
+      marginTop: spacing[6],
+    },
+    discoveryNudge: {
+      alignItems: "center",
+      paddingVertical: spacing[3],
+      marginBottom: spacing[4],
+    },
+    discoveryNudgeText: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      textAlign: "center",
+    },
+    // 2026-09-03 — the closing line after sectionDivider. faint, not
+    // muted — quieter than discoveryNudgeText above (which is a real,
+    // occasionally-tappable row) since this is pure stillness, nothing to
+    // act on. Generous paddingVertical gives it real presence as an
+    // ending rather than reading as one more compressed row.
+    closingLine: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontStyle: "italic",
+      fontSize: fontSizes.sm,
+      textAlign: "center",
+      paddingVertical: spacing[6],
+    },
+    // The unified action-menu row style, in normal document flow below the
+    // spiral (2026-09-02) — Explore the map / Feeling lucky both use this.
+    // Left-aligned and same label/description size relationship the old
+    // centered luckyLabel/luckyDescription used (base/sm), just re-aligned
+    // to match the curve's own action rows (Stay with it/etc.) rather than
+    // reading as a smaller, centered footer — the deliberate "same weight,
+    // second group" hierarchy this pass introduced (see this block's own
+    // header comment above).
+    wideMenuRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: spacing[4],
+      paddingVertical: spacing[3],
+    },
+    // Text column — was the row's own direct children before the row
+    // became flexDirection:'row' to make space for DepthsMenuSymbol at the
+    // trailing edge (2026-09-02); wrapping label+description in their own
+    // flexed column keeps them left-aligned and lets the icon claim a
+    // fixed slot on the right without the text stretching to fill it.
+    wideMenuText: {
+      flex: 1,
+    },
+    wideMenuLabel: {
+      color: colors.text.secondary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.base,
+    },
+    wideMenuDescription: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      marginTop: spacing[1],
+    },
   });
 }

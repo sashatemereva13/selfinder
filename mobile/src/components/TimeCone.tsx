@@ -1,6 +1,16 @@
 import { useMemo, useRef } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import Svg, { Defs, LinearGradient, Stop, Ellipse as SvgEllipse, Line, Circle as SvgCircle } from 'react-native-svg';
+import Svg, {
+  Defs,
+  LinearGradient,
+  Stop,
+  Ellipse as SvgEllipse,
+  Line,
+  Circle as SvgCircle,
+  Path,
+  Text as SvgText,
+  TextPath,
+} from 'react-native-svg';
 import { useThemeColors } from '../theme/useThemeColors';
 import { fonts, fontSizes, letterSpacings } from '../theme/typography';
 
@@ -58,6 +68,28 @@ export interface TimeConePoint {
 // remembered moment). The vertex where they meet is "here and now."
 const RIM_RY_RATIO = 0.32; // ellipse foreshortening — matches AuraField's own "wide and flat, viewed from an angle" ratio family
 
+// "Eternal now" plane sizing (showEternalNowPlane) — wider than the
+// cone's own base (baseRx) so it visibly extends past the silhouette on
+// both sides, matching the reference light-cone diagram's own "space"
+// axis reading past the cone. Requires the caller to also pass a wider
+// canvasWidth (see that prop's own comment) — without it this gets
+// clipped by the SVG canvas edge, confirmed live (2026-09-05).
+//
+// 2026-09-05 (follow-up: "too subtle, make it more visible... looking at
+// it from above"): rounder than the rim ellipses' own foreshortening
+// (RIM_RY_RATIO=0.32) rather than flatter — a plane viewed nearly
+// straight-on (from above, looking down its own normal) foreshortens
+// LESS than a rim viewed edge-on, not more; the original 0.14 (flatter
+// than the rims) was reading as a near-invisible sliver for exactly that
+// reason. Opacity bumped to fully opaque (1) at the same time — the
+// previous 0.8 combined with the ambient backdrop's own container-level
+// opacity (see ArcLinePage's coneBackdrop) was reading as barely there.
+const PLANE_RX_RATIO = 1.35;
+const PLANE_RY_RATIO = 0.55;
+
+// See curvedLabelPadding's own comment below for what this is for.
+const CURVED_LABEL_PADDING = fontSizes.xs * 1.5;
+
 // coneHeight used to be derived purely from baseRx (width/2 * 1.15),
 // entirely independent of the `height` prop actually given to the SVG —
 // confirmed live on a real device (2026-08-19) that this clipped both rim
@@ -87,6 +119,72 @@ export function buildTimeConeGeometry(width: number, height: number) {
   const pastRimY = vertexY + coneHeight;
 
   return { centerX, vertexY, baseRx, baseRy, coneHeight, futureRimY, pastRimY };
+}
+
+// Traces a SHORT arc across the TOP-center of an ellipse — from a point
+// partway up-left of top-dead-center to the mirrored point up-right of
+// it — rather than the whole ellipse. Explicitly left-to-right by
+// construction (the path's own literal start/end points, not an inferred
+// midpoint), so TextPath's startOffset="0%" is unambiguous: the actual
+// start of the path, not a computed fraction that depends on how many
+// arc segments came before it or which way a sweep flag bends.
+//
+// 2026-09-06 rewrite: the previous version built the FULL ellipse as two
+// 180° `A` commands and located "top-center" via startOffset="25%"
+// (documented in this function's own prior comment as "confirmed on
+// web"). Confirmed live ON DEVICE (2026-09-06) that native rendered that
+// same path/offset with the label mirrored/reversed — react-native-svg's
+// native (Fabric) TextPath implementation evidently resolves the
+// sweep-flag/arc-direction differently from its web fallback for a path
+// this shape, even though the `d` string itself follows the SVG spec
+// unambiguously. Rather than chase a platform-specific sweep-flag fix
+// blind (no way to screenshot-verify native from here), this sidesteps
+// the ambiguity entirely: a single, short, explicitly left-to-right arc
+// with nothing before it in the path removes every place a
+// direction-interpretation difference could hide.
+//
+// ARC_SPAN_RATIO controls how far around the ellipse (in each direction
+// from top-center) the arc reaches — small enough that a short kicker
+// label fits without wrapping most of the way around, wide enough that
+// letters aren't crammed.
+const ARC_SPAN_RATIO = 1.45;
+
+// centerAngle (radians, 0 = top-dead-center, positive = toward the right)
+// lets a caller slide the arc's own middle away from top-center — used
+// by the plane's label (see its own call site) to land the arc off to
+// the right side, clear of ArcLinePage's quote text which sits centered
+// on this same ellipse. spanRatio overrides ARC_SPAN_RATIO per call —
+// the plane's own label ("the eternal now") needs a NARROWER span than
+// the default: widening the shared span enough to fit the future/past
+// rim's longer labels (see ARC_SPAN_RATIO's own comment) pushed the
+// plane's centerAngle needed to still clear the quote text far enough
+// around the ellipse that the label started reading vertically instead
+// of horizontally (confirmed live 2026-09-06) — a shorter span lets it
+// stay both clear of the quote AND close enough to top-center to read
+// roughly horizontally.
+function topArcPathD(cx: number, cy: number, rx: number, ry: number, centerAngle = 0, spanRatio = ARC_SPAN_RATIO): string {
+  const startAngle = centerAngle - spanRatio;
+  const endAngle = centerAngle + spanRatio;
+  const startX = cx + rx * Math.sin(startAngle);
+  const startY = cy - ry * Math.cos(startAngle);
+  const endX = cx + rx * Math.sin(endAngle);
+  const endY = cy - ry * Math.cos(endAngle);
+  return `M ${startX} ${startY} A ${rx} ${ry} 0 0 1 ${endX} ${endY}`;
+}
+
+// Same short arc, across the BOTTOM-center of the ellipse instead — for
+// a label meant to sit along a shape's underside (the past rim's own
+// front-facing curve) rather than its top. Endpoints below cy, sweep
+// flag flipped so the arc still bows outward (away from center) along
+// the bottom rather than caving inward.
+function bottomArcPathD(cx: number, cy: number, rx: number, ry: number, centerAngle = 0, spanRatio = ARC_SPAN_RATIO): string {
+  const startAngle = centerAngle - spanRatio;
+  const endAngle = centerAngle + spanRatio;
+  const startX = cx + rx * Math.sin(startAngle);
+  const startY = cy + ry * Math.cos(startAngle);
+  const endX = cx + rx * Math.sin(endAngle);
+  const endY = cy + ry * Math.cos(endAngle);
+  return `M ${startX} ${startY} A ${rx} ${ry} 0 0 0 ${endX} ${endY}`;
 }
 
 // Maps a normalized point (depth 0..1, angle 0..1 turns) onto one cone's
@@ -122,6 +220,46 @@ interface TimeConeProps {
   // still opens the full detail. Same past-points-only scope as
   // onPointPress — see that prop's own comment.
   onPointLongPress?: (id: string) => void;
+  // Suppresses the built-in "now" label (2026-09-05, ArcLinePage's
+  // ambient-background use of this component) — that page renders its
+  // own "WHERE YOU ARE" label at the same vertex position as part of its
+  // own zone copy, so the internal one would sit on top of/overlap it.
+  // Defaults to shown (false) so TimeConePage's own usage is unaffected.
+  hideNowLabel?: boolean;
+  // Draws a wide, flat ellipse through the vertex, extending past the
+  // cone's own silhouette on both sides (2026-09-05, ArcLinePage's
+  // ambient use) — the classic "light cone" diagram's horizontal
+  // space/"eternal now" plane cutting through past and future, which is
+  // what actually reads as a 3D double-cone rather than a flat hourglass
+  // outline (a plain two-triangle wireframe has no cue that the vertex is
+  // a real cross-section, not just where two lines happen to meet).
+  // Opt-in, default off, so TimeConePage's own real-data usage (dense
+  // with reading dots already) isn't changed by this purely decorative
+  // addition.
+  showEternalNowPlane?: boolean;
+  // Widens the SVG canvas beyond `width` (defaults to `width`, i.e. no
+  // change) so the eternal-now plane can extend past the cone's own
+  // silhouette without being clipped by the canvas edge — confirmed live
+  // (2026-09-05) that giving the plane's own rx a ratio > 1 without this
+  // just got cut off at the SVG boundary, since the canvas is exactly
+  // `width` px wide. The cone's own geometry (baseRx etc.) still derives
+  // from `width`, not `canvasWidth`, so the cone itself doesn't change
+  // size — only the room around it does.
+  canvasWidth?: number;
+  // Draws each label CURVED along its own ellipse (2026-09-05 follow-up:
+  // "could the text be literally drawn on the cone, so that it repeats
+  // the cone's shape?") via SVG TextPath, rather than as separate flat RN
+  // Text sitting near the shape. Opt-in and independent per ellipse —
+  // omit any of the three to leave that one as a plain shape with no
+  // label. Kept to short, uppercase, kicker-style strings in practice
+  // (ArcLinePage's own usage) — TextPath follows letter-by-letter, so a
+  // long sentence would read as increasingly distorted the further round
+  // the ellipse it goes.
+  curvedLabels?: {
+    future?: string;
+    past?: string;
+    plane?: string;
+  };
 }
 
 // onPointPress went unwired for a first static-only pass (2026-08-14:
@@ -146,10 +284,15 @@ interface TimeConeProps {
 const NOW_LABEL_CLEARANCE = 16;
 const NOW_LABEL_EXTRA_PUSH = 20;
 
-export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress }: TimeConeProps) {
+export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress, hideNowLabel, showEternalNowPlane, canvasWidth, curvedLabels }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
+  // Extra canvas width is split evenly on both sides so the cone's own
+  // geometry (computed from `width` alone, unaware of canvasWidth) stays
+  // centered in the wider box rather than shifting toward one edge.
+  const svgWidth = canvasWidth ?? width;
+  const canvasXOffset = (svgWidth - width) / 2;
   // Checks real rendered positions (not depth/angle inputs) against the
   // label's own default anchor — the actual collision only exists once
   // points are turned into screen coordinates, so this has to run after
@@ -172,9 +315,40 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
   // Pressable pattern and the bug would return the moment it's re-wired.
   const suppressNextPress = useRef<Set<string>>(new Set());
 
+  // Curved labels' own ascenders (e.g. the "C" in "CALLING") extend a few
+  // px above the future rim's topmost point / below the past rim's
+  // bottommost point — the rim ITSELF fits inside [0, height] (see
+  // buildTimeConeGeometry's own comment), but text drawn along an arc
+  // sitting right at that boundary doesn't automatically get the same
+  // headroom. Confirmed live (both web and on-device, 2026-09-06): the
+  // top of "CALLING" was visibly clipped by the viewBox's own y=0 edge.
+  // Only applied when curvedLabels is actually set — TimeConePage's real
+  // usage never sets it and shouldn't have its own geometry/viewBox
+  // shifted for a case that doesn't apply to it. The caller (ArcLinePage)
+  // doesn't need to know about or compensate for this — its own
+  // coneBackdrop wrapper has no explicit height/top, so this View simply
+  // growing symmetrically (top and bottom) needs no adjustment anywhere
+  // else (confirmed live 2026-09-06 after first trying, incorrectly, to
+  // offset the parent to compensate for a height change it never needed
+  // to know about).
+  const curvedLabelPadding = curvedLabels ? CURVED_LABEL_PADDING : 0;
+
   return (
-    <View style={{ width, height }}>
-      <Svg width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
+    <View style={{ width: svgWidth, height: height + curvedLabelPadding * 2 }}>
+      {/* viewBox's own x-origin absorbs canvasXOffset (negative — shifts
+          the visible window left so the geometry, still drawn at its
+          original `width`-relative coordinates, appears centered in the
+          wider canvas) rather than touching every geometry.centerX call
+          site below. y-origin absorbs curvedLabelPadding the same way —
+          negative so the extra room appears ABOVE y=0 (and the viewBox's
+          own extra height reaches equally far below `height`), without
+          moving any of the geometry itself, which is still computed
+          purely from the original `height`. */}
+      <Svg
+        width={svgWidth}
+        height={height + curvedLabelPadding * 2}
+        viewBox={`${-canvasXOffset} ${-curvedLabelPadding} ${svgWidth} ${height + curvedLabelPadding * 2}`}
+      >
         {/* Atmospheric-perspective depth cue (2026-08-20 review: "the cone
             is a bit too 2D") — the wireframe itself stays pure stroke, no
             fill (per this file's own standing rule), but each slant
@@ -205,6 +379,45 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             <Stop offset="0" stopColor={strokeColor} stopOpacity={0.7} />
             <Stop offset="1" stopColor={strokeColor} stopOpacity={0.15} />
           </LinearGradient>
+          {/* Path versions of the rim/plane ellipses, referenced by
+              TextPath below (2026-09-05, curvedLabels) — TextPath's href
+              only accepts a <Path>, not the <Ellipse> elements those
+              shapes are actually drawn with, so each labeled ellipse gets
+              a matching invisible path here purely to carry text. */}
+          {curvedLabels?.future && (
+            <Path
+              id="cone-future-rim-path"
+              d={topArcPathD(geometry.centerX, geometry.futureRimY, geometry.baseRx, geometry.baseRy)}
+            />
+          )}
+          {curvedLabels?.past && (
+            <Path
+              id="cone-past-rim-path"
+              d={bottomArcPathD(geometry.centerX, geometry.pastRimY, geometry.baseRx, geometry.baseRy)}
+            />
+          )}
+          {curvedLabels?.plane && (
+            // Narrower spanRatio than the future/past rims (0.55 vs the
+            // shared ARC_SPAN_RATIO, widened for their longer labels) —
+            // see topArcPathD's own comment on why the plane's shorter
+            // "the eternal now" needs its own, smaller span: with the
+            // shared wider span, clearing the quote text required a
+            // centerAngle far enough around the ellipse that the label
+            // read nearly vertically instead of horizontally (confirmed
+            // live 2026-09-06). centerAngle 1.2 rad here (~70°) is
+            // calibrated for THIS span, not the wider default.
+            <Path
+              id="cone-plane-path"
+              d={topArcPathD(
+                geometry.centerX,
+                geometry.vertexY,
+                geometry.baseRx * PLANE_RX_RATIO,
+                geometry.baseRy * PLANE_RY_RATIO,
+                1.35,
+                0.75
+              )}
+            />
+          )}
         </Defs>
 
         {/* Future cone — open, sparse by construction (only ever the
@@ -236,6 +449,19 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           strokeOpacity={0.3}
           strokeWidth={1}
         />
+        {/* startOffset 0% + textAnchor "start" — cone-future-rim-path IS
+            the label's own arc now (topArcPathD), not a fraction of a
+            larger ellipse path, so "the literal start of the path" is
+            unambiguous on every platform (see topArcPathD's own comment
+            for why this replaced the old 25%-of-a-full-ellipse approach,
+            which rendered mirrored on native). */}
+        {curvedLabels?.future && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+            <TextPath href="#cone-future-rim-path" startOffset="0%" textAnchor="start">
+              {curvedLabels.future.toUpperCase()}
+            </TextPath>
+          </SvgText>
+        )}
 
         {/* Past cone — dense, real, one point per remembered moment (the
             person's own account of it, never asserted as raw fact — see
@@ -266,6 +492,51 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           strokeOpacity={0.3}
           strokeWidth={1}
         />
+        {/* Same startOffset 0% / textAnchor "start" reasoning as the
+            future rim's own label above — cone-past-rim-path
+            (bottomArcPathD) IS this label's own short arc, not a
+            fraction of a longer path. */}
+        {curvedLabels?.past && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+            <TextPath href="#cone-past-rim-path" startOffset="0%" textAnchor="start">
+              {curvedLabels.past.toUpperCase()}
+            </TextPath>
+          </SvgText>
+        )}
+
+        {/* The "eternal now" plane — a flat ellipse through the vertex,
+            wider than the cone's own rims, reading as a horizontal
+            cross-section the two cones share rather than just their
+            meeting point. Wide/flat (PLANE_RX_RATIO/PLANE_RY_RATIO) so it
+            visually extends past the cone's silhouette on both sides,
+            same "space" axis the reference light-cone diagram draws —
+            faint stroke, no fill, consistent with this file's own
+            wireframe-only rule. */}
+        {showEternalNowPlane && (
+          <SvgEllipse
+            cx={geometry.centerX}
+            cy={geometry.vertexY}
+            rx={geometry.baseRx * PLANE_RX_RATIO}
+            ry={geometry.baseRy * PLANE_RY_RATIO}
+            fill="none"
+            stroke={strokeColor}
+            strokeOpacity={1}
+            strokeWidth={1}
+          />
+        )}
+        {/* cone-plane-path is already built off-center (centerAngle 1.2,
+            spanRatio 0.55 — see that Path's own comment) so its own
+            start (0%) already sits off to the plane's right side, clear
+            of ArcLinePage's centered quote text. Same startOffset 0% /
+            textAnchor "start"
+            reasoning as the future/past rim labels above. */}
+        {curvedLabels?.plane && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+            <TextPath href="#cone-plane-path" startOffset="0%" textAnchor="start">
+              {curvedLabels.plane.toUpperCase()}
+            </TextPath>
+          </SvgText>
+        )}
 
         {/* The vertex itself — "here and now." A small, bright dot, same
             "core orb" register AuraFigure's own chest glow uses for "this
@@ -299,21 +570,23 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           meet, visually crowded by the shape itself; beside the vertex,
           clear of both cones' lines, reads as pointing in at the dot from
           outside rather than being squeezed inside the geometry. */}
-      <Text
-        style={[
-          styles.nowLabel,
-          { color: colors.text.faint, left: nowLabelLeft, top: geometry.vertexY - 6 },
-        ]}
-      >
-        now
-      </Text>
+      {!hideNowLabel && (
+        <Text
+          style={[
+            styles.nowLabel,
+            { color: colors.text.faint, left: nowLabelLeft + canvasXOffset, top: geometry.vertexY - 6 },
+          ]}
+        >
+          now
+        </Text>
+      )}
       {/* Tap targets for the past cone's own points only — pastPoints are
           real, distinct moments (a specific reading or wish) each worth
           opening into their own detail; futurePoints is always just the
           one active wish, already shown in full on "What calls you," so
           it has nothing further to reveal by tapping it here. */}
       {(onPointPress || onPointLongPress) && (
-        <View style={{ position: 'absolute', width, height }} pointerEvents="box-none">
+        <View style={{ position: 'absolute', left: canvasXOffset, width, height }} pointerEvents="box-none">
           {pastPoints.map((p) => {
             const pos = timeConePointPosition(p, geometry, 'past');
             return (

@@ -31,8 +31,19 @@ export default function RootLayout() {
   // depending on locale didn't work (expo-font's useFonts doesn't support
   // changing the font map after first mount) and isn't needed now that a
   // single typeface covers both Latin and Cyrillic correctly.
+  //
+  // EtudeNoire-Light added 2026-09-02 — was sitting unused in assets/
+  // fonts alongside Medium/Regular/Bold. First real use: Depths' sphere
+  // labels, where RN's SYNTHETIC bold (fontWeight alone, no real second
+  // face loaded) produced no visible contrast between "selected" and
+  // "not selected" — Medium already reads as fairly heavy on its own, so
+  // faking heavier on top of it barely changed anything (confirmed by
+  // the user: "all look pretty bold all the time"). Loading the real
+  // Light file gives unselected labels a genuinely different face to
+  // fall back to, instead of trying to fake "regular" out of Medium.
   const [fontsLoaded] = useFonts({
     'EtudeNoire-Medium': require('../assets/fonts/Etude-Noire-Medium.ttf'),
+    'EtudeNoire-Light': require('../assets/fonts/Etude-Noire-Light.ttf'),
   });
 
   const { hydrated: philoHydrated, hydrate: hydratePhilo, philosopher } = usePhilosopherStore();
@@ -120,7 +131,7 @@ export default function RootLayout() {
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'crisis-support',
+      'your-arc', 'your-arc-past', 'your-arc-future', 'crisis-support',
     ].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
@@ -171,6 +182,8 @@ export default function RootLayout() {
           <Stack.Screen name="possible-selves" />
           <Stack.Screen name="enough"     />
           <Stack.Screen name="your-arc"   />
+          <Stack.Screen name="your-arc-past" />
+          <Stack.Screen name="your-arc-future" />
           <Stack.Screen name="crisis-support" />
         </Stack>
         {showHowToUse && <HowToUseOverlay />}

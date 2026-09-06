@@ -54,22 +54,55 @@ interface PagedScrollViewProps {
   // destination" before arriving there (2026-08-20, Your Arc's "journey,
   // not equal-weight carousel" pass).
   distinctLastDot?: boolean;
+  // 2026-09-03 — suppresses this component's own dot row, for a caller
+  // that renders its own external progress/navigation control instead
+  // (e.g. Your Arc's ArcDial) rather than the plain dot row below. The
+  // Pressable-driven jump-to-any-page mechanism (handleJumpTo) stays
+  // fully intact and reachable via `jumpTo` either way — this only hides
+  // the row's own visual dots, it doesn't remove page-jump capability.
+  hideDots?: boolean;
 }
 
-export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinctLastDot }: PagedScrollViewProps) {
+export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinctLastDot, hideDots }: PagedScrollViewProps) {
   const { width } = useWindowDimensions();
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+  // True while an ANIMATED programmatic scrollTo (handleJumpTo) is still
+  // playing out — guards handleScroll below from treating the scroll's
+  // own intermediate, mid-animation contentOffset values as real page
+  // changes. Without this, a multi-page jump (e.g. ArcDial's momentum
+  // carrying 2 steps at once) animates the ScrollView THROUGH every page
+  // in between at speed, and each of those in-between positions rounds
+  // to its own page index — handleScroll fired onActiveIndexChange for
+  // each one, even though handleJumpTo had already correctly set
+  // activeIndex to the true TARGET the instant the jump was requested.
+  // From the outside (confirmed live 2026-09-05, ArcDial's own external
+  // label/indicator) this read as "the wheel snaps back after making a
+  // choice" — the wheel/label correctly landed on the target, then
+  // flickered back to an intermediate page mid-scroll, then corrected
+  // again once the real animation finished. The plain dot row never
+  // surfaced this because adjacent dots look nearly identical mid-
+  // flicker; a named external label makes it obvious.
+  const isProgrammaticScroll = useRef(false);
 
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (isProgrammaticScroll.current) return;
     const index = Math.round(e.nativeEvent.contentOffset.x / width);
     if (index !== activeIndex) {
       setActiveIndex(index);
       onActiveIndexChange?.(index);
     }
+  };
+
+  // Fires once the ScrollView's own momentum/animation genuinely settles
+  // — this is what actually clears isProgrammaticScroll, not a fixed
+  // timer, so a jump is protected for exactly as long as its real
+  // animation takes, on whatever device/frame-rate is running it.
+  const handleScrollEnd = () => {
+    isProgrammaticScroll.current = false;
   };
 
   // Dots are a real navigation control, not just a passive indicator
@@ -80,6 +113,7 @@ export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinc
   // far jump (e.g. dot 1 to dot 7) still reads as real motion through the
   // pages, matching "gather, condense, become" over an instant teleport.
   const handleJumpTo = (index: number) => {
+    isProgrammaticScroll.current = true;
     scrollRef.current?.scrollTo({ x: index * width, animated: true });
     setActiveIndex(index);
     onActiveIndexChange?.(index);
@@ -100,6 +134,17 @@ export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinc
         showsHorizontalScrollIndicator={false}
         onScroll={handleScroll}
         scrollEventThrottle={32}
+        // onScrollAnimationEnd fires once a programmatic scrollTo({
+        // animated: true }) genuinely finishes — the real signal that
+        // isProgrammaticScroll's own protection window should end.
+        // onMomentumScrollEnd is ALSO wired to the same handler as a
+        // fallback (harmless if it fires a second time — the flag is
+        // just re-set to false) since RN Web's ScrollView shim has a
+        // documented history of quirks with animation-completion
+        // callbacks in this codebase, and this guard needs to reliably
+        // clear on every platform this app ships to, not just native iOS.
+        onScrollAnimationEnd={handleScrollEnd}
+        onMomentumScrollEnd={handleScrollEnd}
       >
         {children.map((child, i) => (
           <View key={i} style={{ width }}>
@@ -107,7 +152,7 @@ export function PagedScrollView({ children, jumpTo, onActiveIndexChange, distinc
           </View>
         ))}
       </ScrollView>
-      {children.length > 1 && (
+      {children.length > 1 && !hideDots && (
         <View style={styles.dotsRow}>
           {children.map((_, i) => {
             const isLast = distinctLastDot && i === children.length - 1;

@@ -102,6 +102,33 @@ export function FactsPage({
               </View>
             );
           }
+          // Rhythm facts (2026-09-05) — day-of-week/time-of-day names are
+          // translated via their own keys (yourArc.dayX/timeOfDayX) rather
+          // than interpolated as raw strings, so "sunday"/"evening" read
+          // naturally in every locale rather than leaking the internal
+          // English bucket name into, e.g., Russian copy.
+          if (fact.key === 'dayOfWeek' || fact.key === 'timeOfDay' || fact.key === 'dayAndTime') {
+            const dayLabel = fact.params.day ? t(`yourArc.day_${fact.params.day}`) : undefined;
+            const timeLabel = fact.params.time ? t(`yourArc.timeOfDay_${fact.params.time}`) : undefined;
+            const i18nKey =
+              fact.key === 'dayAndTime' ? 'yourArc.factDayAndTime'
+              : fact.key === 'dayOfWeek' ? 'yourArc.factDayOfWeek'
+              : 'yourArc.factTimeOfDay';
+            return (
+              <View key={fact.key} style={styles.factRow}>
+                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                <Text style={styles.factLine}>{t(i18nKey, { day: dayLabel, time: timeLabel })}</Text>
+              </View>
+            );
+          }
+          if (fact.key === 'cadence') {
+            return (
+              <View key={fact.key} style={styles.factRow}>
+                <View style={[styles.factDot, { backgroundColor: `rgb(${accentRgb})` }]} />
+                <Text style={styles.factLine}>{t('yourArc.factCadence', { count: fact.params.days })}</Text>
+              </View>
+            );
+          }
           const i18nKey =
             fact.key === 'thisMonth' ? 'yourArc.factThisMonth'
             : fact.key === 'streak' ? 'yourArc.factStreak'

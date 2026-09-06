@@ -27,8 +27,20 @@ import { JourneyStage } from '../../types';
 // split back to the person before asking one grounded follow-up. This is
 // the "reflect -> contrast -> classify -> move on" pattern instead of
 // open-ended probing.
+//
+// 2026-09-03: replaced the old opener, "What are you trying to control?",
+// with two concrete stages, "situation" then "wish" — the old opener
+// presupposed the person already knows the object of control, which is
+// exactly what this Journey exists to help them discover. Starting from a
+// concrete situation ("what's happening?") and only then asking what they
+// wish were different surfaces the object of control rather than asking
+// the person to name it cold. "wish" fully replaces the old "name" stage —
+// its answer is now the thing "observable"/"represents" refer to as what
+// the person is trying to control, and it's what the ending's "You began
+// with" quote (JourneyReflection, control.tsx) reads from.
 export const CONTROL_STAGES: JourneyStage[] = [
-  { id: 'name', openingQuestion: 'What are you trying to control?' },
+  { id: 'situation', openingQuestion: 'Think of a situation you wish would unfold differently. What’s happening?' },
+  { id: 'wish', openingQuestion: 'What do you wish happened instead?' },
   { id: 'observable', openingQuestion: 'What would tell you that was happening?' },
   { id: 'represents', openingQuestion: 'If that happened, what would it give you?' },
   { id: 'separate', openingQuestion: 'Leave their choice out of it for a moment — if it stayed exactly as it is, what would still be yours to change?' },

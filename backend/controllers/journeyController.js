@@ -137,7 +137,18 @@ function buildSeparateReveal(priorStages) {
   const observable = priorStages?.find((s) => s.stageId === "observable")?.answer?.trim();
   const represents = priorStages?.find((s) => s.stageId === "represents")?.answer?.trim();
   if (!observable || !represents) return null; // missing prior material — fall back to the plain fixed question, no reveal
-  return `You want ${observable}. Underneath it, you want to ${represents}. Which of those can you author?`;
+  // 2026-09-03: softened from an asserted "Underneath it, you want to..."
+  // to "You said it would give you..." — both clauses are still pure
+  // interpolation of the user's own words (never invents anything), but
+  // the old wording stated a two-layer want/need structure as fact; this
+  // phrasing only reflects back what they themselves already said, letting
+  // the split be something they notice rather than something the app
+  // tells them is true (see docs/journeys-concept.md's psychoanalytic
+  // grounding review, 2026-09-03: control's real object isn't always a
+  // single internal "need" — it can be certainty, agency, or a specific
+  // other person's behavior — so the copy shouldn't hard-code "underneath"
+  // as if there's always exactly one layer under the surface want).
+  return `You want ${observable}. You said it would give you ${represents}. Which of those can you author?`;
 }
 
 // Control's own stage goals — used to judge STAGE COMPLETE, i.e. whether
@@ -149,12 +160,207 @@ function buildSeparateReveal(priorStages) {
 // so adding one is additive, not a rewrite of this file's structure.
 const STAGE_GOALS = {
   control: {
-    name: 'Land on ONE concrete, specific thing they are trying to control — an actual situation, relationship, or outcome, not an abstract feeling or a meta-question about the process. If their answer is vague, abstract, "I don\'t know," or about the conversation itself rather than their life, you do NOT have enough yet — ask one small, concrete grounding question (e.g. "What situation is this about?") before treating the stage as complete. Do not ask more than 3 sub-questions total even if still vague — after 3, accept whatever concrete-ish anchor exists and move on.',
-    observable: 'ONE concrete, observable sign that would tell them the thing they named is actually happening — something they could see, hear, or point to, not a feeling. Do not ask more than 1 sub-question — if their first answer is already a concrete sign (an action, an event, a specific thing someone would say or do), the stage is complete immediately; only ask once, to turn a vague answer into a concrete one, then move on regardless.',
-    represents: 'The ONE feeling or internal state that observable sign would give them if it happened — what it would mean to them, not a second observable fact. Do not ask more than 1 sub-question — accept their first real feeling-word or short phrase and move on; this stage exists to name ONE thing, not to explore it.',
+    situation: 'ONE concrete, real situation the person wishes would unfold differently — an actual scene, relationship, or circumstance, not an abstract feeling or a meta-question about the process. If their answer is vague, abstract, "I don\'t know," or about the conversation itself rather than their life, you do NOT have enough yet — ask one small, concrete grounding question (e.g. "What situation is this about?") before treating the stage as complete. Do not ask more than 2 sub-questions total even if still vague — after 2, accept whatever concrete-ish anchor exists and move on.',
+    wish: 'ONE concrete thing they wish were happening instead, in the situation they just named — this becomes the thing they are trying to control for every later stage, so it needs to be a real wished-for outcome or change, not a vague feeling like "I wish I felt better." Do not ask more than 1 sub-question — accept their first real answer and move on.',
+    observable: 'ONE concrete, observable sign that would tell them the thing they wished for is actually happening — something they could see, hear, or point to, not a feeling. Do not ask more than 1 sub-question — if their first answer is already a concrete sign (an action, an event, a specific thing someone would say or do), the stage is complete immediately; only ask once, to turn a vague answer into a concrete one, then move on regardless.',
+    represents: 'The ONE thing that observable sign would actually give them if it happened — what it would mean to them. This does not have to be a feeling-word: it may just as legitimately be certainty/knowing something, a sense that their own will or effort counts here, or simply a specific other person behaving predictably — do not steer them toward naming an emotion if their honest answer is one of these instead. Do not ask more than 1 sub-question — accept their first real answer and move on; this stage exists to name ONE thing, not to explore it.',
     separate: 'One grounded thing that would still be theirs to change even with the other person/outside factor\'s choice left out of it entirely. Do not ask more than 1 sub-question — accept whatever concrete thing they name and move on; this stage is testing whether they can locate a real answer, not exhausting the topic.',
     agency: "The elements they place into each bucket during the sort — this stage completes as soon as the sort itself is submitted, not through conversation.",
     recognition: "Something that feels different or newly visible to them now, in their own words. Do not ask more than 1 sub-question — this is the closing stage; accept their first real answer and let the Journey end.",
+  },
+  // The Choice — "what do I actually want?" (docs/journeys-concept.md).
+  // Hard content constraint carried into every stage's own goal text
+  // where relevant: this Journey never resolves "I want both" into one
+  // manufactured "real" desire — A, B, both, neither, and "I still don't
+  // know" must all be acceptable, fully complete answers, especially at
+  // the final "choice-again" stage.
+  'the-choice': {
+    choice: 'TWO concrete things they are actually choosing between — real options, not a vague "I don\'t know what I want." If vague, ask one small grounding question (e.g. "What are the two real options in front of you?"). Do not ask more than 2 sub-questions — after 2, accept whatever two-sided framing exists, even an imperfect one, and move on.',
+    attraction: 'What draws them toward EACH option, and what having it would actually give them (money, safety, being seen a certain way, ease, pride, etc.) — a real mix of reasons is expected and does not need to be sorted into good/bad yet. Do not ask more than 1 sub-question.',
+    pressure: 'What they believe they SHOULD choose, and whose reaction they are most aware of when they imagine choosing the other way — do not accept a pressure-free answer without at least asking once whether anyone else\'s opinion is in the room. Do not ask more than 1 sub-question.',
+    audience: 'What changes, if anything, once approval/disapproval and being seen are imagined removed from the equation — "nothing changes" is a fully legitimate answer (it means the want was never about the audience) and must be accepted as complete, not probed further. Do not ask more than 1 sub-question.',
+    fear: 'ONE real fear attached to each option, if they have one — a feared consequence, not just a feeling-word. "I don\'t know" or "no real fear on one side" is a legitimate, completable answer. Do not ask more than 1 sub-question.',
+    cost: 'What they would lose by choosing each option — a real cost on both sides, not just the "wrong" one. Do not ask more than 1 sub-question.',
+    futures: 'For EACH imagined six-months-later life: what draws them toward it and what makes them pull away. Do not ask more than 1 sub-question — if they only address one imagined future in depth, one nudge toward the other is enough, then move on regardless.',
+    'choice-again': 'Their own answer to the same opening question, now informed by everything above — A, B, both, neither, and "I still don\'t know" are ALL complete, legitimate answers; never treat uncertainty as an incomplete stage needing another sub-question. Do not ask more than 1 sub-question, and only if their answer is truly empty (e.g. no reply at all), never to push toward a cleaner decision.',
+  },
+  // The Loop — "why does this keep happening to me?" (docs/journeys-
+  // concept.md). Hard ethical guardrail carried into familiarity/compare/
+  // pattern's own goal text: "this isn't actually a pattern" must be a
+  // fully legitimate, complete answer at each of those stages — never
+  // treat "not similar" or "no real repetition" as an incomplete stage
+  // needing another push toward finding one.
+  'the-loop': {
+    present: 'A real, specific recent situation, PLUS what they thought it meant, what they felt, and what they did about it — a full chain, not just the bare event. If they only give the bare event, ask once for the rest of the chain. Do not ask more than 2 sub-questions — after 2, accept whatever chain exists even if thin, and move on.',
+    familiarity: 'What, if anything, feels familiar about this situation — "actually, it doesn\'t feel familiar" is a fully legitimate, complete answer and must be accepted as such, never pushed past. Do not ask more than 1 sub-question.',
+    past: 'ONE earlier, real situation that feels similar, PLUS its own chain (what happened, what they thought, what they felt, what they did) — same shape as "present." If they can\'t recall one, "I can\'t think of one" is a legitimate answer that still lets the Journey continue (compare simply has less to work with). Do not ask more than 2 sub-questions.',
+    compare: 'What is actually the same and what is actually different between the two situations named so far — "these aren\'t very similar after all" is a fully legitimate, complete answer, never something to probe past in search of a similarity that isn\'t there. Do not ask more than 1 sub-question.',
+    desire: 'What they wanted in EACH situation — a real want, named for both, not just one. Do not ask more than 1 sub-question.',
+    expectation: 'What they expected from the other person or the world, in EACH situation. Do not ask more than 1 sub-question.',
+    response: 'What they actually did in anticipation of what they expected, in each situation — a real action or reaction, not a feeling-report. Do not ask more than 1 sub-question.',
+    pattern: 'Where the repetition actually lives, if anywhere — the situation itself, a feeling, an expectation, their own response, a role they keep occupying, or the outcome. "There isn\'t really a repeating element" or "I\'m not sure" are fully legitimate, complete answers — never push toward naming one that isn\'t genuinely there. Do not ask more than 1 sub-question.',
+    recognition: 'Something that feels different or newly visible to them now, in their own words, including which part (if any) they might want to change next time. "I don\'t know yet" is a legitimate closing answer. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // Whose Voice? — "is this really what I believe or want?" (docs/
+  // journeys-concept.md). Hard content constraint carried into
+  // integration/my-voice's own goal text: "it came from someone else, and
+  // I've discovered I choose it too" must be treated as a fully
+  // legitimate, even celebrated outcome — never validate only
+  // origin-tracing-toward-rejection.
+  'whose-voice': {
+    statement: 'ONE real belief or want, PLUS whether it feels like a want, a should, a must, a need, or a "supposed to" — both halves, not just the belief alone. Do not ask more than 2 sub-questions.',
+    consequence: 'What they imagine would happen if they didn\'t follow this belief, PLUS the feeling that appears when they imagine that (guilt, fear, shame, relief, disappointment, something else) — both halves. Do not ask more than 1 sub-question.',
+    origin: 'When they remember first encountering this idea, PLUS who or what around them seemed to carry it — parents, a partner, teachers, culture, social media, an earlier version of themselves. "I don\'t know" for either half is a fully legitimate, complete answer — never push past it. Do not ask more than 1 sub-question.',
+    meaning: 'What the belief meant in the environment/time it came from, PLUS what it means to them now — both halves, even if the answer is "the same thing." Do not ask more than 1 sub-question.',
+    remove: 'What remains of the belief once being seen/judged by others is imagined removed — "nothing changes" is a fully legitimate, complete answer (it means the want was never about the audience). Do not ask more than 1 sub-question.',
+    disagreement: 'Who they would be disagreeing with if they let this belief go, and whether changing it would feel like leaving something or someone behind — "no, this is genuinely just mine" is just as legitimate an answer as "yes, it would feel like a betrayal." Do not ask more than 1 sub-question.',
+    integration: 'Whether they endorse this belief TODAY, regardless of where it came from — yes, partly, no, and "I don\'t know yet" are ALL complete, legitimate answers. A "yes, I still choose it" answer is not a failure of the Journey to find something to reject — it is one of the most meaningful outcomes this Journey can produce. Do not ask more than 1 sub-question.',
+    'my-voice': 'Their own current belief, stated in their own words, now informed by everything above. Do not ask more than 1 sub-question, and only if their answer is truly empty — this is the closing stage.',
+  },
+  // The Road Not Taken — "why can't I stop thinking about what could have
+  // been?" (docs/journeys-concept.md). Hard content constraint carried
+  // into closed-open and return-to-now's own goal text: "I lost
+  // something and cannot have it back, full stop, no lesson" must be a
+  // fully legitimate, complete answer — never turn every closed door
+  // into a search for a silver lining.
+  'the-road-not-taken': {
+    fork: 'The real fork (what actually happened), PLUS what they imagine would have happened instead on the other road — a real constructed alternative, not just a vague wish. Do not ask more than 2 sub-questions.',
+    'reality-imagination': 'At least a rough classification of the imagined road into what they know, what they think probably would have happened, what they hope would have happened, and what they honestly don\'t know — doesn\'t need to be exhaustive, just genuinely attempted. Do not ask more than 1 sub-question.',
+    object: 'What specifically they miss, PLUS what having it would actually give them (not just the object itself). Do not ask more than 1 sub-question.',
+    responsibility: 'Whether they wish their own action, another person\'s action, or the circumstances themselves had been different — this distinguishes regret from disappointment and matters for what follows. Do not ask more than 1 sub-question.',
+    'me-then-now': 'What they knew, wanted, feared, and believed their options were back then, PLUS what they know now only because they lived through what followed — both halves, since the point is the contrast, not just hindsight alone. Do not ask more than 1 sub-question.',
+    'closed-open': 'What feels irreversibly gone, PLUS what still remains possible, even in another form — "nothing remains open, this is simply closed" is a fully legitimate, complete answer and must never be pushed toward finding a silver lining. Do not ask more than 1 sub-question.',
+    'unlived-self': 'Who they imagine they would have become on the other road, PLUS what they feel toward that imagined version of themselves (envy, tenderness, grief, longing, anger, pride, or several at once). Do not ask more than 1 sub-question.',
+    uncertainty: 'What might also have been difficult about the other road — this must stay genuinely epistemic (the other road wasn\'t guaranteed either), never a rhetorical trick toward manufactured gratitude for what actually happened. "I don\'t know, it might have been fine" is a legitimate answer. Do not ask more than 1 sub-question.',
+    'return-to-now': 'What this imagined alternative reveals about their life now, and their own answer to why they keep returning to this road — many different honest answers are legitimate here (still wanting something it represented, understanding a past choice differently now, discovering part of it is still open, grieving, or simply not knowing). Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // Letting Go — "what am I actually holding onto?" (docs/journeys-
+  // concept.md). Hard content constraint carried into form-now's own
+  // goal text: the ending must NEVER conclude "it's time to let go" —
+  // "keep it exactly as is," "carry it differently," "leave part of it,"
+  // and "not ready to decide" must all be fully legitimate, equally
+  // complete answers.
+  'letting-go': {
+    'the-object': 'ONE real thing they are trying to let go of, PLUS what specifically about it feels difficult to release once they say it out loud — the object may shift once named (e.g. from a person to a possibility) and that shift is a real, welcome discovery, not something to correct. Do not ask more than 2 sub-questions.',
+    'gone-remains': 'What has actually ended, PLUS what still exists — genuinely two separate lists, not one blended answer. Do not ask more than 1 sub-question.',
+    connection: 'What they are keeping alive by holding onto this (hope, a version of themselves, a belief, a possibility), PLUS what they imagine would be lost if they stopped holding it. Do not ask more than 1 sub-question.',
+    hope: 'What they are still hoping will happen, PLUS what keeping that possibility open costs them today — both halves, held side by side with no verdict drawn from the comparison. Do not ask more than 1 sub-question.',
+    unfinished: 'Whether anything feels unresolved, and if so, what is still waiting to happen and from whom (themselves, the other person, both, or "nobody can anymore"). "No, nothing feels unfinished" is a fully legitimate, complete answer. Do not ask more than 1 sub-question.',
+    meaning: 'What receiving whatever they are waiting for would actually change for them — going one layer beneath the surface want. Do not ask more than 1 sub-question.',
+    identity: 'Who they have been while holding onto this, PLUS who they imagine they would be without it — "I don\'t know" for the second half is not a failure, it may be the actual center of this Journey for this person. Do not ask more than 1 sub-question.',
+    'function-price': 'What holding onto this gives them (connection, hope, identity, certainty, protection, meaning, motivation), PLUS what it asks from them (time, attention, energy, waiting) — asked without judgment in either direction. Do not ask more than 1 sub-question.',
+    'time-keep': 'Whether what they are holding has changed since it began, PLUS what they would want to keep if they didn\'t have to lose everything — the "keep" half is about addition, not subtraction, and should surface something positive worth naming regardless of what happens with the rest. Do not ask more than 1 sub-question.',
+    'form-now': 'Whether this feels like something to hold, carry differently, or leave — or genuinely not decide yet, which is a fully legitimate, complete answer — PLUS their own answer to the Journey\'s own opening question, now informed by everything above. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // The Mirror — "why does this person affect me so strongly?" (docs/
+  // journeys-concept.md). This Journey's central discipline: preserving
+  // the OTHER person's reality and separateness throughout. REALITY
+  // (what they actually did) must be kept strictly factual, never
+  // colored by interpretation — MEANING is the explicit separate bridge.
+  // reality-check is the single most load-bearing stage in this Journey:
+  // it must be able to conclude "no, they are genuinely, repeatedly doing
+  // something real" and STOP there — never route every answer back into
+  // "this is about my own history." The word "projection" must never
+  // appear anywhere in this Journey's generated text.
+  'the-mirror': {
+    person: 'Who affects them, PLUS what happens inside them around this person, PLUS what specifically seems to trigger that — three things, not just the name. This applies equally to attraction/admiration/fascination as to insecurity/anger; a positive intensity is just as valid a Mirror moment. Do not ask more than 2 sub-questions.',
+    reality: 'ONLY what the other person actually said or did — concrete, factual, observable. If their answer already contains an interpretation ("they don\'t care about me"), gently ask for the observable fact underneath it once. Do not ask more than 1 sub-question.',
+    meaning: 'What they made the other person\'s behavior mean — the bridge between the fact (reality) and the reaction (person). Never imply the interpretation is wrong; it only needs to be named as an interpretation. Do not ask more than 1 sub-question.',
+    desire: 'What they want from this person, PLUS why receiving it from THEM specifically matters (not just wanting the thing in general). Do not ask more than 1 sub-question.',
+    self: 'Who they become around this person (small, competitive, powerful, childlike, defensive, calm, desired, alive — any register, positive or negative), PLUS what the other person seems to embody that brings that out. Do not ask more than 1 sub-question.',
+    role: 'What part this person seems to be playing in what just happened, PLUS what part that leaves the user playing — keep this DESCRIPTIVE (a plain description of the interaction dynamic, e.g. "the one who criticized" / "the one who apologized first"), not archetypal or interpretive (avoid framing like "the withholding parent" or naming a psychological pattern) — interpretive framing here, before reality-check has run, would pre-load a conclusion reality-check is supposed to test independently. Discovered by them, never proposed by you. Do not ask more than 1 sub-question.',
+    familiarity: 'Whether they have played these same two parts before, even with a completely different kind of person — matching the STRUCTURE of the interaction, not surface similarity between people. "No, this feels new" is a fully legitimate, complete answer. This stage is doing real comparative work (a pattern is only real once it recurs across more than one instance) — don\'t let it be skipped just because "person" already felt like it captured the whole picture. Do not ask more than 1 sub-question.',
+    'reality-check': 'TWO things, not one: (1) EVIDENCE — has this specific person concretely done this specific thing more than once (not just "did it feel bad," but did it actually recur, specifically, from them); (2) FIT — does the size and shape of their reaction match what a reasonable person would feel toward that documented pattern, or does it feel like it carries more weight than this one relationship could account for. Both can be true at once (a real, repeated harm AND some extra personal weight) — never force an either/or. A third legitimate candidate: the intensity may have started somewhere else entirely (a bad day, an unrelated stress, a bodily state) and simply landed on this person because they were the most salient thing in the room — offer this as equally legitimate to "it\'s about them" and "it\'s about my history," never assert which one is true for this person. "Yes, they are genuinely, repeatedly doing something real, and my reaction makes complete sense as a response to that, full stop" MUST be accepted as a fully legitimate, complete stopping point — never redirected back toward "but what does this say about you." This is the single most important stage in this Journey — never rush it or treat a "this is really about them" answer as an incomplete result. Do not ask more than 1 sub-question.',
+    authority: 'What their approval would seem to prove, PLUS what their rejection would seem to prove, PLUS what changes once their opinion is imagined to prove nothing definitive about the user\'s worth — three parts. Both "actually, nothing changes, I still want to know them" and "actually, I realize I wanted validation, not the relationship" are equally legitimate discoveries; never privilege one. Do not ask more than 1 sub-question.',
+    'the-mirror-now': 'What being around this person makes visible in them, PLUS their own answer to why this person affects them so strongly — this answer can legitimately land anywhere from "this is genuinely about my own history" to "this is genuinely about what they are actually doing" to an honest mixture, and REALITY CHECK\'s own finding must not be quietly overridden here. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // The Unsaid — "what do I actually want to say?" (docs/journeys-
+  // concept.md). Distinctive boundary: completion never requires any
+  // real-world action. Hard content constraint carried into
+  // communication's own goal text: "no, I just needed to say it to
+  // myself" must be a fully legitimate, complete, SUCCESSFUL outcome —
+  // never an unfinished Journey. Never draft the actual message to send —
+  // that would cross from self-discovery into communication advice.
+  'the-unsaid': {
+    person: 'Who this is about, PLUS what feels unsaid, PLUS a low-stakes incomplete opening sentence if the full feeling is hard to name yet ("I wish...", "I never told you..."). "I don\'t know" for the middle part is legitimate — the incomplete sentence can carry the stage instead. Do not ask more than 2 sub-questions.',
+    reaction: 'What happens inside them imagining actually saying it, PLUS what they imagine the other person would do in response — both halves. Do not ask more than 1 sub-question.',
+    'expression-outcome': 'What they want to SAY, kept genuinely separate from what they want to HAPPEN afterward — these are often fused and the stage isn\'t complete until both are named distinctly. Do not ask more than 1 sub-question.',
+    meaning: 'What they need the other person to understand, PLUS what they want their words to actually DO (express, reveal, request, change, repair, end, be recognized, provoke, protect — more than one purpose can be present at once). Do not ask more than 1 sub-question.',
+    silence: 'What staying silent protects (the relationship, dignity, hope, the other person\'s feelings, ambiguity, the possibility of being wrong), PLUS what staying silent asks of them — no predetermined conclusion that speaking is superior; "silence is genuinely the right choice for me" is a fully legitimate answer. Do not ask more than 1 sub-question.',
+    exposure: 'What the other person would know about them if they said what they really mean, PLUS how it feels to imagine that being known — locating the real barrier (often vulnerability, not wording). Do not ask more than 1 sub-question.',
+    'remove-listener-editor': 'Raw material generated under BOTH counterfactual strips — first assuming the words will never be heard, then assuming they don\'t have to be fair or reasonable. Never correct, refine, or soften what emerges here; this stage exists to produce unedited material, not a polished message. Do not ask more than 1 sub-question.',
+    contradiction: 'Whether another part of them wants to say something different, or the opposite — genuinely allow two coexisting, unreconciled true wants (e.g. "leave me alone" and "please don\'t leave") rather than forcing them into one blended sentence. "No, it\'s all one thing" is also legitimate. Do not ask more than 1 sub-question.',
+    distill: 'Which part of everything written so far feels most true to them — their own judgment call, not yours to make for them. Do not ask more than 1 sub-question.',
+    communication: 'Whether any of this needs to reach the other person (yes / some of it / no / I don\'t know — all legitimate), PLUS who really needs to hear it (them, the user themselves, both, someone else, or "nobody, I just needed to say it"). Someone discovering mid-answer that they, not the other person, are who needs to hear it is a valid and complete discovery. Do not ask more than 1 sub-question — this is the closing stage. Never draft or suggest actual wording for a message to send.',
+  },
+  // Becoming — "who am I becoming?" (docs/journeys-concept.md). Hard
+  // content constraint carried into "evidence": a claimed transformation
+  // is never accepted on its own — always tied to something they
+  // actually did differently. This is what keeps the whole Journey
+  // grounded rather than aspirational, per its own founding premise.
+  becoming: {
+    change: 'What feels different about them lately, PLUS what has NOT changed — both halves required, since identity being fully in flux is rarely true and would itself be a false clarity. Do not ask more than 1 sub-question.',
+    evidence: 'A real, concrete ACTION they have done differently (not a feeling or a self-description), PLUS a choice they keep making repeatedly — a claimed change ("I\'m becoming more confident") is not accepted on its own until tied to something they actually did. Do not ask more than 2 sub-questions.',
+    practice: 'What way of being those repeated choices seem to be rehearsing, PLUS what they feel they are becoming better at. Do not ask more than 1 sub-question.',
+    normal: 'What they are becoming accustomed to, PLUS what they tolerate now that they didn\'t before, or have stopped tolerating — either direction is legitimate. Do not ask more than 1 sub-question.',
+    'possible-selves': 'All three: who they hope they\'re becoming, who they\'re afraid they\'re becoming, and who they believe they\'re supposed to become — these can genuinely differ from each other and that\'s the point, not something to resolve into one. Do not ask more than 1 sub-question.',
+    trajectory: 'Which of the three named possible selves their actual current life most resembles, PLUS which version of themselves they feel they are becoming less like. Do not ask more than 1 sub-question.',
+    'feeling-real': 'Where in their current life they feel most like themselves — genuinely themselves, inhabited rather than performed. Do not ask more than 1 sub-question.',
+    extrapolate: 'What might become stronger if they continued exactly as they are now, PLUS which direction(s) they choose to strengthen, reconsider, or simply keep observing without acting yet — "just watch, not decide yet" is a fully legitimate choice. Do not ask more than 1 sub-question.',
+    'name-it-now': 'Their own completion of "I am becoming someone who..." PLUS something concrete they are doing today that is already creating that person. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // The Threshold — "what is stopping me from moving forward?" (docs/
+  // journeys-concept.md). Hard content constraint carried into
+  // return-answer's own goal text below: the Journey's desired outcome
+  // is CLARITY about non-action, not action — staying exactly where they
+  // are, with real clarity about why, must be a fully legitimate,
+  // complete, successful outcome, never nudged toward crossing.
+  'the-threshold': {
+    movement: 'What "moving forward" actually means concretely, PLUS the one specific action that would make it real (e.g. "press publish," not "launch my business" left abstract) — a real BEFORE/THRESHOLD/AFTER structure is needed before anything else can be grounded. Do not ask more than 2 sub-questions.',
+    'forward-back': 'What genuinely pulls them toward moving, PLUS what genuinely pulls them away — both must be treated as equally real; never imply the "back" pull is simply fear to be overcome. Do not ask more than 1 sub-question.',
+    'reality-knowing': 'What becomes concretely real once they cross this specific threshold, PLUS what they would find out that they currently don\'t have to know. Do not ask more than 1 sub-question.',
+    'failure-success': 'What they fear if it goes badly, PLUS what changes if it goes well — both halves, symmetric weight. Do not ask more than 1 sub-question.',
+    'loss-staying': 'What they could lose BY MOVING, PLUS what staying currently gives them, PLUS what they could lose BY NOT MOVING — genuinely three things, the deliberately symmetric structure (moving has both gains and losses; staying has both gains and losses) rather than the naive move=risk/stay=safety framing. Do not ask more than 1 sub-question.',
+    voice: 'What their hesitation would say if it could speak as its own voice, PLUS which of those concerns respond to something actually happening now versus something that might happen later. Do not ask more than 1 sub-question.',
+    ambivalence: 'What the part of them that wants to move seems to want FOR them (not just "to move"), PLUS what the part that wants to stay wants for them — treating both parts as having a genuine, legitimate interest in their wellbeing, neither villainized. Do not ask more than 1 sub-question.',
+    'identity-permission': 'Who they imagine they would become on the other side of this threshold, PLUS whose permission (if anyone\'s) they feel they are waiting for — "nobody\'s, I think it\'s just me" is a legitimate answer. Do not ask more than 1 sub-question.',
+    'staying-future': 'What feels impossible to undo, PLUS whether that\'s actually true (many things people call irreversible have more give than they assume — but never assert this, only ask), PLUS where staying leads if this direction simply continues. Do not ask more than 1 sub-question.',
+    'return-answer': 'Their own honest answer to what is actually stopping them from moving forward, now informed by everything above — clarity about NOT crossing, with real understanding of why, is a fully legitimate, complete, successful outcome. Never treat "I think I\'m going to stay, and now I understand why" as an incomplete or lesser result than deciding to move. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // Possible Selves — "which future actually feels like mine?" (docs/
+  // journeys-concept.md). Hard content constraint: multiple, even
+  // competing, imagined futures at once is psychologically sound, not
+  // indecisive — never quietly narrow the person toward one "correct"
+  // future at any stage.
+  'possible-selves': {
+    multiplicity: 'AT LEAST TWO genuinely different imagined futures, PLUS what an ordinary day actually looks like in each — concrete daily texture, not just a social-identity label ("a doctor," "married with kids"). If they only offer one future, ask once for at least a second. Do not ask more than 2 sub-questions.',
+    underneath: 'What each named future gives them psychologically, PLUS for each one, whether they want to BE that person or simply HAVE what that person has — a real, useful distinction, not a trick question. Do not ask more than 1 sub-question.',
+    'audience-status': 'What remains of each future\'s pull once being seen by others is imagined removed, PLUS once impressiveness is imagined removed — "nothing changes" for either is a fully legitimate, complete answer for any given future. Do not ask more than 1 sub-question.',
+    fear: 'Which futures they reject because of what choosing them would seem to mean about them, PLUS who they are afraid of becoming, PLUS which future still draws them once its social label/identity is stripped away. Do not ask more than 1 sub-question.',
+    'cost-loss': 'What each future would ask of them, PLUS what version of themselves each would require leaving behind — real costs on every option, not just the ones they\'re leaning away from. Do not ask more than 1 sub-question.',
+    continuity: 'Where each named future ALREADY exists in some form in their current life, right now — this stage is not optional scaffolding, it\'s central to the whole Journey\'s premise that futures reveal a present self, not a destination. Do not ask more than 1 sub-question.',
+    congruence: 'Which future feels inhabited rather than performed, PLUS what happens inside them when they imagine having already chosen it. Do not ask more than 1 sub-question.',
+    'escape-reality': 'What present problem they imagine each future solving, PLUS what NEW problems that future might create instead — every future must have both, no fantasy-only option. Do not ask more than 1 sub-question.',
+    'common-thread': 'What element, quality, or feeling appears across every future that genuinely feels like theirs — "nothing common, they\'re all different" is a legitimate answer. Do not ask more than 1 sub-question.',
+    'return-answer': 'What these imagined futures reveal about who they are today, PLUS their own answer to which future feels like theirs, OR what a future would need to contain to feel like theirs — a specific future is not required; naming the missing ingredient is an equally complete answer. Do not ask more than 1 sub-question — this is the closing stage.',
+  },
+  // Enough — "what would actually be enough for me?" (docs/journeys-
+  // concept.md). Hard content constraint: never rank goals as worthy or
+  // unworthy (wanting money, recognition, or achievement is not
+  // inherently unhealthy) — only ever ask what the goal is doing for the
+  // person, in every stage's own goal text below.
+  enough: {
+    'more-threshold': 'ONE real thing they feel they don\'t have enough of (can be any domain — money, recognition, reassurance, achievement, certainty), PLUS a real answer to how they\'d know when they had enough of it — a number, a feeling, a condition, whatever they actually name. Do not ask more than 2 sub-questions.',
+    underneath: 'What they expect having enough would actually give them, PLUS what they are postponing until they reach it ("then I\'ll..."). Do not ask more than 1 sub-question.',
+    'history-adaptation': 'What once would have felt like plenty to them, PLUS something they actually reached that eventually became normal/unremarkable — concrete instances, not a general claim about human nature. Do not ask more than 1 sub-question.',
+    authority: 'Who or what determines whether they have enough, PLUS who they\'re comparing themselves against, PLUS what changes if nobody could see what they have — three parts. Do not ask more than 1 sub-question.',
+    'purpose-levels': 'What "enough" is actually for in this case, PLUS an attempt to distinguish what would cover survival, safety, the life they actually want, versus what\'s simply more beyond that — doesn\'t need to be precise, just genuinely attempted. Do not ask more than 1 sub-question.',
+    'not-no-desire': 'Something they would still want even after having enough of the thing named in stage 1 — this guards against mistaking "enough" for "wanting nothing further," which is not the same thing and must not be implied as the goal. Do not ask more than 1 sub-question.',
+    'fear-motivation': 'What feels threatening about saying "this is enough" (loss of drive, loss of identity, complacency, being seen as having stopped trying), PLUS whether they believe they personally need some dissatisfaction to keep moving — never validate or challenge this belief, only surface it. Do not ask more than 1 sub-question.',
+    maximizing: 'A genuine answer to whether they are looking for enough or for the maximum possible outcome — maximizing is not framed as a flaw, just a real, nameable orientation with its own real tradeoffs (research shows maximizers sometimes get objectively better outcomes while feeling worse about them). Do not ask more than 1 sub-question.',
+    'recognition-condition': 'Somewhere in their life where they already genuinely know what enough feels like (even a small, unrelated domain), PLUS what conditions (rather than a number) would make the thing from stage 1 feel like enough. Do not ask more than 1 sub-question.',
+    permission: 'An honest answer to whether they would actually let themselves count those conditions as enough if they existed — "no, I don\'t think I would" is a real, important, legitimate answer, not a failure. Do not ask more than 1 sub-question.',
+    'now-answer': 'How much of what they\'d call enough is already present in their life right now, PLUS their own answer to the Journey\'s own opening question, now informed by everything above. Do not ask more than 1 sub-question — this is the closing stage.',
   },
 };
 
@@ -172,11 +378,138 @@ const STAGE_GOALS = {
 // history).
 const STAGE_SUBQUESTION_CAP = {
   control: {
-    name: 3,
+    situation: 2,
+    wish: 1,
     observable: 1,
     represents: 1,
     separate: 1,
     recognition: 1,
+  },
+  'the-choice': {
+    choice: 2,
+    attraction: 1,
+    pressure: 1,
+    audience: 1,
+    fear: 1,
+    cost: 1,
+    futures: 1,
+    'choice-again': 1,
+  },
+  'the-loop': {
+    present: 2,
+    familiarity: 1,
+    past: 2,
+    compare: 1,
+    desire: 1,
+    expectation: 1,
+    response: 1,
+    pattern: 1,
+    recognition: 1,
+  },
+  'whose-voice': {
+    statement: 2,
+    consequence: 1,
+    origin: 1,
+    meaning: 1,
+    remove: 1,
+    disagreement: 1,
+    integration: 1,
+    'my-voice': 1,
+  },
+  'the-road-not-taken': {
+    fork: 2,
+    'reality-imagination': 1,
+    object: 1,
+    responsibility: 1,
+    'me-then-now': 1,
+    'closed-open': 1,
+    'unlived-self': 1,
+    uncertainty: 1,
+    'return-to-now': 1,
+  },
+  'letting-go': {
+    'the-object': 2,
+    'gone-remains': 1,
+    connection: 1,
+    hope: 1,
+    unfinished: 1,
+    meaning: 1,
+    identity: 1,
+    'function-price': 1,
+    'time-keep': 1,
+    'form-now': 1,
+  },
+  'the-mirror': {
+    person: 2,
+    reality: 1,
+    meaning: 1,
+    desire: 1,
+    self: 1,
+    role: 1,
+    familiarity: 1,
+    'reality-check': 1,
+    authority: 1,
+    'the-mirror-now': 1,
+  },
+  'the-unsaid': {
+    person: 2,
+    reaction: 1,
+    'expression-outcome': 1,
+    meaning: 1,
+    silence: 1,
+    exposure: 1,
+    'remove-listener-editor': 1,
+    contradiction: 1,
+    distill: 1,
+    communication: 1,
+  },
+  becoming: {
+    change: 1,
+    evidence: 2,
+    practice: 1,
+    normal: 1,
+    'possible-selves': 1,
+    trajectory: 1,
+    'feeling-real': 1,
+    extrapolate: 1,
+    'name-it-now': 1,
+  },
+  'the-threshold': {
+    movement: 2,
+    'forward-back': 1,
+    'reality-knowing': 1,
+    'failure-success': 1,
+    'loss-staying': 1,
+    voice: 1,
+    ambivalence: 1,
+    'identity-permission': 1,
+    'staying-future': 1,
+    'return-answer': 1,
+  },
+  'possible-selves': {
+    multiplicity: 2,
+    underneath: 1,
+    'audience-status': 1,
+    fear: 1,
+    'cost-loss': 1,
+    continuity: 1,
+    congruence: 1,
+    'escape-reality': 1,
+    'common-thread': 1,
+    'return-answer': 1,
+  },
+  enough: {
+    'more-threshold': 2,
+    underneath: 1,
+    'history-adaptation': 1,
+    authority: 1,
+    'purpose-levels': 1,
+    'not-no-desire': 1,
+    'fear-motivation': 1,
+    maximizing: 1,
+    'recognition-condition': 1,
+    permission: 1,
+    'now-answer': 1,
   },
 };
 
@@ -187,11 +520,138 @@ const STAGE_SUBQUESTION_CAP = {
 // needs its own minimal nudge.
 const STAGE_FALLBACK_NUDGE = {
   control: {
-    name: "What situation is this actually about?",
+    situation: "What situation is this actually about?",
+    wish: "What would you want to happen instead, in one sentence?",
     observable: "What's one thing you'd see or hear that would tell you?",
     represents: "What would that give you, in one word?",
     separate: "Leaving that aside — what's still yours here?",
     recognition: "What stands out to you right now?",
+  },
+  'the-choice': {
+    choice: "What are the two real options in front of you?",
+    attraction: "What's one thing that draws you toward it?",
+    pressure: "Is anyone else's opinion in the room right now?",
+    audience: "If nobody would know, what changes — if anything?",
+    fear: "What's the thing you're actually afraid might happen?",
+    cost: "What would you be giving up?",
+    futures: "What does that imagined life pull you toward, or away from?",
+    'choice-again': "What feels true right now, even if it's still unclear?",
+  },
+  'the-loop': {
+    present: "What did you think, feel, or do about it?",
+    familiarity: "Does anything about it feel familiar — or not?",
+    past: "Can you recall a time that felt something like this?",
+    compare: "What's actually the same, and what's different?",
+    desire: "What did you want, in each of these?",
+    expectation: "What did you expect to happen?",
+    response: "What did you actually do?",
+    pattern: "If anything repeats here, where does it live?",
+    recognition: "What stands out to you right now?",
+  },
+  'whose-voice': {
+    statement: "Is it a want, a should, or a must?",
+    consequence: "What do you feel when you imagine not following it?",
+    origin: "Who or what comes to mind first?",
+    meaning: "What does it mean to you now?",
+    remove: "What's left once nobody's watching?",
+    disagreement: "Would letting it go feel like leaving something behind?",
+    integration: "Do you still choose it today?",
+    'my-voice': "What do you believe, in your own words?",
+  },
+  'the-road-not-taken': {
+    fork: "What do you imagine would have happened next?",
+    'reality-imagination': "Which parts do you actually know versus just hope?",
+    object: "What would having it actually give you?",
+    responsibility: "Whose action, or what circumstance, do you wish had been different?",
+    'me-then-now': "What do you know now that you didn't know then?",
+    'closed-open': "Is there anything that still feels possible, even changed?",
+    'unlived-self': "What do you feel toward that version of yourself?",
+    uncertainty: "What might not have gone well on that road either?",
+    'return-to-now': "What does this show you about your life now?",
+  },
+  'letting-go': {
+    'the-object': "What exactly feels hard to release?",
+    'gone-remains': "What still exists, even now?",
+    connection: "What would you lose if you let go?",
+    hope: "What does keeping that hope open cost you?",
+    unfinished: "What's still waiting to happen?",
+    meaning: "What would that actually change for you?",
+    identity: "Who would you be without it?",
+    'function-price': "What does it ask of you in return?",
+    'time-keep': "What would you want to keep, regardless?",
+    'form-now': "Hold, carry differently, or leave — which feels closest?",
+  },
+  'the-mirror': {
+    person: "What specifically brings that reaction out?",
+    reality: "What did they actually say or do?",
+    meaning: "What did you take that to mean?",
+    desire: "Why does it matter that it's them, specifically?",
+    self: "What do they bring out in you?",
+    role: "What part does that leave you playing?",
+    familiarity: "Has this pairing shown up before, with someone else?",
+    'reality-check': "Has this specifically happened before, more than once?",
+    authority: "What would change if their opinion couldn't define you?",
+    'the-mirror-now': "What does this make visible in you?",
+  },
+  'the-unsaid': {
+    person: "Even one unfinished sentence — where would you start?",
+    reaction: "What do you imagine they'd do?",
+    'expression-outcome': "Separate from what you want to happen — what do you want to SAY?",
+    meaning: "What do you want your words to actually do?",
+    silence: "What does staying quiet ask of you?",
+    exposure: "What would they know about you if you said it plainly?",
+    'remove-listener-editor': "If it never had to be fair or reasonable — what else is there?",
+    contradiction: "Is there a part of you that wants the opposite?",
+    distill: "Which part feels truest?",
+    communication: "Who really needs to hear this?",
+  },
+  becoming: {
+    change: "What's the same as it's always been?",
+    evidence: "What's something you actually did, not just felt?",
+    practice: "What do you seem to be getting better at?",
+    normal: "What are you used to now that you weren't before?",
+    'possible-selves': "Who are you afraid of becoming?",
+    trajectory: "Which one does your life right now actually look like?",
+    'feeling-real': "Where do you feel most like yourself?",
+    extrapolate: "Which direction do you want to keep, or reconsider?",
+    'name-it-now': "What are you doing today that builds that?",
+  },
+  'the-threshold': {
+    movement: "What's the actual next concrete step?",
+    'forward-back': "And what pulls you the other way?",
+    'reality-knowing': "What would you rather not know yet?",
+    'failure-success': "What changes if it goes well?",
+    'loss-staying': "What does staying still give you?",
+    voice: "Is that about now, or about what might happen?",
+    ambivalence: "What does the part that wants to stay want for you?",
+    'identity-permission': "Whose permission do you feel like you're waiting for?",
+    'staying-future': "Is it actually undoable, or does it just feel that way?",
+    'return-answer': "What do you think is really stopping you?",
+  },
+  'possible-selves': {
+    multiplicity: "What's a second, different future you imagine?",
+    underneath: "Do you want to be them, or just have what they have?",
+    'audience-status': "Does it still pull you if nobody's impressed?",
+    fear: "What would choosing it seem to say about you?",
+    'cost-loss': "What would you leave behind for that one?",
+    continuity: "Where does that already show up in your life now?",
+    congruence: "Does it feel like you, or like a performance?",
+    'escape-reality': "What new problem might it bring instead?",
+    'common-thread': "What shows up in more than one of these?",
+    'return-answer': "What would a future need, to feel like yours?",
+  },
+  enough: {
+    'more-threshold': "How would you actually know you had enough?",
+    underneath: "What are you waiting to reach before you allow yourself something?",
+    'history-adaptation': "What became normal that used to feel like plenty?",
+    authority: "Who's actually deciding whether it's enough?",
+    'purpose-levels': "Enough for what, exactly?",
+    'not-no-desire': "What would you still want, even then?",
+    'fear-motivation': "What do you think you'd lose by saying 'enough'?",
+    maximizing: "Best possible, or just good enough?",
+    'recognition-condition': "Where do you already know what enough feels like?",
+    permission: "Would you actually let that count?",
+    'now-answer': "How much of that is already here?",
   },
 };
 
@@ -583,6 +1043,30 @@ export async function getJourneySession(req, res) {
   }
 
   res.json(session);
+}
+
+// GET /api/journeys/sessions — every COMPLETED session for the signed-in
+// user, across all Journeys, newest first (2026-08-30, see RULES.md's
+// "history is the product" framing — every finished Journey becomes a
+// real entry in the person's own record). No consent check here — unlike
+// MeasureResult (never created at all without consent, see
+// chatController.js's saveMeasureResultIfConsented), a JourneySession must
+// persist regardless of consent since the engine itself depends on it
+// (resuming mid-stage, the completion reflection) for every user, not
+// just consenting ones. Consent for Journey-history VISIBILITY is instead
+// enforced client-side in Your Arc (mobile/app/your-arc.tsx applies this
+// fetch's result only inside the same profile.consent.psychologicalData
+// .given guard every other record type there already uses) — a product/
+// UI decision, not a data-access one; the session always belongs to and
+// is readable by its own owner via this endpoint.
+export async function getJourneySessions(req, res) {
+  const sessions = await JourneySession.find({
+    userId: req.user.id,
+    completedAt: { $ne: null },
+  })
+    .sort({ completedAt: -1 })
+    .limit(100);
+  res.json(sessions);
 }
 
 // POST /api/journeys/purchase — self-service free grant (2026-08-28,

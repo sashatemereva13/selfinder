@@ -462,7 +462,23 @@ function LoggedInAccount({
       <Text style={styles.signedInAs}>{t('account.signedInAs', { username: session.username })}</Text>
 
       <View style={styles.consentToggleRow}>
-        <Text style={styles.consentToggleLabel}>{t('account.saveReadingsToAccount')}</Text>
+        <View style={styles.consentToggleLabelCol}>
+          <Text style={styles.consentToggleLabel}>{t('account.saveReadingsToAccount')}</Text>
+          {/* The button below says what TAPPING does ("Turn on"/"Turn
+              off") — it used to just say the current state ("On"/"Off"),
+              which on a plain pill read as an instruction to press
+              ("Off" looked like a button that turns things off, when the
+              opposite was true: it meant saving was ALREADY off and
+              tapping would turn it on). Without a separate status word,
+              changing the button to an action label alone would leave
+              nothing on screen stating the CURRENT state for a
+              first-time visitor (consentTimestamp, which does state it,
+              only exists after the toggle's been touched once) — this
+              line is that missing, always-visible status. */}
+          <Text style={[styles.consentStatus, consentGiven && { color: colors.accent.buttonFill }]}>
+            {consentBusy ? '…' : consentGiven ? t('account.consentStatusOn') : t('account.consentStatusOff')}
+          </Text>
+        </View>
         <Pressable
           style={[styles.consentToggleButton, consentGiven && { backgroundColor: colors.accent.buttonFill }]}
           onPress={toggleConsent}
@@ -726,12 +742,17 @@ function makeStyles(colors: Colors) {
     justifyContent: 'space-between',
     gap: spacing[3],
   },
+  consentToggleLabelCol: { flex: 1, gap: spacing[1] },
   consentToggleLabel: {
-    flex: 1,
     color: colors.text.secondary,
     fontFamily: fonts.light,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
+  },
+  consentStatus: {
+    color: colors.text.faint,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
   },
   // Filled, not outlined — matches submitButton's convention for the one
   // other real action in this file; an outlined pill was the odd one out.

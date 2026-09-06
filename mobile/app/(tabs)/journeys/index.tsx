@@ -1,15 +1,16 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../src/store/themeStore';
 import type { Colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
+import { fonts, fontSizes, lineHeights } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
 import { AmbientGlow } from '../../../src/components/AmbientGlow';
 import { ProfileIcon } from '../../../src/components/ProfileIcon';
+import { JourneyShelf } from '../../../src/components/JourneyShelf';
 import { JourneyKey } from '../../../src/types';
 
 // The three temporal groups a Journey's own movement belongs to (see
@@ -28,6 +29,17 @@ interface Product {
   key: JourneyKey;
   labelKey: string;
   descriptionKey: string;
+  // A short, non-diagnostic line naming the real psychoanalytic/
+  // psychological research this Journey's question architecture is
+  // grounded in (see docs/journeys-concept.md's own "Research grounding"
+  // section for each Journey) — added 2026-09-03 so the catalog signals
+  // these sequences aren't random, without ever surfacing what that
+  // research implies ABOUT THE USER. This is a narrow, deliberate
+  // exception to RULES.md's "research grounding is never surfaced" rule:
+  // naming that the architecture itself is researched is fine; the rule
+  // that must never be crossed is drawing a conclusion about the person
+  // reading it from that research, which this line never does.
+  groundingKey: string;
   // A plain string, not a closed union of known routes — Journeys are an
   // explicitly open-ended, growing family (2026-08-23 pivot, see RULES.md's
   // Product/positioning section), so this list is expected to keep
@@ -48,21 +60,12 @@ interface Product {
 // content Selfinder gives the user). Built as a real array (same
 // SOURCES/HOW_TO_USE_ENTRIES pattern as sources/index.tsx and
 // howToUseEntries.ts) so a future Journey is a new entry here, not a new
-// screen. Control is the only one with real content today; the rest are
-// named, reachable, honest "not yet available" placeholders (see each
-// route's own file, all sharing JourneyComingSoonScreen) — not dead
-// links, since a catalog entry that goes nowhere would be exactly the
-// kind of tap-target-that-looks-like-a-purchase-and-doesn't this
-// project's own standing rule warns against.
+// screen.
 //
 // 2026-08-23: replaced the earlier placeholder Either/Or and Identity
 // entries with this question-first catalog (label is the question in the
 // user's own voice, e.g. "What am I really trying to control?" — see
-// docs/journeys-concept.md's "Catalog" section for why). Control is the
-// reference implementation for how a Journey's architecture actually
-// gets designed once it's built for real, and the only one with a real
-// build behind it today — the rest are honest "not yet available"
-// placeholders (see JourneyComingSoonScreen).
+// docs/journeys-concept.md's "Catalog" section for why).
 //
 // 2026-08-26: grouped by temporal orientation (see docs/journeys-
 // concept.md's "Catalog" section for the full reasoning) rather than one
@@ -79,18 +82,18 @@ interface Product {
 // helpful cross-listing once tried live — Your Arc is now Center's one
 // true home, and this catalog is purely the 11-Journey question set.
 const PRODUCTS: Product[] = [
-  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', route: '/control', temporal: 'present' },
-  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', route: '/the-choice', temporal: 'present' },
-  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', route: '/the-loop', temporal: 'past' },
-  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', route: '/whose-voice', temporal: 'past' },
-  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', route: '/the-road-not-taken', temporal: 'past' },
-  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', route: '/letting-go', temporal: 'past' },
-  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', route: '/the-mirror', temporal: 'present' },
-  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', route: '/the-unsaid', temporal: 'present' },
-  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', route: '/becoming', temporal: 'future' },
-  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', route: '/the-threshold', temporal: 'future' },
-  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', route: '/possible-selves', temporal: 'future' },
-  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', route: '/enough', temporal: 'present' },
+  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', groundingKey: 'products.controlGrounding', route: '/control', temporal: 'present' },
+  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', groundingKey: 'products.theChoiceGrounding', route: '/the-choice', temporal: 'present' },
+  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', groundingKey: 'products.theLoopGrounding', route: '/the-loop', temporal: 'past' },
+  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', groundingKey: 'products.whoseVoiceGrounding', route: '/whose-voice', temporal: 'past' },
+  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', groundingKey: 'products.theRoadNotTakenGrounding', route: '/the-road-not-taken', temporal: 'past' },
+  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', groundingKey: 'products.lettingGoGrounding', route: '/letting-go', temporal: 'past' },
+  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', groundingKey: 'products.theMirrorGrounding', route: '/the-mirror', temporal: 'present' },
+  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', groundingKey: 'products.theUnsaidGrounding', route: '/the-unsaid', temporal: 'present' },
+  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', groundingKey: 'products.becomingGrounding', route: '/becoming', temporal: 'future' },
+  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', groundingKey: 'products.theThresholdGrounding', route: '/the-threshold', temporal: 'future' },
+  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', groundingKey: 'products.possibleSelvesGrounding', route: '/possible-selves', temporal: 'future' },
+  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', groundingKey: 'products.enoughGrounding', route: '/enough', temporal: 'present' },
 ];
 
 const TEMPORAL_GROUPS: { key: TemporalGroup; headingKey: string }[] = [
@@ -99,6 +102,17 @@ const TEMPORAL_GROUPS: { key: TemporalGroup; headingKey: string }[] = [
   { key: 'future', headingKey: 'products.groupFuture' },
 ];
 
+// 2026-09-03: replaced the flat, vertically-stacked row list (grouped
+// under text headings, one full-width row per Journey) with three
+// horizontally-swiped shelves, one per time-orientation — see
+// JourneyShelf.tsx's own header comment for the full design rationale.
+// Past/Present/Future stays a VERTICAL sequence (all three shelves
+// visible together, nothing hidden behind an undiscovered swipe) while
+// each shelf's own Journeys swipe HORIZONTALLY as cards — the version the
+// user asked for after comparing three prototyped layouts (a refined flat
+// list, a single horizontal timeline, and a Depths-style radial orbit):
+// vertical time-order plus horizontal per-row browsing, without the
+// orbit's discoverability risk for a first-time visitor.
 export default function ProductsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -117,31 +131,22 @@ export default function ProductsScreen() {
       {theme === 'dark' && <AmbientGlow />}
 
       <Text style={styles.title}>{t('products.title')}</Text>
-      {/* Standing orientation line — "why would I come here" — kept
-          distinct from the commercial-framing line just below it ("what's
-          the deal"): two different questions, same reasoning as the tab
-          explainer on Depths/Your Arc. */}
-      <Text style={styles.tabExplainer}>{t('products.tabExplainer')}</Text>
-      <Text style={styles.intro}>{t('products.intro')}</Text>
 
       {TEMPORAL_GROUPS.map((group) => {
         const items = PRODUCTS.filter((p) => p.temporal === group.key);
         if (items.length === 0) return null;
         return (
-          <View key={group.key} style={styles.group}>
-            <Text style={styles.groupHeading}>{t(group.headingKey)}</Text>
-            {items.map((product) => (
-              // Full row weight (label + description), same as
-              // sourcesLink/howToUseLink's own rows on the You tab and
-              // RULES.md's "a next step earns the same visual weight...
-              // if it's meant to be genuinely chosen" rule — this is the
-              // entry point to a real purchase, not a footnote link.
-              <Pressable key={product.key} style={styles.row} onPress={() => router.push(product.route)}>
-                <Text style={styles.rowLabel}>{t(product.labelKey)}</Text>
-                <Text style={styles.rowDescription}>{t(product.descriptionKey)}</Text>
-              </Pressable>
-            ))}
-          </View>
+          <JourneyShelf
+            key={group.key}
+            label={t(group.headingKey)}
+            items={items.map((product) => ({
+              key: product.key,
+              name: t(product.labelKey),
+              question: t(product.descriptionKey),
+              grounding: t(product.groundingKey),
+              onPress: () => router.push(product.route),
+            }))}
+          />
         );
       })}
       </ScrollView>
@@ -153,48 +158,14 @@ function makeStyles(colors: Colors) {
   return StyleSheet.create({
   rootWrap: { flex: 1, backgroundColor: colors.bg.base },
   root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { padding: spacing[6], paddingBottom: spacing[12] },
+  content: { paddingBottom: spacing[12] },
   title: {
     color: colors.text.primary,
     fontFamily: fonts.medium,
     fontSize: fontSizes.xl,
     lineHeight: fontSizes.xl * lineHeights.tight,
-    marginBottom: spacing[2],
-  },
-  tabExplainer: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    marginBottom: spacing[3],
-  },
-  intro: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.loose,
+    paddingHorizontal: spacing[6],
     marginBottom: spacing[8],
-  },
-  group: { marginTop: spacing[8] },
-  // Same kicker register as facts/pastReadings sections elsewhere in the
-  // app (see your-arc.tsx's own factsKicker) — a plain uppercase label,
-  // no box, position and space carrying the grouping rather than a card.
-  groupHeading: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-    marginBottom: spacing[2],
-  },
-  row: { paddingVertical: spacing[4], borderTopWidth: 1, borderTopColor: colors.bg.border },
-  rowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.md },
-  rowDescription: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    marginTop: spacing[1],
-    lineHeight: fontSizes.sm * lineHeights.normal,
   },
   });
 }

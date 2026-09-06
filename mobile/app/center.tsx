@@ -14,7 +14,6 @@ import { getMeasureHistory } from '../src/api/user';
 import { ArcKaleidoscope } from '../src/components/ArcKaleidoscope';
 import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
-import { PagedScrollView } from '../src/components/PagedScrollView';
 import { AmbientGlow } from '../src/components/AmbientGlow';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
@@ -27,8 +26,21 @@ import { JourneyPurchase } from '../src/types';
 // Cover page; see RULES.md's Product/positioning section). Unlike Your
 // Arc, this is NOT part of the record — each purchase generates its own,
 // genuinely different result (a fresh seedNonce folded into
-// kaleidoscopeData.ts's seedFromLog), and every past purchase stays
-// individually browsable rather than being replaced by the latest one.
+// kaleidoscopeData.ts's seedFromLog).
+//
+// 2026-08-30: this screen used to browse EVERY past purchase in-screen
+// (a PagedScrollView, one page per purchase). That doesn't scale to 12
+// Journeys each needing their own browsable-history UI, and control.tsx
+// (the reference implementation for every OTHER Journey) never had
+// browsing at all — it could only ever show its one most recent result,
+// with no way to even start over. Reconciled the two: every Journey
+// screen, this one included, now shows only its most recent result plus
+// a "do it again" button; ALL historical browsing (every past purchase,
+// real content — stages, answers, reflection) moved to exactly one place,
+// Your Arc's own JourneysPage.tsx, consent-gated the same way Measure/
+// Spill/Wish history already is. This screen keeps generating a fresh
+// kaleidoscope each time (handleGetCenter, unchanged) — it just stops
+// being the place you go to look BACK at past ones.
 //
 // 2026-08-29: the light cone (previously shown right below the
 // kaleidoscope on this screen) moved to its own page on Your Arc
@@ -104,6 +116,12 @@ function CenterScreen() {
   // merged in locally rather than waiting on a refetch.
   const [extraPurchases, setExtraPurchases] = useState<JourneyPurchase[]>([]);
   const purchases = hookPurchases === null ? null : [...hookPurchases, ...extraPurchases];
+  // 2026-08-30 — this screen now shows only the most recent purchase (see
+  // this file's own header comment); every OTHER Journey screen already
+  // derived this the same way (control.tsx's own mostRecentPurchase).
+  const mostRecentPurchase = purchases && purchases.length > 0
+    ? [...purchases].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0]
+    : null;
   const [purchasing, setPurchasing] = useState(false);
 
   // The server-saved record — fetched for any signed-in session, no Your
@@ -213,29 +231,23 @@ function CenterScreen() {
           </Pressable>
         </ScrollView>
       ) : (
-        // Every past purchase, most recent first — browsable, not
-        // latest-only (confirmed with the user: "the user should be able
-        // to see everything they've previously purchased because every
-        // purchasable experience will create a result"). One more page at
-        // the end offers to generate a new one.
-        <PagedScrollView>
-          {[...purchases]
-            .sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())
-            .map((purchase) => (
-              <ScrollView key={purchase.id} contentContainerStyle={styles.pageContent}>
-                <Text style={styles.kicker}>{t('center.title')}</Text>
-                <Text style={styles.purchaseDate}>{formatDate(new Date(purchase.purchasedAt).getTime())}</Text>
-                {renderExperience(purchase)}
-              </ScrollView>
-            ))}
-          <ScrollView key="get-another" contentContainerStyle={styles.pageContent}>
-            <Text style={styles.kicker}>{t('center.kicker')}</Text>
-            <Text style={styles.introLine}>{t('center.repeatLine')}</Text>
-            <Pressable style={styles.getButton} onPress={handleGetCenter}>
-              <Text style={styles.getButtonText}>{t('center.getCenter')}</Text>
-            </Pressable>
-          </ScrollView>
-        </PagedScrollView>
+        // 2026-08-30: only the most recent purchase now, not every past
+        // one browsable in-screen — that history moved to Your Arc's own
+        // JourneysPage.tsx (see this file's own header comment). Same
+        // "do it again" action as before (handleGetCenter, unchanged),
+        // just no longer paired with in-screen browsing of what it
+        // replaces.
+        <ScrollView contentContainerStyle={styles.pageContent}>
+          <Text style={styles.kicker}>{t('center.title')}</Text>
+          <Text style={styles.purchaseDate}>
+            {formatDate(new Date(mostRecentPurchase!.purchasedAt).getTime())}
+          </Text>
+          {renderExperience(mostRecentPurchase)}
+          <Pressable style={[styles.getButton, purchasing && { opacity: 0.5 }]} onPress={handleGetCenter} disabled={purchasing}>
+            <Text style={styles.getButtonText}>{purchasing ? t('center.getCenterBusy') : t('center.getCenter')}</Text>
+          </Pressable>
+          <Text style={styles.savedInYourArcNote}>{t('journey.savedInYourArcNote')}</Text>
+        </ScrollView>
       )}
     </View>
   );
@@ -294,5 +306,12 @@ function makeStyles(colors: Colors) {
     backgroundColor: colors.accent.buttonFill,
   },
   getButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  savedInYourArcNote: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+    marginTop: spacing[4],
+  },
   });
 }

@@ -7,7 +7,7 @@ import { useThemeColors } from '../src/theme/useThemeColors';
 import { useThemeStore } from '../src/store/themeStore';
 import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes } from '../src/theme/typography';
-import { spacing } from '../src/theme/spacing';
+import { spacing, radius } from '../src/theme/spacing';
 import { useAuthStore } from '../src/store/authStore';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { purchaseJourney } from '../src/api/journeys';
@@ -38,30 +38,65 @@ export default function ControlScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const session = useAuthStore((s) => s.session);
-  const purchases = useJourneyPurchases('control');
+  const hookPurchases = useJourneyPurchases('control');
   const accentRgb = useAppAccentRgb();
   const [completedSession, setCompletedSession] = useState<JourneySessionDTO | null>(null);
   // Selfinder is fully free for now (see RULES.md's Product/positioning
   // section) — a signed-in user with no existing Control purchase gets
   // one self-granted automatically, rather than seeing a "not purchased
-  // yet" teaser. Tracked locally so the freshly-granted purchase is used
-  // immediately, without waiting on a second useJourneyPurchases refetch.
-  const [freeGrant, setFreeGrant] = useState<JourneyPurchase | null>(null);
+  // yet" teaser. 2026-08-30: renamed from the old single-slot `freeGrant`
+  // to an array (extraPurchases), matching center.tsx's own pattern
+  // exactly — a single slot got silently SHADOWED by hookPurchases once
+  // any purchase existed (mostRecentPurchase preferred the hook's own
+  // list whenever it was non-empty, so a fresh grant after finishing once
+  // was invisible: the screen kept showing the OLD completed purchase).
+  // An array merged with the hook's own list and always re-sorted by date
+  // means a freshly-granted purchase is picked up immediately, every
+  // time, without waiting on a useJourneyPurchases refetch.
+  const [extraPurchases, setExtraPurchases] = useState<JourneyPurchase[]>([]);
+  const purchases = hookPurchases === null ? null : [...hookPurchases, ...extraPurchases];
   const grantRequestedRef = useRef(false);
 
   const mostRecentPurchase = purchases && purchases.length > 0
     ? [...purchases].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0]
-    : freeGrant;
+    : null;
 
   useEffect(() => {
     if (!session || purchases === null || mostRecentPurchase || grantRequestedRef.current) return;
     grantRequestedRef.current = true;
     purchaseJourney('control', session.token)
-      .then(setFreeGrant)
+      .then((purchase) => setExtraPurchases((prev) => [...prev, purchase]))
       .catch(() => {
         grantRequestedRef.current = false; // allow a retry on the next render if this failed
       });
   }, [session, purchases, mostRecentPurchase]);
+
+  // 2026-08-30: "do this Journey again" — unconditional, unlike the
+  // auto-grant effect above (which only ever fires once, the FIRST time
+  // this screen is opened with no purchase at all). Before this, once a
+  // purchase existed the screen could never request another one — no
+  // matter how many times the person finished Control, this was the only
+  // result they'd ever see again. Mirrors center.tsx's own
+  // handleGetCenter exactly: a fresh purchaseJourney call, appended to
+  // extraPurchases so it's picked up immediately, then completedSession
+  // is cleared so the screen falls through to JourneyWizard for the NEW
+  // purchase rather than continuing to show the old completed one.
+  const [restarting, setRestarting] = useState(false);
+  const handleDoItAgain = async () => {
+    if (!session || restarting) return;
+    setRestarting(true);
+    try {
+      const purchase = await purchaseJourney('control', session.token);
+      setExtraPurchases((prev) => [...prev, purchase]);
+      setCompletedSession(null);
+    } catch {
+      // Best-effort — the person can just tap again; no destructive state
+      // to roll back since completedSession/extraPurchases are only
+      // touched on success.
+    } finally {
+      setRestarting(false);
+    }
+  };
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
@@ -85,14 +120,30 @@ export default function ControlScreen() {
           <ArcKaleidoscopeLoading size={KALEIDOSCOPE_LOADING_SIZE * 0.6} accentRgb={accentRgb} />
         </View>
       ) : completedSession ? (
-        <JourneyReflection
-          beganLabelKey="control.reflectionBegan"
-          beganAnswer={completedSession.stages[0]?.finalAnswer ?? ''}
-          shiftLabelKey={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ? 'control.reflectionShift' : undefined}
-          shiftText={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ?? undefined}
-          arrivedLabelKey="control.reflectionArrived"
-          arrivedAnswer={completedSession.stages[completedSession.stages.length - 1]?.finalAnswer ?? ''}
-        />
+        // 2026-08-30: the dead end this used to be — once completedSession
+        // was set, there was no way back to a fresh Journey, ever. Now
+        // wrapped with a real "do it again" action (handleDoItAgain) and a
+        // quiet pointer to where the full history actually lives now that
+        // this screen itself only ever shows the ONE most recent result —
+        // see JourneysPage.tsx (Your Arc).
+        <View style={styles.completedWrap}>
+          <JourneyReflection
+            beganLabelKey="control.reflectionBegan"
+            beganAnswer={completedSession.stages.find((s) => s.stageId === 'wish')?.finalAnswer ?? completedSession.stages[0]?.finalAnswer ?? ''}
+            shiftLabelKey={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ? 'control.reflectionShift' : undefined}
+            shiftText={completedSession.stages.find((s) => s.stageId === 'separate')?.revealText ?? undefined}
+            arrivedLabelKey="control.reflectionArrived"
+            arrivedAnswer={completedSession.stages[completedSession.stages.length - 1]?.finalAnswer ?? ''}
+          />
+          <Pressable
+            style={[styles.doItAgainButton, restarting && { opacity: 0.5 }]}
+            onPress={handleDoItAgain}
+            disabled={restarting}
+          >
+            <Text style={styles.doItAgainButtonText}>{t('journey.doItAgain')}</Text>
+          </Pressable>
+          <Text style={styles.savedInYourArcNote}>{t('journey.savedInYourArcNote')}</Text>
+        </View>
       ) : (
         <JourneyWizard
           journey="control"
@@ -122,6 +173,22 @@ function makeStyles(colors: Colors) {
       fontFamily: fonts.light,
       fontSize: fontSizes.base,
       textAlign: 'center',
+    },
+    completedWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingBottom: spacing[8] },
+    doItAgainButton: {
+      marginTop: spacing[2],
+      paddingVertical: spacing[3],
+      paddingHorizontal: spacing[5],
+      borderRadius: radius.full,
+      backgroundColor: colors.accent.buttonFill,
+    },
+    doItAgainButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+    savedInYourArcNote: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      textAlign: 'center',
+      marginTop: spacing[4],
     },
   });
 }

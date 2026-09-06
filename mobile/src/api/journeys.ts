@@ -80,3 +80,14 @@ export async function getJourneySession(
     return null;
   }
 }
+
+// Every completed Journey session for the signed-in account, across every
+// Journey, newest first — the record Your Arc's own JourneysPage.tsx
+// browses (2026-08-30). Server-side has no consent check (see
+// journeyController.js's getJourneySessions comment); consent gates
+// whether this is even CALLED/applied, done by the caller (your-arc.tsx,
+// same profile.consent.psychologicalData.given guard every other record
+// fetch there already uses), not by this function.
+export function listMyJourneySessions(token: string): Promise<JourneySessionDTO[]> {
+  return request<JourneySessionDTO[]>('/journeys/sessions', undefined, { method: 'GET', token });
+}

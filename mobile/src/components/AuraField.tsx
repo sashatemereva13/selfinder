@@ -1,5 +1,15 @@
+import { useEffect } from 'react';
 import Svg, { Ellipse as SvgEllipse } from 'react-native-svg';
+import Animated, { useAnimatedProps, useSharedValue, withTiming, Easing } from 'react-native-reanimated';
 import { getAuraFigureMetrics } from './AuraFigure';
+
+const AnimatedSvgEllipse = Animated.createAnimatedComponent(SvgEllipse);
+const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+// Matches DepthsSpiral.tsx's own PULSE_DURATION_MS — the ring-dimming
+// should settle at roughly the same pace as the spiral's own confirmation
+// pulse landing, so "rings shift" reads as caused by the pulse arriving,
+// not a separate, differently-timed transition.
+const EMPHASIS_DURATION_MS = 380;
 
 // PHASE C of Depths' field-lines reveal — the aura + its four rings now
 // sit as a foreshortened "ground plane" at the base of the conical
@@ -122,19 +132,60 @@ export function AuraField({
         const rx = rxFor(i);
         const ry = ryFor(i);
         return (
-          <SvgEllipse
+          <AuraFieldRing
             key={key}
             cx={svgCenterX}
             cy={svgCenterY}
             rx={rx}
             ry={ry}
-            fill="none"
-            stroke={colors[key]}
-            strokeWidth={1}
-            opacity={0.55 * emphasis}
+            color={colors[key]}
+            emphasis={emphasis}
           />
         );
       })}
     </Svg>
+  );
+}
+
+// A single ring, its own emphasis-driven opacity animated rather than a
+// plain SVG prop — a bare `opacity` prop snaps instantly when `emphasis`
+// changes (React Native SVG doesn't interpolate prop changes on its own),
+// which read as an instant swap rather than the "rings shift" transition
+// the sphere-tap pulse is meant to cause (2026-08-29, see DepthsSpiral.tsx's
+// own pulseToSphere). Kept as its own small component (not inlined in the
+// .map above) so the shared value lives per-ring, not per-render.
+function AuraFieldRing({
+  cx,
+  cy,
+  rx,
+  ry,
+  color,
+  emphasis,
+}: {
+  cx: number;
+  cy: number;
+  rx: number;
+  ry: number;
+  color: string;
+  emphasis: number;
+}) {
+  const emphasisValue = useSharedValue(emphasis);
+  useEffect(() => {
+    emphasisValue.value = withTiming(emphasis, { duration: EMPHASIS_DURATION_MS, easing: SOFT_EASE });
+  }, [emphasis]);
+  const animatedProps = useAnimatedProps(() => ({
+    opacity: 0.55 * emphasisValue.value,
+  }));
+  return (
+    <AnimatedSvgEllipse
+      cx={cx}
+      cy={cy}
+      rx={rx}
+      ry={ry}
+      fill="none"
+      stroke={color}
+      strokeWidth={1}
+      animatedProps={animatedProps}
+    />
   );
 }

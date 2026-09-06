@@ -2,6 +2,20 @@ import { useLocaleStore } from '../store/localeStore';
 
 const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
+// Carries the real HTTP status alongside the backend's human-readable
+// message (see the !res.ok branch below) — added 2026-09-06 so a 401
+// caused by an EXPIRED/invalid token (auth.js's requireAuth) can be told
+// apart from any other failure without string-matching the message
+// itself, which would be both fragile and locale-dependent. See
+// handleExpiredSession below, the actual consumer of `status`.
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
 // Shown when fetch() itself throws — i.e. the request never reached the
 // server at all (DNS failure, connection refused, a VPN routing traffic
 // somewhere selfinder.online's host rejects). Confirmed on a real device:
@@ -39,6 +53,7 @@ const TIMEOUT_ERROR_MESSAGE = {
 interface RequestOptions {
   method?: 'GET' | 'POST' | 'DELETE';
   token?: string | null;
+  timeoutMs?: number;
 }
 
 async function request<T>(path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
@@ -47,7 +62,7 @@ async function request<T>(path: string, body?: unknown, options: RequestOptions 
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
 
   let res: Response;
   try {
@@ -90,7 +105,30 @@ async function request<T>(path: string, body?: unknown, options: RequestOptions 
         // to the generic message above rather than showing raw HTML/text.
       }
     }
-    throw new Error(message);
+    const err = new ApiError(message, res.status);
+    // A 401 specifically caused by a token that was actually SENT (not
+    // just "no token, anonymous request") means the stored session is
+    // dead — expired (backend/controllers/authController.js signs tokens
+    // with a 7-day expiry, and there's no refresh mechanism) or otherwise
+    // rejected by the server. Before this fix, authStore's session object
+    // just stayed populated forever in that case (nothing ever cleared
+    // it), so the app kept believing it was signed in while every
+    // authenticated call — arcLine, Spill, wishes, crossings, journeys —
+    // silently failed with "Token invalid or expired" logged to the
+    // console and nothing shown to the user (confirmed live 2026-09-06:
+    // every one of those calls failing at once, all with this exact
+    // message, is the signature of this bug, not five separate broken
+    // endpoints). Calling logout() here makes a dead session self-heal
+    // into "signed out" — which the app already handles correctly
+    // (_layout.tsx redirects to onboarding) — instead of limping along
+    // silently broken. Dynamic import avoids a require cycle (authStore
+    // itself calls into several *Api modules that go through this file).
+    if (res.status === 401 && options.token) {
+      import('../store/authStore').then(({ useAuthStore }) => {
+        useAuthStore.getState().logout();
+      });
+    }
+    throw err;
   }
   return res.json() as Promise<T>;
 }

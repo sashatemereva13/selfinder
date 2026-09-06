@@ -29,6 +29,18 @@ import { spacing } from '../../theme/spacing';
 // FactsPage/ResurfacedWishPage used two other, inconsistent treatments.
 export function makeSharedArcPageStyles(colors: Colors) {
   return StyleSheet.create({
+    // Identical to FactsPage/TimeConePage/WishCrossingPage's own
+    // page-local `kicker` style (not deduplicated there — out of scope
+    // for this pass) — JourneysPage.tsx uses this shared one rather than
+    // adding a 4th copy.
+    kicker: {
+      alignSelf: 'flex-start',
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
     headline: {
       color: colors.text.primary,
       fontFamily: fonts.medium,
@@ -45,6 +57,28 @@ export function makeSharedArcPageStyles(colors: Colors) {
       color: colors.text.faint,
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
+    },
+    // The documented "body" register (sm/secondary) — was described in
+    // this file's own header comment but never actually declared as a
+    // reusable style; every page instead had its own equivalently-styled
+    // one-off (wishText, factLine, momentAnswer, etc.). Added as a real
+    // shared style for JourneysPage.tsx's own quoted-answer/synthesis text
+    // rather than adding yet another one-off.
+    body: {
+      color: colors.text.secondary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
+    },
+    // A person's own words, quoted back — same register wishText/
+    // momentSpillText already use (italic sm/secondary) for this exact
+    // kind of material.
+    quoteText: {
+      color: colors.text.secondary,
+      fontFamily: fonts.light,
+      fontStyle: 'italic',
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
     },
     // Each swipeable page is its own ScrollView (per PagedScrollView's own
     // contract), so there are two content-container shapes: pageCentered

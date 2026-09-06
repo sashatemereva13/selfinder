@@ -31,25 +31,6 @@ export function GuideTabIcon({ color }: { color: string }) {
   );
 }
 
-// A reduced figure outline — head ring + shoulder line — same silhouette
-// AuraFigure uses at icon scale, but as a thin construction line rather
-// than a filled glowing body. Kept for reuse on the profile entry point
-// even though it no longer names a tab (see Phase 5 of the nav restructure).
-export function YouTabIcon({ color }: { color: string }) {
-  return (
-    <Svg width={24} height={24} viewBox="0 0 28 28">
-      <Circle cx={14} cy={8} r={4} stroke={color} strokeWidth={1.4} fill="none" />
-      <Path
-        d="M8 24 C8 16.5 10.6 13.5 14 13.5 C17.4 13.5 20 16.5 20 24"
-        stroke={color}
-        strokeWidth={1.4}
-        strokeLinecap="round"
-        fill="none"
-      />
-    </Svg>
-  );
-}
-
 // A small path stepping through three points — a Journey is a designed
 // sequence, not a single state, so the icon is a route rather than a ring.
 export function JourneysTabIcon({ color }: { color: string }) {
