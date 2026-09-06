@@ -9,7 +9,7 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing } from '../../../../src/theme/spacing';
 import feelingLuckyListEn from '../../../../src/content/feelingLuckyList.json';
 import feelingLuckyListRu from '../../../../src/content/feelingLuckyList.ru.json';
-import { LongPressToSave } from '../../../../src/components/LongPressToSave';
+import { LongPressToSave } from '../../../../src/components/shared/LongPressToSave';
 import { track } from '../../../../src/utils/analytics';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';

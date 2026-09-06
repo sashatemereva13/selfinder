@@ -21,8 +21,8 @@ import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
-import { AmbientGlow } from '../../../../src/components/AmbientGlow';
-import { tuneInArtworkReady } from '../../../../src/components/TuneInAudioController';
+import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { tuneInArtworkReady } from '../../../../src/components/depths/TuneInAudioController';
 import { VOLUME_STEPS, TIMER_OPTIONS, players, useTuneInStore } from '../../../../src/store/tuneInStore';
 
 // Tells the lock screen not to show a scrub bar/duration for Tune In's

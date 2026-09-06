@@ -8,7 +8,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { useMeasureStore } from '../../../../src/store/measureStore';
-import { MoonPhaseDisc } from '../../../../src/components/MoonPhaseDisc';
+import { MoonPhaseDisc } from '../../../../src/components/depths/MoonPhaseDisc';
 import {
   SYNODIC_MONTH,
   getMoonPhaseFraction,

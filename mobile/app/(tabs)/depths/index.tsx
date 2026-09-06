@@ -47,17 +47,17 @@ import {
 } from "../../../src/content/measureConfig";
 import { useLocaleStore } from "../../../src/store/localeStore";
 import { Sphere } from "../../../src/types";
-import { LongPressToSave } from "../../../src/components/LongPressToSave";
-import { AmbientGlow } from "../../../src/components/AmbientGlow";
-import { PhilosopherPresence } from "../../../src/components/PhilosopherPresence";
-import { PhilosopherEnergy } from "../../../src/components/PhilosopherEnergy";
-import { ProfileIcon } from "../../../src/components/ProfileIcon";
+import { LongPressToSave } from "../../../src/components/shared/LongPressToSave";
+import { AmbientGlow } from "../../../src/components/shared/AmbientGlow";
+import { PhilosopherPresence } from "../../../src/components/depths/PhilosopherPresence";
+import { PhilosopherEnergy } from "../../../src/components/depths/PhilosopherEnergy";
+import { ProfileIcon } from "../../../src/components/shared/ProfileIcon";
 import {
   buildAuraFieldGeometry,
   RING_ORDER,
   type SphereKey,
-} from "../../../src/components/AuraField";
-import { AURA_NEUTRAL_COLOR } from "../../../src/components/AuraFigure";
+} from "../../../src/components/depths/AuraField";
+import { AURA_NEUTRAL_COLOR } from "../../../src/components/shared/AuraFigure";
 import {
   AURA_LEVEL_IMAGES,
   AURA_NEUTRAL_IMAGE,
@@ -67,8 +67,8 @@ import {
 import { useAppAccentRgb } from "../../../src/utils/appAccent";
 import { track } from "../../../src/utils/analytics";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
-import { DepthsSpiralCore } from "../../../src/components/DepthsSpiralCore";
-import { DepthsSpiralMenu } from "../../../src/components/DepthsSpiralMenu";
+import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
+import { DepthsSpiralMenu } from "../../../src/components/depths/DepthsSpiralMenu";
 import {
   SLOT_ORDER,
   H_CUT,
@@ -81,7 +81,7 @@ import {
   type SpiralActionKey,
   type SpiralShiftSubPoint,
   type SpiralShiftSubKey,
-} from "../../../src/components/depthsSpiralGeometry";
+} from "../../../src/components/depths/depthsSpiralGeometry";
 import {
   buildDepthsGeometry,
   BASE_AURA_DISPLAY_SIZE,

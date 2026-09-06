@@ -13,7 +13,7 @@ import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useLocaleStore } from '../../../../src/store/localeStore';
-import { AnimatedNatureSymbol, NatureSymbolId } from '../../../../src/components/NatureSymbol';
+import { AnimatedNatureSymbol, NatureSymbolId } from '../../../../src/components/depths/NatureSymbol';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis

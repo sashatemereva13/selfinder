@@ -1,14 +1,14 @@
 import { Dimensions } from "react-native";
 import { spacing } from "../../theme/spacing";
-import { buildAuraFieldGeometry } from "../AuraField";
-import { getAuraFigureMetrics } from "../AuraFigure";
+import { buildAuraFieldGeometry } from "./AuraField";
+import { getAuraFigureMetrics } from "../shared/AuraFigure";
 import {
   H_CUT,
   H_MAX,
   WHEEL_SIZE,
   TOP_LOOP_TARGET_PX,
   TOP_MARGIN,
-} from "../depthsSpiralGeometry";
+} from "./depthsSpiralGeometry";
 
 
 // Pre-baked assets, not the live AuraFigure component — react-native-svg's

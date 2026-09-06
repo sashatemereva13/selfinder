@@ -1,5 +1,5 @@
 import { JourneyScreenShell } from '../src/components/journeys/JourneyScreenShell';
-import { AgencySortPrimitive } from '../src/components/AgencySortPrimitive';
+import { AgencySortPrimitive } from '../src/components/journeys/AgencySortPrimitive';
 import { CONTROL_STAGES } from '../src/content/journeys/control';
 
 // Control — "what am I really trying to control?" The reference

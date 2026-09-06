@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { fonts } from '../../src/theme/typography';
 import { useAppAccentRgb } from '../../src/utils/appAccent';
-import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/components/TabIcons';
+import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/components/shared/TabIcons';
 
 // Guide and You no longer have bottom-tab slots — see
 // docs/app-architecture-concept.md. Guide is reached via the persistent

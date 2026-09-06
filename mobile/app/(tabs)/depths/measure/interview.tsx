@@ -26,9 +26,9 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
 import { QAPair, Sphere } from '../../../../src/types';
-import { TypingDots } from '../../../../src/components/TypingDots';
-import { AmbientGlow } from '../../../../src/components/AmbientGlow';
-import { ScoringOrbs } from '../../../../src/components/ScoringOrbs';
+import { TypingDots } from '../../../../src/components/shared/TypingDots';
+import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { ScoringOrbs } from '../../../../src/components/depths/ScoringOrbs';
 import { track } from '../../../../src/utils/analytics';
 import { useWideColumnWidth, useIsLargeScreen } from '../../../../src/theme/responsive';
 

@@ -15,10 +15,10 @@ import { useEngagementStore } from '../src/store/engagementStore';
 import { useLocaleStore } from '../src/store/localeStore';
 import { useThemeStore } from '../src/store/themeStore';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
-import { AIDisclosureOverlay } from '../src/components/AIDisclosureOverlay';
+import { AIDisclosureOverlay } from '../src/components/shared/AIDisclosureOverlay';
 import { useHowToUseStore } from '../src/store/howToUseStore';
-import { HowToUseOverlay } from '../src/components/HowToUseOverlay';
-import { TuneInAudioController } from '../src/components/TuneInAudioController';
+import { HowToUseOverlay } from '../src/components/shared/HowToUseOverlay';
+import { TuneInAudioController } from '../src/components/depths/TuneInAudioController';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
 

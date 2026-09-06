@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { Philosopher } from '../types';
-import { enableDailyReminder, disableDailyReminder, topUpDailyReminder } from '../utils/dailyReminder';
+import { enableDailyReminder, disableDailyReminder, topUpDailyReminder } from '../components/account/dailyReminder';
 import { track } from '../utils/analytics';
 
 const STORAGE_KEY = 'selfinder_daily_reminder';

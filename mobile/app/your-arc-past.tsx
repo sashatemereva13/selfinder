@@ -14,21 +14,21 @@ import { getConversationForMeasureResult, SavedConversation } from '../src/api/c
 import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { listMyWishes, SavedWish } from '../src/api/wish';
 import { listMyCrossings } from '../src/api/crossing';
-import { findActiveWish } from '../src/utils/crossingEligibility';
+import { findActiveWish } from '../src/components/yourArc/crossingEligibility';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { listMyJourneySessions } from '../src/api/journeys';
 import { SavedMeasureResult, JourneySessionDTO } from '../src/types';
-import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
-import { PagedScrollView } from '../src/components/PagedScrollView';
-import { ArcDial } from '../src/components/ArcDial';
-import { buildArcFacts } from '../src/utils/arcFacts';
+import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
+import { PagedScrollView } from '../src/components/yourArc/PagedScrollView';
+import { ArcDial } from '../src/components/yourArc/ArcDial';
+import { buildArcFacts } from '../src/components/yourArc/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
-import { DetailPage } from '../src/components/yourArcPages/DetailPage';
-import { FactsPage } from '../src/components/yourArcPages/FactsPage';
-import { JourneysPage } from '../src/components/yourArcPages/JourneysPage';
-import { TimeConePage } from '../src/components/yourArcPages/TimeConePage';
+import { DetailPage } from '../src/components/yourArc/pages/DetailPage';
+import { FactsPage } from '../src/components/yourArc/pages/FactsPage';
+import { JourneysPage } from '../src/components/yourArc/pages/JourneysPage';
+import { TimeConePage } from '../src/components/yourArc/pages/TimeConePage';
 
 // Same loose-match window your-arc.tsx used to use for qaPairs/rich-history
 // matching — Spill has no reading link (it's its own free-standing

@@ -8,7 +8,7 @@ import { useThemeStore } from '../src/store/themeStore';
 import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
 import { spacing } from '../src/theme/spacing';
-import { AmbientGlow } from '../src/components/AmbientGlow';
+import { AmbientGlow } from '../src/components/shared/AmbientGlow';
 import { HOW_TO_USE_ENTRIES } from '../src/content/howToUseEntries';
 
 // Reachable from onboarding (once, via HowToUseOverlay.tsx right after

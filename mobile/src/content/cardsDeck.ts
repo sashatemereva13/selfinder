@@ -1,4 +1,4 @@
-import { CardSymbolId } from '../components/CardSymbol';
+import { CardSymbolId } from '../components/depths/CardSymbol';
 import type { ResolvedTheme } from '../store/themeStore';
 
 // The Selfinder Cards deck — see docs/cards-concept.md for the full

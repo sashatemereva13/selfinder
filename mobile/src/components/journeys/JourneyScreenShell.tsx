@@ -8,13 +8,13 @@ import { useThemeStore } from '../../store/themeStore';
 import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
-import { AmbientGlow } from '../AmbientGlow';
-import { ArcKaleidoscopeLoading } from '../ArcKaleidoscopeLoading';
+import { AmbientGlow } from '../shared/AmbientGlow';
+import { ArcKaleidoscopeLoading } from '../shared/ArcKaleidoscopeLoading';
 import { useAppAccentRgb } from '../../utils/appAccent';
 import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../../types';
 import { useJourneySlot } from './useJourneySlot';
-import { JourneyWizard } from '../JourneyWizard';
-import { JourneyReflection } from '../JourneyReflection';
+import { JourneyWizard } from './JourneyWizard';
+import { JourneyReflection } from './JourneyReflection';
 
 const KALEIDOSCOPE_LOADING_SIZE = 300;
 

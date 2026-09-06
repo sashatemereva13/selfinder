@@ -14,10 +14,10 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../src/store/localeStore';
 import { useReminderStore } from '../src/store/reminderStore';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { PhilosopherPicker } from '../src/components/PhilosopherPicker';
+import { PhilosopherPicker } from '../src/components/shared/PhilosopherPicker';
 import { AccountSection } from '../src/components/AccountSection';
-import { DailyReminderSection } from '../src/components/DailyReminderSection';
-import { AmbientGlow } from '../src/components/AmbientGlow';
+import { DailyReminderSection } from '../src/components/account/DailyReminderSection';
+import { AmbientGlow } from '../src/components/shared/AmbientGlow';
 
 // Both directions ride the same crossfade duration/ease as PhilosopherPicker's
 // own ring fade-in (see ownRingOpacity in PhilosopherPicker.tsx) — opening

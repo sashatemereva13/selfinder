@@ -39,12 +39,12 @@ import { spacing, radius } from "../../src/theme/spacing";
 import { useWideColumnWidth } from "../../src/theme/responsive";
 import { usePhilosopherStore } from "../../src/store/philosopherStore";
 import { useLocaleStore } from "../../src/store/localeStore";
-import { PhilosopherPicker } from "../../src/components/PhilosopherPicker";
-import { AmbientGlow } from "../../src/components/AmbientGlow";
+import { PhilosopherPicker } from "../../src/components/shared/PhilosopherPicker";
+import { AmbientGlow } from "../../src/components/shared/AmbientGlow";
 import {
   getAuraFigureMetrics,
   auraBodyToPixel,
-} from "../../src/components/AuraFigure";
+} from "../../src/components/shared/AuraFigure";
 import { generateAuraDots, AuraDot } from "../../src/utils/auraDots";
 import { track } from "../../src/utils/analytics";
 import { quadBezierPoint, quadPathString, quadBezierLength, sampleQuad } from "../../src/utils/bezier";

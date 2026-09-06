@@ -8,9 +8,9 @@ import { useAuthStore } from '../src/store/authStore';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { getArcLine } from '../src/api/arcLine';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
-import { ProfileIcon } from '../src/components/ProfileIcon';
-import { ArcLinePage } from '../src/components/yourArcPages/ArcLinePage';
+import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
+import { ProfileIcon } from '../src/components/shared/ProfileIcon';
+import { ArcLinePage } from '../src/components/yourArc/pages/ArcLinePage';
 
 // Used by the first-paint loading placeholder (scaled down) — see
 // YourArcRoute's own comment below for why this thin wrapper exists at

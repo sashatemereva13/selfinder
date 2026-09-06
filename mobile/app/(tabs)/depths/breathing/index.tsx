@@ -18,7 +18,7 @@ import { spacing } from '../../../../src/theme/spacing';
 import { BREATHING_PATTERNS, BreathingPhase, getRandomCompletionLine, getLocalizedBreathingPattern } from '../../../../src/content/breathingPatterns';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
-import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useMeasureStore } from '../../../../src/store/measureStore';

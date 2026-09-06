@@ -8,9 +8,9 @@ import { useThemeStore } from '../../../src/store/themeStore';
 import type { Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
-import { AmbientGlow } from '../../../src/components/AmbientGlow';
-import { ProfileIcon } from '../../../src/components/ProfileIcon';
-import { JourneyShelf } from '../../../src/components/JourneyShelf';
+import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
+import { ProfileIcon } from '../../../src/components/shared/ProfileIcon';
+import { JourneyShelf } from '../../../src/components/journeys/JourneyShelf';
 import { JourneyKey } from '../../../src/types';
 
 // The three temporal groups a Journey's own movement belongs to (see

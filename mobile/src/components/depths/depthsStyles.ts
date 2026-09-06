@@ -2,7 +2,7 @@ import { StyleSheet } from "react-native";
 import { type Colors } from "../../theme/colors";
 import { fonts, fontSizes, letterSpacings, lineHeights } from "../../theme/typography";
 import { spacing } from "../../theme/spacing";
-import { AURA_NEUTRAL_COLOR } from "../AuraFigure";
+import { AURA_NEUTRAL_COLOR } from "../shared/AuraFigure";
 import { SCREEN_WIDTH, BLEED_AMOUNT_PX, type DepthsGeometry } from "./depthsGeometry";
 
 export function makeStyles(colors: Colors, geometry: DepthsGeometry) {

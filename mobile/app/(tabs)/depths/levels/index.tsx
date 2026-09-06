@@ -9,8 +9,8 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../../../../src/content/measureConfig';
-import { ConsciousnessWheel } from '../../../../src/components/ConsciousnessWheel';
-import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { ConsciousnessWheel } from '../../../../src/components/depths/ConsciousnessWheel';
+import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useWideColumnWidth } from '../../../../src/theme/responsive';
 

@@ -11,7 +11,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { useSpillStore } from '../../../../src/store/spillStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
-import { AmbientGlow } from '../../../../src/components/AmbientGlow';
+import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { track } from '../../../../src/utils/analytics';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 

@@ -24,8 +24,8 @@ import { useMeasureStore } from '../src/store/measureStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useAppAccentRgb, useAppAccentButtonRgb } from '../src/utils/appAccent';
 import { getNudgeState, getNudgeCopy } from '../src/content/guideNudges';
-import { TypingDots } from '../src/components/TypingDots';
-import { AmbientGlow } from '../src/components/AmbientGlow';
+import { TypingDots } from '../src/components/shared/TypingDots';
+import { AmbientGlow } from '../src/components/shared/AmbientGlow';
 import { track } from '../src/utils/analytics';
 
 export default function GuideScreen() {
