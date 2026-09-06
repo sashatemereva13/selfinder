@@ -47,6 +47,7 @@ import {
 } from "../../src/components/AuraFigure";
 import { generateAuraDots, AuraDot } from "../../src/utils/auraDots";
 import { track } from "../../src/utils/analytics";
+import { quadBezierPoint, quadPathString, quadBezierLength, sampleQuad } from "../../src/utils/bezier";
 
 // A static, pre-rendered PNG of AuraFigure's neutral body (exported from the
 // browser, where its SVG filters render correctly) rather than the live SVG
@@ -127,45 +128,6 @@ const WHY_LINE_Y = POSITION.why.y;
 const CHEST_LINE_Y = WHY_SPACE + FIGURE_METRICS.chestY + POSITION.chest.y;
 const DIP_LINE_Y = CHEST_LINE_Y + SHAPE.chestDipDepth;
 const FIGURE_COMP_HEIGHT = WHY_SPACE + FIGURE_METRICS.height;
-
-function quadBezierPoint(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  t: number,
-) {
-  const mt = 1 - t;
-  return {
-    x: mt * mt * p0.x + 2 * mt * t * p1.x + t * t * p2.x,
-    y: mt * mt * p0.y + 2 * mt * t * p1.y + t * t * p2.y,
-  };
-}
-function quadPathString(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-) {
-  return `M ${p0.x},${p0.y} Q ${p1.x},${p1.y} ${p2.x},${p2.y}`;
-}
-// Approximate arc length by summing short chords along the sampled curve —
-// exact enough for sizing a stroke-dasharray "draw itself" reveal, without
-// needing a runtime getTotalLength() call (react-native-svg doesn't expose
-// one from JS the way web SVG does).
-function quadBezierLength(
-  p0: { x: number; y: number },
-  p1: { x: number; y: number },
-  p2: { x: number; y: number },
-  samples = 24,
-) {
-  let length = 0;
-  let prev = p0;
-  for (let i = 1; i <= samples; i++) {
-    const pt = quadBezierPoint(p0, p1, p2, i / samples);
-    length += Math.hypot(pt.x - prev.x, pt.y - prev.y);
-    prev = pt;
-  }
-  return length;
-}
 
 // Three separate paths rather than one multi-segment string — a second "Q"
 // command chained onto the first wasn't rendering reliably. Each is defined
@@ -267,18 +229,6 @@ const V_RING_RADIUS = 80;
 // figure's torso, so the ring forms where the body is fading out and the
 // philosophers arrive, standing where you stood.
 const V_RING_CENTER = { x: LINE_CENTER, y: CHEST_LINE_Y + 110 };
-function sampleQuad(
-  pts: {
-    p0: { x: number; y: number };
-    p1: { x: number; y: number };
-    p2: { x: number; y: number };
-  },
-  n: number,
-) {
-  return Array.from({ length: n }, (_, i) =>
-    quadBezierPoint(pts.p0, pts.p1, pts.p2, i / (n - 1)),
-  );
-}
 const YOU_MORPH_SOURCE = sampleQuad(YOU_DOWN_PTS, V_MORPH_POINTS);
 const FEEL_MORPH_SOURCE = sampleQuad(FEEL_DOWN_PTS, V_MORPH_POINTS);
 // "you" (left arc): top of the circle, around the left side, to the bottom.
