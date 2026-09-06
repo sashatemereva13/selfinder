@@ -477,6 +477,47 @@ const ACTION_SYMBOL_SIZE = 60;
 const SHIFT_SUB_ENTER_MS = 560;
 const SHIFT_SUB_EXIT_MS = 260;
 
+// Shared by ActionRow and ShiftSubRow — both play the identical brief
+// scale-up + opacity dip on tap (see this file's own header comment on
+// what this replaced), differing only in what they render around it.
+function usePulseOnTap(isPulsing: boolean, onPulseSettled?: () => void) {
+  const scale = useSharedValue(1);
+  const dim = useSharedValue(0);
+  useEffect(() => {
+    if (!isPulsing) return;
+    cancelAnimation(scale);
+    cancelAnimation(dim);
+    scale.value = withSequence(
+      withTiming(1.08, {
+        duration: ACTION_PULSE_DURATION_MS * 0.5,
+        easing: SOFT_EASE,
+      }),
+      withTiming(1, {
+        duration: ACTION_PULSE_DURATION_MS * 0.5,
+        easing: SOFT_EASE,
+      }),
+    );
+    dim.value = withSequence(
+      withTiming(1, { duration: ACTION_PULSE_FADE_MS, easing: SOFT_EASE }),
+      withTiming(0, {
+        duration: ACTION_PULSE_DURATION_MS - ACTION_PULSE_FADE_MS,
+        easing: SOFT_EASE,
+      }),
+    );
+    const timer = setTimeout(
+      () => onPulseSettled?.(),
+      ACTION_PULSE_DURATION_MS,
+    );
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isPulsing]);
+  const rowStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: 1 - dim.value * 0.25,
+  }));
+  return rowStyle;
+}
+
 function ActionRow({
   point,
   x,
@@ -512,40 +553,7 @@ function ActionRow({
   onPulseSettled?: () => void;
 }) {
   const isPulsing = pulseKey === point.key;
-  const scale = useSharedValue(1);
-  const dim = useSharedValue(0);
-  useEffect(() => {
-    if (!isPulsing) return;
-    cancelAnimation(scale);
-    cancelAnimation(dim);
-    scale.value = withSequence(
-      withTiming(1.08, {
-        duration: ACTION_PULSE_DURATION_MS * 0.5,
-        easing: SOFT_EASE,
-      }),
-      withTiming(1, {
-        duration: ACTION_PULSE_DURATION_MS * 0.5,
-        easing: SOFT_EASE,
-      }),
-    );
-    dim.value = withSequence(
-      withTiming(1, { duration: ACTION_PULSE_FADE_MS, easing: SOFT_EASE }),
-      withTiming(0, {
-        duration: ACTION_PULSE_DURATION_MS - ACTION_PULSE_FADE_MS,
-        easing: SOFT_EASE,
-      }),
-    );
-    const timer = setTimeout(
-      () => onPulseSettled?.(),
-      ACTION_PULSE_DURATION_MS,
-    );
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPulsing]);
-  const rowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: 1 - dim.value * 0.25,
-  }));
+  const rowStyle = usePulseOnTap(isPulsing, onPulseSettled);
 
   return (
     <View>
@@ -681,36 +689,7 @@ function ShiftSubRow({
   onPulseSettled?: () => void;
 }) {
   const isPulsing = pulseKey === point.key;
-  const scale = useSharedValue(1);
-  const dim = useSharedValue(0);
-  useEffect(() => {
-    if (!isPulsing) return;
-    cancelAnimation(scale);
-    cancelAnimation(dim);
-    scale.value = withSequence(
-      withTiming(1.08, {
-        duration: ACTION_PULSE_DURATION_MS * 0.5,
-        easing: SOFT_EASE,
-      }),
-      withTiming(1, {
-        duration: ACTION_PULSE_DURATION_MS * 0.5,
-        easing: SOFT_EASE,
-      }),
-    );
-    dim.value = withSequence(
-      withTiming(1, { duration: ACTION_PULSE_FADE_MS, easing: SOFT_EASE }),
-      withTiming(0, {
-        duration: ACTION_PULSE_DURATION_MS - ACTION_PULSE_FADE_MS,
-        easing: SOFT_EASE,
-      }),
-    );
-    const timer = setTimeout(
-      () => onPulseSettled?.(),
-      ACTION_PULSE_DURATION_MS,
-    );
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isPulsing]);
+  const rowStyle = usePulseOnTap(isPulsing, onPulseSettled);
   // 2026-09-02 — entrance/exit animation for this row's own appearance
   // (Shift's own sub-points used to pop in/out instantly the moment
   // shiftRevealed flipped, no transition at all; a first pass added a
@@ -750,10 +729,6 @@ function ShiftSubRow({
       { translateX: dx * (1 - entrance.value) },
       { translateY: dy * (1 - entrance.value) },
     ],
-  }));
-  const rowStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-    opacity: 1 - dim.value * 0.25,
   }));
 
   return (
