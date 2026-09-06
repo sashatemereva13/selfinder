@@ -6,6 +6,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../theme/typog
 import { spacing } from '../../theme/spacing';
 import { JourneySessionDTO, JourneyKey } from '../../types';
 import { Locale } from '../../store/localeStore';
+import { formatDate } from '../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface JourneysPageProps {
@@ -33,14 +34,6 @@ const JOURNEY_LABEL_KEYS: Record<JourneyKey, string> = {
   'possible-selves': 'products.possibleSelvesLabel',
   enough: 'products.enoughLabel',
 };
-
-function formatDate(iso: string, locale: Locale) {
-  return new Date(iso).toLocaleDateString(locale === 'ru' ? 'ru-RU' : undefined, {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
 
 // Every completed Journey, real content not just a tally (2026-08-30) —
 // each individual Journey screen (Control, Center, ...) now only ever

@@ -3,16 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { SavedWish } from '../../api/wish';
+import { formatDate } from '../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface ResurfacedWishPageProps {
   resurfacedWish: SavedWish; // caller only mounts this page when truthy
   wishRevealed: boolean;
   onReveal: () => void; // handleRevealWish
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // A wish from before. Pure resurfacing (docs/session-result-concept.md,

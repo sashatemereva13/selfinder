@@ -13,6 +13,7 @@ import { CrossfadeSwitcher } from '../CrossfadeSwitcher';
 import { useTimeConeGeometry } from '../../utils/useTimeConeGeometry';
 import { getLocalizedLevelName, VIBRATION_LEVELS } from '../../content/measureConfig';
 import { Locale } from '../../store/localeStore';
+import { formatDate } from '../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface TimeConePageProps {
@@ -23,10 +24,6 @@ interface TimeConePageProps {
 }
 
 const CONE_SIZE = 260;
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
 
 // The light cone — split out of Center 2026-08-29 (it used to live only
 // there, alongside the kaleidoscope) and given a real home of its own on

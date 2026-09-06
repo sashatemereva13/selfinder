@@ -12,6 +12,7 @@ import { SavedMeasureResult } from '../../types';
 import { ChatTurn } from '../ChatTurn';
 import { getLocalizedLevelName } from '../../content/measureConfig';
 import { Locale } from '../../store/localeStore';
+import { formatDate } from '../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface DetailPageProps {
@@ -23,10 +24,6 @@ interface DetailPageProps {
   hasSession: boolean;
   hasRichHistory: boolean;
   locale: Locale;
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // The tapped point's own detail, inserted dynamically only once something's

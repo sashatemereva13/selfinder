@@ -10,6 +10,7 @@ import { SavedMeasureResult } from '../../types';
 import { ArcFact } from '../../utils/arcFacts';
 import { getLocalizedLevelName, VIBRATION_LEVELS, useLevelColors } from '../../content/measureConfig';
 import { Locale } from '../../store/localeStore';
+import { formatDate } from '../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface FactsPageProps {
@@ -28,10 +29,6 @@ interface FactsPageProps {
   // catalog's own entry), just without a "you've made N" count yet.
   centerPurchaseCount: number | null;
   onPressCenter: () => void;
-}
-
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 // Real, true facts about this person's OWN record — never an

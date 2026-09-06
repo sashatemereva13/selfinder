@@ -16,10 +16,11 @@ import { LongPressToSave } from '../src/components/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/ArcKaleidoscopeLoading';
 import { AmbientGlow } from '../src/components/AmbientGlow';
 import { useAppAccentRgb } from '../src/utils/appAccent';
-import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { purchaseJourney } from '../src/api/journeys';
 import { useReadingColumnWidth } from '../src/theme/responsive';
 import { JourneyPurchase } from '../src/types';
+import { useJourneySlot } from '../src/components/journeys/useJourneySlot';
+import { formatDate } from '../src/utils/relativeTime';
 
 // Center — Selfinder's first Journey: a one-time-purchase, repeatable
 // experience (the kaleidoscope, spun out of what used to be Your Arc's
@@ -66,10 +67,6 @@ import { JourneyPurchase } from '../src/types';
 const KALEIDOSCOPE_LOADING_SIZE = 300;
 const KALEIDOSCOPE_PADDING = 24;
 
-function formatDate(ts: number) {
-  return new Date(ts).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 // Thin wrapper mounted by the router — same requestAnimationFrame-deferred
 // pattern your-arc.tsx's own YourArcRoute uses, for the same reason: the
 // real screen below mounts ArcKaleidoscope synchronously, and without
@@ -108,20 +105,15 @@ function CenterScreen() {
   const session = useAuthStore((s) => s.session);
   const columnWidth = useReadingColumnWidth();
   const accentRgb = useAppAccentRgb();
-  const hookPurchases = useJourneyPurchases('center');
   // Selfinder is fully free for now (see RULES.md's Product/positioning
   // section) — "getting Center" self-grants a free purchase instead of
-  // going through real IAP. useJourneyPurchases only fetches once per
-  // session, so a freshly self-granted purchase is tracked here and
-  // merged in locally rather than waiting on a refetch.
-  const [extraPurchases, setExtraPurchases] = useState<JourneyPurchase[]>([]);
-  const purchases = hookPurchases === null ? null : [...hookPurchases, ...extraPurchases];
-  // 2026-08-30 — this screen now shows only the most recent purchase (see
-  // this file's own header comment); every OTHER Journey screen already
-  // derived this the same way (control.tsx's own mostRecentPurchase).
-  const mostRecentPurchase = purchases && purchases.length > 0
-    ? [...purchases].sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())[0]
-    : null;
+  // going through real IAP. useJourneySlot (shared with every other
+  // Journey screen) tracks a freshly self-granted purchase locally and
+  // merges it in immediately rather than waiting on a refetch. Center
+  // doesn't use the hook's auto-grant-on-mount or "do it again" pieces
+  // (it grants explicitly via handleGetCenter below, with its own
+  // "get"/"repeat" copy), just its purchase list and setter.
+  const { purchases, mostRecentPurchase, addPurchase } = useJourneySlot('center');
   const [purchasing, setPurchasing] = useState(false);
 
   // The server-saved record — fetched for any signed-in session, no Your
@@ -169,7 +161,7 @@ function CenterScreen() {
     setPurchasing(true);
     try {
       const purchase = await purchaseJourney('center', session.token);
-      setExtraPurchases((prev) => [...prev, purchase]);
+      addPurchase(purchase);
     } catch {
       Alert.alert(t('center.getCenterErrorTitle'), t('center.getCenterErrorBody'));
     } finally {

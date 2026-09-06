@@ -3,6 +3,23 @@
 // definition of "how long ago" so the two screens never drift into
 // different vocabularies for the same thing.
 
+import { Locale } from '../store/localeStore';
+
+// A full "Jan 1, 2026"-style date — every Your Arc page and Journey
+// screen that shows a purchase/reading date used to reimplement this
+// themselves (six copies, two slightly different signatures). Accepts
+// either a timestamp (most call sites) or an ISO string (JourneysPage's
+// own JourneySessionDTO.completedAt), and an optional locale for the one
+// call site (JourneysPage) that needs Russian date formatting.
+export function formatDate(input: number | string, locale?: Locale): string {
+  const date = typeof input === 'number' ? new Date(input) : new Date(input);
+  return date.toLocaleDateString(locale === 'ru' ? 'ru-RU' : undefined, {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
 function daysSince(isoString: string): number {
   const date = new Date(isoString);
   const now = new Date();
