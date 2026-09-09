@@ -5,6 +5,7 @@ import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
 import { useAppAccentRgb } from '../../utils/appAccent';
+import { JourneySymbol, type JourneySymbolId } from './JourneySymbol';
 
 // JourneyShelf — one time-orientation's (Past/Present/Future) own row of
 // Journey cards, swiped through horizontally. Built for the Journeys
@@ -31,6 +32,7 @@ export interface JourneyShelfItem {
   key: string;
   name: string;
   question: string;
+  symbolId: JourneySymbolId;
   onPress: () => void;
 }
 
@@ -75,6 +77,9 @@ export function JourneyShelf({ label, items }: JourneyShelfProps) {
           <Pressable key={item.key} style={styles.card} onPress={item.onPress}>
             <Text style={styles.cardName}>{item.name}</Text>
             <Text style={styles.cardQuestion}>{item.question}</Text>
+            <View style={styles.symbolWrap}>
+              <JourneySymbol id={item.symbolId} rgb={accentRgb} size={72} />
+            </View>
           </Pressable>
         ))}
       </ScrollView>
@@ -135,18 +140,25 @@ function makeStyles(colors: Colors) {
       fontSize: 9,
       letterSpacing: letterSpacings.kicker,
       textTransform: 'uppercase',
+      marginTop: spacing[3],
       marginBottom: spacing[2],
     },
-    // 2026-09-09: was the middle of three lines (name/question/grounding)
-    // — now the last visible line on the card, since the grounding line
-    // moved to its own page (see (tabs)/journeys/index.tsx's own
-    // groundingLink and journeys-grounding.tsx). No more marginBottom:
-    // nothing follows it inside the card anymore.
+    // 2026-09-09: was the last of two lines (name/question) — the symbol
+    // now sits below it (see symbolWrap), so this needs its own
+    // marginBottom again to separate from what follows.
     cardQuestion: {
       color: colors.accent.ivory,
       fontFamily: fonts.medium,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
+      marginBottom: spacing[3],
+    },
+    // Centers the symbol horizontally in the card, below the question —
+    // the symbol reads as the card's own quiet second half, not another
+    // line of text competing with name/question for the eye.
+    symbolWrap: {
+      alignItems: 'center',
+      marginTop: spacing[1],
     },
     dotsRow: {
       flexDirection: 'row',

@@ -197,7 +197,12 @@ function fixedPointLayers(cx: number, cy: number) {
 // a slightly different radius/detune (an echo of the same near-resonance,
 // one revolution apart) so the "almost closing" quality reads as
 // recurring, not a single attempt.
-function incompleteResonanceLayers(cx: number, cy: number) {
+//
+// Exported (unlike this file's other layer-builder functions) so
+// JourneySymbol.tsx can reuse it for The Loop's own symbol — repetition
+// compulsion IS a near-closed, never-quite-repeating loop, the same
+// underlying picture, not a coincidental visual match.
+export function incompleteResonanceLayers(cx: number, cy: number) {
   function loop(r: number, detune: number, steps: number, turns: number): string {
     const points: Point[] = [];
     for (let i = 0; i <= steps; i++) {
@@ -290,7 +295,12 @@ function belowThresholdLayers(cx: number, cy: number) {
 // two possible futures), the trajectory's approach to the saddle is the
 // primary trace, and a small scatter of points shows past attempts that
 // fell back into the near well before reaching center.
-function thresholdLayers(cx: number, cy: number) {
+//
+// Exported (unlike this file's other layer-builder functions) so
+// JourneySymbol.tsx can reuse it for the Journey named The Threshold's
+// own symbol — approach-avoidance conflict IS a saddle-point trajectory,
+// the same dynamical picture this Cards card was already built around.
+export function thresholdLayers(cx: number, cy: number) {
   const width = 220;
   const depth = 58;
   // Quartic double-well normalized so u=0 (edges AND center) sits at the

@@ -11,6 +11,7 @@ import { spacing } from '../../../src/theme/spacing';
 import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { ProfileIcon } from '../../../src/components/shared/ProfileIcon';
 import { JourneyShelf } from '../../../src/components/journeys/JourneyShelf';
+import { type JourneySymbolId } from '../../../src/components/journeys/JourneySymbol';
 import { JourneyKey } from '../../../src/types';
 
 // The three temporal groups a Journey's own movement belongs to (see
@@ -29,6 +30,13 @@ interface Product {
   key: JourneyKey;
   labelKey: string;
   descriptionKey: string;
+  // The physics/math symbol standing in for this Journey on its own card
+  // (see JourneySymbol.tsx's own header comment) — added 2026-09-09 at
+  // the user's own request, replacing plain text with a symbol the same
+  // way Cards' own "draw a symbol" deck does, each one chosen to
+  // structurally match the Journey's real psychological mechanism rather
+  // than illustrate the question literally.
+  symbolId: JourneySymbolId;
   // A plain string, not a closed union of known routes — Journeys are an
   // explicitly open-ended, growing family (2026-08-23 pivot, see RULES.md's
   // Product/positioning section), so this list is expected to keep
@@ -71,18 +79,18 @@ interface Product {
 // helpful cross-listing once tried live — Your Arc is now Center's one
 // true home, and this catalog is purely the 11-Journey question set.
 const PRODUCTS: Product[] = [
-  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', route: '/control', temporal: 'present' },
-  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', route: '/the-choice', temporal: 'present' },
-  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', route: '/the-loop', temporal: 'past' },
-  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', route: '/whose-voice', temporal: 'past' },
-  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', route: '/the-road-not-taken', temporal: 'past' },
-  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', route: '/letting-go', temporal: 'past' },
-  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', route: '/the-mirror', temporal: 'present' },
-  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', route: '/the-unsaid', temporal: 'present' },
-  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', route: '/becoming', temporal: 'future' },
-  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', route: '/the-threshold', temporal: 'future' },
-  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', route: '/possible-selves', temporal: 'future' },
-  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', route: '/enough', temporal: 'present' },
+  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', symbolId: 'control', route: '/control', temporal: 'present' },
+  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', symbolId: 'theChoice', route: '/the-choice', temporal: 'present' },
+  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', symbolId: 'theLoop', route: '/the-loop', temporal: 'past' },
+  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', symbolId: 'whoseVoice', route: '/whose-voice', temporal: 'past' },
+  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', symbolId: 'theRoadNotTaken', route: '/the-road-not-taken', temporal: 'past' },
+  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', symbolId: 'lettingGo', route: '/letting-go', temporal: 'past' },
+  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', symbolId: 'theMirror', route: '/the-mirror', temporal: 'present' },
+  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', symbolId: 'theUnsaid', route: '/the-unsaid', temporal: 'present' },
+  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', symbolId: 'becoming', route: '/becoming', temporal: 'future' },
+  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', symbolId: 'theThreshold', route: '/the-threshold', temporal: 'future' },
+  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', symbolId: 'possibleSelves', route: '/possible-selves', temporal: 'future' },
+  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', symbolId: 'enough', route: '/enough', temporal: 'present' },
 ];
 
 const TEMPORAL_GROUPS: { key: TemporalGroup; headingKey: string }[] = [
@@ -140,6 +148,7 @@ export default function ProductsScreen() {
               key: product.key,
               name: t(product.labelKey),
               question: t(product.descriptionKey),
+              symbolId: product.symbolId,
               onPress: () => router.push(product.route),
             }))}
           />
