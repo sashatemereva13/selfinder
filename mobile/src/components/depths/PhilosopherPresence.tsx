@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { Dimensions, Pressable, Text, View, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../theme/useThemeColors';
 import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, letterSpacings } from '../../theme/typography';
@@ -19,6 +20,7 @@ const SCREEN_WIDTH = Dimensions.get('window').width;
 // (empty-string dot, filled with the accent color) for the same
 // first-meeting signal, just relocated from the tab bar to here.
 export function PhilosopherPresence() {
+  const { t } = useTranslation();
   const router = useRouter();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -31,7 +33,17 @@ export function PhilosopherPresence() {
   const hasUnmetPhilosopher = !metPhilosopherIds.includes(philosopher.id);
 
   return (
-    <Pressable style={styles.row} onPress={() => router.push('/guide')}>
+    <Pressable
+      style={styles.row}
+      onPress={() => router.push('/guide')}
+      accessibilityRole="button"
+      accessibilityLabel={
+        hasUnmetPhilosopher
+          ? t('depths.talkWithPhilosopherNewLabel', { name: philosopher.name })
+          : t('depths.talkWithPhilosopherLabel', { name: philosopher.name })
+      }
+      accessibilityHint={t('depths.talkWithPhilosopherHint')}
+    >
       {/* Top energy spirals — commented out for now (2026-08-30), pending
           further review; keep PhilosopherEnergy/the wiring intact so
           this is a one-line restore, not a rebuild. */}

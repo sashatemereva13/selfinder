@@ -233,7 +233,11 @@ export default function TuneInScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Pressable
+          style={styles.backRow}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+        >
           <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
 

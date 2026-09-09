@@ -815,7 +815,7 @@ export default function DepthsScreen() {
           }}
         >
           <View style={styles.kickerRow}>
-            <Text style={styles.kicker}>{t("depths.kicker")}</Text>
+            <Text style={styles.kicker} accessibilityRole="header">{t("depths.kicker")}</Text>
           </View>
           {/* The standing orientation line ("What's happening inside you
             right now.") was removed 2026-08-30 — the goal now is for the

@@ -119,14 +119,18 @@ export default function ProfileScreen() {
             your-arc.tsx's explicit destination), since this is always
             PUSHED from wherever the icon was tapped, so popping the
             stack genuinely returns there. */}
-        <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Pressable
+          style={styles.backRow}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+        >
           <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
 
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →
             Walk with Socrates), and this label keeps it going. */}
-        <Text style={styles.kicker}>{t('you.walkingWith')}</Text>
+        <Text style={styles.kicker} accessibilityRole="header">{t('you.walkingWith')}</Text>
 
         {showCurrent && philosopher && (
           <Animated.View style={[styles.currentSection, currentFadeStyle]}>
@@ -165,7 +169,7 @@ export default function ProfileScreen() {
                 only mattered before Journeys had its own bottom tab). */}
             <View style={styles.divider} />
             <View style={styles.groupSection}>
-              <Text style={styles.groupKicker}>{t('you.groupSelfinder')}</Text>
+              <Text style={styles.groupKicker} accessibilityRole="header">{t('you.groupSelfinder')}</Text>
               <Pressable onPress={() => router.push('/how-to-use')}>
                 <Text style={styles.sourcesLink}>{t('you.howToUseLink')}</Text>
               </Pressable>
@@ -176,14 +180,14 @@ export default function ProfileScreen() {
 
             <View style={styles.divider} />
             <View style={styles.groupSection}>
-              <Text style={styles.groupKicker}>{t('you.groupPreferences')}</Text>
+              <Text style={styles.groupKicker} accessibilityRole="header">{t('you.groupPreferences')}</Text>
               {/* Not nested inside AccountSection, and not gated on being
                   signed in — most usage doesn't require an account, and a
                   language preference is meaningful before someone ever
                   creates one. */}
               <View style={styles.languageSection}>
                 <Text style={styles.languageKicker}>{t('you.language')}</Text>
-                <View style={styles.languageRow}>
+                <View style={styles.languageRow} accessibilityRole="radiogroup">
                   {(['en', 'ru'] as Locale[]).map((option) => (
                     <Pressable
                       key={option}
@@ -200,6 +204,8 @@ export default function ProfileScreen() {
                         // notifications keep firing in the old language.
                         if (philosopher) rescheduleReminderWindow(philosopher);
                       }}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: locale === option }}
                     >
                       <Text
                         style={[
@@ -216,7 +222,7 @@ export default function ProfileScreen() {
 
               <View style={styles.themeSection}>
                 <Text style={styles.themeKicker}>{t('you.theme')}</Text>
-                <View style={styles.themeRow}>
+                <View style={styles.themeRow} accessibilityRole="radiogroup">
                   {(['system', 'light', 'dark'] as ThemePreference[]).map((option) => (
                     <Pressable
                       key={option}
@@ -225,6 +231,8 @@ export default function ProfileScreen() {
                         themePreference === option && { backgroundColor: colors.accent.buttonFill },
                       ]}
                       onPress={() => setThemePreference(option)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ checked: themePreference === option }}
                     >
                       <Text
                         style={[

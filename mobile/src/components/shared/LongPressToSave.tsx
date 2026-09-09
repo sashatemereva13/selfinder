@@ -57,17 +57,33 @@ export function LongPressToSave({ children, message, accentRgb, captureChildren 
     }
   };
 
+  // VoiceOver/TalkBack intercept a raw single-finger long-press for their
+  // own navigation gestures, so a screen-reader user generally can't
+  // trigger onLongPress directly — accessibilityActions + onAccessibility
+  // Action maps a VoiceOver double-tap ("activate") to the same handler,
+  // so this is actually reachable rather than just labeled.
+  const a11yProps = {
+    disabled: status === 'saving',
+    accessibilityRole: 'button' as const,
+    accessibilityLabel: t('saveMessage.saveImageLabel'),
+    accessibilityHint: t('saveMessage.saveImageHint'),
+    accessibilityActions: [{ name: 'activate' }],
+    onAccessibilityAction: (e: { nativeEvent: { actionName: string } }) => {
+      if (e.nativeEvent.actionName === 'activate') handleLongPress();
+    },
+  };
+
   return (
     <View>
       {captureChildren ? (
-        <Pressable onLongPress={handleLongPress} disabled={status === 'saving'}>
+        <Pressable onLongPress={handleLongPress} {...a11yProps}>
           <View ref={targetRef} collapsable={false}>
             {children}
           </View>
         </Pressable>
       ) : (
         <>
-          <Pressable onLongPress={handleLongPress} disabled={status === 'saving'}>
+          <Pressable onLongPress={handleLongPress} {...a11yProps}>
             {children}
           </Pressable>
           {/* Off-screen capture target — same pattern SaveMessageAction

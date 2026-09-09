@@ -566,6 +566,7 @@ function ActionRow({
         // symbolId — the two are mutually exclusive per point.
         <View
           pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
           style={{
             position: "absolute",
             left: x - ACTION_SYMBOL_SIZE / 2,
@@ -591,6 +592,7 @@ function ActionRow({
         // icon competing with the label text for attention.
         <View
           pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
           style={{
             position: "absolute",
             left: x - ACTION_SYMBOL_SIZE / 2,
@@ -606,6 +608,7 @@ function ActionRow({
       ) : (
         <View
           pointerEvents="none"
+          importantForAccessibility="no-hide-descendants"
           style={[
             styles.dot,
             {
@@ -621,6 +624,8 @@ function ActionRow({
       <Pressable
         onPress={() => onActionPress(point.key)}
         hitSlop={4}
+        accessibilityRole="button"
+        accessibilityLabel={`${point.label}. ${point.description}`}
         style={[
           styles.actionLabelHit,
           {
@@ -736,6 +741,8 @@ function ShiftSubRow({
       <Pressable
         onPress={() => onShiftSubPress(point.key)}
         hitSlop={4}
+        accessibilityRole="button"
+        accessibilityLabel={`${point.label}. ${point.description}`}
         style={[
           styles.actionLabelHit,
           { top: labelY, left: labelX, width: SHIFT_SUB_LABEL_BOX_W },

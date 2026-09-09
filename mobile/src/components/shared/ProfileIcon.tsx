@@ -1,5 +1,6 @@
 import { Pressable, Image, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../../theme/spacing';
 import { useThemeStore } from '../../store/themeStore';
@@ -46,6 +47,7 @@ const ICON_WIDTH = 22;
 const ICON_HEIGHT = ICON_WIDTH * (840 / 480);
 
 export function ProfileIcon() {
+  const { t } = useTranslation();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const theme = useThemeStore((s) => s.theme);
@@ -55,11 +57,14 @@ export function ProfileIcon() {
       style={[styles.wrap, { top: insets.top + spacing[4], right: spacing[6] }]}
       onPress={() => router.push('/profile')}
       hitSlop={12}
+      accessibilityRole="button"
+      accessibilityLabel={t('you.profileIconLabel')}
     >
       <Image
         source={theme === 'light' ? AURA_NEUTRAL_IMAGE_LIGHT : AURA_NEUTRAL_IMAGE}
         style={{ width: ICON_WIDTH, height: ICON_HEIGHT }}
         resizeMode="contain"
+        accessible={false}
       />
     </Pressable>
   );

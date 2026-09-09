@@ -38,7 +38,11 @@ export default function CrisisSupportScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')}>
+      <Pressable
+        style={styles.backRow}
+        onPress={() => router.replace('/(tabs)/depths')}
+        accessibilityRole="button"
+      >
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 

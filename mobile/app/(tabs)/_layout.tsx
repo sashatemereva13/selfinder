@@ -37,6 +37,7 @@ export default function TabsLayout() {
         name="depths"
         options={{
           title: t('common.tabDepths'),
+          tabBarAccessibilityLabel: t('common.tabDepths'),
           tabBarIcon: ({ color }) => <DepthsTabIcon color={color as string} />,
         }}
       />
@@ -44,6 +45,7 @@ export default function TabsLayout() {
         name="journeys"
         options={{
           title: t('common.tabJourneys'),
+          tabBarAccessibilityLabel: t('common.tabJourneys'),
           tabBarIcon: ({ color }) => <JourneysTabIcon color={color as string} />,
         }}
       />
@@ -51,6 +53,7 @@ export default function TabsLayout() {
         name="your-arc"
         options={{
           title: t('common.tabYourArc'),
+          tabBarAccessibilityLabel: t('common.tabYourArc'),
           tabBarIcon: ({ color }) => <YourArcTabIcon color={color as string} />,
         }}
       />

@@ -150,27 +150,59 @@ export function ConsciousnessWheel({
   const activeLevel = VIBRATION_LEVELS[activeIndex];
   const activeColor = `rgb(${levelColors[activeLevel.slug]})`;
 
+  // A raw single-finger drag is a gesture VoiceOver/TalkBack intercept for
+  // their own navigation, so the wheel has no screen-reader equivalent by
+  // design (see this file's own header comment on why it's drag-only for
+  // sighted use). accessibilityRole="adjustable" + accessibilityActions
+  // gives a real alternative path: a VoiceOver swipe-up/down on this
+  // element steps activeIndex by one level, same as tapping a neighboring
+  // tick would, with accessibilityValue announcing the level landed on.
+  const stepIndex = (direction: 1 | -1) => {
+    const next = (activeIndex + direction + TOTAL) % TOTAL;
+    dragAngle.value = withSpring(angleFor(next, TOTAL), { damping: 14 });
+    setActiveIndex(next);
+  };
+
   return (
     <View style={styles.wrap}>
       <GestureDetector gesture={gesture}>
-        <View style={{ width: SIZE, height: SIZE }}>
-          <Svg width={SIZE} height={SIZE}>
-            <SvgCircle cx={CENTER} cy={CENTER} r={WHEEL_RADIUS} fill="none" stroke={colors.bg.border} strokeWidth={1} />
-            {VIBRATION_LEVELS.map((level, i) => {
-              const isActive = i === activeIndex;
-              const pos = polarToXY(CENTER, WHEEL_RADIUS, angleFor(i, TOTAL));
-              return (
-                <SvgCircle
-                  key={level.slug}
-                  cx={pos.x}
-                  cy={pos.y}
-                  r={isActive ? 0 : TICK_LENGTH / 2.2}
-                  fill={`rgb(${levelColors[level.slug]})`}
-                  opacity={isActive ? 0 : 0.8}
-                />
-              );
-            })}
-          </Svg>
+        <View
+          style={{ width: SIZE, height: SIZE }}
+          accessible
+          accessibilityRole="adjustable"
+          accessibilityLabel={t('levels.wheelLabel')}
+          accessibilityHint={t('levels.wheelHint')}
+          accessibilityValue={{ text: getLocalizedLevelName(activeLevel, locale) }}
+          accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+          onAccessibilityAction={(e) => {
+            if (e.nativeEvent.actionName === 'increment') stepIndex(1);
+            else if (e.nativeEvent.actionName === 'decrement') stepIndex(-1);
+          }}
+        >
+          {/* Wrapped in a plain View (not accessibility props directly on
+              Svg, which react-native-svg doesn't support on web) so the 17
+              tick SvgCircles never surface as separate elements — the
+              outer View above is the one accessible stop for this whole
+              control. */}
+          <View importantForAccessibility="no-hide-descendants">
+            <Svg width={SIZE} height={SIZE}>
+              <SvgCircle cx={CENTER} cy={CENTER} r={WHEEL_RADIUS} fill="none" stroke={colors.bg.border} strokeWidth={1} />
+              {VIBRATION_LEVELS.map((level, i) => {
+                const isActive = i === activeIndex;
+                const pos = polarToXY(CENTER, WHEEL_RADIUS, angleFor(i, TOTAL));
+                return (
+                  <SvgCircle
+                    key={level.slug}
+                    cx={pos.x}
+                    cy={pos.y}
+                    r={isActive ? 0 : TICK_LENGTH / 2.2}
+                    fill={`rgb(${levelColors[level.slug]})`}
+                    opacity={isActive ? 0 : 0.8}
+                  />
+                );
+              })}
+            </Svg>
+          </View>
           {/* The draggable dot itself — an Animated.View rather than another
               SvgCircle, since it needs to track a continuously-updating
               shared value smoothly; mixing that with the static SVG ticks
@@ -194,6 +226,7 @@ export function ConsciousnessWheel({
       </Text>
       <Text
         style={styles.levelLink}
+        accessibilityRole="link"
         onPress={() => onSelectLevel?.(activeLevel.slug)}
       >
         {t('levels.readAbout', { name: getLocalizedLevelName(activeLevel, locale) })}

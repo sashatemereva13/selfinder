@@ -45,6 +45,7 @@ export default function SpillScreen() {
       <Pressable
         style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
         onPress={() => router.back()}
+        accessibilityRole="button"
       >
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>

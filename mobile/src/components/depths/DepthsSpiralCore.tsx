@@ -552,6 +552,8 @@ export function DepthsSpiralCore({
                 ]}
                 onPress={() => interactive && onPointPress(point.key)}
                 hitSlop={4}
+                accessible={false}
+                importantForAccessibility="no-hide-descendants"
               >
                 <View
                   style={[
@@ -570,10 +572,15 @@ export function DepthsSpiralCore({
                   a caption over the dot's — a dot alone is a small, fiddly
                   target on a real screen. Same onPointPress, same key, so
                   tapping either the dot OR its full label text does the
-                  same thing. */}
+                  same thing. The dot's own Pressable above is marked
+                  accessible={false} so a screen reader only ever stops on
+                  this one, labeled, tap target for the pair. */}
               <Pressable
                 onPress={() => interactive && onPointPress(point.key)}
                 hitSlop={4}
+                accessibilityRole="button"
+                accessibilityLabel={point.label}
+                accessibilityState={{ selected: point.isSelected, disabled: !interactive }}
                 style={[
                   styles.pointLabelHit,
                   {

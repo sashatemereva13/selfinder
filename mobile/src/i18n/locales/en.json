@@ -25,6 +25,7 @@
     "tabYourArc": "Your Arc"
   },
   "you": {
+    "profileIconLabel": "Profile and settings",
     "groupSelfinder": "Selfinder",
     "groupPreferences": "Preferences",
     "howToUseLink": "How to use Selfinder →",
@@ -113,6 +114,9 @@
   },
   "depths": {
     "kicker": "Depths",
+    "talkWithPhilosopherLabel": "Talk with {{name}}",
+    "talkWithPhilosopherNewLabel": "Talk with {{name}} — new",
+    "talkWithPhilosopherHint": "Opens a conversation with your philosopher",
     "tabExplainer": "What's happening inside you right now.",
     "intentionPrompt": "What would you like to do with what's here?",
     "stayWithIt": "Stay with it",
@@ -317,6 +321,8 @@
     "fulfilledWishesHeading": "Wishes that came true"
   },
   "saveMessage": {
+    "saveImageLabel": "Save image",
+    "saveImageHint": "Saves this image to your photo gallery",
     "keepThisMessage": "Keep this message",
     "saving": "Saving…",
     "saved": "Saved ✓",
@@ -485,6 +491,8 @@
     "title": "The map of consciousness",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
     "note": "These connections describe what's true between neighboring states, not a route everyone has to walk — you can move from Anger to Love and back to Reason without passing through everything between, and that's not doing it wrong.",
+    "wheelLabel": "Vibration level wheel",
+    "wheelHint": "Swipe up or down to move between the seventeen levels",
     "readAbout": "Read about {{name}} →"
   },
   "feelingLucky": {

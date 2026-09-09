@@ -36,17 +36,17 @@ export function AIDisclosureOverlay() {
           { width: columnWidth, alignSelf: 'center', paddingHorizontal: spacing[6] },
         ]}
       >
-        <Text style={styles.kicker}>{t('aiDisclosure.kicker')}</Text>
+        <Text style={styles.kicker} accessibilityRole="header">{t('aiDisclosure.kicker')}</Text>
         <Text style={styles.body}>{t('aiDisclosure.body')}</Text>
         {/* A real link where the body copy above already promises one —
             "see the privacy policy for details" used to have nowhere to
             actually go from this overlay, which is often the ONLY
             privacy-relevant text a signed-out user (the primary path,
             see this file's own header comment) ever sees. */}
-        <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)}>
+        <Pressable onPress={() => Linking.openURL(PRIVACY_POLICY_URL)} accessibilityRole="link">
           <Text style={styles.linkText}>{t('account.readPrivacyPolicy')}</Text>
         </Pressable>
-        <Pressable style={styles.button} onPress={acknowledge}>
+        <Pressable style={styles.button} onPress={acknowledge} accessibilityRole="button">
           <Text style={styles.buttonText}>{t('aiDisclosure.continue')}</Text>
         </Pressable>
       </View>

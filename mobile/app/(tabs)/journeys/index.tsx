@@ -127,7 +127,7 @@ export default function ProductsScreen() {
       >
       {theme === 'dark' && <AmbientGlow />}
 
-      <Text style={styles.title}>{t('products.title')}</Text>
+      <Text style={styles.title} accessibilityRole="header">{t('products.title')}</Text>
       {/* Where the per-card "Grounded in..." line used to be read by anyone
           who wanted it — moved to its own page (2026-09-09, at the user's
           own request) so every card can just be the question, with the

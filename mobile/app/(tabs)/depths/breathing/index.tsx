@@ -186,7 +186,11 @@ export default function BreathingScreen() {
           paddingHorizontal: spacing[6],
         }}
       >
-        <Pressable style={styles.backRow} onPress={() => router.back()}>
+        <Pressable
+          style={styles.backRow}
+          onPress={() => router.back()}
+          accessibilityRole="button"
+        >
           <Text style={styles.backLink}>{t('common.back')}</Text>
         </Pressable>
 

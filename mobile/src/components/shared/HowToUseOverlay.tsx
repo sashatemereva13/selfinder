@@ -38,7 +38,7 @@ export function HowToUseOverlay() {
           { width: columnWidth, alignSelf: 'center', paddingHorizontal: spacing[6], paddingTop: insets.top + spacing[8] },
         ]}
       >
-        <Text style={styles.kicker}>{t('howToUse.title')}</Text>
+        <Text style={styles.kicker} accessibilityRole="header">{t('howToUse.title')}</Text>
         <Text style={styles.intro}>{t('howToUse.intro')}</Text>
 
         {HOW_TO_USE_ENTRIES.map((entry) => (
@@ -48,7 +48,7 @@ export function HowToUseOverlay() {
           </View>
         ))}
 
-        <Pressable style={styles.button} onPress={acknowledge}>
+        <Pressable style={styles.button} onPress={acknowledge} accessibilityRole="button">
           {/* Reuses aiDisclosure.continue rather than adding a near-
               duplicate key — "Continue" is generic and this button does
               exactly the same job (acknowledge, dismiss) as that

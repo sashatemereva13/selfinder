@@ -74,10 +74,16 @@ export function JourneyShelf({ label, items }: JourneyShelfProps) {
         scrollEventThrottle={32}
       >
         {items.map((item) => (
-          <Pressable key={item.key} style={styles.card} onPress={item.onPress}>
+          <Pressable
+            key={item.key}
+            style={styles.card}
+            onPress={item.onPress}
+            accessibilityRole="button"
+            accessibilityLabel={`${item.name}. ${item.question}`}
+          >
             <Text style={styles.cardName}>{item.name}</Text>
             <Text style={styles.cardQuestion}>{item.question}</Text>
-            <View style={styles.symbolWrap}>
+            <View style={styles.symbolWrap} importantForAccessibility="no-hide-descendants">
               <JourneySymbol id={item.symbolId} rgb={accentRgb} size={72} />
             </View>
           </Pressable>
@@ -85,7 +91,7 @@ export function JourneyShelf({ label, items }: JourneyShelfProps) {
       </ScrollView>
 
       {items.length > 1 && (
-        <View style={styles.dotsRow}>
+        <View style={styles.dotsRow} importantForAccessibility="no-hide-descendants">
           {items.map((_, i) => (
             <View
               key={i}
