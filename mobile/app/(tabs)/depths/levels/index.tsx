@@ -7,7 +7,7 @@ import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
-import { spacing } from '../../../../src/theme/spacing';
+import { spacing, radius } from '../../../../src/theme/spacing';
 import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { ConsciousnessWheel } from '../../../../src/components/depths/ConsciousnessWheel';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
@@ -71,10 +71,10 @@ export default function LevelsScreen() {
       <ConsciousnessWheel onSelectLevel={goToLevel} />
 
       <View style={styles.list}>
-        {LEVELS_HIGH_TO_LOW.map((level, i) => (
+        {LEVELS_HIGH_TO_LOW.map((level) => (
           <Pressable
             key={level.slug}
-            style={[styles.row, i > 0 && styles.rowDivider]}
+            style={styles.row}
             onPress={() => goToLevel(level.slug)}
             accessibilityRole="button"
           >
@@ -115,22 +115,21 @@ function makeStyles(colors: Colors) {
     marginTop: spacing[3],
     marginBottom: spacing[8],
   },
-  list: { marginTop: spacing[10] },
-  // 2026-09-10: was a bordered, filled box per row (the literal "no
-  // cards" anti-pattern aesthetic.md names) — replaced with the same
-  // hairline-divider convention this screen's own deepDiveBody already
-  // uses elsewhere, so position and a thin line do the separating
-  // instead of a box. No divider above the first row — the list's own
-  // top edge (marginTop above) is separation enough there.
+  list: { gap: spacing[2], marginTop: spacing[10] },
+  // 2026-09-10: matches cards/index.tsx's own cardPlane material — a
+  // raised, borderless colors.bg.elevated surface, not a bordered box
+  // and not a hairline divider between rows either (a divider still
+  // reads as a boundary line, the same "generic UI box" cue a border
+  // does, just thinner). Rounded corners, no border, no line: the fill
+  // alone is what lifts each row off the page.
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing[3],
     paddingVertical: spacing[4],
-  },
-  rowDivider: {
-    borderTopWidth: 1,
-    borderTopColor: colors.bg.border,
+    paddingHorizontal: spacing[4],
+    borderRadius: radius.lg,
+    backgroundColor: colors.bg.elevated,
   },
   rowDot: { width: 10, height: 10, borderRadius: 5 },
   rowName: { flex: 1, color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.base },
