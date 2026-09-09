@@ -31,7 +31,6 @@ export interface JourneyShelfItem {
   key: string;
   name: string;
   question: string;
-  grounding: string;
   onPress: () => void;
 }
 
@@ -76,7 +75,6 @@ export function JourneyShelf({ label, items }: JourneyShelfProps) {
           <Pressable key={item.key} style={styles.card} onPress={item.onPress}>
             <Text style={styles.cardName}>{item.name}</Text>
             <Text style={styles.cardQuestion}>{item.question}</Text>
-            <Text style={styles.cardGrounding}>{item.grounding}</Text>
           </Pressable>
         ))}
       </ScrollView>
@@ -139,18 +137,16 @@ function makeStyles(colors: Colors) {
       textTransform: 'uppercase',
       marginBottom: spacing[2],
     },
+    // 2026-09-09: was the middle of three lines (name/question/grounding)
+    // — now the last visible line on the card, since the grounding line
+    // moved to its own page (see (tabs)/journeys/index.tsx's own
+    // groundingLink and journeys-grounding.tsx). No more marginBottom:
+    // nothing follows it inside the card anymore.
     cardQuestion: {
       color: colors.accent.ivory,
       fontFamily: fonts.medium,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
-      marginBottom: spacing[2],
-    },
-    cardGrounding: {
-      color: colors.text.faint,
-      fontFamily: fonts.light,
-      fontSize: 10,
-      lineHeight: 10 * lineHeights.normal,
     },
     dotsRow: {
       flexDirection: 'row',

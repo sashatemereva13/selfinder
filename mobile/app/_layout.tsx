@@ -132,6 +132,7 @@ export default function RootLayout() {
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
       'your-arc', 'your-arc-past', 'your-arc-future', 'crisis-support',
+      'journeys-grounding',
     ].includes(segments[0] as string);
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
@@ -185,6 +186,7 @@ export default function RootLayout() {
           <Stack.Screen name="your-arc-past" />
           <Stack.Screen name="your-arc-future" />
           <Stack.Screen name="crisis-support" />
+          <Stack.Screen name="journeys-grounding" />
         </Stack>
         {showHowToUse && <HowToUseOverlay />}
         {showAIDisclosure && <AIDisclosureOverlay />}

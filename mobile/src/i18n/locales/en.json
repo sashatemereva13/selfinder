@@ -348,6 +348,7 @@
     "title": "Journeys",
     "tabExplainer": "Something you wish you understood — and want an answer to now.",
     "intro": "A generated experience, made fresh each time you open it — separate from Your Arc's ongoing record.",
+    "groundingLink": "Where do these come from? →",
     "groupPast": "Past",
     "groupPresent": "Present",
     "groupFuture": "Future",
@@ -389,6 +390,10 @@
     "enoughLabel": "Enough",
     "enoughDescription": "What would actually be enough for me?",
     "enoughGrounding": "Grounded in research on the hedonic treadmill and maximizing vs. satisficing."
+  },
+  "journeysGrounding": {
+    "title": "Where these come from",
+    "disclaimer": "Each Journey's questions follow a fixed path, designed once by drawing on real psychological and psychoanalytic research — not generated on the spot, and not a diagnosis of anything about you. This page is for anyone who wants to see that research; nothing here is shown inside a Journey itself."
   },
   "journeyComingSoon": {
     "notYetAvailable": "Not yet available — this Journey is still being made."

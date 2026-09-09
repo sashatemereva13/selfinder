@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
@@ -29,17 +29,6 @@ interface Product {
   key: JourneyKey;
   labelKey: string;
   descriptionKey: string;
-  // A short, non-diagnostic line naming the real psychoanalytic/
-  // psychological research this Journey's question architecture is
-  // grounded in (see docs/journeys-concept.md's own "Research grounding"
-  // section for each Journey) — added 2026-09-03 so the catalog signals
-  // these sequences aren't random, without ever surfacing what that
-  // research implies ABOUT THE USER. This is a narrow, deliberate
-  // exception to RULES.md's "research grounding is never surfaced" rule:
-  // naming that the architecture itself is researched is fine; the rule
-  // that must never be crossed is drawing a conclusion about the person
-  // reading it from that research, which this line never does.
-  groundingKey: string;
   // A plain string, not a closed union of known routes — Journeys are an
   // explicitly open-ended, growing family (2026-08-23 pivot, see RULES.md's
   // Product/positioning section), so this list is expected to keep
@@ -82,18 +71,18 @@ interface Product {
 // helpful cross-listing once tried live — Your Arc is now Center's one
 // true home, and this catalog is purely the 11-Journey question set.
 const PRODUCTS: Product[] = [
-  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', groundingKey: 'products.controlGrounding', route: '/control', temporal: 'present' },
-  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', groundingKey: 'products.theChoiceGrounding', route: '/the-choice', temporal: 'present' },
-  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', groundingKey: 'products.theLoopGrounding', route: '/the-loop', temporal: 'past' },
-  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', groundingKey: 'products.whoseVoiceGrounding', route: '/whose-voice', temporal: 'past' },
-  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', groundingKey: 'products.theRoadNotTakenGrounding', route: '/the-road-not-taken', temporal: 'past' },
-  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', groundingKey: 'products.lettingGoGrounding', route: '/letting-go', temporal: 'past' },
-  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', groundingKey: 'products.theMirrorGrounding', route: '/the-mirror', temporal: 'present' },
-  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', groundingKey: 'products.theUnsaidGrounding', route: '/the-unsaid', temporal: 'present' },
-  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', groundingKey: 'products.becomingGrounding', route: '/becoming', temporal: 'future' },
-  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', groundingKey: 'products.theThresholdGrounding', route: '/the-threshold', temporal: 'future' },
-  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', groundingKey: 'products.possibleSelvesGrounding', route: '/possible-selves', temporal: 'future' },
-  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', groundingKey: 'products.enoughGrounding', route: '/enough', temporal: 'present' },
+  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', route: '/control', temporal: 'present' },
+  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', route: '/the-choice', temporal: 'present' },
+  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', route: '/the-loop', temporal: 'past' },
+  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', route: '/whose-voice', temporal: 'past' },
+  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', route: '/the-road-not-taken', temporal: 'past' },
+  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', route: '/letting-go', temporal: 'past' },
+  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', route: '/the-mirror', temporal: 'present' },
+  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', route: '/the-unsaid', temporal: 'present' },
+  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', route: '/becoming', temporal: 'future' },
+  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', route: '/the-threshold', temporal: 'future' },
+  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', route: '/possible-selves', temporal: 'future' },
+  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', route: '/enough', temporal: 'present' },
 ];
 
 const TEMPORAL_GROUPS: { key: TemporalGroup; headingKey: string }[] = [
@@ -131,6 +120,14 @@ export default function ProductsScreen() {
       {theme === 'dark' && <AmbientGlow />}
 
       <Text style={styles.title}>{t('products.title')}</Text>
+      {/* Where the per-card "Grounded in..." line used to be read by anyone
+          who wanted it — moved to its own page (2026-09-09, at the user's
+          own request) so every card can just be the question, with the
+          research attribution one tap away instead of printed on all 12
+          cards at once. See journeys-grounding.tsx's own header comment. */}
+      <Pressable onPress={() => router.push('/journeys-grounding')} style={styles.groundingLinkRow}>
+        <Text style={styles.groundingLink}>{t('products.groundingLink')}</Text>
+      </Pressable>
 
       {TEMPORAL_GROUPS.map((group) => {
         const items = PRODUCTS.filter((p) => p.temporal === group.key);
@@ -143,7 +140,6 @@ export default function ProductsScreen() {
               key: product.key,
               name: t(product.labelKey),
               question: t(product.descriptionKey),
-              grounding: t(product.groundingKey),
               onPress: () => router.push(product.route),
             }))}
           />
@@ -165,7 +161,16 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xl,
     lineHeight: fontSizes.xl * lineHeights.tight,
     paddingHorizontal: spacing[6],
+  },
+  groundingLinkRow: {
+    paddingHorizontal: spacing[6],
+    marginTop: spacing[2],
     marginBottom: spacing[8],
+  },
+  groundingLink: {
+    color: colors.accent.ivory,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
   },
   });
 }
