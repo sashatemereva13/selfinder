@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
-import { spacing, radius } from '../../../../src/theme/spacing';
+import { spacing } from '../../../../src/theme/spacing';
 import { getLevelBySlug, getLocalizedLevel } from '../../../../src/content/levelsContent';
 import { useLevelColors } from '../../../../src/content/measureConfig';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
@@ -189,14 +189,19 @@ function makeStyles(colors: Colors) {
     marginBottom: spacing[5],
   },
   natureSymbol: { alignItems: 'center', marginBottom: spacing[5] },
+  // 2026-09-10: was a bordered, filled box (the literal "no cards"
+  // anti-pattern aesthetic.md names) — dropped in favor of the same
+  // hairline-divider convention this screen's own deepDiveBody already
+  // uses, so this block reads as continuous with the rest of the page
+  // instead of a boxed-off aside.
   signals: {
-    gap: spacing[3],
-    marginBottom: spacing[5],
-    padding: spacing[4],
-    borderRadius: radius.md,
-    borderWidth: 1,
+    gap: spacing[4],
+    marginBottom: spacing[6],
+    paddingTop: spacing[4],
+    paddingBottom: spacing[1],
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
     borderColor: colors.bg.border,
-    backgroundColor: colors.bg.elevated,
   },
   signalRow: { gap: spacing[1] },
   signalLabel: {
