@@ -14,7 +14,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes } from '../../../../src/theme/typography';
 import { spacing } from '../../../../src/theme/spacing';
 import { useSpillStore } from '../../../../src/store/spillStore';
-import { useAppAccentRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb } from '../../../../src/utils/appAccent';
 import { track } from '../../../../src/utils/analytics';
 
 const DURATION_MS = 60_000;
@@ -28,8 +28,11 @@ export default function SpillWriteScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const setSpillText = useSpillStore((s) => s.setText);
+  // Decorative-only — the progress-bar fill. Use wordColor below for the
+  // actual typed-word Text.
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const wordColor = `rgb(${useAppAccentTextRgb()})`;
 
   const [text, setText] = useState('');
   const textRef = useRef('');
@@ -87,7 +90,7 @@ export default function SpillWriteScreen() {
             key={words.length}
             entering={FadeIn.duration(140)}
             exiting={FadeOut.duration(180)}
-            style={[styles.word, { color: accentColor }]}
+            style={[styles.word, { color: wordColor }]}
           >
             {activeWord}
           </Animated.Text>

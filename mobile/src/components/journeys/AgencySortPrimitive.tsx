@@ -6,7 +6,7 @@ import { useThemeColors } from '../../theme/useThemeColors';
 import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
-import { useAppAccentRgb } from '../../utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb } from '../../utils/appAccent';
 import { AgencySortResult } from '../../types';
 
 type Bucket = keyof AgencySortResult;
@@ -63,8 +63,11 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
+  // Decorative-only (chip/bucket border color). Use accentTextColor below
+  // for anything that colors Text.
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const accentTextColor = `rgb(${useAppAccentTextRgb()})`;
 
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [assignments, setAssignments] = useState<Record<string, Bucket>>({});
@@ -155,7 +158,7 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
                 ]}
                 onPress={() => setSelectedItem(isSelected ? null : item)}
               >
-                <Text style={[styles.chipText, isSelected && { color: accentColor }]} numberOfLines={2}>
+                <Text style={[styles.chipText, isSelected && { color: accentTextColor }]} numberOfLines={2}>
                   {item}
                 </Text>
                 {assignedTo && <Text style={styles.chipBucketLabel}>{bucketLabels[assignedTo]}</Text>}
@@ -169,7 +172,7 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
         {BUCKETS.map((bucket) => (
           <Animated.View key={bucket} style={[styles.bucketRow, bucketPulseStyle]}>
             <Pressable style={styles.bucketRowInner} onPress={() => handleAssign(bucket)} disabled={!selectedItem}>
-              <Text style={[styles.bucketLabel, selectedItem && { color: accentColor }]}>
+              <Text style={[styles.bucketLabel, selectedItem && { color: accentTextColor }]}>
                 {bucketLabels[bucket]}
               </Text>
               <Text style={styles.bucketHint}>{t(`control.${bucket}Hint`)}</Text>
@@ -183,7 +186,7 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
         onPress={handleSubmit}
         disabled={!allAssigned}
       >
-        <Text style={[styles.submitButtonText, { color: accentColor }]}>{t('control.agencySortDone')}</Text>
+        <Text style={[styles.submitButtonText, { color: accentTextColor }]}>{t('control.agencySortDone')}</Text>
       </Pressable>
     </View>
   );

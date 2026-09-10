@@ -57,6 +57,18 @@ export interface Colors {
     // dark mode — this only diverges in light mode.
     buttonFill: string;
     buttonFillRgb: string;
+    // TEXT-SAFE variant of `ivory` — same relationship TEXT_GOLD_RGB
+    // already has to GOLD_RGB for the text.* ladder just below, but
+    // `ivory` itself never got the equivalent treatment: it measures
+    // 2.45:1 against light mode's own bg.base, well below WCAG AA even
+    // for large text, yet is used directly as Text color at dozens of
+    // call sites (Depths' action-row labels, a philosopher's name before
+    // a first reading, nudge links) wherever there's no current reading
+    // to color by instead. Same value as `ivory` in dark mode (already
+    // AA-safe there, same reasoning as the level-color text variant) —
+    // this only diverges in light mode.
+    ivoryText: string;
+    ivoryTextRgb: string;
   };
   // Text color for content sitting on a filled colors.accent.ivory (or
   // LEVEL_COLORS) surface — e.g. a filled button's label. Deliberately NOT
@@ -100,6 +112,8 @@ export const darkColors: Colors = {
     ivoryRgb: IVORY_RGB,
     buttonFill: '#efe3cf',
     buttonFillRgb: IVORY_RGB,
+    ivoryText: '#efe3cf',
+    ivoryTextRgb: IVORY_RGB,
   },
   onAccent: '#06060d',
   text: {
@@ -149,6 +163,12 @@ export const lightColors: Colors = {
     // the pill real lift instead of sitting as a flat color block.
     buttonFill: '#d6b26c',
     buttonFillRgb: '214,178,108',
+    // Same hue/saturation as `ivory` above, darkened in HSL space until
+    // contrast against bg.base reached 4.5:1 (WCAG AA, normal text) —
+    // `ivory` itself measures only 2.45:1. Same value as `ivory` in dark
+    // mode (already AA-safe there).
+    ivoryText: '#7e622a',
+    ivoryTextRgb: '126,98,42',
   },
   // Same dark ink AuraFigure's body gradient uses (rgb(30,27,40)) — not
   // bg.base, which is ivory in this theme (see the Colors interface's own

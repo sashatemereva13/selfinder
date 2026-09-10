@@ -22,7 +22,9 @@ interface ClosingPageProps {
   closingWriteSubmitting: boolean;
   onSubmitClosingWrite: () => void;
   closingArrivalStyle: ReturnType<typeof useAnimatedStyle>;
-  accentRgb: string;
+  // Text-safe — this page's "Write it now" link is bare Text on the page
+  // background (no fill).
+  accentTextRgb: string;
 }
 
 // The closing page (docs/your-arc-expansion-plan.md, Thread 2). Positioned
@@ -45,7 +47,7 @@ export function ClosingPage({
   closingWriteSubmitting,
   onSubmitClosingWrite,
   closingArrivalStyle,
-  accentRgb,
+  accentTextRgb,
 }: ClosingPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -92,7 +94,7 @@ export function ClosingPage({
               onPress={onSubmitClosingWrite}
               disabled={!closingWriteInput.trim() || closingWriteSubmitting}
             >
-              <Text style={[styles.closingWriteButtonText, { color: `rgb(${accentRgb})` }]}>
+              <Text style={[styles.closingWriteButtonText, { color: `rgb(${accentTextRgb})` }]}>
                 {t('yourArc.closingWriteButton')}
               </Text>
             </Pressable>
@@ -158,8 +160,8 @@ function makeStyles(colors: Colors) {
       paddingVertical: spacing[3],
     },
     closingWriteButton: { alignSelf: 'center', marginTop: spacing[3], paddingVertical: spacing[1] },
-    // Color set per-instance via accentRgb (see call site) rather than a
-    // fixed token — this is the pager's actual CTA, so it takes the same
+    // Color set per-instance via accentTextRgb (see call site) rather than
+    // a fixed token — this is the pager's actual CTA, so it takes the same
     // reading-aware accent FactsPage's Center row and WishCrossingPage's
     // send buttons already use, instead of the plain text.primary that
     // made it visually indistinguishable from a static body sentence.

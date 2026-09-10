@@ -7,7 +7,7 @@ import { fonts, fontSizes, lineHeights } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { usePhilosopherStore } from '../../store/philosopherStore';
 import { useReminderStore } from '../../store/reminderStore';
-import { useAppAccentRgb } from '../../utils/appAccent';
+import { useAppAccentTextRgb } from '../../utils/appAccent';
 import { useLocaleStore } from '../../store/localeStore';
 
 // Deliberately simple: four fixed times, no custom picker. Tapping the
@@ -45,7 +45,8 @@ export function DailyReminderSection() {
   const setReminder = useReminderStore((s) => s.setReminder);
   const clearReminder = useReminderStore((s) => s.clearReminder);
   const [deniedNotice, setDeniedNotice] = useState(false);
-  const accentRgb = useAppAccentRgb();
+  // Text-safe — colors the active preset label.
+  const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
 
   if (!philosopher) return null;

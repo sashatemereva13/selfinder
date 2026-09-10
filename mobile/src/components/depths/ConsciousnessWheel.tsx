@@ -9,7 +9,7 @@ import Animated, {
   runOnJS,
   withSpring,
 } from 'react-native-reanimated';
-import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../../content/measureConfig';
+import { VIBRATION_LEVELS, useLevelColors, useLevelTextColors, getLocalizedLevelName } from '../../content/measureConfig';
 import { useThemeColors } from '../../theme/useThemeColors';
 import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../theme/typography';
@@ -76,6 +76,7 @@ export function ConsciousnessWheel({
   const { t } = useTranslation();
   const colors = useThemeColors();
   const levelColors = useLevelColors();
+  const levelTextColors = useLevelTextColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const locale = useLocaleStore((s) => s.locale);
   // Starts at Neutrality (roughly the middle of the scale) — an arbitrary
@@ -148,7 +149,10 @@ export function ConsciousnessWheel({
   });
 
   const activeLevel = VIBRATION_LEVELS[activeIndex];
+  // Decorative-only — the drag-dot's own fill. Use activeTextColor below
+  // for levelName's actual Text.
   const activeColor = `rgb(${levelColors[activeLevel.slug]})`;
+  const activeTextColor = `rgb(${levelTextColors[activeLevel.slug]})`;
 
   // A raw single-finger drag is a gesture VoiceOver/TalkBack intercept for
   // their own navigation, so the wheel has no screen-reader equivalent by
@@ -221,7 +225,7 @@ export function ConsciousnessWheel({
       {/* Nothing labeled until you're pointing at it — the wheel itself
           stays uncluttered; dragging is what reveals a name, one at a
           time, rather than 17 labels crowding the circle at rest. */}
-      <Text style={[styles.levelName, { color: activeColor }]}>
+      <Text style={[styles.levelName, { color: activeTextColor }]}>
         {getLocalizedLevelName(activeLevel, locale)}
       </Text>
       <Text

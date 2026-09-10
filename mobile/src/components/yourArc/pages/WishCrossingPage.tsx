@@ -18,6 +18,11 @@ interface WishCrossingPageProps {
   newWishRetryOffered: boolean;
   wishFulfillPending: string | null;
   accentRgb: string;
+  // Text-safe variant — this page's "Set the plan" link is bare Text on
+  // the page background (no fill), unlike accentRgb's other uses here
+  // (send-button fills, which pair with a fixed onAccent-style text color
+  // instead and don't need this).
+  accentTextRgb: string;
   onSubmitNewWish: () => void;
   onToggleWishFulfilled: (wish: SavedWish) => void;
 }
@@ -78,6 +83,7 @@ export function WishCrossingPage({
   newWishRetryOffered,
   wishFulfillPending,
   accentRgb,
+  accentTextRgb,
   onSubmitNewWish,
   onToggleWishFulfilled,
 }: WishCrossingPageProps) {
@@ -299,7 +305,7 @@ export function WishCrossingPage({
                             onPress={handleSetPlan}
                             disabled={!planIfInput.trim() || !planThenInput.trim()}
                           >
-                            <Text style={[styles.planSetButtonText, { color: `rgb(${accentRgb})` }]}>
+                            <Text style={[styles.planSetButtonText, { color: `rgb(${accentTextRgb})` }]}>
                               {t('yourArc.woopPlanSet')}
                             </Text>
                           </Pressable>

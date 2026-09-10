@@ -6,7 +6,7 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 import Svg, { Circle as SvgCircle } from "react-native-svg";
-import { VIBRATION_LEVELS, useLevelColors } from "../../content/measureConfig";
+import { VIBRATION_LEVELS, useLevelColors, useLevelTextColors } from "../../content/measureConfig";
 import { useThemeColors } from "../../theme/useThemeColors";
 import { fonts, fontSizes, lineHeights } from "../../theme/typography";
 import { SOFT_EASE } from "./depthsSpiralGeometry";
@@ -179,10 +179,14 @@ export function VibrationSpectrum({
 }) {
   const colors = useThemeColors();
   const levelColors = useLevelColors();
+  const levelTextColors = useLevelTextColors();
   const index = levelIndex(levelSlug);
   const total = VIBRATION_LEVELS.length;
   const angle = angleFor(index, total);
+  // Decorative-only — the marker dot's own SVG fill. Use labelColor below
+  // for centerLabel's actual Text.
   const color = `rgb(${levelColors[levelSlug] ?? colors.accent.ivoryRgb})`;
+  const labelColor = `rgb(${levelTextColors[levelSlug] ?? colors.accent.ivoryTextRgb})`;
 
   // Rotation: brings rotateToIndex's own tick to VISIBLE_ANGLE by
   // rotating the ring by (VISIBLE_ANGLE - that tick's own natural
@@ -331,7 +335,7 @@ export function VibrationSpectrum({
             style={[
               styles.centerLabel,
               {
-                color,
+                color: labelColor,
                 // A soft dark halo, not a card/box (per aesthetic.md's "no
                 // cards" rule) — needed 2026-09-02 once Depths' own wheel
                 // started sitting close enough to the aura figure that its

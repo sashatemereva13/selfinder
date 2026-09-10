@@ -21,7 +21,7 @@ import { useThemeColors } from '../../theme/useThemeColors';
 import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
-import { useAppAccentRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
 import { useLocaleStore } from '../../store/localeStore';
 import { PhilosopherObject } from './PhilosopherObject';
 
@@ -133,6 +133,7 @@ function PhilosopherRingItem({
   labelSide,
   state,
   accentRgb,
+  accentTextRgb,
   onPress,
   styles,
 }: {
@@ -142,6 +143,7 @@ function PhilosopherRingItem({
   labelSide: LabelSide;
   state: OrbState;
   accentRgb: string;
+  accentTextRgb: string;
   onPress: () => void;
   styles: ReturnType<typeof makeStyles>;
 }) {
@@ -215,7 +217,7 @@ function PhilosopherRingItem({
           styles.orbName,
           labelStyle(labelSide, point),
           { textAlign: labelSide === 'left' ? 'right' : labelSide === 'right' ? 'left' : 'center' },
-          state === 'focused' && { color: `rgb(${accentRgb})` },
+          state === 'focused' && { color: `rgb(${accentTextRgb})` },
         ]}
       >
         {philosopher.name}
@@ -250,8 +252,11 @@ export function PhilosopherPicker({
   const locale = useLocaleStore((s) => s.locale);
   const [focusedId, setFocusedId] = useState<string | null>(selectedId ?? null);
   const focused = focusedId ? getLocalizedPhilosopher(PHILOSOPHER_MAP[focusedId], locale) : null;
+  // Decorative-only (PhilosopherObject's own SVG fill) — use
+  // accentColor/accentTextRgb below for anything that colors Text.
   const accentRgb = useAppAccentRgb();
-  const accentColor = `rgb(${accentRgb})`;
+  const accentTextRgb = useAppAccentTextRgb();
+  const accentColor = `rgb(${accentTextRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
 
   const ringContainerRef = useRef<View>(null);
@@ -385,6 +390,7 @@ export function PhilosopherPicker({
             labelSide={RING_LAYOUT[i].labelSide}
             state={focusedId === null ? 'idle' : focusedId === p.id ? 'focused' : 'dimmed'}
             accentRgb={accentRgb}
+            accentTextRgb={accentTextRgb}
             onPress={() => setFocusedId(p.id)}
             styles={styles}
           />

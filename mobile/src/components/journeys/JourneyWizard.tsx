@@ -16,7 +16,7 @@ import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, lineHeights, letterSpacings } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
-import { useAppAccentRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
+import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
 import { sendJourneyExchange, getJourneySession } from '../../api/journeys';
 import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../../types';
 import { TypingDots } from '../shared/TypingDots';
@@ -74,7 +74,8 @@ export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, o
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const authToken = useAuthStore((s) => s.session?.token);
-  const accentRgb = useAppAccentRgb();
+  // Text-safe — every use in this file colors real dialogue/progress Text.
+  const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const columnWidth = useWideColumnWidth();

@@ -13,7 +13,7 @@ import { useReadingColumnWidth } from '../src/theme/responsive';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../src/store/localeStore';
 import { useReminderStore } from '../src/store/reminderStore';
-import { useAppAccentRgb } from '../src/utils/appAccent';
+import { useAppAccentTextRgb } from '../src/utils/appAccent';
 import { PhilosopherPicker } from '../src/components/shared/PhilosopherPicker';
 import { AccountSection } from '../src/components/AccountSection';
 import { DailyReminderSection } from '../src/components/account/DailyReminderSection';
@@ -53,7 +53,8 @@ export default function ProfileScreen() {
   const locale = useLocaleStore((s) => s.locale);
   const setLocale = useLocaleStore((s) => s.setLocale);
   const rescheduleReminderWindow = useReminderStore((s) => s.rescheduleWindow);
-  const accentRgb = useAppAccentRgb();
+  // Text-safe — colors the current philosopher's name.
+  const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
 
   // Both directions are the same crossfade, just swapping which block is

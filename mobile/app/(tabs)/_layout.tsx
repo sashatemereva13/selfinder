@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { fonts } from '../../src/theme/typography';
-import { useAppAccentRgb } from '../../src/utils/appAccent';
+import { useAppAccentTextRgb } from '../../src/utils/appAccent';
 import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/components/shared/TabIcons';
 
 // Guide and You no longer have bottom-tab slots — see
@@ -12,7 +12,11 @@ import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/compon
 export default function TabsLayout() {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const accentRgb = useAppAccentRgb();
+  // Text-safe variant, not useAppAccentRgb() — this one color paints both
+  // the tab icon (decorative) and its label text (needs AA contrast), and
+  // RN's tab bar API only accepts a single tint for both, so the text
+  // requirement is the one that governs here.
+  const accentRgb = useAppAccentTextRgb();
   const activeColor = `rgb(${accentRgb})`;
 
   return (

@@ -43,7 +43,7 @@ import {
   getLocalizedLevel,
 } from "../../../src/content/levelsContent";
 import {
-  useLevelColors,
+  useLevelTextColors,
   getLocalizedLevelName,
 } from "../../../src/content/measureConfig";
 import { useLocaleStore } from "../../../src/store/localeStore";
@@ -65,7 +65,7 @@ import {
   AURA_LEVEL_IMAGES_LIGHT,
   AURA_NEUTRAL_IMAGE_LIGHT,
 } from "../../../src/content/auraLevelImages";
-import { useAppAccentRgb } from "../../../src/utils/appAccent";
+import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
 import { track } from "../../../src/utils/analytics";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
@@ -229,7 +229,7 @@ const FEELING_LUCKY: Tool = {
 export default function DepthsScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
-  const levelColors = useLevelColors();
+  const levelTextColors = useLevelTextColors();
   const theme = useThemeStore((s) => s.theme);
   const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
@@ -240,7 +240,12 @@ export default function DepthsScreen() {
   const discovered = useEngagementStore((s) => s.discovered);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
   const accentRgb = useAppAccentRgb();
-  const accentColor = `rgb(${accentRgb})`;
+  // Text-safe variant — this screen's sphere/point labels and the
+  // pre-reading neutral point color are both real Text, not decoration
+  // (see spherePoints/neutralSpherePoints below), so they read through
+  // useAppAccentTextRgb() instead of the decorative-only accentRgb.
+  const accentTextRgb = useAppAccentTextRgb();
+  const accentColor = `rgb(${accentTextRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const sendGuideMessage = useGuideChatStore((s) => s.send);
   const setPendingMeasureResultId = useGuideChatStore(
@@ -309,10 +314,14 @@ export default function DepthsScreen() {
   // system was retired. The four sphere readings below used to each carry
   // their own LEVEL_COLORS hue (four different colors competing in one
   // screen); they're neutral text now, this single color is what's "yours"
-  // here.
+  // here. Text-safe (levelTextColors/accentTextRgb) — this feeds both the
+  // headline's own Text color below and LongPressToSave's decorative
+  // accentRgb prop; using the text-safe value everywhere it's read is a
+  // small, acceptable trade (a marginally less vivid save-image tint) for
+  // never letting the headline reading itself fall below AA contrast.
   const levelRgb = lastLevel
-    ? (levelColors[lastLevel.slug] ?? accentRgb)
-    : accentRgb;
+    ? (levelTextColors[lastLevel.slug] ?? accentTextRgb)
+    : accentTextRgb;
   const levelColor = `rgb(${levelRgb})`;
   // combinationMessage was also shown again on the old reveal screen — that
   // was the literal duplicate (this is its one home now). The reveal
@@ -333,12 +342,15 @@ export default function DepthsScreen() {
   // 17-level map (Levels and a level's own detail page keep the full
   // VibrationSpectrum wheel, unchanged; this is a Depths-specific
   // personalization). Falls back to the level-agnostic accent color if a
-  // given sphere's line is somehow missing.
+  // given sphere's line is somehow missing. Text-safe (levelTextColors/
+  // accentTextRgb) — this feeds both AuraField's own decorative rings AND
+  // DepthsSpiralCore's Body/Mind/Heart/Spirit point LABELS (real Text),
+  // same small trade as levelRgb above.
   const sphereColors: Record<SphereKey, string> = useMemo(() => {
     const colorFor = (key: SphereKey) => {
       const slug = currentResult?.lines.find((l) => l.key === key)
         ?.vibrationLevel.slug;
-      return `rgb(${(slug && levelColors[slug]) ?? accentRgb})`;
+      return `rgb(${(slug && levelTextColors[slug]) ?? accentTextRgb})`;
     };
     return {
       spirit: colorFor("spirit"),
@@ -346,7 +358,7 @@ export default function DepthsScreen() {
       heart: colorFor("heart"),
       body: colorFor("body"),
     };
-  }, [currentResult, accentRgb]);
+  }, [currentResult, accentTextRgb, levelTextColors]);
   // Each sphere's own numeric vibrationScore — drives that ring's grow-in
   // BOUNCE RATE as it first appears (see AuraArrival's
   // buildRingGrowSequence). Frequency-only, never amplitude/shape, is a

@@ -20,7 +20,7 @@ import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
-import { useAppAccentRgb, useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
@@ -88,7 +88,8 @@ export default function InterviewScreen() {
   const isSendingRef = useRef(false);
 
   const currentQuestion = philosopher?.measureQuestions?.[sphereIndex];
-  const accentRgb = useAppAccentRgb();
+  // Text-safe — every use in this file colors real dialogue/label Text.
+  const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const columnWidth = useWideColumnWidth();

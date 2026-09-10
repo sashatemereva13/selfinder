@@ -8,7 +8,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { getLevelBySlug, getLocalizedLevel } from '../../../../src/content/levelsContent';
-import { useLevelColors } from '../../../../src/content/measureConfig';
+import { useLevelColors, useLevelTextColors } from '../../../../src/content/measureConfig';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
@@ -33,6 +33,7 @@ export default function LevelScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const levelColors = useLevelColors();
+  const levelTextColors = useLevelTextColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -67,8 +68,13 @@ export default function LevelScreen() {
     );
   }
 
+  // Decorative-only — the nature symbol's own fill/stroke and the frame
+  // quote's left border, neither of which is text. Use accentTextColor
+  // below for anything that actually colors Text.
   const accentRgb = levelColors[level.slug] ?? colors.accent.ivoryRgb;
   const accentColor = `rgb(${accentRgb})`;
+  const accentTextRgb = levelTextColors[level.slug] ?? colors.accent.ivoryTextRgb;
+  const accentTextColor = `rgb(${accentTextRgb})`;
 
   return (
     <ScrollView
@@ -86,7 +92,7 @@ export default function LevelScreen() {
         <Text style={styles.backLink}>{t('common.back')}</Text>
       </Pressable>
 
-      <Text style={[styles.kicker, { color: accentColor }]}>{t('level.levelScore', { score: level.score })}</Text>
+      <Text style={[styles.kicker, { color: accentTextColor }]}>{t('level.levelScore', { score: level.score })}</Text>
       <Text style={styles.title}>{level.title}</Text>
       <Text style={[styles.frame, { borderLeftColor: accentColor }]}>{level.frame}</Text>
 
@@ -129,7 +135,7 @@ export default function LevelScreen() {
       {level.deepDive && (
         <View style={styles.deepDiveBlock}>
           <Pressable onPress={toggleDeepDive}>
-            <Text style={[styles.deepDiveToggle, { color: accentColor }]}>
+            <Text style={[styles.deepDiveToggle, { color: accentTextColor }]}>
               {deepDiveOpen ? t('level.hideDeeperRead') : t('level.goDeeper')}
             </Text>
           </Pressable>

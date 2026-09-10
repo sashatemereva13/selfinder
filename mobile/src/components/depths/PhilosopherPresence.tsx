@@ -7,7 +7,7 @@ import type { Colors } from '../../theme/colors';
 import { fonts, fontSizes, letterSpacings } from '../../theme/typography';
 import { spacing } from '../../theme/spacing';
 import { usePhilosopherStore } from '../../store/philosopherStore';
-import { useAppAccentRgb } from '../../utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb } from '../../utils/appAccent';
 import { PhilosopherEnergy } from './PhilosopherEnergy';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -26,8 +26,11 @@ export function PhilosopherPresence() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const metPhilosopherIds = usePhilosopherStore((s) => s.metPhilosopherIds);
+  // Decorative-only — the "unmet" badge dot's own fill. Use nameColor
+  // below for the philosopher's name Text.
   const accentRgb = useAppAccentRgb();
   const accentColor = `rgb(${accentRgb})`;
+  const nameColor = `rgb(${useAppAccentTextRgb()})`;
 
   if (!philosopher) return null;
   const hasUnmetPhilosopher = !metPhilosopherIds.includes(philosopher.id);
@@ -51,7 +54,7 @@ export function PhilosopherPresence() {
         <PhilosopherEnergy seed={philosopher.id} width={SCREEN_WIDTH} height={38} color={accentColor} spiralCount={9} />
       </View> */}
       <View style={styles.nameRow}>
-        <Text style={[styles.name, { color: accentColor }]}>{philosopher.name}</Text>
+        <Text style={[styles.name, { color: nameColor }]}>{philosopher.name}</Text>
         {hasUnmetPhilosopher && <View style={[styles.badge, { backgroundColor: accentColor }]} />}
       </View>
     </Pressable>

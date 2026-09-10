@@ -21,7 +21,7 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
 import { PagedScrollView } from '../src/components/yourArc/PagedScrollView';
 import { ArcDial } from '../src/components/yourArc/ArcDial';
-import { useAppAccentRgb } from '../src/utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb } from '../src/utils/appAccent';
 import { getLocalizedLevelName, VIBRATION_LEVELS } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
 import { ResurfacedWishPage } from '../src/components/yourArc/pages/ResurfacedWishPage';
@@ -81,6 +81,7 @@ function YourArcFutureScreen() {
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const session = useAuthStore((s) => s.session);
   const accentRgb = useAppAccentRgb();
+  const accentTextRgb = useAppAccentTextRgb();
 
   const [richDataLoading, setRichDataLoading] = useState(false);
   const [pagerPainted, setPagerPainted] = useState(false);
@@ -323,6 +324,7 @@ function YourArcFutureScreen() {
       newWishRetryOffered={newWishRetryOffered}
       wishFulfillPending={wishFulfillPending}
       accentRgb={accentRgb}
+      accentTextRgb={accentTextRgb}
       onSubmitNewWish={handleSubmitNewWish}
       onToggleWishFulfilled={handleToggleWishFulfilled}
     />
@@ -365,7 +367,7 @@ function YourArcFutureScreen() {
         closingWriteSubmitting={closingWriteSubmitting}
         onSubmitClosingWrite={handleSubmitClosingWrite}
         closingArrivalStyle={closingArrivalStyle}
-        accentRgb={accentRgb}
+        accentTextRgb={accentTextRgb}
       />
     );
     pageLabels.push(t('yourArc.closingDialLabel'));

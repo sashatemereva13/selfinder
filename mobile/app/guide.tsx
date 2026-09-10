@@ -22,7 +22,7 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useGuideChatStore } from '../src/store/guideChatStore';
 import { useMeasureStore } from '../src/store/measureStore';
 import { useEngagementStore } from '../src/store/engagementStore';
-import { useAppAccentRgb, useAppAccentButtonRgb } from '../src/utils/appAccent';
+import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../src/utils/appAccent';
 import { getNudgeState, getNudgeCopy } from '../src/content/guideNudges';
 import { TypingDots } from '../src/components/shared/TypingDots';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
@@ -103,7 +103,9 @@ export default function GuideScreen() {
   );
 
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
-  const accentRgb = useAppAccentRgb();
+  // Text-safe — every use in this file colors real Text (the philosopher's
+  // name, nudge action links).
+  const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const nudge = getNudgeCopy(philosopher?.id ?? 'socrates', getNudgeState(currentResult, previousResult));
