@@ -1,0 +1,93 @@
+name: Backup MongoDB
+
+# Atlas's free/shared tier (this project's `cluster0`) has NO built-in
+# backup at all — no continuous backups, no snapshots. This workflow is
+# the entire disaster-recovery story for user data until/unless the
+# cluster is ever upgraded to M10+. See docs/backup-strategy.md for the
+# full RPO/RTO writeup and restore procedure.
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # daily, 04:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write # to create/prune releases
+
+concurrency:
+  group: backup-mongodb
+  cancel-in-progress: false
+
+env:
+  # Pinned, not "latest" — same discipline as the rest of this repo's
+  # CI (exact Docker/action versions), so a tools update can't silently
+  # change dump behavior on a schedule nobody is watching.
+  MONGODB_TOOLS_VERSION: "100.18.0"
+  RETAIN_BACKUPS: 14 # keep the last 14 daily backups (~2 weeks of RPO history)
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v5
+
+      - name: install mongodb-database-tools
+        run: |
+          set -eu
+          curl -fsSL -o mongo-tools.deb \
+            "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-${MONGODB_TOOLS_VERSION}.deb"
+          sudo apt-get install -y ./mongo-tools.deb
+          rm mongo-tools.deb
+          mongodump --version
+
+      - name: dump and encrypt
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          BACKUP_PASSPHRASE: ${{ secrets.MONGODB_BACKUP_PASSPHRASE }}
+        run: |
+          set -eu
+          STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
+          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+
+          mongodump --uri="$MONGODB_URI" --archive --gzip \
+            | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:BACKUP_PASSPHRASE \
+            > "selfinder-mongodb-$STAMP.archive.gz.enc"
+
+          # Sanity check: a real backup is never a few empty-collection
+          # bytes. Catches a silently-empty dump (e.g. wrong URI, no
+          # network route to Atlas) before it's uploaded as if it were good.
+          SIZE=$(stat -c%s "selfinder-mongodb-$STAMP.archive.gz.enc")
+          if [ "$SIZE" -lt 1024 ]; then
+            echo "::error::Backup archive is suspiciously small ($SIZE bytes) — refusing to publish it as a release."
+            exit 1
+          fi
+          echo "Backup archive: $SIZE bytes"
+
+      - name: publish as a private GitHub release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          gh release create "backup-$STAMP" \
+            "selfinder-mongodb-$STAMP.archive.gz.enc" \
+            --title "MongoDB backup — $STAMP" \
+            --notes "Automated encrypted mongodump. Restore procedure: docs/backup-strategy.md." \
+            --repo "$GITHUB_REPOSITORY"
+
+      - name: prune old backup releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -eu
+          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 \
+            | awk -F'\t' '{print $3}' \
+            | grep '^backup-' \
+            | sort -r \
+            | tail -n "+$((RETAIN_BACKUPS + 1))" \
+            | while read -r tag; do
+                echo "Pruning old backup release: $tag"
+                gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
+              done

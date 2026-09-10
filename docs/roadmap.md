@@ -567,6 +567,42 @@ the portfolio writeup: same root discipline ("test locally before
 touching shared infra"), one time it was skipped and cost a brief
 outage, one time it was followed and prevented one.
 
+---
+
+## MongoDB backup / disaster recovery — DONE (2026-09-10)
+
+**Real, previously-undocumented finding, not a hypothetical:** the
+Atlas cluster backing production (`cluster0`, free/shared tier) had
+**zero backup capability of any kind** — Atlas doesn't offer continuous
+or snapshot backups below the M10 dedicated tier. Every user account,
+reading, and conversation had no recovery path at all if that cluster
+were ever lost or corrupted. Upgrading to M10+ would be the standard fix
+but isn't viable right now since Selfinder is fully free with no live
+payment path (see `RULES.md`) — there's no revenue to size that
+recurring cost against.
+
+**Fix:** `.github/workflows/backup-mongodb.yml` runs `mongodump` daily,
+pipes it straight into `openssl` encryption (never touches disk
+unencrypted), and publishes the result as a private GitHub release
+(not an Actions artifact — those expire on a retention timer, releases
+don't) tagged by timestamp, pruning anything older than the last 14.
+Full RPO/RTO writeup and the restore procedure live in
+`docs/backup-strategy.md` — RPO is honestly stated as up to 24h (daily
+cadence), RTO is an unverified estimate until a real restore drill is
+run against a throwaway cluster (named as the top remaining gap, not
+done yet). Requires two new GitHub secrets that don't exist yet:
+`MONGODB_URI` and `MONGODB_BACKUP_PASSPHRASE` — the workflow will fail
+until both are added.
+
+**Deliberately not done in this pass:** wiring a failure notification
+for this workflow into the same Discord channel Grafana alerting already
+posts to (`monitoring/grafana/provisioning/alerting/contact-points.yml`)
+— that webhook URL currently lives only in `monitoring/.env` on the VPS,
+not as a GitHub secret, and adding it as one is a real decision (a
+production webhook now reachable from GitHub Actions) left for whoever
+picks this up next rather than done silently as a side effect of this
+change.
+
 **Phase 4 — Alerting.** Alertmanager (or, cheaper: a Grafana alert rule
 posting to a Slack/Discord webhook) firing on the same class of signal
 `deploy-backend.yml` already checks once at deploy time — except
