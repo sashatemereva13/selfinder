@@ -152,7 +152,7 @@ export async function getArcLine(req, res) {
 
     res.json({ line, cached: false });
   } catch (err) {
-    console.error("Arc line generation failed:", err.message);
+    req.log.error({ err }, "Arc line generation failed");
     res.status(500).json({ error: "Arc line generation failed" });
   }
 }

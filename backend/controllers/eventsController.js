@@ -55,7 +55,7 @@ export async function postEvents(req, res) {
     await Event.insertMany(docs);
     res.json({ received: docs.length });
   } catch (err) {
-    console.error("Failed to save events:", err.message);
+    req.log.error({ err }, "Failed to save events");
     res.status(500).json({ error: "Failed to save events" });
   }
 }

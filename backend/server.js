@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 
 import { connectDB } from "./db.js";
+import { logger, httpLogger } from "./logger.js";
 import { register, metricsMiddleware } from "./metrics.js";
 import healthRouter       from "./routes/health.js";
 import philosophersRouter from "./routes/philosophers.js";
@@ -42,6 +43,7 @@ app.use(cors({
   },
 }));
 app.use(express.json());
+app.use(httpLogger);
 app.use(metricsMiddleware);
 
 app.get("/metrics", async (req, res) => {
@@ -66,9 +68,9 @@ app.use("/api/journeys",      journeysRouter);
 
 connectDB()
   .then(() => {
-    app.listen(port, () => console.log(`Backend running on :${port}`));
+    app.listen(port, () => logger.info({ port }, "Backend running"));
   })
   .catch((err) => {
-    console.error("Failed to connect to MongoDB:", err.message);
+    logger.fatal({ err }, "Failed to connect to MongoDB");
     process.exit(1);
   });

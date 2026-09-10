@@ -174,7 +174,7 @@ export async function requestPasswordReset(req, res) {
   try {
     await sendPasswordResetEmail(user.email, code);
   } catch (err) {
-    console.error("Failed to send password reset email:", err.message);
+    req.log.error({ err }, "Failed to send password reset email");
   }
 
   res.json(genericResponse);

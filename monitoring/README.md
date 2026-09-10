@@ -29,6 +29,26 @@ with rich app-level metrics starting with Selfinder specifically (see
   labeled by container name, queryable from the same Grafana instance as
   the metrics dashboards (Explore → Loki datasource, or
   `{container="selfinder-backend"}` as a starting query).
+- **Selfinder backend logs are structured JSON** (`backend/logger.js`,
+  `pino` + `pino-http`), not plain `console.log`/`console.error` text —
+  every log line is a real JSON object with `level`, `time`, and (for
+  request-scoped logs) a `req.id` correlation ID that's also echoed back
+  to the client as the `x-request-id` response header. Every request
+  handler logs errors via `req.log.error({ err }, "...")` rather than
+  `logger.error`, so an error log and the request's own "request
+  completed"/"request errored" line share the same `req.id` — in Loki
+  this makes `{container="selfinder-backend"} | json | req_id="<id>"`
+  pull every log line for one specific failed request, which is the
+  actual mechanism behind "trace a Grafana alert back to the request
+  that caused it." A few internal helpers that run outside any single
+  request (`saveMeasureResultIfConsented`, `requestCombinationMessage`,
+  `tryExtractPropositions` in `chatController.js`/`journeyController.js`)
+  use the plain shared `logger` instead, since they aren't handed `req`
+  and threading it through would be a larger refactor than this pass
+  warranted — those lines just won't carry a `req.id`. `/api/health` and
+  `/metrics` are excluded from per-request access logging (`autoLogging.
+  ignore` in `logger.js`) since they're polled every few seconds and
+  would otherwise drown out real traffic in Loki.
 
 **Not yet instrumented:** app-level metrics (request rate/latency/error
 rate) for Amber or other projects — those would need `prom-client` (or

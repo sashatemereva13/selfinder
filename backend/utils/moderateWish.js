@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { logger } from "../logger.js";
 
 // A narrowly-scoped classifier, architecturally separate from anything in
 // the reflection/save path — this function's ONLY job is pass/fail plus a
@@ -79,7 +80,7 @@ export async function moderateWish(text) {
     }
     return { category: parsed.category };
   } catch (err) {
-    console.error("Wish moderation failed, failing closed:", err.message);
+    logger.error({ err }, "Wish moderation failed, failing closed");
     return { category: "concerning" };
   }
 }

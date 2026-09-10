@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { logger } from "../logger.js";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import { BADGE_COMMENT_PROMPTS } from "../data/badgeCommentPrompts.js";
 import { JOURNEY_LINE_PROMPTS } from "../data/journeyLinePrompts.js";
@@ -280,7 +281,7 @@ export async function postChat(req, res) {
       suggestSpill: parsed.suggestSpill === true,
     });
   } catch (err) {
-    console.error("Chat request failed:", err.message);
+    req.log.error({ err }, "Chat request failed");
     res.status(500).json({ error: "AI request failed" });
   }
 }
@@ -357,7 +358,7 @@ export async function postBadgeComment(req, res) {
 
     res.json({ comment, cached: false });
   } catch (err) {
-    console.error("Badge comment generation failed:", err.message);
+    req.log.error({ err }, "Badge comment generation failed");
     if (referenceLine) {
       return res.json({ comment: referenceLine, cached: false, fallback: true });
     }
@@ -431,7 +432,7 @@ export async function postJourneyLine(req, res) {
     journeyLineCache.set(cacheKey, { line, createdAt: Date.now() });
     res.json({ line, cached: false });
   } catch (err) {
-    console.error("Journey line generation failed:", err.message);
+    req.log.error({ err }, "Journey line generation failed");
     res.json({ line: reference, cached: false, fallback: true });
   }
 }
@@ -514,7 +515,7 @@ Either way, stay in character, keep it under 60 words, ground your reply only in
       reply: parsed.reply.trim(),
     });
   } catch (err) {
-    console.error("Measure exchange failed:", err.message);
+    req.log.error({ err }, "Measure exchange failed");
     res.json({ advance: true, goBack: false, reply: "" });
   }
 }
@@ -668,7 +669,7 @@ async function saveMeasureResultIfConsented(userPayload, interpretation, qaPairs
 
     return saved.id;
   } catch (err) {
-    console.error("Failed to save measure result:", err.message);
+    logger.error({ err }, "Failed to save measure result");
     return null;
   }
 }
@@ -718,7 +719,7 @@ quotation marks.`;
     const text = response.choices[0].message.content.trim();
     return text || null;
   } catch (err) {
-    console.error("Combination message generation failed:", err.message);
+    logger.error({ err }, "Combination message generation failed");
     return null;
   }
 }
@@ -769,7 +770,7 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
       rawScores = await requestRawInterviewScores(scoringPrompt);
       break;
     } catch (err) {
-      console.error(`Interview scoring attempt ${attempt} failed:`, err.message);
+      req.log.error({ err, attempt }, "Interview scoring attempt failed");
       if (attempt === MAX_ATTEMPTS) {
         return res.status(500).json({ error: "Scoring failed" });
       }

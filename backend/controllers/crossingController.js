@@ -132,7 +132,7 @@ export async function generateCrossing(req, res) {
 
     res.json({ id: crossing.id, question: crossing.question });
   } catch (err) {
-    console.error("Crossing generation failed:", err.message);
+    req.log.error({ err }, "Crossing generation failed");
     res.status(500).json({ error: "Crossing generation failed" });
   }
 }

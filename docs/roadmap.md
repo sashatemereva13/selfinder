@@ -380,8 +380,12 @@ go well.
 ## Production-grade DevOps upgrade (Terraform, observability)
 
 **Status:** Phases 1 (Terraform), 2 (Prometheus/Grafana), and 3
-(Loki/Promtail logging) done as of 2026-08-18. Phase 4 (alerting) still
-scoped, not started. Motivation: using this repo's real, already-working
+(Loki/Promtail logging) done as of 2026-08-18. Phase 4 (alerting) is also
+done — `monitoring/grafana/provisioning/alerting/` has golden-signal
+rules (availability, error rate, p95 latency, disk/memory saturation,
+container restart-looping) wired to a Discord contact point
+(`contact-points.yml`); this file just hadn't been updated to say so
+until 2026-09-10. Motivation: using this repo's real, already-working
 deploy pipeline as a DevOps-internship portfolio piece — the goal is to
 close the specific gaps that separate "I can deploy an app" from "I run
 infrastructure," not to add tooling for its own sake.
@@ -531,6 +535,21 @@ phase (still plain `console.log`/`console.error`) — moving to a
 structured logger (pino/winston) would make Loki queries meaningfully
 better and is worth doing later, but wasn't required to get real,
 working log aggregation shipped now.
+
+**Structured logging — DONE (2026-09-10).** `backend/logger.js` (pino +
+pino-http) replaced every `console.log`/`console.error` on a real request
+path with structured JSON logs carrying a per-request correlation ID
+(`req.id`, also echoed as the `x-request-id` response header), so a
+Loki query can pull every log line belonging to one specific failed
+request rather than grepping timestamps. See `monitoring/README.md` for
+the query pattern and the short list of non-request-scoped helper
+functions that still log via the plain shared logger (no `req.id`) since
+threading `req` through them wasn't worth the refactor for this pass.
+The two admin CLI scripts (`scripts/grantJourney.js`,
+`scripts/grantArcSubscription.js`) deliberately keep plain
+`console.log`/`console.error` — they're run by hand from a terminal, not
+server request paths, so human-readable stdout is the right output
+there, not JSON.
 
 One real bug found and fixed **before** touching the VPS, entirely
 during local `docker compose up` testing: a newer Loki version requires

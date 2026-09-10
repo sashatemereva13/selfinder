@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import { logger } from "../logger.js";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import User from "../models/User.js";
 import JourneySession from "../models/JourneySession.js";
@@ -886,7 +887,7 @@ Ground everything only in what they actually wrote ("${answer}"), stay under 60 
 
     return res.json({ engaged, goBack, stageComplete, showAcknowledgment, reply, nextQuestion, isComplete });
   } catch (err) {
-    console.error("Journey exchange failed:", err.message);
+    req.log.error({ err }, "Journey exchange failed");
     // Fail open: treat as engaged + stage-complete so the Journey never
     // gets stuck on a bad response, falling back to the raw authored next
     // stage's opening question (unphrased) rather than leaving the
@@ -963,7 +964,7 @@ Respond with ONLY valid JSON: {"propositions": ["...", "...", ...]}`;
 
     return propositions && propositions.length > 0 ? propositions : null;
   } catch (err) {
-    console.error("Proposition extraction failed:", err.message);
+    logger.error({ err }, "Proposition extraction failed");
     return null;
   }
 }
