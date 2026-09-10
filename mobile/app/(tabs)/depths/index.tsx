@@ -17,6 +17,7 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   useAnimatedProps,
+  useReducedMotion,
   withTiming,
   withSequence,
   withDelay,
@@ -253,11 +254,22 @@ export default function DepthsScreen() {
   const [isArriving, setIsArriving] = useState(
     () => useMeasureStore.getState().justCompleted,
   );
-  // Set true by a tap anywhere on the reveal — tells AuraArrival/
-  // ArrivalReveal to cancel their in-flight timelines and jump straight to
-  // the settled end state, then reset back to false once onSettled fires
-  // (see the Pressable wrapping AuraArrival below).
-  const [skipArrival, setSkipArrival] = useState(false);
+  // Same OS-level Reduce Motion signal onboarding's own arrival sequence
+  // already reads (see onboarding/index.tsx) — Depths' own ring-grow/
+  // color-settle ceremony is a multi-second, non-essential animation of
+  // exactly the same kind, and previously had no automatic path past it:
+  // only a manual tap-to-skip (skipArrival below), which someone has to
+  // already know exists. Initializing skipArrival to true when Reduce
+  // Motion is on reuses that same skip machinery instead of adding a
+  // second, parallel "instant" code path — the reveal lands directly on
+  // its settled state on first render, the same outcome a tap produces.
+  const reduceMotion = useReducedMotion();
+  // Set true by a tap anywhere on the reveal (or automatically under
+  // Reduce Motion, see above) — tells AuraArrival/ArrivalReveal to cancel
+  // their in-flight timelines and jump straight to the settled end state,
+  // then reset back to false once onSettled fires (see the Pressable
+  // wrapping AuraArrival below).
+  const [skipArrival, setSkipArrival] = useState(reduceMotion);
   // Starts fully opaque black ONLY when arriving fresh from Measure — the
   // mirror image of interview.tsx's own exitFade: that screen fades TO
   // black and holds before navigating here, so this screen needs to
