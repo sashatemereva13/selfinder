@@ -135,7 +135,14 @@ wrong regardless of how clean it looks in isolation.
 - **One warm, low-center ambient glow** (`<AmbientGlow />`) on every
   screen — not two corner blobs (the old, retired version). Barely
   perceptible; if you can describe it without squinting, it's too strong.
-- **One typeface (Panchang).** Hierarchy via size, not weight.
+- **One typeface (Etude Noire).** Hierarchy via size, not weight.
+  Switched from Panchang (2026-08-02, mobile only) — Panchang has zero
+  Cyrillic glyphs and corrupted PostScript names in every weight file
+  (literally the string "false", which also made it render bold on
+  Android regardless of the weight requested); Etude Noire has full
+  Cyrillic coverage and correct metadata. See `docs/design/aesthetic.md`
+  for the full reasoning. Web (`frontend/`) is a separate codebase and
+  still uses Panchang — see `docs/roadmap.md`'s own typography item.
 - **Motion gathers, condenses, becomes — never slides or pops.** Causality
   over coincidence. No idle motion without meaning (cut dead time instead
   of padding it with animation).

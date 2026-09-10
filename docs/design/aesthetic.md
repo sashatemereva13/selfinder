@@ -151,17 +151,36 @@ perceptible; if you can describe it without squinting, it's too strong.
 
 ## Typography
 
-**One typeface: Panchang.** Currently mapped to the Medium weight file
-for both `fonts.light` and `fonts.medium` (see the comment in
-`typography.ts` — thin strokes haloed on the near-black background and
-were hard to read in body text). This is a live, not-fully-settled
-experiment; if a real second weight is introduced later, it should
-still be exactly one typeface family.
+**One typeface: Etude Noire.** Switched from Panchang (2026-08-02) —
+Panchang has zero Cyrillic glyphs, so any Russian text silently fell back
+to a system font, and its PostScript names were corrupted in every weight
+file (literally the string `"false"`), which also made it render bold on
+Android regardless of the weight actually requested. Etude Noire has full
+Cyrillic coverage and correct metadata in every weight, so one typeface
+now covers every supported language — not a per-locale font (an earlier
+attempt at swapping which file loads per locale didn't work anyway:
+`expo-font`'s `useFonts` doesn't support changing the font map after
+first mount).
 
-**Hierarchy is carried by size, not weight** (since there's currently
-only one weight in practice). Use the existing scale
-(`fontSizes.xs` through `hero`) rather than inventing new sizes per
-screen.
+`fonts.light` and `fonts.medium` both currently map to the Medium weight
+file (see the comment in `typography.ts` — thin strokes haloed on the
+near-black background and were hard to read in body text); a real Light
+face (`fonts.trueLight`) was added later, kept as its own separate key
+rather than changing what `fonts.light` maps to, specifically for Depths'
+sphere labels, where a genuinely different face was needed to
+distinguish the unselected state (synthetic `fontWeight` alone wasn't
+enough contrast against an already-Medium base). This is still a live,
+not-fully-settled arrangement; if a Bold or Regular face is put into real
+use later, it should still be exactly one typeface family across the
+whole app.
+
+**Hierarchy is carried by size, not weight** for most of the app (since
+`fonts.light`/`fonts.medium` are both the same Medium face in practice) —
+use the existing scale (`fontSizes.xs` through `hero`) rather than
+inventing new sizes per screen. `fonts.trueLight` is the one deliberate,
+narrow exception where a real weight contrast is needed against an
+already-Medium context (see above) — don't reach for it as a general
+substitute for the size-based hierarchy everywhere else.
 
 ## Motion
 
@@ -241,8 +260,10 @@ this file is about how that voice is *styled*, not what it says.
 
 ## What's still open / not yet decided
 
-- Whether Panchang ever gets a second real weight, or whether
-  single-weight-forever becomes the permanent rule.
+- Whether Etude Noire's Bold or Regular weight files (present in
+  `assets/fonts` but not currently loaded/used anywhere) ever get a real
+  use, or whether the current two-weight arrangement (Medium + Light)
+  becomes the permanent rule.
 - No enforcement mechanism exists yet (no lint rule blocking a
   reintroduced `colors.brand.purple`-style hardcoded hex) — this doc is
   the only guard right now. If a future session is asked to add a lint
