@@ -14,6 +14,13 @@ with rich app-level metrics starting with Selfinder specifically (see
   request rate, latency (histogram, so p50/p95/p99 are all queryable),
   and error rate, labeled by route/method/status code. Exposed at
   `GET /metrics` on the backend itself, scraped by Prometheus.
+  **Cardinality is deliberately bounded**: `route` is always an Express
+  route *pattern* (`/api/wish/:id`), never a literal URL — including for
+  404s on unmatched paths, which collapse into one `unmatched_route`
+  label rather than becoming an unbounded, attacker-influenced label
+  value per garbage path. See the comment in `metrics.js` for the full
+  reasoning; this is the same class of problem Prometheus/any metrics
+  backend has to guard against at any scale.
 - **Whole-VPS host metrics** (`node-exporter`) — CPU, memory, disk,
   network for the box itself, covering every project on it, not just
   Selfinder.
