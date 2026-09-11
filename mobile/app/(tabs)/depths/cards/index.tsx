@@ -13,6 +13,7 @@ import { AnimatedCardSymbol } from '../../../../src/components/depths/AnimatedCa
 import { CARDS_DECK, CardEntry, drawCard, cardRgbForTheme } from '../../../../src/content/cardsDeck';
 import { LongPressToSave } from '../../../../src/components/shared/LongPressToSave';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { track } from '../../../../src/utils/analytics';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
@@ -99,13 +100,7 @@ export default function CardsScreen() {
     >
       {theme === 'dark' && <AmbientGlow />}
 
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       {/* The card itself — a bounded plane (colors.bg.elevated, the same
           token input fields and other raised surfaces already use, see
@@ -177,7 +172,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12], alignItems: 'center' },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   cardPlane: {
     width: '100%',
     maxWidth: 380,

@@ -12,6 +12,7 @@ import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { AuraSettle } from '../../../../src/components/depths/AuraSettle';
 import { track } from '../../../../src/utils/analytics';
 import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
@@ -45,13 +46,7 @@ export default function TodayScreen() {
     <View style={styles.root}>
       {theme === 'dark' && <AmbientGlow />}
 
-      <Pressable
-        style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]} />
 
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
         <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
@@ -121,11 +116,6 @@ function makeStyles(colors: Colors) {
   backRow: {
     paddingHorizontal: spacing[6],
     paddingBottom: spacing[8],
-  },
-  backLink: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
   },
   body: {
     flex: 1,

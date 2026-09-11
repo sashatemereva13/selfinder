@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import { useThemeStore } from '../src/store/themeStore';
@@ -9,6 +8,7 @@ import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
 import { spacing } from '../src/theme/spacing';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
+import { BackLink } from '../src/components/shared/BackLink';
 import { JourneyKey } from '../src/types';
 
 // The "Where do these come from?" page linked from the Journeys catalog
@@ -54,7 +54,6 @@ export default function JourneysGroundingScreen() {
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
@@ -63,13 +62,7 @@ export default function JourneysGroundingScreen() {
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
       {theme === 'dark' && <AmbientGlow />}
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       <Text style={styles.title}>{t('journeysGrounding.title')}</Text>
       <Text style={styles.disclaimer}>{t('journeysGrounding.disclaimer')}</Text>
@@ -93,7 +86,6 @@ function makeStyles(colors: Colors) {
     root: { flex: 1, backgroundColor: colors.bg.base },
     content: { padding: spacing[6], paddingBottom: spacing[12] },
     backRow: { paddingBottom: spacing[8] },
-    backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     title: {
       color: colors.text.primary,
       fontFamily: fonts.medium,

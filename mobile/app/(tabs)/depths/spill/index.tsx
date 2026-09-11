@@ -12,6 +12,7 @@ import { useSpillStore } from '../../../../src/store/spillStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { track } from '../../../../src/utils/analytics';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
@@ -42,13 +43,7 @@ export default function SpillScreen() {
     <View style={styles.root}>
       {theme === 'dark' && <AmbientGlow />}
 
-      <Pressable
-        style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]} />
 
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
         <Text style={styles.kicker}>{t('spill.kicker')}</Text>
@@ -79,11 +74,6 @@ function makeStyles(colors: Colors) {
   backRow: {
     paddingHorizontal: spacing[6],
     paddingBottom: spacing[8],
-  },
-  backLink: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
   },
   body: {
     flex: 1,

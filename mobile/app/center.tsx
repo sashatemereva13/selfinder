@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import { useThemeStore } from '../src/store/themeStore';
@@ -15,6 +14,7 @@ import { ArcKaleidoscope } from '../src/components/journeys/ArcKaleidoscope';
 import { LongPressToSave } from '../src/components/shared/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
+import { BackLink } from '../src/components/shared/BackLink';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { purchaseJourney } from '../src/api/journeys';
 import { useReadingColumnWidth } from '../src/theme/responsive';
@@ -100,7 +100,6 @@ function CenterScreen() {
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const session = useAuthStore((s) => s.session);
   const columnWidth = useReadingColumnWidth();
@@ -184,13 +183,7 @@ function CenterScreen() {
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       {theme === 'dark' && <AmbientGlow />}
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       {!session ? (
         // Genuinely signed out — Center's real prerequisite now that the
@@ -254,7 +247,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   centerFill: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   teaserContent: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12] },
   pageContent: { flexGrow: 1, alignItems: 'center', padding: spacing[6], paddingBottom: spacing[12] },
   kicker: {

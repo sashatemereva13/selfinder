@@ -18,6 +18,7 @@ import { PhilosopherPicker } from '../src/components/shared/PhilosopherPicker';
 import { AccountSection } from '../src/components/AccountSection';
 import { DailyReminderSection } from '../src/components/account/DailyReminderSection';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
+import { BackLink } from '../src/components/shared/BackLink';
 
 // Both directions ride the same crossfade duration/ease as PhilosopherPicker's
 // own ring fade-in (see ownRingOpacity in PhilosopherPicker.tsx) — opening
@@ -116,17 +117,11 @@ export default function ProfileScreen() {
       >
         {/* Now a top-level route reached from all three tabs via the
             shared ProfileIcon (see docs/app-architecture-concept.md),
-            not a tab itself — router.back() is correct here (unlike
-            your-arc.tsx's explicit destination), since this is always
-            PUSHED from wherever the icon was tapped, so popping the
-            stack genuinely returns there. */}
-        <Pressable
-          style={styles.backRow}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-        >
-          <Text style={styles.backLink}>{t('common.back')}</Text>
-        </Pressable>
+            not a tab itself — the default router.back() is correct here
+            (unlike your-arc.tsx's explicit destination), since this is
+            always PUSHED from wherever the icon was tapped, so popping
+            the stack genuinely returns there. */}
+        <BackLink style={styles.backRow} />
 
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →
@@ -317,7 +312,6 @@ function makeStyles(colors: Colors) {
     },
     themeOptionText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
     backRow: { alignSelf: 'flex-start', paddingBottom: spacing[6] },
-    backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     kicker: {
       color: colors.text.muted,
       fontFamily: fonts.medium,

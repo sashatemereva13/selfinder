@@ -11,6 +11,7 @@ import { spacing, radius } from '../../../../src/theme/spacing';
 import { VIBRATION_LEVELS, useLevelColors, getLocalizedLevelName } from '../../../../src/content/measureConfig';
 import { ConsciousnessWheel } from '../../../../src/components/depths/ConsciousnessWheel';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useWideColumnWidth } from '../../../../src/theme/responsive';
 
@@ -40,13 +41,7 @@ export default function LevelsScreen() {
       ]}
     >
       {theme === 'dark' && <AmbientGlow />}
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       <Text style={styles.kicker}>{t('levels.kicker')}</Text>
       <Text style={styles.title}>{t('levels.title')}</Text>
@@ -92,7 +87,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

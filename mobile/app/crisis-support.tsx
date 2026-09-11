@@ -8,6 +8,7 @@ import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
 import { spacing, radius } from '../src/theme/spacing';
 import { useLocaleStore } from '../src/store/localeStore';
+import { BackLink } from '../src/components/shared/BackLink';
 
 // Shared infrastructure, not scoped to any one feature — routeToCrisisSupport.ts
 // is the callable trigger; this is the screen it lands on. First (and
@@ -38,13 +39,11 @@ export default function CrisisSupportScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.replace('/(tabs)/depths')}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      {/* Not the default router.back() — someone reaching this screen may
+          not want to land back on whatever they were doing right before
+          (see routeToCrisisSupport.ts), so this replaces to Depths
+          instead of popping the stack. */}
+      <BackLink style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')} />
 
       <Text style={styles.kicker}>{t('crisisSupport.kicker')}</Text>
       <Text style={styles.title}>{t('crisisSupport.title')}</Text>
@@ -72,7 +71,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,

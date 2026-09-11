@@ -9,6 +9,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { useMeasureStore } from '../../../../src/store/measureStore';
 import { MoonPhaseDisc } from '../../../../src/components/depths/MoonPhaseDisc';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import {
   SYNODIC_MONTH,
   getMoonPhaseFraction,
@@ -51,13 +52,7 @@ export default function MoonScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       <Text style={styles.kicker}>{t('moon.kicker')}</Text>
       <Text style={styles.title}>{t('moon.title')}</Text>
@@ -139,7 +134,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { padding: spacing[6], paddingBottom: spacing[12], gap: spacing[4] },
   backRow: { paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     color: colors.text.muted,
     fontFamily: fonts.medium,

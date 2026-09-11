@@ -22,6 +22,7 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { tuneInArtworkReady } from '../../../../src/components/depths/TuneInAudioController';
 import { VOLUME_STEPS, TIMER_OPTIONS, players, useTuneInStore } from '../../../../src/store/tuneInStore';
 
@@ -233,13 +234,7 @@ export default function TuneInScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Pressable
-          style={styles.backRow}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-        >
-          <Text style={styles.backLink}>{t('common.back')}</Text>
-        </Pressable>
+        <BackLink style={styles.backRow} />
 
         <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
         <Text style={styles.title}>{t('tuneIn.title')}</Text>
@@ -316,7 +311,6 @@ function makeStyles(colors: Colors) {
     flexGrow: 1,
   },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,

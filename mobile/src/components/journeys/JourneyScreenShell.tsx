@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { useThemeStore } from '../../store/themeStore';
@@ -10,6 +9,7 @@ import { fonts, fontSizes } from '../../theme/typography';
 import { spacing, radius } from '../../theme/spacing';
 import { AmbientGlow } from '../shared/AmbientGlow';
 import { ArcKaleidoscopeLoading } from '../shared/ArcKaleidoscopeLoading';
+import { BackLink } from '../shared/BackLink';
 import { useAppAccentRgb } from '../../utils/appAccent';
 import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../../types';
 import { useJourneySlot } from './useJourneySlot';
@@ -68,7 +68,6 @@ export function JourneyScreenShell({
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const accentRgb = useAppAccentRgb();
   const {
@@ -84,13 +83,7 @@ export function JourneyScreenShell({
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       {theme === 'dark' && <AmbientGlow />}
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       {!session ? (
         <ScrollView contentContainerStyle={styles.teaserContent}>
@@ -137,7 +130,6 @@ function makeStyles(colors: Colors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg.base },
     backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
-    backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     centerFill: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     teaserContent: { flexGrow: 1, justifyContent: 'center', padding: spacing[6], gap: spacing[3] },
     title: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.xl, textAlign: 'center' },

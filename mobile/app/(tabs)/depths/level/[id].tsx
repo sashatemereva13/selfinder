@@ -14,6 +14,7 @@ import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AnimatedNatureSymbol, NatureSymbolId } from '../../../../src/components/depths/NatureSymbol';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 
 // The source material has exactly one inline "**bold**" emphasis across all
 // seventeen levels — this splits on it so that spot renders as real emphasis
@@ -61,9 +62,7 @@ export default function LevelScreen() {
     return (
       <View style={[styles.root, styles.notFoundRoot]}>
         <Text style={styles.notFoundText}>{t('level.notFound')}</Text>
-        <Pressable onPress={() => router.back()}>
-          <Text style={styles.backLink}>{t('common.back')}</Text>
-        </Pressable>
+        <BackLink />
       </View>
     );
   }
@@ -84,13 +83,7 @@ export default function LevelScreen() {
         { paddingTop: insets.top + spacing[4], width: columnWidth, alignSelf: 'center' },
       ]}
     >
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       <Text style={[styles.kicker, { color: accentTextColor }]}>{t('level.levelScore', { score: level.score })}</Text>
       <Text style={styles.title}>{level.title}</Text>
@@ -169,7 +162,6 @@ function makeStyles(colors: Colors) {
   notFoundRoot: { alignItems: 'center', justifyContent: 'center', gap: spacing[3] },
   notFoundText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.base },
   backRow: { paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     fontFamily: fonts.medium,
     fontSize: fontSizes.xs,

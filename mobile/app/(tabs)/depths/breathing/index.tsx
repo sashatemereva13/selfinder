@@ -19,6 +19,7 @@ import { BREATHING_PATTERNS, BreathingPhase, getRandomCompletionLine, getLocaliz
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -186,13 +187,7 @@ export default function BreathingScreen() {
           paddingHorizontal: spacing[6],
         }}
       >
-        <Pressable
-          style={styles.backRow}
-          onPress={() => router.back()}
-          accessibilityRole="button"
-        >
-          <Text style={styles.backLink}>{t('common.back')}</Text>
-        </Pressable>
+        <BackLink style={styles.backRow} />
 
         <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
         <Text style={styles.title}>{t('breathing.title')}</Text>
@@ -264,7 +259,6 @@ function makeStyles(colors: Colors) {
     alignItems: 'center',
   },
   backRow: { alignSelf: 'flex-start', paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   kicker: {
     alignSelf: 'flex-start',
     color: colors.text.muted,

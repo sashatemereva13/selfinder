@@ -19,6 +19,7 @@ import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { listMyJourneySessions } from '../src/api/journeys';
 import { SavedMeasureResult, JourneySessionDTO } from '../src/types';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
+import { BackLink } from '../src/components/shared/BackLink';
 import { PagedScrollView } from '../src/components/yourArc/PagedScrollView';
 import { ArcDial } from '../src/components/yourArc/ArcDial';
 import { buildArcFacts } from '../src/components/yourArc/arcFacts';
@@ -273,13 +274,7 @@ function YourArcPastScreen() {
 
   return (
     <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
       {richDataLoading && <Text style={styles.loadingNote}>{t('yourArc.loadingMore')}</Text>}
       <View
         style={pagerPainted ? styles.pagerVisible : styles.pagerHidden}
@@ -319,7 +314,6 @@ function makeStyles(colors: Colors) {
   return StyleSheet.create({
     root: { flex: 1, backgroundColor: colors.bg.base },
     backRow: { alignSelf: 'flex-start', paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
-    backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
     loadingNote: {
       alignSelf: 'flex-start',
       color: colors.text.faint,

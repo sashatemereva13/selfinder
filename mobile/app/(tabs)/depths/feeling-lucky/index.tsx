@@ -15,6 +15,7 @@ import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useLocaleStore } from '../../../../src/store/localeStore';
+import { BackLink } from '../../../../src/components/shared/BackLink';
 
 // Drawn once per visit, deliberately — no reroll button. The whole idea is
 // that whichever message shows up is the one meant to find you right now;
@@ -57,13 +58,7 @@ export default function FeelingLuckyScreen() {
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      <Pressable
-        style={styles.backRow}
-        onPress={() => router.back()}
-        accessibilityRole="button"
-      >
-        <Text style={styles.backLink}>{t('common.back')}</Text>
-      </Pressable>
+      <BackLink style={styles.backRow} />
 
       {/* Long-press the message itself to save it (2026-08-20 — replaces
           the old visible Save/Share buttons app-wide, see
@@ -88,7 +83,6 @@ function makeStyles(colors: Colors) {
   root: { flex: 1, backgroundColor: colors.bg.base },
   content: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12] },
   backRow: { paddingBottom: spacing[8] },
-  backLink: { color: colors.text.faint, fontFamily: fonts.light, fontSize: fontSizes.xs },
   messageWrap: { flex: 1, justifyContent: 'center', paddingVertical: spacing[8] },
   talkLinkWrap: { alignItems: 'center', marginTop: spacing[6] },
   talkLink: {
