@@ -531,7 +531,7 @@ function IntroFigure({
     // unhurried, closer to condensation than to a UI transition.
     arrive.value = withTiming(1, {
       duration: 1500,
-      easing: Easing.bezier(0.22, 1, 0.36, 1),
+      easing: SOFT_EASE,
     });
   }, []);
 
