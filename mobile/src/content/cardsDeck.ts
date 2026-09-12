@@ -322,6 +322,138 @@ export const CARDS_DECK: CardEntry[] = [
     },
     rgb: '224,196,168',
   },
+
+  // Sphere-intensity cards — twelve cards, three per Body/Mind/Heart/
+  // Spirit, each sphere's own three showing the SAME physical picture at
+  // increasing amplitude/drive (see docs/cards-concept.md, "Sphere-
+  // intensity cards" for the full rationale: this borrows the one
+  // reusable idea from tarot's Minor Arcana — a numbered progression
+  // within one domain — without importing its four elemental suits,
+  // which would duplicate Selfinder's own Body/Mind/Heart/Spirit
+  // language rather than sit alongside it). None of the three stages per
+  // sphere claims the person is currently AT that stage — same
+  // "possibility to check against" framing the cycle-phase cards already
+  // use for a different axis (cyclical position, not amplitude).
+  {
+    id: 'bodyLoadLow',
+    name: { en: 'Body — Quiet Load', ru: 'Тело — тихий груз' },
+    kind: 'statement',
+    line: {
+      en: "Something in your body is holding a small weight it hasn't mentioned.",
+      ru: 'Что-то в твоём теле держит небольшой груз, о котором оно ещё не сказало.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'bodyLoadMid',
+    name: { en: 'Body — Full Load', ru: 'Тело — полная нагрузка' },
+    kind: 'statement',
+    line: {
+      en: "Your body is carrying about as much as it can carry without you noticing the carrying.",
+      ru: 'Твоё тело несёт примерно столько, сколько может нести, не давая тебе заметить сам процесс.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'bodyLoadHigh',
+    name: { en: 'Body — Past Capacity', ru: 'Тело — сверх предела' },
+    kind: 'instruction',
+    line: {
+      en: 'Notice where your body has been asked to hold more than its own shape.',
+      ru: 'Замечай, где твоё тело просят удержать больше, чем позволяет его собственная форма.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'mindDriveLow',
+    name: { en: 'Mind — Single Note', ru: 'Разум — одна нота' },
+    kind: 'statement',
+    line: {
+      en: "One clear thought has been running underneath everything else, quiet enough to miss.",
+      ru: 'Одна ясная мысль звучит под всем остальным — достаточно тихо, чтобы её пропустить.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'mindDriveMid',
+    name: { en: 'Mind — Full Register', ru: 'Разум — полный диапазон' },
+    kind: 'statement',
+    line: {
+      en: "A thought has found its full volume, and it isn't shouting to get there.",
+      ru: 'Мысль обрела полную громкость — и ей не пришлось для этого кричать.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'mindDriveHigh',
+    name: { en: 'Mind — Clipped Peak', ru: 'Разум — срезанный пик' },
+    kind: 'instruction',
+    line: {
+      en: "Notice where a thought has been pushed past the point where it still sounds like itself.",
+      ru: 'Замечай, где мысль подтолкнули дальше той точки, где она ещё звучала как она сама.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'heartCouplingLow',
+    name: { en: 'Heart — Loose Coupling', ru: 'Сердце — слабая связь' },
+    kind: 'statement',
+    line: {
+      en: "Something in you is quietly responding to someone else, more than either of you has said.",
+      ru: 'Что-то в тебе тихо отзывается на другого человека — больше, чем вы оба сказали вслух.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'heartCouplingMid',
+    name: { en: 'Heart — Locked Step', ru: 'Сердце — в такт' },
+    kind: 'statement',
+    line: {
+      en: "Two things that used to move separately are now moving as one, and you may not have noticed when that started.",
+      ru: 'Две вещи, что раньше двигались порознь, теперь движутся как одна — и ты, возможно, не заметил, когда это началось.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'heartCouplingHigh',
+    name: { en: 'Heart — Overcoupled', ru: 'Сердце — перевязано' },
+    kind: 'instruction',
+    line: {
+      en: "Notice where staying in step with someone else has cost you your own separate motion.",
+      ru: 'Замечай, где, оставаясь в такт с другим, ты платишь за это собственным отдельным движением.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'spiritFieldLow',
+    name: { en: 'Spirit — Faint Field', ru: 'Дух — слабое поле' },
+    kind: 'statement',
+    line: {
+      en: "Something has been quietly present in the background, not yet asking to be named.",
+      ru: 'Что-то тихо присутствует на фоне — и пока не просит, чтобы его назвали.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'spiritFieldMid',
+    name: { en: 'Spirit — Even Field', ru: 'Дух — ровное поле' },
+    kind: 'statement',
+    line: {
+      en: "Whatever this is, it isn't concentrated anywhere — it's simply everywhere at once, evenly.",
+      ru: 'Что бы это ни было, оно нигде не сгущено — оно просто есть везде и сразу, ровно.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'spiritFieldHigh',
+    name: { en: 'Spirit — Saturated Field', ru: 'Дух — насыщенное поле' },
+    kind: 'instruction',
+    line: {
+      en: "Notice what happens when there's no longer any empty space left to feel this arrive into.",
+      ru: 'Замечай, что происходит, когда не остаётся пустого места, куда это могло бы прийти.',
+    },
+    rgb: '224,196,168',
+  },
 ];
 
 export function drawCard(): CardEntry {

@@ -765,6 +765,149 @@ function heldCourseLayers(cx: number, cy: number) {
   return { heldPath, driftedPath, ticks };
 }
 
+// ============================================================================
+// Sphere-intensity cards — twelve cards, three per Body/Mind/Heart/Spirit,
+// each sphere's own three cards showing the SAME physical picture at
+// increasing amplitude/drive rather than three unrelated ideas. See
+// docs/cards-concept.md, "Sphere-intensity cards" for the full rationale:
+// this borrows the one genuinely reusable idea from tarot's Minor Arcana
+// (a numbered progression within one domain, Ace's pure potential through
+// 10's fullness) without importing its four elemental suits, which would
+// duplicate Selfinder's own Body/Mind/Heart/Spirit language rather than
+// sit alongside it. Each sphere's own three stages describe a real
+// physical regime (a beam's elastic range, a signal's linear range, an
+// oscillator pair's coupling strength, a field's saturation) — never a
+// claim about where the person currently is, same "possibility to check
+// against" framing the cycle-phase cards already use for a different
+// axis (position in a cycle, not amplitude within one).
+//
+// Every sphere reuses a construction technique already established
+// elsewhere in this file (Body: a loaded beam, echoing whatYoureCarrying's
+// ghost-outline convention; Mind: a driven sine trace, echoing
+// signalBeneathNoise/standingWave; Heart: two oscillators at a given
+// coupling strength, echoing union; Spirit: a scattered field at a given
+// density, echoing fixedPoint/broadcastingField) — the intensity axis is
+// new, the underlying physical vocabulary for each sphere is not.
+
+export type SphereIntensityStage = 'low' | 'mid' | 'high';
+
+// Body — a beam under a growing load. Low: negligible deflection, well
+// within the beam's own elastic range. Mid: real, visible, still-stable
+// deflection. High: the beam bent visibly PAST its own straight rest
+// line, with that original line kept as a faint ghost (the same
+// "distortion visible against its own undistorted reference" idea
+// whatYoureCarrying's ghost ellipse already uses) — real elastic
+// deformation, not breakage; the beam is still one continuous piece.
+function bodyLoadLayers(cx: number, cy: number, stage: SphereIntensityStage) {
+  const width = 200;
+  const restY = cy - 30;
+  const deflection = stage === 'low' ? 14 : stage === 'mid' ? 42 : 78;
+  const steps = 100;
+  const beam: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = cx - width / 2 + t * width;
+    // A simply-supported beam's own deflection shape under a center load
+    // (a cubic bowing curve, pinned at both ends) — the same family of
+    // curve every real loaded beam actually takes.
+    const shape = t * (1 - t) * (1 - 2 * (t - 0.5) ** 2 * 0.6);
+    beam.push({ x, y: restY + deflection * shape });
+  }
+  const beamPath = polylinePath(beam);
+  const restPath = polylinePath([{ x: cx - width / 2, y: restY }, { x: cx + width / 2, y: restY }]);
+  const loadPoint = { x: cx, y: restY + deflection * 0.4 };
+  return { beamPath, restPath, loadPoint, deflection };
+}
+
+// Mind — a driven sine wave. Low: small, clean amplitude. Mid: full
+// amplitude, still perfectly sinusoidal — the signal at its own natural
+// range, not yet pushed past it. High: the same drive pushed further, so
+// the peaks visibly FLATTEN (real waveform clipping — an amplifier or
+// speaker driven past its own linear range produces exactly this shape,
+// not a taller sine wave). The clipped shape is a physical fact about
+// being overdriven, not a judgment about the thought itself.
+function mindDriveLayers(cx: number, cy: number, stage: SphereIntensityStage) {
+  const width = 200;
+  const steps = 200;
+  const cap = stage === 'low' ? 14 : stage === 'mid' ? 34 : 34;
+  const drive = stage === 'low' ? 14 : stage === 'mid' ? 34 : 58;
+  const wave: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = cx - width / 2 + t * width;
+    const raw = drive * Math.sin(t * 5 * Math.PI);
+    // Soft-clip past +/-cap using tanh — a real, smooth saturation curve
+    // (how an overdriven analog signal actually rounds off) rather than a
+    // hard digital clip, which would read as a rendering artifact.
+    const y = cap * Math.tanh(raw / cap);
+    wave.push({ x, y: cy + y });
+  }
+  const wavePath = polylinePath(wave);
+  const capLineTop = polylinePath([{ x: cx - width / 2, y: cy - cap }, { x: cx + width / 2, y: cy - cap }]);
+  const capLineBottom = polylinePath([{ x: cx - width / 2, y: cy + cap }, { x: cx + width / 2, y: cy + cap }]);
+  return { wavePath, capLineTop, capLineBottom, showCapLines: stage === 'high' };
+}
+
+// Heart — two oscillators at a given coupling strength. Low: two traces
+// with matching color but visibly different phase/amplitude, mostly
+// independent. Mid: the two traces LOCKED — identical, perfectly
+// overlapping, the same "arrived at agreement" picture union.tsx already
+// ends on. High: still locked, but both traces' own amplitude is
+// visibly REDUCED compared to mid — real overcoupling costs both
+// oscillators energy (a physically accurate consequence, the same way a
+// real pair of coupled pendulums damps faster the more tightly they're
+// linked), not a stylistic choice.
+function heartCouplingLayers(cx: number, cy: number, stage: SphereIntensityStage) {
+  const width = 200;
+  const steps = 200;
+  const ampA = stage === 'high' ? 16 : 26;
+  function trace(freq: number, phase: number, amp: number): Point[] {
+    const points: Point[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const t = i / steps;
+      const x = cx - width / 2 + t * width;
+      points.push({ x, y: cy + amp * Math.sin(t * freq * Math.PI + phase) });
+    }
+    return points;
+  }
+  // A visibly different vertical offset for the unlocked ("low") stage,
+  // not just a phase/frequency nudge — two sine traces at the same
+  // frequency and center-line are hard to tell apart at a glance even
+  // with a real phase offset, but the same amplitude sitting on visibly
+  // different center lines reads immediately as "two separate things,"
+  // which converging onto one shared center line (mid/high) then
+  // resolves clearly.
+  const aOffset = stage === 'low' ? -22 : 0;
+  const bOffset = stage === 'low' ? 22 : 0;
+  const aPath = polylinePath(trace(5, 0, ampA).map((p) => ({ x: p.x, y: p.y + aOffset })));
+  const bFreq = stage === 'low' ? 8 : 5;
+  const bPhase = stage === 'low' ? 2.2 : 0;
+  const bAmp = stage === 'low' ? ampA * 0.7 : ampA;
+  const bPath = polylinePath(trace(bFreq, bPhase, bAmp).map((p) => ({ x: p.x, y: p.y + bOffset })));
+  return { aPath, bPath, locked: stage !== 'low' };
+}
+
+// Spirit — a scattered field at a given density. Low: a sparse handful of
+// dim points. Mid: a moderate, evenly-distributed, evenly-bright field —
+// present everywhere, nowhere concentrated. High: a dense field where
+// points begin to visually overlap/cluster (genuine saturation, the same
+// way a real sensor or photographic exposure saturates once there's no
+// remaining dynamic range) — still evenly distributed, not clumped
+// toward one side, since the card is about fullness, not imbalance.
+function spiritFieldLayers(cx: number, cy: number, stage: SphereIntensityStage) {
+  const rng = seededRng(stage === 'low' ? 61 : stage === 'mid' ? 67 : 71);
+  const count = stage === 'low' ? 10 : stage === 'mid' ? 26 : 52;
+  const opacity = stage === 'low' ? 0.22 : stage === 'mid' ? 0.4 : 0.5;
+  const radius = stage === 'high' ? 1.4 : 1.1;
+  const points: Point[] = [];
+  for (let i = 0; i < count; i++) {
+    const a = rng() * 2 * Math.PI;
+    const r = Math.sqrt(rng()) * 74;
+    points.push({ x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) * 0.92 });
+  }
+  return { points, opacity, radius };
+}
+
 // Shared construction for the six cycle-phase cards (Beginning, Rising,
 // Peak, Turning, Releasing, Rest) — a full ring, always drawn faint and
 // complete, with ONE arc segment emphasized at a different position per
@@ -836,7 +979,19 @@ export type CardSymbolId =
   | 'settledAmplitude'
   | 'broadcastingField'
   | 'theSplit'
-  | 'heldCourse';
+  | 'heldCourse'
+  | 'bodyLoadLow'
+  | 'bodyLoadMid'
+  | 'bodyLoadHigh'
+  | 'mindDriveLow'
+  | 'mindDriveMid'
+  | 'mindDriveHigh'
+  | 'heartCouplingLow'
+  | 'heartCouplingMid'
+  | 'heartCouplingHigh'
+  | 'spiritFieldLow'
+  | 'spiritFieldMid'
+  | 'spiritFieldHigh';
 
 // Every card's geometry splits into exactly one "primary" trace (the
 // element the eye should land on first) and a "rest" layer (fainter
@@ -1155,6 +1310,62 @@ export function buildCardSymbolLayers(id: CardSymbolId, color: string): CardSymb
             <Path d={driftedPath} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.16} strokeDasharray="1,4" />
             {ticks.map((t, i) => (
               <Line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={color} strokeWidth={1} strokeOpacity={0.28} />
+            ))}
+          </>
+        ),
+      };
+    }
+    case 'bodyLoadLow':
+    case 'bodyLoadMid':
+    case 'bodyLoadHigh': {
+      const stage: SphereIntensityStage = id === 'bodyLoadLow' ? 'low' : id === 'bodyLoadMid' ? 'mid' : 'high';
+      const { beamPath, restPath, loadPoint } = bodyLoadLayers(cx, cy, stage);
+      return {
+        primaryPath: beamPath,
+        primaryStrokeWidth: 2,
+        rest: <Path d={restPath} fill="none" stroke={color} strokeWidth={1.1} strokeOpacity={0.4} strokeDasharray="1,4" />,
+        emphasis: { cx: loadPoint.x, cy: loadPoint.y, r: 3.2 },
+      };
+    }
+    case 'mindDriveLow':
+    case 'mindDriveMid':
+    case 'mindDriveHigh': {
+      const stage: SphereIntensityStage = id === 'mindDriveLow' ? 'low' : id === 'mindDriveMid' ? 'mid' : 'high';
+      const { wavePath, capLineTop, capLineBottom, showCapLines } = mindDriveLayers(cx, cy, stage);
+      return {
+        primaryPath: wavePath,
+        primaryStrokeWidth: 1.8,
+        rest: showCapLines ? (
+          <>
+            <Path d={capLineTop} fill="none" stroke={color} strokeWidth={0.9} strokeOpacity={0.2} strokeDasharray="1,5" />
+            <Path d={capLineBottom} fill="none" stroke={color} strokeWidth={0.9} strokeOpacity={0.2} strokeDasharray="1,5" />
+          </>
+        ) : null,
+      };
+    }
+    case 'heartCouplingLow':
+    case 'heartCouplingMid':
+    case 'heartCouplingHigh': {
+      const stage: SphereIntensityStage = id === 'heartCouplingLow' ? 'low' : id === 'heartCouplingMid' ? 'mid' : 'high';
+      const { aPath, bPath, locked } = heartCouplingLayers(cx, cy, stage);
+      return {
+        primaryPath: aPath,
+        primaryStrokeWidth: locked ? 1.8 : 2,
+        rest: <Path d={bPath} fill="none" stroke={color} strokeWidth={locked ? 1.8 : 1.6} strokeOpacity={locked ? 0.7 : 0.55} />,
+      };
+    }
+    case 'spiritFieldLow':
+    case 'spiritFieldMid':
+    case 'spiritFieldHigh': {
+      const stage: SphereIntensityStage = id === 'spiritFieldLow' ? 'low' : id === 'spiritFieldMid' ? 'mid' : 'high';
+      const { points, opacity, radius } = spiritFieldLayers(cx, cy, stage);
+      return {
+        primaryPath: '',
+        primaryStrokeWidth: 0,
+        rest: (
+          <>
+            {points.map((p, i) => (
+              <Circle key={i} cx={p.x} cy={p.y} r={radius} fill={color} fillOpacity={opacity} />
             ))}
           </>
         ),

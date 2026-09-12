@@ -1,30 +1,34 @@
 # Selfinder Cards — concept draft, now live in the app
 
-Status: **wired and working**. The deck (26 cards — the original 8
-physics/math cards, 6 cycle-phase cards, 6 archetype cards, and 6
-tarot-sourced archetype cards), draw screen, Depths entry row, and
-Guide/Spill routing are all implemented — see "What's actually built"
-below for exact files. This doc remains the design record: read it
-before changing any of it, since several choices here (no card selection
-based on reading data, no content-echoing, statement/instruction format)
-are deliberate constraints that aren't obvious from the code alone. See
-`RULES.md`, "The answers are already inside the person" for the
-governing rule this feature must stay inside of.
+Status: **wired and working**. The deck (38 cards — the original 8
+physics/math cards, 6 cycle-phase cards, 6 archetype cards, 6
+tarot-sourced archetype cards, and 12 sphere-intensity cards), draw
+screen, Depths entry row, and Guide/Spill routing are all implemented —
+see "What's actually built" below for exact files. This doc remains the
+design record: read it before changing any of it, since several choices
+here (no card selection based on reading data, no content-echoing,
+statement/instruction format) are deliberate constraints that aren't
+obvious from the code alone. See `RULES.md`, "The answers are already
+inside the person" for the governing rule this feature must stay inside
+of.
 
 ## What's actually built
 
-- **Deck content**: `mobile/src/content/cardsDeck.ts` — 26 cards total
+- **Deck content**: `mobile/src/content/cardsDeck.ts` — 38 cards total
   (the original 8 physics/math cards + 6 cycle-phase cards + 6 archetype
-  cards + 6 tarot-sourced archetype cards, see "Cycle-phase cards",
-  "Archetype cards", and "Second archetype set (tarot-sourced)" below),
+  cards + 6 tarot-sourced archetype cards + 12 sphere-intensity cards,
+  see "Cycle-phase cards", "Archetype cards", "Second archetype set
+  (tarot-sourced)", and "Sphere-intensity cards" below),
   `{id, name: {en,ru}, kind, line: {en,ru}, rgb}`, plus `drawCard()`
-  (uniform random pick across all 26, no weighting, no separate mode/
+  (uniform random pick across all 38, no weighting, no separate mode/
   theme — every sub-family is shuffled into the same pool).
 - **Symbols**: `mobile/src/components/depths/CardSymbol.tsx` — the
   original 8 physics/math forms, a shared `cycleRing()` construction +
   `CYCLE_PHASES` position table powering the 6 cycle-phase symbols, 6
   standalone constructions (no shared base) for the first archetype set,
-  and 6 more standalone constructions for the second, tarot-sourced set.
+  6 more standalone constructions for the second, tarot-sourced set, and
+  4 parametrized constructions (one per sphere, each taking a `low`/
+  `mid`/`high` stage argument) powering the 12 sphere-intensity symbols.
 - **Draw screen**: `mobile/app/(tabs)/depths/cards/index.tsx` — draws
   once per visit (`useState(() => drawCard())`, no reroll, same rule as
   Feeling Lucky), shows the symbol + kind label ("Receive"/"Notice") +
@@ -449,6 +453,122 @@ of `CardSymbol.tsx`.
   the line just holds, through continuous small adjustment rather than
   one act of force. *Instruction: "Notice what you're quietly correcting
   for, moment to moment, to keep this steady."*
+
+## Sphere-intensity cards
+
+Twelve cards, three each for Body/Mind/Heart/Spirit — Selfinder's own
+four spheres, already the language Measure and Depths use everywhere
+else in the app. Each sphere's own three cards show the SAME physical
+picture at increasing amplitude/drive, not three unrelated ideas.
+
+**Where this idea came from, and what was deliberately left out.**
+Tarot's Minor Arcana (56 cards: four elemental suits — Wands/Cups/
+Swords/Pentacles — each run Ace through 10, a numbered progression from
+pure potential to fullness) has exactly one structural idea worth
+reusing: a small numbered sequence within one domain. Its actual four
+suits were NOT imported — Fire/Water/Air/Earth would duplicate Body/
+Mind/Heart/Spirit rather than sit alongside it, the same "two systems
+doing the same job" problem the app avoids everywhere else (see
+`RULES.md`'s engineering-conventions discipline against exactly this).
+Court cards (Page/Knight/Queen/King, stages of personal mastery) were
+left out entirely — they lean toward asserting a personality/maturity
+archetype about the reader, closer to the territory already ruled out
+for The Magician/Emperor/Empress in the tarot-sourced archetype set
+above.
+
+**What "intensity" means here, and the constraint it has to respect.**
+Each sphere's three stages are real physical regimes of one system, not
+a low/medium/high verdict: a beam has a genuine elastic range before it
+deforms permanently; a driven signal has a genuine linear range before
+it clips; a pair of oscillators has a genuine coupling strength before
+locking, then overcoupling; a field has a genuine density before it
+saturates. None of the three stages claims the person IS at that stage
+right now — same "possibility to check against" framing the cycle-phase
+cards already use for a different axis (position in a cycle, not
+amplitude within one). "Past Capacity," "Clipped Peak," "Overcoupled,"
+and "Saturated" are physical descriptions of a regime, not a scorecard —
+matching how `LEVEL_COLORS`' own 17-stop gradient treats shame-through-
+enlightenment as a spectrum to be described, never ranked.
+
+**Construction technique**, one parametrized function per sphere in
+`CardSymbol.tsx` (`bodyLoadLayers`, `mindDriveLayers`,
+`heartCouplingLayers`, `spiritFieldLayers`), each taking a `low`/`mid`/
+`high` stage argument rather than three separate hand-built geometries —
+reuses a technique already established elsewhere in this file:
+
+- **Body** — a simply-supported beam's own real deflection curve under a
+  growing center load, drawn against a faint dashed rest-line ghost (the
+  same "distortion against its own undistorted reference" idea
+  `whatYoureCarrying`'s ghost ellipse already uses). Low: a small, stable
+  deflection. Mid: a real, larger, still-stable deflection. High: the
+  beam bent visibly past where the rest-line ghost sits — real elastic
+  deformation, never breakage.
+  - **Quiet Load** (`bodyLoadLow`) — *Statement: "Something in your body
+    is holding a small weight it hasn't mentioned."*
+  - **Full Load** (`bodyLoadMid`) — *Statement: "Your body is carrying
+    about as much as it can carry without you noticing the carrying."*
+  - **Past Capacity** (`bodyLoadHigh`) — *Instruction: "Notice where your
+    body has been asked to hold more than its own shape."*
+- **Mind** — a driven sine wave, soft-clipped past a fixed cap via a real
+  tanh saturation curve (the same smooth rounding a real overdriven
+  analog signal actually produces, not a hard digital clip). Low: small,
+  clean amplitude, nowhere near the cap. Mid: full amplitude, still
+  perfectly sinusoidal — the signal at its own natural range. High: the
+  same drive pushed further, so the peaks visibly flatten.
+  - **Single Note** (`mindDriveLow`) — *Statement: "One clear thought has
+    been running underneath everything else, quiet enough to miss."*
+  - **Full Register** (`mindDriveMid`) — *Statement: "A thought has found
+    its full volume, and it isn't shouting to get there."*
+  - **Clipped Peak** (`mindDriveHigh`) — *Instruction: "Notice where a
+    thought has been pushed past the point where it still sounds like
+    itself."*
+- **Heart** — two oscillators at a given coupling strength, echoing
+  `union`'s own convergence idea but as three static strengths rather
+  than one dynamic sweep. Low: two traces at genuinely different center
+  lines, frequency, and phase — two visibly separate things. Mid: the
+  traces locked — identical, perfectly overlapping. High: still locked,
+  but both traces' own amplitude visibly reduced compared to mid — real
+  overcoupling costs both oscillators energy, the same way a real pair of
+  tightly-linked pendulums damps faster than a loosely-linked one.
+  - **Loose Coupling** (`heartCouplingLow`) — *Statement: "Something in
+    you is quietly responding to someone else, more than either of you
+    has said."*
+  - **Locked Step** (`heartCouplingMid`) — *Statement: "Two things that
+    used to move separately are now moving as one, and you may not have
+    noticed when that started."*
+  - **Overcoupled** (`heartCouplingHigh`) — *Instruction: "Notice where
+    staying in step with someone else has cost you your own separate
+    motion."*
+- **Spirit** — a scattered field at a given density, echoing
+  `fixedPoint`/`broadcastingField`'s own scatter technique. Low: a sparse
+  handful of dim points. Mid: a moderate, evenly-distributed, evenly-
+  bright field. High: a dense field where points begin to visually
+  overlap — genuine saturation, still evenly distributed rather than
+  clumped toward one side (the card is about fullness, not imbalance).
+  - **Faint Field** (`spiritFieldLow`) — *Statement: "Something has been
+    quietly present in the background, not yet asking to be named."*
+  - **Even Field** (`spiritFieldMid`) — *Statement: "Whatever this is, it
+    isn't concentrated anywhere — it's simply everywhere at once,
+    evenly."*
+  - **Saturated Field** (`spiritFieldHigh`) — *Instruction: "Notice what
+    happens when there's no longer any empty space left to feel this
+    arrive into."*
+
+**Real bugs found and fixed during visual verification** (via
+`run-mobile`, worth recording since they're the kind of thing that looks
+fine in the geometry math but fails on screen): the Body family's first
+draft used a 6px deflection at `low` against a rest-line ghost drawn at
+0.22 opacity — both were too subtle to read at the card's own render
+size, so `low`/`mid`/`high` all looked like the same flat line;
+deflection values and the ghost's opacity were both increased until the
+three stages read as a real, distinguishable progression. The Heart
+family's first draft distinguished the "loose" stage only by a small
+frequency/phase offset at a shared center line, which stayed invisible
+at this card size even with a genuine mathematical difference — fixed by
+giving the two traces visibly different center lines at `low`, resolving
+onto one shared center line at `mid`/`high`, so "unlocked" reads as
+"two separate things" at a glance rather than requiring the viewer to
+notice a subtle waveform mismatch.
 
 ## Themes (earlier question-format draft — retired, kept only for the
 record of what didn't work; see "Why not questions" above)
