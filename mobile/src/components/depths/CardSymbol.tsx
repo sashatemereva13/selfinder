@@ -520,6 +520,251 @@ function unionLayers(cx: number, cy: number) {
   return { aPath, bPath, lock };
 }
 
+// ============================================================================
+// Second archetype set — six more physics concepts, each chosen the same
+// way as the first six (see "Archetype cards" above): a physical picture
+// that already IS the archetype, not a picture bent to illustrate one
+// afterward. This set's own starting point was different, though — see
+// docs/cards-concept.md, "Second archetype set (tarot-sourced)" for the
+// full account: these six trace back to six Major Arcana THEMES (not
+// imagery) that had no existing equivalent in the deck. Tarot symbolism is
+// old and genuinely universal (a threshold, a collapse, a quiet renewal —
+// none of that belongs to any one tradition); what's kept is the
+// underlying human situation each theme names, never the card art, the
+// divinatory apparatus, or the tarot's own vocabulary (no towers, devils,
+// suns, or lovers appear anywhere in this file). Same discipline as
+// every other card: pure wireframe construction geometry, no pre-loaded
+// story shape.
+
+// The Fold — a metastable system, resting in a shallow local minimum on a
+// shelf, with the true (deeper) minimum visible further along, separated
+// by a barrier so slight it's almost not there. Distinct from
+// belowThreshold (a real barrier not yet crossed) and threshold (balanced
+// AT a saddle) — here the system isn't approaching or balancing at
+// anything, it's simply sitting on ground that's already sloped out from
+// under it. Nothing moves in this symbol; the card is about the moment
+// before, not the fall itself.
+function theFoldLayers(cx: number, cy: number) {
+  const width = 220;
+  const steps = 160;
+  const shelfY = cy - 34;
+  const trueMinY = cy + 46;
+  const restU = -0.5;
+  const bumpU = -0.08;
+  const dropStartU = 0.02;
+  // The ground itself, in real screen-y (down is positive): a flat shelf
+  // holding the resting point, a small rise just past it (the barely-
+  // there barrier), then a real, visible drop into the true, much deeper
+  // minimum on the right — three legible tiers, not one smooth wiggle.
+  function groundY(u: number): number {
+    if (u < bumpU - 0.06) return shelfY;
+    if (u < dropStartU) {
+      // The small rise: a gentle hump peaking just before the drop.
+      const t = (u - (bumpU - 0.06)) / (dropStartU - (bumpU - 0.06));
+      return shelfY - 10 * Math.sin(t * Math.PI);
+    }
+    // The drop: an eased fall from shelf level down to the true minimum.
+    const t = Math.min(1, (u - dropStartU) / (1 - dropStartU));
+    const eased = 1 - Math.pow(1 - t, 2.2);
+    return shelfY + eased * (trueMinY - shelfY);
+  }
+  const ground: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const u = -1 + t * 2;
+    ground.push({ x: cx + u * (width / 2), y: groundY(u) });
+  }
+  const groundPath = polylinePath(ground);
+  // Where it would fall, if nudged — drawn only as a faint dashed
+  // possibility just above the ground itself, never as something already
+  // happening.
+  const fallPreviewSteps = 60;
+  const fallPreview: Point[] = [];
+  for (let i = 0; i <= fallPreviewSteps; i++) {
+    const t = i / fallPreviewSteps;
+    const u = restU + t * (1 - restU);
+    fallPreview.push({ x: cx + u * (width / 2), y: groundY(u) - 8 });
+  }
+  const fallPreviewPath = polylinePath(fallPreview);
+  const restPoint = { x: cx + restU * (width / 2), y: groundY(restU) };
+  return { groundPath, fallPreviewPath, restPoint };
+}
+
+// The Smaller Door — a bounded well with the trajectory circling
+// repeatedly near the bottom, never approaching the one real, walkable
+// gap in the wall. Distinct from guardian (a boundary containing a whole
+// field, some points already escaped) — here there is exactly one
+// trajectory and one unused exit, and nothing has left yet, because
+// nothing has gone looking.
+function smallerDoorLayers(cx: number, cy: number) {
+  const r = 76;
+  const gapAngle = Math.PI * 0.72;
+  const gapWidth = 0.5;
+  // The wall, split into two arcs so the gap is a real, visible absence
+  // rather than a differently-styled segment of one continuous path —
+  // the boundary simply doesn't exist across the gap's own span.
+  const wallSteps = 200;
+  const wallArc: Point[] = [];
+  for (let i = 0; i <= wallSteps; i++) {
+    const t = gapAngle + gapWidth / 2 + (i / wallSteps) * (2 * Math.PI - gapWidth);
+    wallArc.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) });
+  }
+  const wallPath = polylinePath(wallArc);
+  // The gap itself: two short jamb marks at the opening's own edges,
+  // angled outward like a real doorframe, plus one line drawn straight
+  // through the gap from just inside the well to just outside it — a
+  // path that's actually open, not merely a same-radius arc segment
+  // (which reads as "wall, but dimmer" rather than "a way through").
+  const edgeA = { x: cx + r * Math.cos(gapAngle - gapWidth / 2), y: cy + r * Math.sin(gapAngle - gapWidth / 2) };
+  const edgeB = { x: cx + r * Math.cos(gapAngle + gapWidth / 2), y: cy + r * Math.sin(gapAngle + gapWidth / 2) };
+  const jambLen = 12;
+  const jambA = {
+    x1: edgeA.x, y1: edgeA.y,
+    x2: edgeA.x + jambLen * Math.cos(gapAngle - gapWidth / 2 - 0.5),
+    y2: edgeA.y + jambLen * Math.sin(gapAngle - gapWidth / 2 - 0.5),
+  };
+  const jambB = {
+    x1: edgeB.x, y1: edgeB.y,
+    x2: edgeB.x + jambLen * Math.cos(gapAngle + gapWidth / 2 + 0.5),
+    y2: edgeB.y + jambLen * Math.sin(gapAngle + gapWidth / 2 + 0.5),
+  };
+  const throughLine = {
+    x1: cx + (r - 16) * Math.cos(gapAngle), y1: cy + (r - 16) * Math.sin(gapAngle),
+    x2: cx + (r + 16) * Math.cos(gapAngle), y2: cy + (r + 16) * Math.sin(gapAngle),
+  };
+  // The trajectory: several loose, overlapping loops filling most of the
+  // well's own interior, well clear of the gap, never widening toward it
+  // — genuinely large enough to read as "circling the whole space," not
+  // a tight scribble at the center.
+  const loopSteps = 260;
+  const loop: Point[] = [];
+  for (let i = 0; i <= loopSteps; i++) {
+    const t = (i / loopSteps) * 2 * Math.PI * 4.2;
+    const rr = 30 + 14 * Math.sin(t * 1.3);
+    loop.push({ x: cx + rr * Math.cos(t), y: cy + 6 + rr * Math.sin(t) * 0.72 });
+  }
+  const loopPath = polylinePath(loop);
+  return { wallPath, jambA, jambB, throughLine, loopPath };
+}
+
+// The Settled Amplitude — an oscillation whose envelope decays smoothly
+// toward a real, stable, NON-ZERO baseline, and holds there. Distinct
+// from standingWave (one antinode still at full height amid otherwise-
+// flat damping, an asymmetric picture) — this is deliberately the
+// quietest, most symmetric card in the deck: everything settles evenly
+// to the same calm floor, nothing left standing taller than the rest.
+function settledAmplitudeLayers(cx: number, cy: number) {
+  const width = 210;
+  const steps = 220;
+  const floor = 8;
+  function envelope(t: number, startAmp: number): Point[] {
+    const points: Point[] = [];
+    for (let i = 0; i <= steps; i++) {
+      const tt = i / steps;
+      const x = cx - width / 2 + tt * width;
+      const decay = floor + (startAmp - floor) * Math.exp(-tt * 3.4);
+      const y = cy + decay * Math.sin(tt * 9 * Math.PI);
+      points.push({ x, y });
+    }
+    return points;
+  }
+  const main = polylinePath(envelope(1, 30));
+  const priorA = polylinePath(envelope(1, 46));
+  const priorB = polylinePath(envelope(1, 60));
+  return { main, priorA, priorB };
+}
+
+// The Broadcasting Field — a source radiating rings that stay in phase
+// outward in every direction, evenly spaced, no distortion, nothing to
+// interact with. Distinct from interference (two sources meeting and
+// distorting each other at a boundary) and signalBeneathNoise (one clean
+// signal buried under noise) — here there is no second thing at all; the
+// field simply broadcasts, undisturbed, in every direction at once.
+function broadcastingFieldLayers(cx: number, cy: number) {
+  const ringCount = 4;
+  const baseR = 20;
+  const spacing = 17;
+  const ringSteps = 100;
+  function ring(r: number): string {
+    const points: Point[] = [];
+    for (let i = 0; i <= ringSteps; i++) {
+      const t = (i / ringSteps) * 2 * Math.PI;
+      points.push({ x: cx + r * Math.cos(t), y: cy + r * Math.sin(t) * 0.94 });
+    }
+    return `${polylinePath(points)} Z`;
+  }
+  const outerPath = ring(baseR + spacing * (ringCount - 1));
+  const innerPaths: string[] = [];
+  for (let i = 0; i < ringCount - 1; i++) {
+    innerPaths.push(ring(baseR + spacing * i));
+  }
+  return { outerPath, innerPaths };
+}
+
+// The Split — a single trajectory approaching from the left, diverging
+// cleanly into two separate, EQUALLY-WEIGHTED stable branches after a
+// critical point (a real pitchfork bifurcation). Distinct from union
+// (two traces converging into one) — this is deliberately the mirror:
+// divergence, not merging, and the only card in the deck where the "rest"
+// layer is drawn at matched opacity to the primary rather than fainter,
+// since neither branch is the lesser option.
+function theSplitLayers(cx: number, cy: number) {
+  const width = 210;
+  const forkX = cx - 15;
+  const steps = 100;
+  const incoming: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = cx - width / 2 + t * (forkX - (cx - width / 2));
+    incoming.push({ x, y: cy });
+  }
+  function branch(sign: 1 | -1): Point[] {
+    const points: Point[] = [...incoming];
+    const branchSteps = 100;
+    for (let i = 1; i <= branchSteps; i++) {
+      const t = i / branchSteps;
+      const x = forkX + t * (cx + width / 2 - forkX);
+      const spread = sign * 44 * Math.sqrt(t);
+      points.push({ x, y: cy + spread });
+    }
+    return points;
+  }
+  const branchA = polylinePath(branch(1));
+  const branchB = polylinePath(branch(-1));
+  const forkPoint = { x: forkX, y: cy };
+  return { branchA, branchB, forkPoint };
+}
+
+// Held Course — a level trajectory holding a straight line across the
+// card, with a field of short angled ticks beneath it showing a steady
+// drift force, plus a faint unrealized path showing where the trajectory
+// would have gone without continuous correction. Nothing dramatic
+// happens here — the whole point is that the line just holds, through
+// many small unglamorous adjustments rather than one dramatic act of
+// will.
+function heldCourseLayers(cx: number, cy: number) {
+  const width = 210;
+  const steps = 120;
+  const held: Point[] = [];
+  const drifted: Point[] = [];
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const x = cx - width / 2 + t * width;
+    held.push({ x, y: cy + 3 * Math.sin(t * 5 * Math.PI) * 0.4 });
+    drifted.push({ x, y: cy + 46 * t * t });
+  }
+  const heldPath = polylinePath(held);
+  const driftedPath = polylinePath(drifted);
+  const rng = seededRng(53);
+  const ticks: { x1: number; y1: number; x2: number; y2: number }[] = [];
+  for (let i = 0; i < 14; i++) {
+    const x = cx - width / 2 + (i / 13) * width + (rng() - 0.5) * 6;
+    const y = cy + 34 + rng() * 10;
+    ticks.push({ x1: x, y1: y, x2: x - 10, y2: y - 7 });
+  }
+  return { heldPath, driftedPath, ticks };
+}
+
 // Shared construction for the six cycle-phase cards (Beginning, Rising,
 // Peak, Turning, Releasing, Rest) — a full ring, always drawn faint and
 // complete, with ONE arc segment emphasized at a different position per
@@ -585,7 +830,13 @@ export type CardSymbolId =
   | 'hiddenRoot'
   | 'seeker'
   | 'theReturn'
-  | 'union';
+  | 'union'
+  | 'theFold'
+  | 'smallerDoor'
+  | 'settledAmplitude'
+  | 'broadcastingField'
+  | 'theSplit'
+  | 'heldCourse';
 
 // Every card's geometry splits into exactly one "primary" trace (the
 // element the eye should land on first) and a "rest" layer (fainter
@@ -819,6 +1070,94 @@ export function buildCardSymbolLayers(id: CardSymbolId, color: string): CardSymb
         primaryStrokeWidth: 1.8,
         rest: <Path d={aPath} fill="none" stroke={color} strokeWidth={1.2} strokeOpacity={0.38} />,
         emphasis: { cx: lock.x, cy: lock.y, r: 2.2 },
+      };
+    }
+    case 'theFold': {
+      const { groundPath, fallPreviewPath, restPoint } = theFoldLayers(cx, cy);
+      return {
+        primaryPath: groundPath,
+        primaryStrokeWidth: 2,
+        rest: (
+          <Path d={fallPreviewPath} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.25} strokeDasharray="1,4" />
+        ),
+        emphasis: { cx: restPoint.x, cy: restPoint.y, r: 2.8 },
+      };
+    }
+    case 'smallerDoor': {
+      const { wallPath, jambA, jambB, throughLine, loopPath } = smallerDoorLayers(cx, cy);
+      return {
+        primaryPath: wallPath,
+        primaryStrokeWidth: 1.6,
+        rest: (
+          <>
+            <Line x1={jambA.x1} y1={jambA.y1} x2={jambA.x2} y2={jambA.y2} stroke={color} strokeWidth={1.6} strokeOpacity={0.85} />
+            <Line x1={jambB.x1} y1={jambB.y1} x2={jambB.x2} y2={jambB.y2} stroke={color} strokeWidth={1.6} strokeOpacity={0.85} />
+            <Line
+              x1={throughLine.x1}
+              y1={throughLine.y1}
+              x2={throughLine.x2}
+              y2={throughLine.y2}
+              stroke={color}
+              strokeWidth={1.2}
+              strokeOpacity={0.6}
+              strokeDasharray="1,3"
+            />
+            <Path d={loopPath} fill="none" stroke={color} strokeWidth={1.2} strokeOpacity={0.45} />
+          </>
+        ),
+      };
+    }
+    case 'settledAmplitude': {
+      const { main, priorA, priorB } = settledAmplitudeLayers(cx, cy);
+      return {
+        primaryPath: main,
+        primaryStrokeWidth: 1.6,
+        rest: (
+          <>
+            <Path d={priorB} fill="none" stroke={color} strokeWidth={0.9} strokeOpacity={0.14} />
+            <Path d={priorA} fill="none" stroke={color} strokeWidth={0.9} strokeOpacity={0.2} />
+          </>
+        ),
+      };
+    }
+    case 'broadcastingField': {
+      const { outerPath, innerPaths } = broadcastingFieldLayers(cx, cy);
+      return {
+        primaryPath: outerPath,
+        primaryStrokeWidth: 1.6,
+        rest: (
+          <>
+            {innerPaths.map((p, i) => (
+              <Path key={i} d={p} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.3 - i * 0.05} />
+            ))}
+          </>
+        ),
+        emphasis: { cx, cy, r: 3 },
+      };
+    }
+    case 'theSplit': {
+      const { branchA, branchB, forkPoint } = theSplitLayers(cx, cy);
+      return {
+        primaryPath: branchA,
+        primaryStrokeWidth: 2,
+        // Matched, not faded — neither branch is the lesser option.
+        rest: <Path d={branchB} fill="none" stroke={color} strokeWidth={2} strokeOpacity={0.85} strokeLinecap="round" />,
+        emphasis: { cx: forkPoint.x, cy: forkPoint.y, r: 2.4 },
+      };
+    }
+    case 'heldCourse': {
+      const { heldPath, driftedPath, ticks } = heldCourseLayers(cx, cy);
+      return {
+        primaryPath: heldPath,
+        primaryStrokeWidth: 2,
+        rest: (
+          <>
+            <Path d={driftedPath} fill="none" stroke={color} strokeWidth={1} strokeOpacity={0.16} strokeDasharray="1,4" />
+            {ticks.map((t, i) => (
+              <Line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={color} strokeWidth={1} strokeOpacity={0.28} />
+            ))}
+          </>
+        ),
       };
     }
     case 'cycleBeginning':

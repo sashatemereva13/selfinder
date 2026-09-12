@@ -10,7 +10,7 @@ import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { AnimatedCardSymbol } from '../../../../src/components/depths/AnimatedCardSymbol';
-import { CARDS_DECK, CardEntry, drawCard, cardRgbForTheme } from '../../../../src/content/cardsDeck';
+import { CardEntry, drawCard, cardRgbForTheme } from '../../../../src/content/cardsDeck';
 import { LongPressToSave } from '../../../../src/components/shared/LongPressToSave';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';

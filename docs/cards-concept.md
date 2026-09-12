@@ -1,28 +1,30 @@
 # Selfinder Cards — concept draft, now live in the app
 
-Status: **wired and working**. The deck (20 cards — the original 8
-physics/math cards, 6 cycle-phase cards, and 6 archetype cards), draw
-screen, Depths entry row, and Guide/Spill routing are all implemented —
-see "What's actually built" below for exact files. This
-doc remains the design record: read it before changing any of it, since
-several choices here (no card selection based on reading data, no
-content-echoing, statement/instruction format) are deliberate constraints
-that aren't obvious from the code alone. See `RULES.md`, "The answers
-are already inside the person" for the governing rule this feature must
-stay inside of.
+Status: **wired and working**. The deck (26 cards — the original 8
+physics/math cards, 6 cycle-phase cards, 6 archetype cards, and 6
+tarot-sourced archetype cards), draw screen, Depths entry row, and
+Guide/Spill routing are all implemented — see "What's actually built"
+below for exact files. This doc remains the design record: read it
+before changing any of it, since several choices here (no card selection
+based on reading data, no content-echoing, statement/instruction format)
+are deliberate constraints that aren't obvious from the code alone. See
+`RULES.md`, "The answers are already inside the person" for the
+governing rule this feature must stay inside of.
 
 ## What's actually built
 
-- **Deck content**: `mobile/src/content/cardsDeck.ts` — 20 cards total
+- **Deck content**: `mobile/src/content/cardsDeck.ts` — 26 cards total
   (the original 8 physics/math cards + 6 cycle-phase cards + 6 archetype
-  cards, see "Cycle-phase cards" and "Archetype cards" below),
+  cards + 6 tarot-sourced archetype cards, see "Cycle-phase cards",
+  "Archetype cards", and "Second archetype set (tarot-sourced)" below),
   `{id, name: {en,ru}, kind, line: {en,ru}, rgb}`, plus `drawCard()`
-  (uniform random pick across all 20, no weighting, no separate mode/
+  (uniform random pick across all 26, no weighting, no separate mode/
   theme — every sub-family is shuffled into the same pool).
-- **Symbols**: `mobile/src/components/CardSymbol.tsx` — the original 8
-  physics/math forms, a shared `cycleRing()` construction +
-  `CYCLE_PHASES` position table powering the 6 cycle-phase symbols, and 6
-  standalone constructions (no shared base) for the archetype cards.
+- **Symbols**: `mobile/src/components/depths/CardSymbol.tsx` — the
+  original 8 physics/math forms, a shared `cycleRing()` construction +
+  `CYCLE_PHASES` position table powering the 6 cycle-phase symbols, 6
+  standalone constructions (no shared base) for the first archetype set,
+  and 6 more standalone constructions for the second, tarot-sourced set.
 - **Draw screen**: `mobile/app/(tabs)/depths/cards/index.tsx` — draws
   once per visit (`useState(() => drawCard())`, no reroll, same rule as
   Feeling Lucky), shows the symbol + kind label ("Receive"/"Notice") +
@@ -364,6 +366,89 @@ same layered-wireframe rendering technique (a primary trace, a fainter
   waves that already agree. *Instruction: "Notice two things that
   started out of step with each other, quietly finding the same
   rhythm."*
+
+## Second archetype set (tarot-sourced)
+
+Six more cards, same discipline as the first archetype set (a physical
+picture that already IS the archetype, not one bent to illustrate it
+after the fact), but with a different starting point: these six trace
+back to six Major Arcana **themes** with no existing equivalent anywhere
+in the deck — a sudden structural collapse, a trap that's smaller than it
+looks, a quiet renewal, an outward-radiating clarity, a genuine
+bifurcation between two real paths, and a steadiness held through
+continuous small correction.
+
+**What's actually kept from tarot, and what isn't.** Tarot symbolism is
+old and genuinely cross-cultural — a threshold, a sudden collapse, a
+quiet renewal after depletion are recognizable human situations, not
+proprietary content belonging to any one tradition or deck. What's kept
+here is exactly that: the underlying situation each theme names. What's
+explicitly NOT kept, on purpose, matching every constraint already
+established for the first archetype set (see "Physics/math vocabulary"
+above): the tarot's own card art, its divinatory apparatus (upright/
+reversed meanings, spreads, card-near-card combinatorics — all already
+forbidden by "What it must never do"), and its own vocabulary. No tower,
+devil, sun, lovers, chariot, or star appears anywhere in this file,
+`cardsDeck.ts`, or `CardSymbol.tsx` — each theme was translated into a
+physics form the same way the first archetype set translated Jungian/
+mythic ideas (return, threshold, the shadow-root) into oscillators,
+saddle points, and hidden components. A reader with zero tarot knowledge
+loses nothing; a reader who recognizes the source theme gains only the
+same thing they'd gain recognizing Camus' boulder — a resonance with a
+prior tradition, never a claim the card is asserting.
+
+Same statement/instruction discipline as the rest of the deck (see "Why
+not questions" above), same two-tone `rgb` alternation as every other
+card, same `{primaryPath, rest, emphasis}` construction shape as the rest
+of `CardSymbol.tsx`.
+
+- **The Fold** (`theFold`) — a metastable system resting in a shallow
+  local minimum on a shelf, with the true (deeper) minimum visible
+  further along, separated by a barrier so slight it's almost not there.
+  Distinct from Below the Threshold (a real barrier not yet crossed) and
+  The Threshold (balanced *at* a saddle) — nothing moves in this symbol;
+  it's about the moment before a collapse, not the collapse itself, and
+  the collapse it points toward reveals what was already unstable rather
+  than causing it. *Statement: "Something has been standing only because
+  nothing has nudged it yet."*
+- **The Smaller Door** (`smallerDoor`) — a bounded well with the
+  trajectory circling repeatedly near the bottom, never approaching the
+  one real, walkable gap already open in the wall. Distinct from The
+  Guardian (a boundary containing a whole field, some points already
+  escaped) — here nothing has left yet, because nothing has gone
+  looking. *Instruction: "Notice where the wall is actually thinner than
+  you've been treating it."*
+- **The Settled Amplitude** (`settledAmplitude`) — an oscillation whose
+  envelope decays smoothly toward a real, stable, NON-ZERO baseline and
+  holds there. Distinct from Standing Wave (one antinode still at full
+  height amid otherwise-flat damping, an asymmetric picture) — this is
+  deliberately the quietest, most symmetric card in the deck: everything
+  settles evenly to the same calm floor. *Statement: "What's left isn't
+  nothing — it's what stayed once the rest quieted down."*
+- **The Broadcasting Field** (`broadcastingField`) — a source radiating
+  rings that stay in phase outward in every direction, evenly spaced, no
+  distortion. Distinct from Interference Pattern (two sources meeting and
+  distorting each other) and Signal Beneath Noise (one clean signal
+  buried under noise) — here there is no second thing to interact with;
+  the field simply broadcasts, undisturbed. *Statement: "Something in you
+  is putting out a clear signal right now, whether or not anyone's tuned
+  to it."*
+- **The Split** (`theSplit`) — a single trajectory diverging cleanly into
+  two separate, equally-weighted stable branches after a critical point
+  (a real pitchfork bifurcation). Distinct from The Union (two traces
+  converging into one) — this is the deliberate mirror, divergence not
+  merging, and the only card in the deck where the "rest" layer is drawn
+  at matched opacity to the primary rather than fainter, since neither
+  branch is the lesser option. *Statement: "The path didn't run out — it
+  became two, and you haven't picked yet."*
+- **Held Course** (`heldCourse`) — a level trajectory holding a straight
+  line across the card, with a field of short angled ticks beneath it
+  showing a steady drift force, plus a faint unrealized path showing
+  where the trajectory would have gone without correction. Nothing
+  dramatic happens in this symbol on purpose — the whole point is that
+  the line just holds, through continuous small adjustment rather than
+  one act of force. *Instruction: "Notice what you're quietly correcting
+  for, moment to moment, to keep this steady."*
 
 ## Themes (earlier question-format draft — retired, kept only for the
 record of what didn't work; see "Why not questions" above)

@@ -254,6 +254,74 @@ export const CARDS_DECK: CardEntry[] = [
     },
     rgb: '224,196,168',
   },
+
+  // Second archetype set — six more physics concepts, sourced from six
+  // Major Arcana THEMES with no existing equivalent in the deck (see
+  // docs/cards-concept.md, "Second archetype set (tarot-sourced)" for the
+  // full rationale and the boundary respected: the underlying human
+  // situation each theme names is kept; the card art, divinatory
+  // apparatus, and tarot's own vocabulary are not — no towers, devils,
+  // suns, or lovers anywhere in this file or CardSymbol.tsx).
+  {
+    id: 'theFold',
+    name: { en: 'The Fold', ru: 'Складка' },
+    kind: 'statement',
+    line: {
+      en: 'Something has been standing only because nothing has nudged it yet.',
+      ru: 'Что-то держится только потому, что его ещё никто не толкнул.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'smallerDoor',
+    name: { en: 'The Smaller Door', ru: 'Дверь поменьше' },
+    kind: 'instruction',
+    line: {
+      en: "Notice where the wall is actually thinner than you've been treating it.",
+      ru: 'Замечай, где стена на самом деле тоньше, чем ты думаешь.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'settledAmplitude',
+    name: { en: 'The Settled Amplitude', ru: 'Устоявшаяся амплитуда' },
+    kind: 'statement',
+    line: {
+      en: "What's left isn't nothing — it's what stayed once the rest quieted down.",
+      ru: 'То, что осталось, — не пустота. Это то, что не ушло, когда всё остальное затихло.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'broadcastingField',
+    name: { en: 'The Broadcasting Field', ru: 'Излучающее поле' },
+    kind: 'statement',
+    line: {
+      en: "Something in you is putting out a clear signal right now, whether or not anyone's tuned to it.",
+      ru: 'Что-то в тебе прямо сейчас подаёт ясный сигнал — независимо от того, настроен ли кто-то на него.',
+    },
+    rgb: '224,196,168',
+  },
+  {
+    id: 'theSplit',
+    name: { en: 'The Split', ru: 'Развилка' },
+    kind: 'statement',
+    line: {
+      en: "The path didn't run out — it became two, and you haven't picked yet.",
+      ru: 'Путь не закончился — он разделился на два, и ты ещё не выбрал.',
+    },
+    rgb: '239,227,207',
+  },
+  {
+    id: 'heldCourse',
+    name: { en: 'Held Course', ru: 'Удержанный курс' },
+    kind: 'instruction',
+    line: {
+      en: "Notice what you're quietly correcting for, moment to moment, to keep this steady.",
+      ru: 'Замечай, что ты тихо выравниваешь, момент за моментом, чтобы удержать это ровно.',
+    },
+    rgb: '224,196,168',
+  },
 ];
 
 export function drawCard(): CardEntry {
