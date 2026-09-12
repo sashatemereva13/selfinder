@@ -100,6 +100,7 @@ export function VibrationSpectrum({
   rotateToIndex,
   labelOffset,
   dotScale = 1,
+  isAggregate = false,
 }: {
   levelSlug: string;
   compact?: boolean;
@@ -176,6 +177,16 @@ export function VibrationSpectrum({
   // their normal 1:1 scale relative to the ring, exactly as before this
   // prop existed.
   dotScale?: number;
+  // Distinguishes "this marker is the overall/combined reading" from
+  // "this marker is one specific sphere's own reading" — same wheel,
+  // same color logic, just a different mark shape, so a viewer can tell
+  // the two states apart without reading anything. Depths is the only
+  // caller that ever has both states to distinguish (every other caller
+  // — Levels, level-detail, a compact per-line wheel — only ever shows
+  // one specific level, never an aggregate). Undefined (every other
+  // caller) renders the plain filled marker exactly as before this prop
+  // existed.
+  isAggregate?: boolean;
 }) {
   const colors = useThemeColors();
   const levelColors = useLevelColors();
@@ -281,6 +292,26 @@ export function VibrationSpectrum({
           spin (see hideMarker) — its normal tick renders in the loop
           above instead, indistinguishable from the other 16, until the
           spin lands. */}
+      {/* Two distinct marker shapes for two distinct meanings — a viewer
+          learns both once, the same way ConsciousnessWheel already
+          trains "point at it, then it names itself." A single sphere's
+          own reading keeps the plain filled dot every other caller of
+          this component also uses. The AGGREGATE reading (Depths only,
+          no sphere selected) is instead a halo — an unfilled ring one
+          step larger than the filled dot, with the same filled dot held
+          at its center — reading as "this position, gathered from
+          several," not a fifth, unrelated shape. */}
+      {!hideMarker && isAggregate && (
+        <SvgCircle
+          cx={marker.x}
+          cy={marker.y}
+          r={markerR * 1.8}
+          fill="none"
+          stroke={color}
+          strokeWidth={compact ? 1.2 : 1.6}
+          strokeOpacity={0.55}
+        />
+      )}
       {!hideMarker && (
         <SvgCircle
           cx={marker.x}

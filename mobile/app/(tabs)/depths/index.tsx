@@ -942,6 +942,7 @@ export default function DepthsScreen() {
                       wheelSize={CORE_GEOMETRY.wheelSize}
                       selectedWheelLevelSlug={wheelLevelSlug}
                       selectedWheelLevelName={wheelLevelName}
+                      isAggregateReading={!selectedSphere}
                       onWheelLevelPress={
                         wheelLevelSlug
                           ? () => goToLevel(wheelLevelSlug)
@@ -949,10 +950,33 @@ export default function DepthsScreen() {
                       }
                     />
                   </View>
+                  {/* Once settled, tapping the aura figure itself clears a
+                      selected sphere — the way back from "one sphere's own
+                      reading" to "the whole reading," the same body the
+                      four spiral dots narrow FROM. No-op, and no hit
+                      target at all (pointerEvents "none" below), once
+                      nothing is selected — this never competes with taps
+                      meant for the spiral dots layered above it, and there
+                      is nothing to clear when the wheel is already showing
+                      the aggregate. The aggregate state itself already
+                      reads visually: AnimatedAuraField's own emphasis
+                      logic holds all four rings at full brightness when
+                      selectedSphere is null (see its own comment), only
+                      dimming the other three once one is tapped — the
+                      "whole vs. one part" distinction was already carried
+                      by the rings, this just adds a real way back. */}
                   <Pressable
                     style={styles.arrivalSkipWrap}
-                    pointerEvents={isArriving ? "auto" : "none"}
-                    onPress={() => setSkipArrival(true)}
+                    pointerEvents={
+                      isArriving ? "auto" : selectedSphere ? "auto" : "none"
+                    }
+                    onPress={() => {
+                      if (isArriving) {
+                        setSkipArrival(true);
+                      } else if (selectedSphere) {
+                        setSelectedSphere(null);
+                      }
+                    }}
                   >
                     <AuraArrival
                       arriving={isArriving}

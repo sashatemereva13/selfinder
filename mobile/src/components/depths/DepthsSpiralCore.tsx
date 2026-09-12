@@ -72,6 +72,7 @@ export function DepthsSpiralCore({
   wheelSize = WHEEL_SIZE,
   selectedWheelLevelSlug,
   selectedWheelLevelName,
+  isAggregateReading = false,
   onWheelLevelPress,
 }: DepthsSpiralCoreProps) {
   const colors = useThemeColors();
@@ -527,6 +528,7 @@ export function DepthsSpiralCore({
               // 1, i.e. unchanged, everywhere else VibrationSpectrum is
               // used).
               dotScale={0.7}
+              isAggregate={isAggregateReading}
               centerLabel={
                 selectedWheelLevelName ?? lastWheelName.current ?? fonts.light
               }
@@ -722,6 +724,12 @@ interface DepthsSpiralCoreProps {
   // SpiralSpherePoint's own label field).
   selectedWheelLevelSlug: string | null;
   selectedWheelLevelName: string | null;
+  // Whether selectedWheelLevelSlug is the OVERALL/combined reading (no
+  // sphere tapped) rather than one specific sphere's own reading — see
+  // VibrationSpectrum's own isAggregate prop for what this changes
+  // visually. Defaults to false so every call site from before this prop
+  // existed keeps rendering the plain single-reading marker unchanged.
+  isAggregateReading?: boolean;
   // Tapping the wheel's own center label — the level's own detail page,
   // same destination the old ringLevelName link below the aura used to
   // lead to before it was removed as redundant with the wheel itself.
