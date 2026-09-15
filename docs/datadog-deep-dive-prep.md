@@ -84,6 +84,34 @@ independently, days apart. Naming that the two incidents *rhyme* is
 itself a good answer to "how do you learn from failures" — you weren't
 just fixing bugs, you noticed a pattern across two unrelated systems.
 
+**A third instance of the exact same root-cause shape, a month later —
+the MongoDB backup's network-access failure
+(`docs/backup-strategy.md`, `docs/roadmap.md`):** a GitHub Actions
+workflow was built to run `mongodump` against the production Atlas
+cluster on a schedule. Every run failed with a TLS error
+(`tls: internal error`) that looked, at first read, like a known Ubuntu
+24.04/OpenSSL compatibility issue with Atlas — a real bug that does
+exist for that combination in general, which made it a very plausible
+first diagnosis. It wasn't the actual cause: Atlas's Network Access list
+for this project only allows the VPS's fixed IP, and a GitHub-hosted
+runner has no stable IP at all — Atlas was correctly rejecting an
+untrusted connection, just surfacing that rejection as a generic TLS
+alert rather than a clear access-denied message. The fix that was
+available but *rejected*: open Atlas to all IPs (`0.0.0.0/0`) so the
+runner could connect from anywhere — a real security tradeoff, made
+just to let a cron job run, that wasn't worth it. The actual fix: run
+the dump from the VPS itself (the one IP already trusted), and let
+GitHub Actions only deploy the script and its cron entry to the box,
+instead of running the dump directly. **This is worth telling as its
+own story, not folded into the two above, specifically because of the
+red herring**: the first, very reasonable hypothesis (an OpenSSL
+version mismatch) was wrong, and the discipline that mattered was not
+accepting the first plausible-sounding explanation without checking the
+access-control layer too. It's also a genuinely good answer to "tell me
+about a time you fixed the wrong thing first" — the honest version of
+that question, where you catch your own wrong hypothesis before
+shipping a bad fix, not after.
+
 **"How would this scale" — answer honestly, don't oversell:** this is a
 single VPS, no orchestrator, and that's a *stated, deliberate* decision
 (`docs/roadmap.md` explicitly rejects adding Kubernetes here as

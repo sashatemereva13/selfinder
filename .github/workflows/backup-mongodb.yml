@@ -1,93 +1,85 @@
-name: Backup MongoDB
+name: Deploy MongoDB Backup Script
 
-# Atlas's free/shared tier (this project's `cluster0`) has NO built-in
-# backup at all — no continuous backups, no snapshots. This workflow is
-# the entire disaster-recovery story for user data until/unless the
-# cluster is ever upgraded to M10+. See docs/backup-strategy.md for the
-# full RPO/RTO writeup and restore procedure.
+# This workflow does NOT run the backup itself. Atlas's Network Access
+# list for this project only allows the VPS's fixed IP — a GitHub-hosted
+# runner has no stable IP, so the first version of this workflow (which
+# ran mongodump directly in Actions) failed every time with a TLS error
+# from Atlas that turned out to be an access-list rejection, not a real
+# TLS problem. Opening Atlas to 0.0.0.0/0 just to let CI connect was
+# deliberately rejected as too wide a tradeoff for a cron job — see
+# docs/backup-strategy.md.
+#
+# Instead: the actual backup (monitoring/backup-mongodb.sh) runs on the
+# VPS itself, via cron, using the box's own already-trusted IP. This
+# workflow only keeps that script and its crontab entry up to date on
+# the server whenever the script changes — the same SSH-deploy shape as
+# deploy-backend.yml, applied to a script instead of a container.
 
 on:
-  schedule:
-    - cron: "0 4 * * *" # daily, 04:00 UTC
+  push:
+    branches:
+      - main
+    paths:
+      - "monitoring/backup-mongodb.sh"
+      - ".github/workflows/backup-mongodb.yml"
   workflow_dispatch:
 
 permissions:
-  contents: write # to create/prune releases
+  contents: read
 
 concurrency:
-  group: backup-mongodb
+  group: deploy-backup-script-production
   cancel-in-progress: false
 
 env:
-  # Pinned, not "latest" — same discipline as the rest of this repo's
-  # CI (exact Docker/action versions), so a tools update can't silently
-  # change dump behavior on a schedule nobody is watching.
-  MONGODB_TOOLS_VERSION: "100.18.0"
-  RETAIN_BACKUPS: 14 # keep the last 14 daily backups (~2 weeks of RPO history)
+  BACKUP_SCRIPT_PATH: ${{ vars.BACKUP_SCRIPT_PATH || '/opt/selfinder/backup/backup-mongodb.sh' }}
+  BACKUP_CRON_SCHEDULE: ${{ vars.BACKUP_CRON_SCHEDULE || '0 4 * * *' }}
 
 jobs:
-  backup:
+  deploy:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 10
+    environment: production
 
     steps:
       - name: checkout repository
         uses: actions/checkout@v5
 
-      - name: install mongodb-database-tools
-        run: |
-          set -eu
-          curl -fsSL -o mongo-tools.deb \
-            "https://fastdl.mongodb.org/tools/db/mongodb-database-tools-ubuntu2404-x86_64-${MONGODB_TOOLS_VERSION}.deb"
-          sudo apt-get install -y ./mongo-tools.deb
-          rm mongo-tools.deb
-          mongodump --version
+      - name: copy backup script to the VPS
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          source: "monitoring/backup-mongodb.sh"
+          target: "/tmp/selfinder-backup-deploy"
 
-      - name: dump and encrypt
-        env:
-          MONGODB_URI: ${{ secrets.MONGODB_URI }}
-          BACKUP_PASSPHRASE: ${{ secrets.MONGODB_BACKUP_PASSPHRASE }}
-        run: |
-          set -eu
-          STAMP="$(date -u +%Y-%m-%dT%H-%M-%SZ)"
-          echo "STAMP=$STAMP" >> "$GITHUB_ENV"
+      - name: install script and cron entry
+        uses: appleboy/ssh-action@v1.2.1
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          script: |
+            set -eu
 
-          mongodump --uri="$MONGODB_URI" --archive --gzip \
-            | openssl enc -aes-256-cbc -pbkdf2 -salt -pass env:BACKUP_PASSPHRASE \
-            > "selfinder-mongodb-$STAMP.archive.gz.enc"
+            UPLOADED="$(find /tmp/selfinder-backup-deploy -name backup-mongodb.sh -type f)"
+            if [ -z "$UPLOADED" ]; then
+              echo "backup-mongodb.sh not found under /tmp/selfinder-backup-deploy after upload" >&2
+              exit 1
+            fi
 
-          # Sanity check: a real backup is never a few empty-collection
-          # bytes. Catches a silently-empty dump (e.g. wrong URI, no
-          # network route to Atlas) before it's uploaded as if it were good.
-          SIZE=$(stat -c%s "selfinder-mongodb-$STAMP.archive.gz.enc")
-          if [ "$SIZE" -lt 1024 ]; then
-            echo "::error::Backup archive is suspiciously small ($SIZE bytes) — refusing to publish it as a release."
-            exit 1
-          fi
-          echo "Backup archive: $SIZE bytes"
+            sudo mkdir -p "$(dirname "${{ env.BACKUP_SCRIPT_PATH }}")"
+            sudo mv "$UPLOADED" "${{ env.BACKUP_SCRIPT_PATH }}"
+            sudo chmod 750 "${{ env.BACKUP_SCRIPT_PATH }}"
+            rm -rf /tmp/selfinder-backup-deploy
 
-      - name: publish as a private GitHub release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -eu
-          gh release create "backup-$STAMP" \
-            "selfinder-mongodb-$STAMP.archive.gz.enc" \
-            --title "MongoDB backup — $STAMP" \
-            --notes "Automated encrypted mongodump. Restore procedure: docs/backup-strategy.md." \
-            --repo "$GITHUB_REPOSITORY"
+            # This box's own crontab, keyed by a comment marker so re-runs
+            # replace the one line rather than accumulating duplicates.
+            MARKER="# selfinder-mongodb-backup"
+            ( crontab -l 2>/dev/null | grep -vF "$MARKER" ; \
+              echo "${{ env.BACKUP_CRON_SCHEDULE }} ${{ env.BACKUP_SCRIPT_PATH }} $MARKER" \
+            ) | crontab -
 
-      - name: prune old backup releases
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -eu
-          gh release list --repo "$GITHUB_REPOSITORY" --limit 200 \
-            | awk -F'\t' '{print $3}' \
-            | grep '^backup-' \
-            | sort -r \
-            | tail -n "+$((RETAIN_BACKUPS + 1))" \
-            | while read -r tag; do
-                echo "Pruning old backup release: $tag"
-                gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --yes --cleanup-tag
-              done
+            echo "Installed. Current crontab:"
+            crontab -l

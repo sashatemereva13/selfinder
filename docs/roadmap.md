@@ -569,7 +569,7 @@ outage, one time it was followed and prevented one.
 
 ---
 
-## MongoDB backup / disaster recovery — DONE (2026-09-10)
+## MongoDB backup / disaster recovery — DONE (2026-09-10, redesigned 2026-09-15)
 
 **Real, previously-undocumented finding, not a hypothetical:** the
 Atlas cluster backing production (`cluster0`, free/shared tier) had
@@ -581,27 +581,45 @@ but isn't viable right now since Selfinder is fully free with no live
 payment path (see `RULES.md`) — there's no revenue to size that
 recurring cost against.
 
-**Fix:** `.github/workflows/backup-mongodb.yml` runs `mongodump` daily,
-pipes it straight into `openssl` encryption (never touches disk
-unencrypted), and publishes the result as a private GitHub release
-(not an Actions artifact — those expire on a retention timer, releases
-don't) tagged by timestamp, pruning anything older than the last 14.
-Full RPO/RTO writeup and the restore procedure live in
+**Fix, v1 (2026-09-10):** a GitHub Actions workflow ran `mongodump`
+directly on a GitHub-hosted runner, piped it into `openssl` encryption,
+and published the result as a private GitHub release.
+
+**Real incident that forced a redesign (2026-09-15):** every run of the
+v1 workflow failed with a TLS error from Atlas
+(`tls: internal error`) that looked like an Ubuntu 24.04/OpenSSL
+compatibility bug — a real, documented issue for that combination in
+general — but wasn't the actual cause here. Root cause: Atlas's Network
+Access list for this project only allows the VPS's own fixed IP; a
+GitHub-hosted runner has no stable IP, so Atlas was correctly rejecting
+the connection, just surfacing it as a generic TLS alert instead of a
+clear access-control message. Opening Atlas to `0.0.0.0/0` so a runner
+could connect from anywhere was considered and rejected — too wide a
+security tradeoff for a cron job. **Fix, v2:** the dump now runs
+*on the VPS itself* via cron (`monitoring/backup-mongodb.sh`), using the
+box's own already-trusted IP; GitHub Actions
+(`.github/workflows/backup-mongodb.yml`) now only keeps that script and
+its crontab entry current on the server, the same SSH-deploy shape
+`deploy-backend.yml` already uses. Worth naming alongside the Terraform
+and monitoring-network incidents in `docs/roadmap.md`'s earlier phases:
+a third instance of the same recurring root cause in this project — an
+assumption about network/access reachability that held in one
+environment and silently didn't in another. The size-sanity-check added
+in v1 is what actually caught this live (refused to publish a 32-byte
+broken "backup" rather than shipping it) — a good example of a cheap
+guard paying for itself on its very first real failure.
+
+Full RPO/RTO writeup, VPS setup steps, and the restore procedure live in
 `docs/backup-strategy.md` — RPO is honestly stated as up to 24h (daily
 cadence), RTO is an unverified estimate until a real restore drill is
 run against a throwaway cluster (named as the top remaining gap, not
-done yet). Requires two new GitHub secrets that don't exist yet:
-`MONGODB_URI` and `MONGODB_BACKUP_PASSPHRASE` — the workflow will fail
-until both are added.
+done yet).
 
 **Deliberately not done in this pass:** wiring a failure notification
-for this workflow into the same Discord channel Grafana alerting already
+for the cron job into the same Discord channel Grafana alerting already
 posts to (`monitoring/grafana/provisioning/alerting/contact-points.yml`)
-— that webhook URL currently lives only in `monitoring/.env` on the VPS,
-not as a GitHub secret, and adding it as one is a real decision (a
-production webhook now reachable from GitHub Actions) left for whoever
-picks this up next rather than done silently as a side effect of this
-change.
+— left for whoever picks this up next rather than done silently as a
+side effect of this change.
 
 **Phase 4 — Alerting.** Alertmanager (or, cheaper: a Grafana alert rule
 posting to a Slack/Discord webhook) firing on the same class of signal
