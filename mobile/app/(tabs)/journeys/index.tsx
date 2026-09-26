@@ -8,6 +8,7 @@ import { useThemeStore } from '../../../src/store/themeStore';
 import type { Colors } from '../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
+import { GatherIn } from '../../../src/components/shared/GatherIn';
 import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { ProfileIcon } from '../../../src/components/shared/ProfileIcon';
 import { JourneyShelf } from '../../../src/components/journeys/JourneyShelf';
@@ -127,6 +128,10 @@ export default function ProductsScreen() {
       >
       {theme === 'dark' && <AmbientGlow />}
 
+      {/* The page gathers in top to bottom as it comes into view — title
+          first, then each shelf in turn (see GatherIn) — rather than all
+          of it, heavy carousels included, landing in one frame. */}
+      <GatherIn>
       <Text style={styles.title} accessibilityRole="header">{t('products.title')}</Text>
       {/* Where the per-card "Grounded in..." line used to be read by anyone
           who wanted it — moved to its own page (2026-09-09, at the user's
@@ -136,13 +141,14 @@ export default function ProductsScreen() {
       <Pressable onPress={() => router.push('/journeys-grounding')} style={styles.groundingLinkRow}>
         <Text style={styles.groundingLink}>{t('products.groundingLink')}</Text>
       </Pressable>
+      </GatherIn>
 
-      {TEMPORAL_GROUPS.map((group) => {
+      {TEMPORAL_GROUPS.map((group, i) => {
         const items = PRODUCTS.filter((p) => p.temporal === group.key);
         if (items.length === 0) return null;
         return (
+          <GatherIn key={group.key} delay={140 + i * 140}>
           <JourneyShelf
-            key={group.key}
             label={t(group.headingKey)}
             items={items.map((product) => ({
               key: product.key,
@@ -152,6 +158,7 @@ export default function ProductsScreen() {
               onPress: () => router.push(product.route),
             }))}
           />
+          </GatherIn>
         );
       })}
       </ScrollView>

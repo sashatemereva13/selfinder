@@ -4,15 +4,9 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import { spacing } from '../src/theme/spacing';
-import { useAppAccentRgb } from '../src/utils/appAccent';
-import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
 import { ProfileIcon } from '../src/components/shared/ProfileIcon';
+import { GatherIn } from '../src/components/shared/GatherIn';
 import { ArcLinePage } from '../src/components/yourArc/pages/ArcLinePage';
-
-// Used by the first-paint loading placeholder (scaled down) — see
-// YourArcRoute's own comment below for why this thin wrapper exists at
-// all.
-const KALEIDOSCOPE_SIZE = 300;
 
 // 2026-09-05: Your Arc's hub restructure — this file used to build the
 // entire flat pager (Facts, TimeCone, Journeys, wish/Crossing, Closing,
@@ -47,7 +41,6 @@ const KALEIDOSCOPE_SIZE = 300;
 // second entry point to the same route, not a replacement for the first.
 export default function YourArcRoute() {
   const colors = useThemeColors();
-  const accentRgb = useAppAccentRgb();
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -55,12 +48,12 @@ export default function YourArcRoute() {
     return () => cancelAnimationFrame(id);
   }, []);
 
+  // One frame of plain dark ground while the heavy page mounts — it used
+  // to be a loading kaleidoscope shown for that single frame and then
+  // swapped out, which read as a pop. The page itself gathers in instead
+  // (see YourArcHubScreen).
   if (!ready) {
-    return (
-      <View style={{ flex: 1, backgroundColor: colors.bg.base, justifyContent: 'center', alignItems: 'center' }}>
-        <ArcKaleidoscopeLoading size={KALEIDOSCOPE_SIZE * 0.6} accentRgb={accentRgb} />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: colors.bg.base }} />;
   }
 
   return <YourArcHubScreen />;
@@ -74,11 +67,15 @@ function YourArcHubScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg.base, paddingTop: insets.top + spacing[4] }}>
       <ProfileIcon />
-      <ArcLinePage
-        onJumpToPresent={() => router.push('/center')}
-        onJumpToPast={() => router.push('/your-arc-past')}
-        onJumpToFuture={() => router.push('/your-arc-future')}
-      />
+      {/* Gathers into place as the page comes into view, the same way
+          every page now arrives (see GatherIn). */}
+      <GatherIn style={{ flex: 1 }} delay={60}>
+        <ArcLinePage
+          onJumpToPresent={() => router.push('/center')}
+          onJumpToPast={() => router.push('/your-arc-past')}
+          onJumpToFuture={() => router.push('/your-arc-future')}
+        />
+      </GatherIn>
     </View>
   );
 }
