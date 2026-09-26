@@ -10,6 +10,7 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
+import { ensureAIConsent } from '../../../../src/store/aiDisclosureStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
@@ -36,7 +37,12 @@ export default function TodayScreen() {
   const accentColor = `rgb(${accentRgb})`;
   const hasMeasuredBefore = Boolean(currentResult);
 
-  const handleBegin = () => {
+  // Consent is asked here, before the interview opens, rather than at the
+  // first answer — Measure's exchange deliberately fails open (see
+  // interview.tsx), so a "Not now" mid-interview would silently skip every
+  // reply and then fail at scoring.
+  const handleBegin = async () => {
+    if (!(await ensureAIConsent())) return;
     resetInterview();
     track('measure_started');
     router.push('/(tabs)/depths/measure/interview');
@@ -48,51 +54,46 @@ export default function TodayScreen() {
 
       <BackLink style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]} />
 
+      {/* 2026-09-26 — recomposed: four text blocks (kicker, a two-line
+          title, the philosopher's line, a ~40-word paragraph) competed
+          with the figure, and the paragraph repeated what onboarding's
+          meet step had said a moment earlier ("four sides — body, mind,
+          heart, spirit"). Now this is an arrival, not another explanation:
+          the place's name, the figure, the philosopher's one breath of a
+          line, then the button with the one instruction worth keeping.
+          The minimap hides on Measure (see MapBar) — this is a focused
+          conversation, and the back link is the way out. */}
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
         <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
-        <Text style={styles.title}>
-          {t('measureIntro.title')}
-        </Text>
 
-        {/* The one arrival beat for the whole walk — previously this
-            screen's own words ("a conversation to read where you are")
-            were followed by a SECOND, separate arrival screen
-            (AttentionScan, before sphere 0) doing the same settling job
-            again with the aura, and then that same beat repeated before
-            EVERY subsequent sphere too — four ritual interruptions in a
-            conversation that's often only 4-8 exchanges long. Merging the
-            aura directly into this screen means there's exactly one
-            arrival, and the conversation itself (interview.tsx) now runs
-            straight through with no per-sphere gate. See scanPhrases[0]
-            below — reuses the philosopher's own hand-written body-sphere
-            line rather than inventing new copy for this merged moment. */}
-        <AuraSettle />
-        {philosopher?.scanPhrases?.[0]?.phrase && (
-          <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
-        )}
-
-        {!hasMeasuredBefore && (
-          <Text style={styles.copy}>
-            {t('measureIntro.copy', { name: philosopher?.name ?? t('measure.yourPhilosopher') })}
-          </Text>
-        )}
-
-        {currentResult && (
-          <Text style={styles.lastReading}>
-            {t('measureIntro.lastReading', {
-              level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
-            })}
-          </Text>
-        )}
+        {/* The one arrival beat for the whole walk — see this file's history:
+            the per-sphere AttentionScan gate it replaced ran four times in
+            a 4–8 exchange conversation. scanPhrases[0] is the
+            philosopher's own hand-written body-sphere line. */}
+        <View style={styles.presence}>
+          <AuraSettle />
+          {philosopher?.scanPhrases?.[0]?.phrase && (
+            <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
+          )}
+          {currentResult && (
+            <Text style={styles.lastReading}>
+              {t('measureIntro.lastReading', {
+                level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
+              })}
+            </Text>
+          )}
+        </View>
       </View>
 
-      <View style={[styles.footer, { width: columnWidth, alignSelf: 'center' }]}>
+      <View style={[styles.footer, { width: columnWidth, alignSelf: 'center', paddingBottom: spacing[8] + insets.bottom }]}>
         <Pressable
           style={[styles.button, { backgroundColor: accentColor }]}
           onPress={handleBegin}
+          accessibilityRole="button"
         >
           <Text style={styles.buttonText}>{t('measureIntro.beginConversation')}</Text>
         </Pressable>
+        <Text style={styles.caption}>{t('measureIntro.caption')}</Text>
 
         {hasMeasuredBefore && (
           <Pressable
@@ -115,17 +116,22 @@ function makeStyles(colors: Colors) {
   },
   backRow: {
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[8],
+    paddingBottom: spacing[4],
   },
   body: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: spacing[6],
-    gap: spacing[4],
+  },
+  // The figure and the philosopher's line, centred in whatever height is
+  // left between the place name and the button.
+  presence: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing[5],
   },
   footer: {
     paddingHorizontal: spacing[6],
-    paddingBottom: spacing[10],
   },
   kicker: {
     color: colors.text.muted,
@@ -138,24 +144,14 @@ function makeStyles(colors: Colors) {
   // longer renders that component at all, but this screen inherits its
   // one surviving job — the philosopher's wordless-arrival line).
   scanPhrase: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-    textAlign: 'center',
-  },
-  title: {
     color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.md,
-    lineHeight: fontSizes.md * lineHeights.tight,
-  },
-  copy: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
+    fontFamily: fonts.voice,
+    fontSize: fontSizes.lg,
+    lineHeight: fontSizes.lg * 1.35,
+    textAlign: 'center',
+    // Narrow enough that a short line breaks into two balanced lines
+    // rather than leaving one word alone on the second.
+    maxWidth: 260,
   },
   // textAlign: 'center' — matches scanPhrase directly above it (review,
   // 2026-08-19: the two sat right on top of each other with different
@@ -178,6 +174,18 @@ function makeStyles(colors: Colors) {
     color: colors.onAccent,
     fontFamily: fonts.medium,
     fontSize: fontSizes.base,
+  },
+  // The one instruction worth keeping from the old paragraph — plain
+  // layer, directly under the button it's about.
+  caption: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    lineHeight: fontSizes.xs * lineHeights.normal,
+    textAlign: 'center',
+    marginTop: spacing[3],
+    maxWidth: 260,
+    alignSelf: 'center',
   },
   spillLink: {
     alignItems: 'center',

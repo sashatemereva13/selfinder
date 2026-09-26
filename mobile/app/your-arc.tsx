@@ -4,9 +4,6 @@ import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import { spacing } from '../src/theme/spacing';
-import { useAuthStore } from '../src/store/authStore';
-import { usePhilosopherStore } from '../src/store/philosopherStore';
-import { getArcLine } from '../src/api/arcLine';
 import { useAppAccentRgb } from '../src/utils/appAccent';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
 import { ProfileIcon } from '../src/components/shared/ProfileIcon';
@@ -23,20 +20,31 @@ const KALEIDOSCOPE_SIZE = 300;
 // into two standalone sub-pagers, `your-arc-past.tsx` (Facts, TimeCone,
 // Journeys, Detail) and `your-arc-future.tsx` (ResurfacedWish, WishCrossing,
 // Crossing, Closing), each with its own ArcDial and its own scoped data
-// fetch. This file now IS ArcLinePage's cone — the quote, the three curved
-// zone labels — and nothing else: no wheel, no pager, since it's a
-// navigational hub, not one more page in a sequence. Present still routes
-// straight to Depths (a reading's one real home, per RULES.md's "one
-// reading, one screen" rule); past/future now push real routes instead of
-// requesting a same-pager jump, since there's no longer a shared pager to
-// jump within.
+// fetch. This file now IS ArcLinePage's cone — the three curved zone
+// labels — and nothing else: no wheel, no pager, since it's a
+// navigational hub, not one more page in a sequence. Past/future push
+// real routes instead of requesting a same-pager jump, since there's no
+// longer a shared pager to jump within.
 //
-// arcLine is the only piece of Your-Arc-specific data this file still
-// needs — everything else that used to live in the old single 6-call fetch
-// (getMe/getMeasureHistory/listMySpillEntries/listMyWishes/
-// listMyCrossings/listMyJourneySessions) moved into whichever sub-pager
-// actually consumes it, since neither one is reachable from here without a
-// real navigation anyway.
+// 2026-09-12 — the arcLine fetch (a philosopher's live reflection quote,
+// once rendered over the cone's own present zone) is gone along with the
+// quote itself: see ArcLinePage's own header comment for why that text
+// moved off this page entirely. This file now needs no Your-Arc-specific
+// data fetch at all — it's a pure navigational hub over static geometry.
+//
+// 2026-09-13, at the user's own request — Present now routes to Center
+// (the kaleidoscope) instead of Depths. Reasoning: Center was hard to
+// find (buried one swipe deep inside the Past pager, on FactsPage's own
+// row) despite being, in the user's own words, "really beautiful," and
+// "the eternal now" — this vertex, the single point where past and
+// future meet — is a genuinely better conceptual match for Center's own
+// nature (a fresh, generated reflection of THIS present moment, real but
+// deliberately NOT part of the historical record, see RULES.md) than it
+// ever was for Depths (a reading is part of the record, the opposite
+// kind of thing). Depths loses its one-tap hub shortcut, but keeps its
+// own dedicated bottom tab — this hub screen doesn't need to duplicate
+// that entry point. FactsPage's own Center row is untouched; this is a
+// second entry point to the same route, not a replacement for the first.
 export default function YourArcRoute() {
   const colors = useThemeColors();
   const accentRgb = useAppAccentRgb();
@@ -62,34 +70,12 @@ function YourArcHubScreen() {
   const colors = useThemeColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const philosopher = usePhilosopherStore((s) => s.philosopher);
-  const session = useAuthStore((s) => s.session);
-  const [arcLine, setArcLine] = useState<string | null>(null);
-
-  // Same single endpoint ArcLinePage's quote always used, unchanged by
-  // this restructure — cached server-side per calendar day, so there's no
-  // cost to calling it every visit. Requires a chosen philosopher (the
-  // line is generated in their voice) and at least one reading server-side,
-  // or the backend 404s and this stays null — ArcLinePage's own static
-  // fallback line covers that case.
-  useEffect(() => {
-    if (!session || !philosopher) return;
-    let cancelled = false;
-    (async () => {
-      const line = await getArcLine(philosopher, session.token);
-      if (!cancelled) setArcLine(line);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [session, philosopher]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bg.base, paddingTop: insets.top + spacing[4] }}>
       <ProfileIcon />
       <ArcLinePage
-        arcLine={arcLine}
-        onJumpToPresent={() => router.push('/(tabs)/depths')}
+        onJumpToPresent={() => router.push('/center')}
         onJumpToPast={() => router.push('/your-arc-past')}
         onJumpToFuture={() => router.push('/your-arc-future')}
       />

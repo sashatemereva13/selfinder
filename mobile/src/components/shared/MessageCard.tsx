@@ -60,8 +60,7 @@ function makeStyles(colors: Colors) {
       paddingBottom: spacing[12],
     },
     message: {
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xl,
       lineHeight: fontSizes.xl * lineHeights.loose,
       textAlign: 'center',

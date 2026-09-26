@@ -11,11 +11,13 @@ import { useMeasureStore, ReadingLogEntry } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { getMe, getMeasureHistory } from '../src/api/user';
 import { getConversationForMeasureResult, SavedConversation } from '../src/api/conversation';
+import { getArcLine } from '../src/api/arcLine';
 import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { listMyWishes, SavedWish } from '../src/api/wish';
 import { listMyCrossings } from '../src/api/crossing';
 import { findActiveWish } from '../src/components/yourArc/crossingEligibility';
 import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
+import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { listMyJourneySessions } from '../src/api/journeys';
 import { SavedMeasureResult, JourneySessionDTO } from '../src/types';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
@@ -24,6 +26,7 @@ import { PagedScrollView } from '../src/components/yourArc/PagedScrollView';
 import { ArcDial } from '../src/components/yourArc/ArcDial';
 import { buildArcFacts } from '../src/components/yourArc/arcFacts';
 import { useAppAccentRgb } from '../src/utils/appAccent';
+import { track } from '../src/utils/analytics';
 import { useLevelColors } from '../src/content/measureConfig';
 import { useLocaleStore } from '../src/store/localeStore';
 import { DetailPage } from '../src/components/yourArc/pages/DetailPage';
@@ -82,6 +85,7 @@ function YourArcPastScreen() {
   const readingLog = useMeasureStore((s) => s.readingLog);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const session = useAuthStore((s) => s.session);
+  const philosopher = usePhilosopherStore((s) => s.philosopher);
   const centerPurchases = useJourneyPurchases('center');
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
@@ -90,6 +94,18 @@ function YourArcPastScreen() {
   const [spillEntries, setSpillEntries] = useState<SavedSpillEntry[] | null>(null);
   const [journeySessions, setJourneySessions] = useState<JourneySessionDTO[] | null>(null);
   const [allWishes, setAllWishes] = useState<SavedWish[]>([]);
+  // 2026-09-13, at the user's own request — arcLine used to live on
+  // ArcLinePage (the hub screen) as a philosopher-voiced remark layered
+  // over the light cone; removed from there because it competed with the
+  // cone's own tap affordances (see ArcLinePage's own header comment).
+  // Its actual content — one remark generated from the WHOLE record
+  // (reading count/streak, most recent level, active wish; see
+  // arcLine.ts's own header comment) — matches FactsPage's own scope
+  // (this page already opens on a factual summary of the whole record)
+  // more than any single-reading page would, so it's re-homed here
+  // instead of being left orphaned. Fetched alongside this file's own
+  // existing rich-data Promise.all rather than a separate effect.
+  const [arcLine, setArcLine] = useState<string | null>(null);
   // richDataLoading: true while the scoped server fetch (getMe, history,
   // spill, wishes, crossings, journey sessions) is in flight — the facts
   // row, sphere-arc trace, and Journeys section all depend on it and
@@ -143,6 +159,15 @@ function YourArcPastScreen() {
           setSpillEntries(entries);
           setJourneySessions(sessions);
           setAllWishes(wishes);
+          // Best-effort, separate from the Promise.all above — arcLine
+          // needs `philosopher` (unlike every other fetch here), and its
+          // own function already returns null on any failure/missing
+          // token, so a plain sequential call (not blocking the rest of
+          // this fetch on it) is enough.
+          if (philosopher) {
+            const line = await getArcLine(philosopher, session.token);
+            if (!cancelled) setArcLine(line);
+          }
         } catch {
           // Best-effort — the local-only readingLog view still works without this.
         } finally {
@@ -154,7 +179,7 @@ function YourArcPastScreen() {
       cancelled = true;
       task.cancel();
     };
-  }, [session, currentResult?.savedAt, currentResult?.measureResultId]);
+  }, [session, currentResult?.savedAt, currentResult?.measureResultId, philosopher]);
 
   useEffect(() => {
     const fallback = setTimeout(() => setPagerPainted(true), FIRST_PAINT_FALLBACK_MS);
@@ -172,6 +197,7 @@ function YourArcPastScreen() {
     if (entry) {
       setSelected(entry);
       setDetailJumpToken(Date.now());
+      track('your_arc_past_detail_viewed', { levelSlug: entry.levelSlug });
     }
   };
 
@@ -209,6 +235,11 @@ function YourArcPastScreen() {
 
   const pages: React.ReactNode[] = [];
   const pageLabels: string[] = [];
+  // Stable, untranslated identifiers parallel to pageLabels/pages — used
+  // only for analytics (see onActiveIndexChange below); pageLabels itself
+  // is user-facing translated text and the wrong thing to send as an
+  // event property.
+  const pageIds: string[] = [];
 
   pages.push(
     <FactsPage
@@ -223,9 +254,11 @@ function YourArcPastScreen() {
       onReadingPress={handleFactsReadingPress}
       centerPurchaseCount={centerPurchases?.length ?? null}
       onPressCenter={() => router.push('/center')}
+      arcLine={arcLine}
     />
   );
   pageLabels.push(t('yourArc.factsKicker'));
+  pageIds.push('facts');
 
   pages.push(
     <TimeConePage
@@ -237,10 +270,12 @@ function YourArcPastScreen() {
     />
   );
   pageLabels.push(t('yourArc.coneKicker'));
+  pageIds.push('time_cone');
 
   if (journeySessions !== null) {
     pages.push(<JourneysPage key="journeys" sessions={journeySessions} locale={locale} />);
     pageLabels.push(t('yourArc.journeysKicker'));
+    pageIds.push('journeys');
   }
 
   if (selected) {
@@ -258,6 +293,7 @@ function YourArcPastScreen() {
       />
     );
     pageLabels.push(t('yourArc.detailDialLabel'));
+    pageIds.push('detail');
   }
 
   const detailJumpTo = useMemo(
@@ -284,7 +320,11 @@ function YourArcPastScreen() {
         <PagedScrollView
           jumpTo={combinedJumpTo}
           hideDots
-          onActiveIndexChange={(index) => setActiveDialIndex(index)}
+          onActiveIndexChange={(index) => {
+            setActiveDialIndex(index);
+            const pageId = pageIds[index];
+            if (pageId) track('your_arc_past_page_viewed', { page: pageId });
+          }}
         >
           {pages}
         </PagedScrollView>
@@ -317,8 +357,7 @@ function makeStyles(colors: Colors) {
     loadingNote: {
       alignSelf: 'flex-start',
       color: colors.text.faint,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xs,
       paddingHorizontal: spacing[6],
       marginBottom: spacing[2],

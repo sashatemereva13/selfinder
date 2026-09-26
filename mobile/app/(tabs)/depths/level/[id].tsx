@@ -12,6 +12,7 @@ import { useLevelColors, useLevelTextColors } from '../../../../src/content/meas
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
+import { useMeasureStore } from '../../../../src/store/measureStore';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AnimatedNatureSymbol, NatureSymbolId } from '../../../../src/components/depths/NatureSymbol';
 import { BackLink } from '../../../../src/components/shared/BackLink';
@@ -45,11 +46,18 @@ export default function LevelScreen() {
   const columnWidth = useReadingColumnWidth();
   const [deepDiveOpen, setDeepDiveOpen] = useState(false);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
+  const markLevelPageSeen = useEngagementStore((s) => s.markLevelPageSeen);
+  const currentResult = useMeasureStore((s) => s.currentResult);
 
   useEffect(() => {
     if (level) {
       track('level_detail_viewed', { slug: level.slug });
       markDiscovered('levels');
+      // Their own reading's level specifically — lets Depths' philosopher
+      // seam move on from "understand your state" once they have.
+      if (currentResult && currentResult.vibrationLevel.slug === level.slug) {
+        markLevelPageSeen(currentResult.savedAt);
+      }
     }
   }, [level?.slug]);
 
@@ -178,8 +186,7 @@ function makeStyles(colors: Colors) {
   },
   frame: {
     color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.normal,
     paddingLeft: spacing[4],

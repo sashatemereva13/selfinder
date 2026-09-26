@@ -2,16 +2,21 @@ import {
   View,
   Text,
   Pressable,
-  ScrollView,
   StyleSheet,
   Image,
   Platform,
 } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useRouter, Href } from "expo-router";
+import { useIsFocused, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Svg, { Ellipse as SvgEllipse } from "react-native-svg";
+import Svg, {
+  Ellipse as SvgEllipse,
+  Defs,
+  RadialGradient,
+  Stop,
+  Rect as SvgRect,
+} from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import Animated, {
   useSharedValue,
@@ -33,11 +38,6 @@ import { spacing } from "../../../src/theme/spacing";
 import { useWideColumnWidth } from "../../../src/theme/responsive";
 import { useMeasureStore } from "../../../src/store/measureStore";
 import { usePhilosopherStore } from "../../../src/store/philosopherStore";
-import { useGuideChatStore } from "../../../src/store/guideChatStore";
-import {
-  useEngagementStore,
-  DiscoverableFeature,
-} from "../../../src/store/engagementStore";
 import {
   getLevelBySlug,
   getLocalizedLevel,
@@ -50,7 +50,8 @@ import { useLocaleStore } from "../../../src/store/localeStore";
 import { Sphere } from "../../../src/types";
 import { LongPressToSave } from "../../../src/components/shared/LongPressToSave";
 import { AmbientGlow } from "../../../src/components/shared/AmbientGlow";
-import { PhilosopherPresence } from "../../../src/components/depths/PhilosopherPresence";
+import { PhilosopherSeam } from "../../../src/components/depths/PhilosopherSeam";
+import { usePhilosopherStep } from "../../../src/utils/usePhilosopherStep";
 import { PhilosopherEnergy } from "../../../src/components/depths/PhilosopherEnergy";
 import { ProfileIcon } from "../../../src/components/shared/ProfileIcon";
 import {
@@ -66,10 +67,8 @@ import {
   AURA_NEUTRAL_IMAGE_LIGHT,
 } from "../../../src/content/auraLevelImages";
 import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
-import { track } from "../../../src/utils/analytics";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
-import { DepthsSpiralMenu } from "../../../src/components/depths/DepthsSpiralMenu";
 import {
   SLOT_ORDER,
   H_CUT,
@@ -78,10 +77,6 @@ import {
   TOP_LOOP_TARGET_PX,
   TOP_MARGIN,
   type SpiralSpherePoint,
-  type SpiralActionPoint,
-  type SpiralActionKey,
-  type SpiralShiftSubPoint,
-  type SpiralShiftSubKey,
 } from "../../../src/components/depths/depthsSpiralGeometry";
 import {
   buildDepthsGeometry,
@@ -156,77 +151,24 @@ const SPHERE_LABEL_KEYS: Record<string, string> = {
   spirit: "common.sphereSpirit",
 };
 
-// Never Spill here, deliberately — it already has its two dedicated homes
-// (the fork on Measure's entry screen, and Guide's rare invitation); adding
-// a third, generic "try this" nudge for it would undercut exactly the
-// positioning fix that gave it those two instead. Priority order matters:
-// understanding what a level means is more foundational than a regulation
-// tool, so it's offered first.
-const DISCOVERY_NUDGES: {
-  feature: DiscoverableFeature;
-  labelKey: string;
-  route: Href;
-}[] = [
-  {
-    feature: "levels",
-    labelKey: "depths.nudgeLevels",
-    route: "/(tabs)/depths/levels",
-  },
-  {
-    feature: "tuneIn",
-    labelKey: "depths.nudgeTuneIn",
-    route: "/(tabs)/depths/tunein",
-  },
-  {
-    feature: "breathing",
-    labelKey: "depths.nudgeBreathing",
-    route: "/(tabs)/depths/breathing",
-  },
-];
-
-type Tool = {
-  key: string;
-  labelKey: string;
-  descriptionKey: string;
-  route: Href;
-};
-
-// 2026-08-29: the spiral no longer does navigation (see DepthsSpiral.tsx's
-// own header comment — it's sphere-only now). Tool routes still live here,
-// just no longer framed as "spiral slots" — they're read directly by
-// intentionSection's own rows below (Measure's new dedicated row, Shift's
-// expanded Tune In/Breathing choice) and by Talk about it's own handler.
-const TOOL_META = {
-  measure: {
-    labelKey: "depths.measureLabel",
-    descriptionKey: "depths.measureDescription",
-    route: "/(tabs)/depths/measure" as Href,
-  },
-  breathing: {
-    labelKey: "depths.breathingLabel",
-    descriptionKey: "depths.breathingDescription",
-    route: "/(tabs)/depths/breathing" as Href,
-  },
-};
-// Moon ('Understand your timing') is deliberately pulled out of the current
-// flow, not deleted — its actual value (and a possible Sun/planets
-// expansion) needs to be worked through before it earns a place next to
-// Tune In. The screen still exists at app/(tabs)/depths/moon, unlinked, for
-// when that's ready — likely as paid content.
-
-// Kept outside the sequence and styled quieter — this one isn't a step, it's
-// an alternative to the whole thing: skip finding out, let a message find
-// you. "Feeling Lucky" (the old label) read as a random-internet-button
-// idiom that didn't belong in this world; this says the same thing in
-// Selfinder's own voice.
-const FEELING_LUCKY: Tool = {
-  key: "feeling-lucky",
-  labelKey: "depths.feelingLuckyLabel",
-  descriptionKey: "depths.feelingLuckyDescription",
-  route: "/(tabs)/depths/feeling-lucky",
-};
-
+// A finished Measure returns to the Depths already underneath it
+// (dismissTo in interview.tsx) instead of stacking a new copy. The arrival
+// reveal reads `justCompleted` when DepthsContent first mounts — so while a
+// just-finished reading is on its way back and Depths is still covered,
+// this holds a plain dark frame (matching the interview's fade to black)
+// in place of the old content; the moment Depths comes into view,
+// DepthsContent mounts fresh and plays the arrival as it always has.
 export default function DepthsScreen() {
+  const justCompleted = useMeasureStore((s) => s.justCompleted);
+  const isFocused = useIsFocused();
+  const colors = useThemeColors();
+  if (justCompleted && !isFocused) {
+    return <View style={{ flex: 1, backgroundColor: colors.bg.base }} />;
+  }
+  return <DepthsContent />;
+}
+
+function DepthsContent() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const levelTextColors = useLevelTextColors();
@@ -236,9 +178,6 @@ export default function DepthsScreen() {
   const insets = useSafeAreaInsets();
   const columnWidth = useWideColumnWidth();
   const currentResult = useMeasureStore((s) => s.currentResult);
-  const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
-  const discovered = useEngagementStore((s) => s.discovered);
-  const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
   const accentRgb = useAppAccentRgb();
   // Text-safe variant — this screen's sphere/point labels and the
   // pre-reading neutral point color are both real Text, not decoration
@@ -247,10 +186,7 @@ export default function DepthsScreen() {
   const accentTextRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentTextRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
-  const sendGuideMessage = useGuideChatStore((s) => s.send);
-  const setPendingMeasureResultId = useGuideChatStore(
-    (s) => s.setPendingMeasureResultId,
-  );
+  const step = usePhilosopherStep();
   // Read synchronously (safe — no store mutation) so the very first paint
   // already starts hidden/scaled-down when arriving; the flag itself is
   // cleared in the effect below, not here, since calling the store's set()
@@ -296,13 +232,6 @@ export default function DepthsScreen() {
     // back to false later (via onSettled) shouldn't re-fire this.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  // At most one nudge, for the highest-priority thing not yet found — never
-  // stacked, never repeated once discovered. Only surfaced for someone who's
-  // already established the core habit, not a first-timer still on Measure.
-  const discoveryNudge =
-    totalMeasureCount >= 2
-      ? DISCOVERY_NUDGES.find((n) => !discovered[n.feature])
-      : undefined;
   const rawLastLevel = currentResult
     ? getLevelBySlug(currentResult.vibrationLevel.slug)
     : undefined;
@@ -473,142 +402,6 @@ export default function DepthsScreen() {
     setPulsingSphere(null);
   };
 
-  // The former intentionSection rows (Stay/Understand/Shift/Measure again),
-  // folded onto the spiral's own upper h>1 extension 2026-08-30 — see
-  // DepthsSpiral.tsx's SpiralActionKey. "Understand" only appears once a
-  // philosopher is set, mirroring the old intentionRow's own guard.
-  const actionSpiralPoints: SpiralActionPoint[] = useMemo(() => {
-    const list: SpiralActionPoint[] = [
-      {
-        key: "stay",
-        label: t("depths.stayWithIt"),
-        description: discovered.spill
-          ? t("depths.stayWithItCardsAndSpill")
-          : t("depths.stayWithItCardsOnly"),
-        // 2026-09-03 — symbolId wires up DepthsMenuSymbol's own
-        // already-designed "stay" glyph (stayPath in that file), which
-        // existed but was never actually rendered as a dot until now.
-        symbolId: "stay",
-      },
-    ];
-    if (philosopher) {
-      list.push({
-        key: "understand",
-        label: t("depths.understandIt"),
-        description: t("depths.understandItDescription", {
-          name: philosopher.name,
-        }),
-        // "Understand it" reuses the current philosopher's OWN
-        // PhilosopherObject mark, not a DepthsMenuSymbol glyph — this
-        // row literally means "talk with them," so its own symbol
-        // should BE them (see DepthsMenuSymbol.tsx's own header comment,
-        // which documented this exact plan when the symbol set was
-        // first designed).
-        philosopherId: philosopher.id,
-      });
-    }
-    list.push(
-      {
-        key: "shift",
-        label: t("depths.shiftIt"),
-        description: t("depths.shiftItDescription"),
-        symbolId: "shift",
-      },
-      {
-        key: "measure",
-        label: t("depths.measureAgain"),
-        description: t("depths.measureAgainDescription"),
-        symbolId: "measure",
-      },
-      // 2026-09-02 — moved onto the curve from their own plain wideMenuRow
-      // rows (now removed), at the user's own request: everything else on
-      // this screen has the spiral's own visual language, and these two
-      // read as a generic settings-style list by comparison. Same exact
-      // translated strings, just relocated. (2026-09-03: every point now
-      // has its own symbol, not just these two — see stay/understand/
-      // shift/measure above — but exploreMap/feelingLucky's own symbols
-      // still mark a genuinely different CATEGORY, open-ended exploration
-      // rather than this reading's own next steps.)
-      {
-        key: "exploreMap",
-        label: t("depths.exploreTheMap"),
-        description: t("depths.exploreTheMapDescription"),
-        symbolId: "exploreMap",
-      },
-      {
-        key: "feelingLucky",
-        label: t(FEELING_LUCKY.labelKey),
-        description: t(FEELING_LUCKY.descriptionKey),
-        symbolId: "feelingLucky",
-      },
-    );
-    return list;
-  }, [t, discovered.spill, philosopher]);
-
-  const shiftSubSpiralPoints: SpiralShiftSubPoint[] = useMemo(
-    () => [
-      {
-        key: "tuneIn",
-        label: t("depths.tuneInLabel"),
-        description: t("depths.tuneInDescription"),
-      },
-      {
-        key: "breathing",
-        label: t(TOOL_META.breathing.labelKey),
-        description: t(TOOL_META.breathing.descriptionKey),
-      },
-    ],
-    [t],
-  );
-
-  const [pulsingAction, setPulsingAction] = useState<
-    SpiralActionKey | SpiralShiftSubKey | null
-  >(null);
-  const [shiftRevealed, setShiftRevealed] = useState(false);
-
-  const handleActionPress = (key: SpiralActionKey) => {
-    if (pulsingAction) return;
-    if (key === "shift") {
-      setShiftRevealed((r) => !r);
-      return;
-    }
-    setPulsingAction(key);
-  };
-  const handleShiftSubPress = (key: SpiralShiftSubKey) => {
-    if (pulsingAction) return;
-    setPulsingAction(key);
-  };
-  const handleActionPulseSettled = () => {
-    const settled = pulsingAction;
-    setPulsingAction(null);
-    setShiftRevealed(false);
-    switch (settled) {
-      case "stay":
-        router.push("/(tabs)/depths/cards");
-        break;
-      case "understand":
-        handleTalkAboutIt();
-        break;
-      case "measure":
-        router.push(TOOL_META.measure.route);
-        break;
-      case "exploreMap":
-        router.push("/(tabs)/depths/levels");
-        break;
-      case "feelingLucky":
-        router.push(FEELING_LUCKY.route);
-        break;
-      case "tuneIn":
-        router.push("/(tabs)/depths/tunein");
-        break;
-      case "breathing":
-        router.push(TOOL_META.breathing.route);
-        break;
-      default:
-        break;
-    }
-  };
-
   // Traveling arrival-descent marker (see DepthsSpiral.tsx's own
   // playArrivalDescent prop) — plays once, right after a reading completes,
   // timed to land exactly as the aura body finishes forming (COLOR_START_MS
@@ -628,46 +421,11 @@ export default function DepthsScreen() {
     });
   };
 
-  // Was reveal's own action, keyed to the reading that had just finished;
-  // here it just reads off currentResult directly, since that's always the
-  // most recent reading regardless of how someone arrived at this screen.
-  // Always sends to Guide, plain and unnudged — the past-threshold upsell
-  // nudge that used to live on the not-subscribed Your Arc preview screen
-  // was removed 2026-08-28 along with that screen, once Selfinder went
-  // fully free and there was nothing left to nudge toward.
-  const AXIS_LABEL_KEYS: Record<string, string> = {
-    calm: "common.axisCalm",
-    clarity: "common.axisClarity",
-    intensity: "common.axisIntensity",
-    grounding: "common.axisGrounding",
-  };
-
-  const handleTalkAboutIt = () => {
-    if (!philosopher || !currentResult) return;
-    track("reveal_talk_about_it");
-    recordTalkAboutIt();
-    setPendingMeasureResultId(philosopher.id, currentResult.measureResultId);
-    sendGuideMessage(
-      philosopher,
-      t("depths.iJustMeasuredMyself", {
-        level: getLocalizedLevelName(
-          currentResult.vibrationLevel,
-          locale,
-        ).toLowerCase(),
-        axis: t(
-          AXIS_LABEL_KEYS[currentResult.dominantAxis] ??
-            currentResult.dominantAxis,
-        ),
-      }),
-    );
-    router.push("/guide");
-  };
-
   const entryFadeStyle = useAnimatedStyle(() => ({ opacity: entryFade.value }));
 
   // 2026-09-02 — fixedZone (the fixed/scroll split's own never-scrolling
   // zone) can no longer shrink or scroll its own content, unlike the old
-  // single ScrollView. Its natural height (kicker + PhilosopherPresence +
+  // single ScrollView. Its natural height (kicker + PhilosopherSeam +
   // quote + core geometry's own canvas) comfortably fits taller phones,
   // but on the shortest supported device (iPhone SE, 667pt) it exceeds
   // the screen's own available height entirely, clipping behind the tab
@@ -705,7 +463,10 @@ export default function DepthsScreen() {
   // within the same layout pass before paint on both web and native.
   const [rootHeight, setRootHeight] = useState(0);
   const [naturalContentHeight, setNaturalContentHeight] = useState(0);
-  const MIN_SCROLL_ZONE_HEIGHT = 120;
+  // Room the philosopher's seam needs below the fixed zone (its large line
+  // runs to three lines on a narrow phone) — the fixed zone scales down
+  // before it ever squeezes this.
+  const MIN_SCROLL_ZONE_HEIGHT = 190;
   // Natural (scale-1) geometry — always built, used both for the first
   // measurement pass and as the render output whenever no shrink is
   // needed (the common case: taller phones never touch the branch
@@ -748,7 +509,6 @@ export default function DepthsScreen() {
     [fixedZoneScale, naturalGeometry],
   );
   const CORE_GEOMETRY = geometry.core;
-  const MENU_GEOMETRY = geometry.menu;
   const AURA_METRICS = geometry.auraMetrics;
   const SPIRAL_AURA_HALF_WIDTH = geometry.spiralAuraHalfWidth;
   const SPIRAL_AURA_HALF_HEIGHT = geometry.spiralAuraHalfHeight;
@@ -793,7 +553,20 @@ export default function DepthsScreen() {
           reason, but came back later the same day (see fixedZone's own
           style comment) for a deliberate, unrelated purpose: cropping
           the spiral's own top-bleed effect, not squeezing oversized
-          content — a real, current need, not a leftover. */}
+          content — a real, current need, not a leftover.
+          2026-09-12 — briefly tried swapping this order (scrollZone on
+          top, fixedZone/the aura pinned to the bottom) at the user's own
+          request, reverted the same session: with the action menu on
+          top, the curve visibly broke continuity around "Shift it"/the
+          header (DepthsSpiralMenu's own curve still climbs AWAY from its
+          seam point in the same direction as before, which reads as
+          doubling back once it's above fixedZone on screen instead of
+          below it — see depthsSpiralGeometry.ts's own seam-continuity
+          math, never re-derived for the swap), and the screen's own
+          title (DEPTHS/kicker) ended up buried mid-page instead of at
+          the top. Confirmed via on-device screenshot, then reverted —
+          the user preferred the wheel/aura visible immediately at the
+          top, which this original order already does. */}
       <View
         style={[
           styles.fixedZone,
@@ -848,11 +621,6 @@ export default function DepthsScreen() {
             explain it; see the same reasoning applied to Journeys'
             products.intro/products.groupPresentDescription below. */}
 
-          {/* Guide's real entry point now that it's off the bottom tab bar
-            — always visible, always routes to Guide, no reading required.
-            See docs/app-architecture-concept.md, "What Guide's demotion
-            actually means." */}
-          <PhilosopherPresence />
 
           {currentResult && lastLevel ? (
             <>
@@ -989,6 +757,7 @@ export default function DepthsScreen() {
                       sphereScores={sphereScores}
                       selectedSphere={selectedSphere}
                       geometry={geometry}
+                      glowColor={levelColor}
                       neutralAura={
                         <AuraWithDots
                           source={
@@ -1025,7 +794,33 @@ export default function DepthsScreen() {
                   much bigger now and bleeds mostly off the canvas's
                   right/top edges, leaving only its bottom-left quarter
                   visible — see DepthsSpiralCore.tsx's own wheelPos
-                  comment). */}
+                  comment). 2026-09-12: column widened twice in the same
+                  session (45%→58%, then 58%→68%) and numberOfLines
+                  through 4→7→9→8, all confirmed via direct DOM
+                  measurement (element.scrollHeight vs clientHeight), not
+                  guessed. First pass (45%→58%, 4→7 lines) fixed a real
+                  truncation bug (a 30-word combinationMessage — the AI
+                  prompt's own cap, see requestCombinationMessage,
+                  backend/controllers/chatController.js — clipping
+                  against the old 4-line cap). Second pass: bumping
+                  title's own fontSize 11→14px (styles.title, see its own
+                  comment — fixed a real size-hierarchy inversion, the
+                  quote was tied for the SMALLEST text on the whole
+                  screen) meant the same 30-word sentence needed 9 lines
+                  at 58% width — which visually collided with the "Mind"
+                  sphere label below it (confirmed via measuring both
+                  elements' real screen position: only ~181px/8.35 lines
+                  are actually clear above Mind). Fixed by widening the
+                  column further to 68% (same sentence now fits in 7
+                  lines at the new size) rather than shrinking the font
+                  back down. numberOfLines set to 8, not 7, as a small
+                  margin above the measured worst case. The wheel itself
+                  is untouched by any of this (deliberately kept exactly
+                  as big as it was — it's this app's main concept), since
+                  the reclaimed width both times came from space the
+                  wheel's own bleed never occupied in the first place —
+                  reverify this is still true (screenshot-check the wheel
+                  edge) if the column is ever widened again. */}
                 <View style={styles.quoteBubbleWrap} pointerEvents="box-none">
                   {headlineMessage ? (
                     <LongPressToSave
@@ -1033,7 +828,7 @@ export default function DepthsScreen() {
                       accentRgb={levelRgb}
                     >
                       <Text
-                        numberOfLines={4}
+                        numberOfLines={8}
                         style={[styles.title, { color: levelColor }]}
                       >
                         {headlineMessage}
@@ -1041,7 +836,7 @@ export default function DepthsScreen() {
                     </LongPressToSave>
                   ) : (
                     <Text
-                      numberOfLines={4}
+                      numberOfLines={8}
                       style={[styles.title, { color: levelColor }]}
                     >
                       {headlineMessage}
@@ -1097,124 +892,39 @@ export default function DepthsScreen() {
                   />
                 </View>
               </View>
-              <Text style={styles.title}>{t("depths.firstReadingCopy")}</Text>
             </>
           )}
         </View>
       </View>
 
-      <ScrollView
-        style={styles.scrollZone}
-        contentContainerStyle={[
-          styles.scrollContent,
+      {/* The philosopher's place on Depths — all the space between the
+          reading and the minimap (2026-09-26). This zone first held the
+          scrolling action menu (replaced by the map), then briefly just the
+          menu's spiral art as a decorative thread; the user found the line
+          unnecessary and gave the space to the philosopher speaking
+          instead: their one line, larger, centred in the room it has. */}
+      <View
+        style={[
+          styles.scrollZone,
+          styles.seamZone,
           { width: columnWidth, alignSelf: "center" },
         ]}
       >
-        {/* DepthsSpiralMenu — the action points (Stay/Understand/Shift/
-            Measure again) + the decorative top loop, h∈[H_CUT, H_MAX].
-            Deliberately the FIRST thing in the scroll content (both
-            branches — pre-reading action points are already independent
-            of reading state, see actionSpiralPoints' own comment) so it
-            sits visually flush against DepthsSpiralCore's own canvas
-            directly above it in the fixed zone, at scroll position 0 —
-            see MENU_GEOMETRY's own header comment for why that flushness
-            is exactly what the seam-continuity math assumes. The
-            timestamp/explore-map/wish rows (below) come AFTER this, not
-            before — they're "what happened"/"what's elsewhere" content,
-            not part of the curve, so they belong under the visual join,
-            not wedged between the two halves of it. */}
-        <View style={styles.menuWrap}>
-          <DepthsSpiralMenu
-            width={MENU_GEOMETRY.width}
-            height={MENU_GEOMETRY.height}
-            chestY={MENU_GEOMETRY.chestY}
-            riseHeight={MENU_GEOMETRY.riseHeight}
-            auraHalfWidth={SPIRAL_AURA_HALF_WIDTH}
-            auraHalfHeight={SPIRAL_AURA_HALF_HEIGHT}
+        {philosopher && (
+          <PhilosopherSeam
+            key={step.state}
+            philosopher={philosopher}
+            line={step.line}
+            actionLabel={step.actionLabel}
+            onAction={step.run}
+            onOpenConversation={step.openConversation}
+            accentTextColor={accentColor}
             accentRgb={accentRgb}
-            actionPoints={actionSpiralPoints}
-            onActionPress={handleActionPress}
-            shiftRevealed={shiftRevealed}
-            shiftSubPoints={shiftSubSpiralPoints}
-            onShiftSubPress={handleShiftSubPress}
-            pulseKey={pulsingAction}
-            onPulseSettled={handleActionPulseSettled}
+            visible={!isArriving}
+            size="large"
           />
-        </View>
-
-        <View style={styles.sectionDivider} />
-
-        {/* 2026-09-02 — the unified "what to do next" menu: the 4 curve
-            points above (Stay/Understand/Shift/Measure again — this
-            reading's own next steps) plus a second, visually distinct
-            group for open-ended exploration not tied to this specific
-            reading (Explore the map, Feeling lucky). Both groups now
-            share the SAME row weight (label + description, left-aligned)
-            as the curve points, rather than the second group reading as
-            a smaller afterthought/footer — a deliberate hierarchy choice
-            (see this session's own design discussion): one continuous
-            hub of real choices, not a menu plus three different kinds of
-            footnote. "Explore the map" moved here from a small link
-            right under the quote (a real duplication risk once discussed
-            with "Show conversation," see the old comment history) — this
-            is its first appearance as a full menu row. The wish
-            disclosure that used to sit near here was removed the same
-            day: it duplicated what Your Arc's own DetailPage already
-            shows for this reading (see aesthetic.md's "one reading, one
-            screen" reasoning — the same logic that already removed
-            "Show conversation" from this spot applies here too). */}
-        <View style={styles.stack}>
-          {discoveryNudge && (
-            <Pressable
-              style={styles.discoveryNudge}
-              onPress={() => router.push(discoveryNudge.route)}
-            >
-              <Text style={styles.discoveryNudgeText}>
-                {t(discoveryNudge.labelKey)}
-              </Text>
-            </Pressable>
-          )}
-
-          {/* 2026-09-03 — a quiet closing line, so the scroll ends on a
-              deliberate moment of stillness instead of trailing off into
-              genuinely empty space. Before this, once discoveryNudge had
-              nothing to show (most returning visits — see its own "at most
-              one, for the highest-priority thing not yet found" gating)
-              and Explore the Map/Feeling Lucky had already moved onto the
-              curve above (2026-09-02), this whole stack could render
-              completely empty: sectionDivider, then nothing. Never a
-              call-to-action or a summary of what's above — just a plain
-              permission to leave, same register as firstReadingCopy
-              ("whatever you're feeling right now is information, not a
-              problem to fix"): no diagnosis, no "you should," nothing
-              claimed about this specific person's state. */}
-          <Text style={styles.closingLine}>{t("depths.closingLine")}</Text>
-
-          {/* Explore the map / Feeling Lucky moved onto the curve itself
-              (2026-09-02, see actionSpiralPoints' own comment) — no
-              longer separate wideMenuRow rows here. */}
-
-          {/* Bottom energy spirals — commented out for now (2026-08-30),
-              pending further review; kept intact (bottomEnergyWrap style,
-              the PhilosopherEnergy import) so this is a one-line restore.
-              Was meant to bookend PhilosopherPresence's own descending
-              spirals at the top of the page — same motif, flipped to rise
-              rather than descend. See PhilosopherEnergy's own header
-              comment. */}
-          {/* {philosopher && (
-            <View style={styles.bottomEnergyWrap} pointerEvents="none">
-              <PhilosopherEnergy
-                seed={philosopher.id}
-                width={SCREEN_WIDTH}
-                height={38}
-                color={`rgb(${accentRgb})`}
-                spiralCount={9}
-                direction="up"
-              />
-            </View>
-          )} */}
-        </View>
-      </ScrollView>
+        )}
+      </View>
 
       {/* topFade (the gradient that used to cover content sliding under
           the status bar/notch from behind) was removed 2026-09-01, once
@@ -1264,6 +974,7 @@ function AuraArrival({
   settledAura,
   selectedSphere,
   geometry,
+  glowColor,
 }: {
   arriving: boolean;
   // Flips true on a tap anywhere on the reveal (see the wrapping Pressable
@@ -1282,6 +993,10 @@ function AuraArrival({
   neutralAura: React.ReactNode;
   settledAura: React.ReactNode;
   selectedSphere: SphereKey | null;
+  // The reading's own one accent color (same value driving the headline
+  // and rings) — see AuraGlow below for why this needed to be threaded in
+  // rather than recomputed locally.
+  glowColor: string;
   // 2026-09-02 — the live (possibly shrunk) geometry, threaded down from
   // the screen's own useMemo rather than read off a module constant, so
   // the ring/aura genuinely resize on a short screen (see
@@ -1474,6 +1189,23 @@ function AuraArrival({
 
   return (
     <View style={styles.ringWrap}>
+      {/* 2026-09-12, at the user's own request — a first-time viewer's eye
+          wasn't landing on the aura first (the wheel's size and the
+          quote's saturated color were winning that contest instead, see
+          this session's own discussion). Rather than shrinking either of
+          those (the wheel is this app's main concept and must stay big;
+          the quote was just widened to stop truncating), this gives the
+          aura itself a real contrast advantage: a soft radial glow in
+          the reading's own color, centered behind it, so it's the
+          brightest thing on the canvas purely by luminance — no layout
+          change. Depths' aura is a pre-rendered PNG (AuraWithDots), not
+          the live AuraFigure SVG used elsewhere in the app, so its own
+          baked-in rim can't be tuned here — this is a separate glow
+          layer behind it instead, same RadialGradient technique
+          AmbientGlow already uses for the page-level glow, just tighter
+          and centered on the aura specifically rather than the whole
+          screen. */}
+      <AuraGlow color={glowColor} />
       <AnimatedAuraField
         size={geometry.auraDisplaySize}
         colors={ringOnlySlugs}
@@ -1489,6 +1221,28 @@ function AuraArrival({
           {settledAura}
         </Animated.View>
       </Animated.View>
+    </View>
+  );
+}
+
+// A tight radial glow centered on the aura's own chest, one solid color
+// (the reading's own accent — same value the headline/rings already use,
+// never a second competing hue) fading to transparent. Purely decorative
+// (pointerEvents 'none'), sits behind AnimatedAuraField in paint order so
+// the rings/aura render on top of it, not the other way around.
+function AuraGlow({ color }: { color: string }) {
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+      <Svg width="100%" height="100%">
+        <Defs>
+          <RadialGradient id="auraFocusGlow" cx="50%" cy="62%" r="55%">
+            <Stop offset="0" stopColor={color} stopOpacity={0.22} />
+            <Stop offset="0.5" stopColor={color} stopOpacity={0.08} />
+            <Stop offset="1" stopColor={color} stopOpacity={0} />
+          </RadialGradient>
+        </Defs>
+        <SvgRect width="100%" height="100%" fill="url(#auraFocusGlow)" />
+      </Svg>
     </View>
   );
 }

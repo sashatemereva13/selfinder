@@ -336,7 +336,7 @@ export function hForShiftSub(key: SpiralShiftSubKey): number {
 // a game's status readout sits apart from the menu below it rather than
 // being woven into the menu's own artwork. Sits comfortably within
 // DepthsSpiralCore's own h∈[0, H_CUT] canvas (H_CUT=1.55 > WHEEL_H=1.31).
-export const WHEEL_H = 1.41;
+export const WHEEL_H = 1.65;
 // Passed as VibrationSpectrum's own `size` prop — its bounding box (with
 // ticks/marker) comes out a little larger than this, roughly ~140px.
 // Grown from 92 (2026-08-30, "much bigger") once the gap itself was
@@ -365,7 +365,7 @@ export const WHEEL_SIZE = 340;
 // old value of 40, silently leaving the quote's column too narrow/with
 // dead space once the wheel moved closer to the edge). One named export
 // here is the only value either file should read.
-export const WHEEL_SIDE_MARGIN = 12;
+export const WHEEL_SIDE_MARGIN = -50;
 // How far the wheel's own center is lifted above its curve-anchored
 // position (WHEEL_H) — a fraction of WHEEL_SIZE, so it scales with the
 // wheel rather than a flat pixel count. 2026-09-02 — shared export for

@@ -11,12 +11,12 @@ import { AmbientGlow } from '../src/components/shared/AmbientGlow';
 import { BackLink } from '../src/components/shared/BackLink';
 import { HOW_TO_USE_ENTRIES } from '../src/content/howToUseEntries';
 
-// Reachable from onboarding (once, via HowToUseOverlay.tsx right after
-// choosing a philosopher) and from the profile screen (any time after,
-// same weight as "Where this comes from" — see profile.tsx's own
-// sourcesLink row, which this screen's own link is modeled on directly).
-// See howToUseEntries.ts for why the content list is shared rather than
-// duplicated between this screen and the overlay.
+// Reachable from the profile screen (same weight as "Where this comes
+// from" — see profile.tsx's own sourcesLink row, which this screen's own
+// link is modeled on directly). No longer shown automatically after
+// onboarding (2026-09-26): its tips were for screens a new person hadn't
+// seen yet — orientation moves to where it applies instead (RULES.md,
+// "The philosopher is a constant presence").
 export default function HowToUseScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();

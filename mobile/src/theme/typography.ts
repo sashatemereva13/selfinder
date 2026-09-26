@@ -23,6 +23,16 @@ export const fonts = {
   // swapping ITS mapping to true Light would change every screen at
   // once, not just this one deliberate contrast.
   trueLight: "EtudeNoire-Light",
+  // 2026-09-26 — the philosopher's voice (and any other voiced/quoted
+  // line: a card's message, a wish in someone's own words). Was italic
+  // everywhere, but Etude Noire ships no italic file and iOS won't fake an
+  // italic for a custom font, so the "voice" layer rendered upright and
+  // only colour told it apart from the plain line beneath it (RULES.md,
+  // "Two layers"). Weight carries it instead: thin strokes for the voice,
+  // the sturdier Medium (fonts.light/medium) for plain meaning. Voice
+  // lines are short, so Light's halation on dark backgrounds — the reason
+  // body text moved to Medium — matters much less here.
+  voice: "EtudeNoire-Light",
 } as const;
 
 export const fontSizes = {

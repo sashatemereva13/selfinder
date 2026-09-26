@@ -279,6 +279,17 @@ export function DepthsSpiralCore({
       if (point.key === "spirit") {
         labelX = Math.max(0, labelX - 4);
       }
+      // Body-specific nudge (2026-09-12, at the user's own request) —
+      // purely positional, moving the label slightly down and right from
+      // where the shared geometry above would place it on its own. Same
+      // "applied after the canvas clamp, not before" reasoning as
+      // Spirit's nudge above. Unrelated to the "y" descender clipping
+      // this label also had — that was the Text's own tight line-height
+      // (see pointLabel's lineHeight below), not this label's position.
+      if (point.key === "body") {
+        labelX += 6;
+        labelY += 6;
+      }
       return { labelX, labelY, align };
     });
   }, [points, geometry]);
@@ -334,11 +345,16 @@ export function DepthsSpiralCore({
   // ("the dot travels across the spiral, which looks pretty cool, but
   // can it move slower?" / "make it a bit slower"), still a confirmation
   // pulse rather than the ceremonial ~1700ms arrival descent, just given
-  // enough time to actually be watched traveling the curve. Unchanged
-  // from the pre-split version.
+  // enough time to actually be watched traveling the curve. Later pushed
+  // to 4000ms (too slow — the gap before onPulseSettled fired read as
+  // unresponsive), then dropped to 1500ms, which in turn read as too
+  // fast for an app whose whole register is unhurried, inward attention
+  // rather than snappy UI feedback. Settled at 2200ms: closer to the
+  // ceremonial arrival descent's own pace than to a UI micro-
+  // interaction's, while still resolving before it reads as sluggish.
   const pulseProgress = useSharedValue(0);
   const pulseOpacity = useSharedValue(0);
-  const PULSE_DURATION_MS = 4000;
+  const PULSE_DURATION_MS = 2200;
   const PULSE_FADE_MS = 180;
   useEffect(() => {
     if (!pulseToSphere) return;
@@ -519,8 +535,8 @@ export function DepthsSpiralCore({
                 selectedWheelLevelSlug ?? lastWheelSlug.current!,
               )}
               labelOffset={{
-                x: geometry.curveTouchPoint.x - wheelPos.x + 100,
-                y: geometry.curveTouchPoint.y - wheelPos.y - 10,
+                x: geometry.curveTouchPoint.x - wheelPos.x + 40,
+                y: geometry.curveTouchPoint.y - wheelPos.y + 30,
               }}
               // 2026-09-02, at the user's own request — the wheel's own
               // dots read as too large once the whole ring grew (per
@@ -537,13 +553,49 @@ export function DepthsSpiralCore({
           </Animated.View>
         )}
 
+        {/* 2026-09-12, at the user's own request — with nothing selected,
+            all four dots/labels used to sit at the same near-full weight
+            (0.85 dot opacity, the same fontSizes.xs used everywhere else
+            on this screen) as everything else on the canvas, competing
+            with the aura for a first-time viewer's first glance instead
+            of clearly reading as attributes OF it. Quieting their idle
+            resting state (dimmer dots, smaller/fainter labels) — ONLY
+            when nothing is selected — gives the aura a clearer first-
+            glance win without touching the wheel (which must stay big,
+            per the user's own explicit call) or this component's actual
+            layout/geometry. The moment any one sphere IS selected, that
+            one dot/label pops back to its full, easily-readable weight
+            (point.isSelected below, unchanged) — this only affects the
+            shared idle/neutral resting state all four start from. */}
         {points.map((point, i) => {
           const layout = labelLayout[i];
           if (!layout) return null;
           const { x, y } = geometry.points[i];
           const { labelX, labelY, align } = layout;
+          const anySelected = points.some((p) => p.isSelected);
           const dotColor = interactive ? point.color : `rgb(${accentRgb})`;
-          const dotOpacity = interactive ? (point.isSelected ? 1 : 0.85) : 0.45;
+          const dotOpacity = interactive
+            ? point.isSelected
+              ? 1
+              : anySelected
+                ? 0.85
+                : 0.55
+            : 0.45;
+          // 2026-09-12, at the user's own request — selection used to be
+          // opacity-only (1 vs 0.85/0.55 above), a single weak signal.
+          // Research on visual hierarchy (Gestalt size-contrast, modular
+          // type scales) treats SIZE as the strongest hierarchy cue,
+          // stronger than opacity/color alone, and recommends a real,
+          // deliberate ratio between tiers rather than a small nudge —
+          // 1.333 ("perfect fourth") is one of the standard modular-scale
+          // ratios. Applied only to the SELECTED dot's own radius, so
+          // selection now reads through two independent signals (size +
+          // opacity) instead of one. DOT_RADIUS itself (the shared
+          // geometry constant label-offset math depends on, see
+          // labelOffset above) is intentionally left untouched — this is
+          // a per-instance render-time scale-up, not a change to the
+          // base geometry every point is laid out from.
+          const dotRadius = point.isSelected ? DOT_RADIUS * 1.333 : DOT_RADIUS;
 
           return (
             <View key={point.key}>
@@ -561,9 +613,9 @@ export function DepthsSpiralCore({
                   style={[
                     styles.dot,
                     {
-                      width: DOT_RADIUS * 2,
-                      height: DOT_RADIUS * 2,
-                      borderRadius: DOT_RADIUS,
+                      width: dotRadius * 2,
+                      height: dotRadius * 2,
+                      borderRadius: dotRadius,
                       backgroundColor: dotColor,
                       opacity: dotOpacity,
                     },
@@ -582,7 +634,10 @@ export function DepthsSpiralCore({
                 hitSlop={4}
                 accessibilityRole="button"
                 accessibilityLabel={point.label}
-                accessibilityState={{ selected: point.isSelected, disabled: !interactive }}
+                accessibilityState={{
+                  selected: point.isSelected,
+                  disabled: !interactive,
+                }}
                 style={[
                   styles.pointLabelHit,
                   {
@@ -602,7 +657,22 @@ export function DepthsSpiralCore({
                     styles.pointLabel,
                     {
                       color: interactive ? dotColor : colors.text.faint,
+                      // Same idle-quieting as dotOpacity above — dims
+                      // ONLY while nothing is selected, keeping the
+                      // sphere's own hue (still needed once someone DOES
+                      // want to tell them apart) rather than desaturating
+                      // it away.
+                      opacity:
+                        interactive && !point.isSelected && !anySelected
+                          ? 0.6
+                          : 1,
                       fontSize: fontSizes.xs,
+                      // Etude Noire's descenders (e.g. "Body"'s "y") sit
+                      // slightly below what RN's default tight line-height
+                      // reserves for this font, clipping visibly against
+                      // this label's own box — extra lineHeight gives the
+                      // glyph real room instead of nudging the box itself.
+                      lineHeight: fontSizes.xs * 1.5,
                       textAlign: align,
                       // 2026-09-02, at the user's own request — the
                       // selected sphere's own label reads as genuinely

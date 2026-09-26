@@ -319,8 +319,7 @@ function makeStyles(colors: Colors) {
   // notice, not an instruction or a label.
   bodyFocusPrompt: {
     color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',
@@ -329,8 +328,7 @@ function makeStyles(colors: Colors) {
   },
   directionPrompt: {
     color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',

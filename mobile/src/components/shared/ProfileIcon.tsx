@@ -40,7 +40,11 @@ import { AURA_NEUTRAL_IMAGE, AURA_NEUTRAL_IMAGE_LIGHT } from '../../content/aura
 // native at all, not just at small sizes), so reusing the neutral one
 // here is the same fix Depths itself already relies on, not a new
 // workaround.
-const ICON_WIDTH = 22;
+// 2026-09-12 — 22→28px, at the user's own request ("the person profile
+// icon looks too small"). hitSlop (below) already gave this a reasonable
+// tap target at the old size; this is purely about it reading as legible/
+// present in the corner, not a tap-target fix.
+const ICON_WIDTH = 28;
 // The source PNG's own aspect ratio (480x840) — Image needs an explicit
 // height since these assets have no intrinsic-size lookup wired up the
 // way a local require() would for e.g. web <img>.

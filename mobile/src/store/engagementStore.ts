@@ -54,6 +54,11 @@ interface EngagementState {
   // required. Measure is deliberately never a key here — see
   // markToolVisited.
   toolLastVisitedAt: Partial<Record<BreadcrumbTool, string>>;
+  // savedAt of the reading whose own level page was last opened — Depths'
+  // philosopher seam (see content/depthsSeam.ts) points to "understand
+  // your state" after a reading until this matches that reading, then
+  // moves on to the next step.
+  levelPageSeenFor: string | null;
 }
 
 interface EngagementStore extends EngagementState {
@@ -71,6 +76,7 @@ interface EngagementStore extends EngagementState {
   markFirstRunCarryShown: () => Promise<void>;
   recordTalkAboutIt: () => Promise<void>;
   markToolVisited: (tool: BreadcrumbTool) => Promise<void>;
+  markLevelPageSeen: (readingSavedAt: string) => Promise<void>;
   resetAll: () => Promise<void>;
 }
 
@@ -84,6 +90,7 @@ const DEFAULT_STATE: EngagementState = {
   hasShownFirstRunCarry: false,
   talkAboutItCount: 0,
   toolLastVisitedAt: {},
+  levelPageSeenFor: null,
 };
 
 function readState(raw: string | null): EngagementState {
@@ -111,6 +118,7 @@ function readState(raw: string | null): EngagementState {
         breathing:
           typeof parsed.toolLastVisitedAt?.breathing === 'string' ? parsed.toolLastVisitedAt.breathing : undefined,
       },
+      levelPageSeenFor: typeof parsed.levelPageSeenFor === 'string' ? parsed.levelPageSeenFor : null,
     };
   } catch {
     return DEFAULT_STATE;
@@ -213,6 +221,14 @@ export const useEngagementStore = create<EngagementStore>((set, get) => ({
       ...current,
       toolLastVisitedAt: { ...current.toolLastVisitedAt, [tool]: new Date().toISOString() },
     };
+    set(next);
+    await persist(next);
+  },
+
+  markLevelPageSeen: async (readingSavedAt) => {
+    const current = get();
+    if (current.levelPageSeenFor === readingSavedAt) return;
+    const next: EngagementState = { ...current, levelPageSeenFor: readingSavedAt };
     set(next);
     await persist(next);
   },

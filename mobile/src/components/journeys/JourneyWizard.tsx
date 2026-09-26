@@ -18,6 +18,7 @@ import { spacing, radius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
 import { sendJourneyExchange, getJourneySession } from '../../api/journeys';
+import { ensureAIConsent } from '../../store/aiDisclosureStore';
 import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../../types';
 import { TypingDots } from '../shared/TypingDots';
 import { AmbientGlow } from '../shared/AmbientGlow';
@@ -156,6 +157,9 @@ export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, o
 
   const submitAnswer = async (answer: string, structuredAnswer?: AgencySortResult) => {
     if (!answer.trim() || isAcknowledging || !authToken || !currentStage || isSendingRef.current) return;
+    // Before the input is cleared, so "Not now" keeps the person's answer
+    // in the box instead of losing it to a failed send.
+    if (!(await ensureAIConsent())) return;
     isSendingRef.current = true;
 
     try {
@@ -428,8 +432,7 @@ function makeStyles(colors: Colors) {
     previousSlotText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
     goBackNote: {
       color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xs,
       textAlign: 'center',
       marginBottom: spacing[2],

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing } from 'react-native-reanimated';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming, Easing, FadeIn, FadeOut, LinearTransition } from 'react-native-reanimated';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
@@ -20,17 +20,21 @@ import { fonts, fontSizes, lineHeights, letterSpacings } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
-import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
+import { useAppAccentRgb, useAppAccentTextRgb, useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { sendMeasureExchange } from '../../../../src/api/chat';
 import { submitInterview } from '../../../../src/api/measure';
+import { useGuideChatStore } from '../../../../src/store/guideChatStore';
+import { buildReadingContext } from '../../../../src/utils/readingContext';
 import { QAPair, Sphere } from '../../../../src/types';
 import { TypingDots } from '../../../../src/components/shared/TypingDots';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
+import { BackLink } from '../../../../src/components/shared/BackLink';
+import { PhilosopherObject } from '../../../../src/components/shared/PhilosopherObject';
 import { ScoringOrbs } from '../../../../src/components/depths/ScoringOrbs';
 import { track } from '../../../../src/utils/analytics';
-import { useWideColumnWidth, useIsLargeScreen } from '../../../../src/theme/responsive';
+import { useWideColumnWidth } from '../../../../src/theme/responsive';
 
 const TOTAL_SPHERES = 4;
 
@@ -44,6 +48,11 @@ const TOTAL_SPHERES = 4;
 const FADE_OUT_DURATION_MS = 450;
 const BLACK_HOLD_MS = 500;
 
+const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+// Turns that change place (the conversation re-anchoring once it starts,
+// new lines pushing older ones up) glide there rather than jumping.
+const TURN_LAYOUT = LinearTransition.duration(550).easing(SOFT_EASE);
+
 export default function InterviewScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -51,6 +60,7 @@ export default function InterviewScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const markRgb = useAppAccentRgb();
   // Moved from a module-level constant — needs t(), which only works
   // inside a component (hooks can't be called at module scope).
   const SPHERE_LABELS: Record<Sphere, string> = {
@@ -66,6 +76,13 @@ export default function InterviewScreen() {
   const recordMeasure = useEngagementStore((s) => s.recordMeasure);
 
   const [input, setInput] = useState('');
+  // The answer just sent, shown immediately as the person's own turn while
+  // the philosopher's reply is on its way — it used to vanish from the
+  // input and reappear only with the reply, ~2s later, all in one jump.
+  // Remembers how many exchanges/asides existed when it was sent, so it
+  // hides itself in the very render the real exchange (or aside) arrives —
+  // never shown twice, never a gap between the two.
+  const [pendingAnswer, setPendingAnswer] = useState<{ text: string; qaCount: number; asideCount: number } | null>(null);
   const [acknowledgments, setAcknowledgments] = useState<string[]>([]);
   // Exchanges on the *current* sphere that didn't advance it — the person asked
   // something back or deflected rather than answering. Cleared whenever the
@@ -93,12 +110,13 @@ export default function InterviewScreen() {
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
   const columnWidth = useWideColumnWidth();
-  const isLargeScreen = useIsLargeScreen();
   // Same "short conversation content on a tall tablet screen" case as
   // Guide's own empty-state fix — before any answer has been given at all,
   // there's only the first question, which flex-end would otherwise pin to
   // the very bottom of the screen with nothing else visible above it.
-  const isBeforeFirstAnswer = qaPairs.length === 0 && asides.length === 0 && !isScoring && !scoringError;
+  const showPending =
+    !!pendingAnswer && pendingAnswer.qaCount === qaPairs.length && pendingAnswer.asideCount === asides.length;
+  const isBeforeFirstAnswer = qaPairs.length === 0 && asides.length === 0 && !showPending && !isScoring && !scoringError;
 
   useEffect(() => {
     scrollRef.current?.scrollToEnd({ animated: true });
@@ -114,7 +132,20 @@ export default function InterviewScreen() {
     try {
       const result = await submitInterview(pairs, philosopher?.systemPrompt ?? '', authToken);
       const savedAt = new Date().toISOString();
-      await saveResult({ ...result, qaPairs: pairs, savedAt });
+      const saved = { ...result, qaPairs: pairs, savedAt };
+      await saveResult(saved);
+      // Measure happens inside the conversation with the philosopher (see
+      // RULES.md, "constant presence") — their reflection on this reading
+      // joins that conversation as their latest message, alongside the
+      // headline Depths shows it as.
+      if (philosopher) {
+        useGuideChatStore.getState().addReading(philosopher.id, {
+          savedAt,
+          reflection: result.combinationMessage ?? null,
+          context: buildReadingContext(saved),
+          measureResultId: result.measureResultId,
+        });
+      }
       await recordMeasure(result.vibrationScore, result.vibrationLevel.name, savedAt);
       track('measure_completed');
       // Fade to black, hold briefly, then navigate — a fixed pause
@@ -124,7 +155,12 @@ export default function InterviewScreen() {
       // additional one on top of it.
       exitFade.value = withTiming(1, { duration: FADE_OUT_DURATION_MS, easing: Easing.in(Easing.quad) });
       await new Promise((resolve) => setTimeout(resolve, FADE_OUT_DURATION_MS + BLACK_HOLD_MS));
-      router.replace('/(tabs)/depths');
+      // Back down to the Depths already underneath, not a new copy of it on
+      // top: replace() here used to leave an old Depths and an old intro
+      // in the stack after every reading, so swiping back after a reading
+      // led into stale screens. Depths replays its arrival by rebuilding
+      // itself when it comes back into view (see DepthsScreen).
+      router.dismissTo('/(tabs)/depths');
     } catch (err) {
       console.error('Measure interview scoring request failed:', err);
       setIsScoring(false);
@@ -143,6 +179,7 @@ export default function InterviewScreen() {
 
     try {
       setInput('');
+      setPendingAnswer({ text: answer, qaCount: qaPairs.length, asideCount: asides.length });
       setIsAcknowledging(true);
       setGoBackNote(null);
 
@@ -166,6 +203,7 @@ export default function InterviewScreen() {
       }
 
       setIsAcknowledging(false);
+      setPendingAnswer(null);
 
       if (goBack) {
         goToPreviousSphere();
@@ -207,7 +245,11 @@ export default function InterviewScreen() {
     setAcknowledgments([]);
     setAsides([]);
     setGoBackNote(null);
-    router.replace('/(tabs)/depths/measure');
+    // Back to the intro that's already underneath — replace() used to put
+    // a second copy of the intro there, so the next "back" landed on an
+    // identical screen.
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/depths/measure');
   };
 
   const handleGoBackManually = () => {
@@ -238,19 +280,36 @@ export default function InterviewScreen() {
     >
       {theme === 'dark' && <AmbientGlow />}
 
-      <View style={styles.sphereProgress}>
-        {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => (
-          <Text
-            key={sphere}
-            style={[
-              styles.sphereLabel,
-              i < qaPairs.length && { color: accentColor, fontFamily: fonts.medium },
-              i === sphereIndex && { color: accentColor },
-            ]}
-          >
-            {SPHERE_LABELS[sphere]}
-          </Text>
-        ))}
+      {/* 2026-09-26 — a back link replaces the old "Start over" button that
+          sat right under the input, where a thumb lands. Same effect
+          (handleRestart: back to Measure's intro, answers cleared), in the
+          place every other screen keeps its way out. */}
+      <View style={[styles.header, { width: columnWidth, alignSelf: 'center' }]}>
+        <BackLink onPress={handleRestart} style={styles.backLink} />
+        {/* Three states, told apart by more than weight (fonts.light and
+            fonts.medium are the same file, so "done" and "current" used to
+            look identical): still to come = thin and faint, done = plain,
+            current = accent with a dot beneath. */}
+        <View style={styles.sphereProgress}>
+          {(['body', 'mind', 'heart', 'spirit'] as Sphere[]).map((sphere, i) => {
+            const isCurrent = i === sphereIndex && !isScoring;
+            const isDone = i < qaPairs.length;
+            return (
+              <View key={sphere} style={styles.sphereStep}>
+                <Text
+                  style={[
+                    styles.sphereLabel,
+                    isDone && styles.sphereLabelDone,
+                    isCurrent && { color: accentColor, fontFamily: fonts.medium },
+                  ]}
+                >
+                  {SPHERE_LABELS[sphere]}
+                </Text>
+                <View style={[styles.sphereDot, { backgroundColor: isCurrent ? accentColor : 'transparent' }]} />
+              </View>
+            );
+          })}
+        </View>
       </View>
 
       {sphereIndex > 0 && !isScoring && !scoringError && (
@@ -265,27 +324,72 @@ export default function InterviewScreen() {
         contentContainerStyle={[
           styles.scrollContent,
           { width: columnWidth, alignSelf: 'center' },
-          isLargeScreen && isBeforeFirstAnswer && styles.scrollContentCenteredEmpty,
+          isBeforeFirstAnswer && styles.scrollContentCenteredEmpty,
         ]}
       >
+        {/* 2026-09-26 — one flat, keyed list of turns so the conversation
+            unfolds as a sequence rather than jumping: every turn glides to
+            its new place (layout), only genuinely new lines fade in
+            (entering), and a turn that's already on screen keeps its key
+            — the question stays the same element from the moment it's
+            asked to the moment it's part of history. The first question's
+            large centred version ("-lead") hands over to its chat-sized
+            self by dissolving into it the moment an answer is sent. */}
         {qaPairs.map((pair, i) => (
-          <View key={pair.sphere} style={styles.exchange}>
+          <Animated.View key={`q-${i}`} layout={TURN_LAYOUT}>
             <Turn color={accentColor} styles={styles}>{pair.question}</Turn>
-            <Turn isUser styles={styles}>{pair.answer}</Turn>
-            {acknowledgments[i] ? <Turn color={accentColor} styles={styles}>{acknowledgments[i]}</Turn> : null}
-          </View>
-        ))}
+          </Animated.View>
+        )).flatMap((q, i) => [
+          q,
+          <Animated.View key={`a-${i}`} layout={TURN_LAYOUT}>
+            <Turn isUser styles={styles}>{qaPairs[i].answer}</Turn>
+          </Animated.View>,
+          acknowledgments[i] ? (
+            <Animated.View key={`ack-${i}`} layout={TURN_LAYOUT} entering={FadeIn.duration(600).easing(SOFT_EASE)}>
+              <Turn color={accentColor} styles={styles}>{acknowledgments[i]}</Turn>
+            </Animated.View>
+          ) : null,
+        ])}
 
-        {!isScoring && !scoringError && currentQuestion && (
-          <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
+        {isBeforeFirstAnswer && philosopher && currentQuestion && (
+          <Animated.View key="presence" style={styles.presence} exiting={FadeOut.duration(350)}>
+            <PhilosopherObject id={philosopher.id} rgb={markRgb} size={28} />
+            <Text style={[styles.presenceName, { color: accentColor }]}>{philosopher.name}</Text>
+          </Animated.View>
         )}
 
-        {asides.map((aside, i) => (
-          <View key={i} style={styles.exchange}>
+        {!isScoring && !scoringError && currentQuestion && (
+          isBeforeFirstAnswer ? (
+            <Animated.View key={`q-${sphereIndex}-lead`} exiting={FadeOut.duration(300)}>
+              <Turn color={accentColor} styles={styles} lead>{currentQuestion.question}</Turn>
+            </Animated.View>
+          ) : (
+            <Animated.View
+              key={`q-${sphereIndex}`}
+              layout={TURN_LAYOUT}
+              entering={FadeIn.duration(700).delay(qaPairs.length > 0 && !showPending ? 450 : 150).easing(SOFT_EASE)}
+            >
+              <Turn color={accentColor} styles={styles}>{currentQuestion.question}</Turn>
+            </Animated.View>
+          )
+        )}
+
+        {asides.flatMap((aside, i) => [
+          <Animated.View key={`aside-${i}-a`} layout={TURN_LAYOUT}>
             <Turn isUser styles={styles}>{aside.answer}</Turn>
-            {aside.reply ? <Turn color={accentColor} styles={styles}>{aside.reply}</Turn> : null}
-          </View>
-        ))}
+          </Animated.View>,
+          aside.reply ? (
+            <Animated.View key={`aside-${i}-r`} layout={TURN_LAYOUT} entering={FadeIn.duration(600).easing(SOFT_EASE)}>
+              <Turn color={accentColor} styles={styles}>{aside.reply}</Turn>
+            </Animated.View>
+          ) : null,
+        ])}
+
+        {showPending && pendingAnswer && (
+          <Animated.View key="pending" layout={TURN_LAYOUT} entering={FadeIn.duration(250)}>
+            <Turn isUser styles={styles}>{pendingAnswer.text}</Turn>
+          </Animated.View>
+        )}
 
         {isAcknowledging && (
           <View style={styles.typingRow}>
@@ -316,7 +420,7 @@ export default function InterviewScreen() {
       </ScrollView>
 
       {!isScoring && !scoringError && currentQuestion && (
-        <View style={[styles.compose, { width: columnWidth, alignSelf: 'center' }]}>
+        <View style={[styles.compose, { width: columnWidth, alignSelf: 'center', paddingBottom: insets.bottom + spacing[2] }]}>
           {goBackNote && <Text style={styles.goBackNote}>{goBackNote}</Text>}
           <View style={styles.inputRow}>
             <TextInput
@@ -342,10 +446,6 @@ export default function InterviewScreen() {
         </View>
       )}
 
-      <Pressable style={styles.restartButton} onPress={handleRestart}>
-        <Text style={styles.restartText}>{t('measure.startOver')}</Text>
-      </Pressable>
-
       {/* Transparent until the score comes back, then fades to fully
           opaque and holds briefly before navigating — the "beat of
           stillness" between the philosopher finishing and Depths
@@ -367,11 +467,14 @@ function Turn({
   children,
   color,
   isUser,
+  lead,
   styles,
 }: {
   children: string;
   color?: string;
   isUser?: boolean;
+  // The very first question, alone on the screen — larger and centred.
+  lead?: boolean;
   styles: ReturnType<typeof makeStyles>;
 }) {
   return (
@@ -380,6 +483,7 @@ function Turn({
         styles.turnText,
         isUser ? styles.turnUser : styles.turnPhilosopher,
         !isUser && color ? { color } : null,
+        lead ? styles.turnLead : null,
       ]}
     >
       {children}
@@ -402,23 +506,50 @@ function makeStyles(colors: Colors) {
   // alone (muted for not-yet-reached, accent+medium for done or current),
   // the same "position and weight, not a box" register the rest of the app
   // uses (see aesthetic.md's philosopher-picker example).
+  header: {
+    height: 44,
+    justifyContent: 'center',
+    marginBottom: spacing[2],
+  },
+  backLink: {
+    position: 'absolute',
+    left: spacing[5],
+    top: 0,
+    height: 44,
+    justifyContent: 'center',
+    zIndex: 1,
+  },
   sphereProgress: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: spacing[4],
-    paddingBottom: spacing[3],
   },
+  sphereStep: { alignItems: 'center' },
   sphereLabel: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
+    color: colors.text.faint,
+    fontFamily: fonts.trueLight,
     fontSize: fontSizes.xs,
+  },
+  sphereLabelDone: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+  },
+  sphereDot: { width: 4, height: 4, borderRadius: 2, marginTop: 4 },
+  presence: {
+    alignItems: 'center',
+    gap: spacing[2],
+    marginBottom: spacing[5],
+  },
+  presenceName: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.xs,
+    letterSpacing: letterSpacings.wide,
   },
   previousSphereRow: { alignItems: 'center', paddingBottom: spacing[3] },
   previousSphereText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   goBackNote: {
     color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.xs,
     textAlign: 'center',
     marginBottom: spacing[2],
@@ -431,11 +562,10 @@ function makeStyles(colors: Colors) {
     paddingBottom: spacing[4],
     gap: spacing[3],
   },
-  // See isLargeScreen && isBeforeFirstAnswer above — only overrides
-  // justifyContent, so an in-progress interview on a tablet still anchors
-  // toward the bottom like it does on phone.
+  // Before the first answer only (on every screen size) — the first
+  // question sits centred with the philosopher above it; once the
+  // conversation starts it anchors to the bottom like any chat.
   scrollContentCenteredEmpty: { justifyContent: 'center' },
-  exchange: { gap: spacing[3], marginBottom: spacing[3] },
   // Turn-taking carried by alignment and color, not a bubble shape — same
   // pattern as Guide's own Turn component (app/guide.tsx),
   // reused here so a Measure check-in reads as the same kind of
@@ -447,10 +577,20 @@ function makeStyles(colors: Colors) {
     letterSpacing: letterSpacings.body,
     maxWidth: '88%',
   },
+  // The philosopher's voice — the thin weight (fonts.voice), per the
+  // two-layer rule; your own answers stay in the plain weight.
   turnPhilosopher: {
     alignSelf: 'flex-start',
     color: colors.text.primary,
+    fontFamily: fonts.voice,
     textAlign: 'left',
+  },
+  turnLead: {
+    alignSelf: 'center',
+    textAlign: 'center',
+    fontSize: fontSizes.lg,
+    lineHeight: fontSizes.lg * 1.35,
+    maxWidth: '100%',
   },
   turnUser: {
     alignSelf: 'flex-end',
@@ -474,7 +614,7 @@ function makeStyles(colors: Colors) {
     borderRadius: radius.full,
   },
   retryButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
-  compose: { paddingHorizontal: spacing[5], paddingBottom: spacing[2] },
+  compose: { paddingHorizontal: spacing[5] },
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing[2] },
   input: {
     flex: 1,
@@ -498,7 +638,5 @@ function makeStyles(colors: Colors) {
     justifyContent: 'center',
   },
   sendButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.lg },
-  restartButton: { alignItems: 'center', paddingVertical: spacing[4] },
-  restartText: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm },
   });
 }

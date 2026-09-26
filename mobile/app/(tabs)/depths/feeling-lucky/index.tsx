@@ -93,8 +93,7 @@ function makeStyles(colors: Colors) {
   },
   message: {
     color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.lg,
     lineHeight: fontSizes.lg * lineHeights.loose,
     textAlign: 'center',

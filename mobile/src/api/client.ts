@@ -51,7 +51,11 @@ const TIMEOUT_ERROR_MESSAGE = {
 };
 
 interface RequestOptions {
-  method?: 'GET' | 'POST' | 'DELETE';
+  // 'PATCH' added 2026-09-13 for wish.ts's own setWishWoop (adding WOOP
+  // to an already-saved wish) — the first caller in this codebase to
+  // need a real partial-update semantic distinct from POST's "create/act"
+  // or DELETE's own meaning.
+  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   token?: string | null;
   timeoutMs?: number;
 }

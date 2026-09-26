@@ -1,6 +1,7 @@
 import request from './client';
 import { Philosopher } from '../types';
 import { useLocaleStore } from '../store/localeStore';
+import { hasAIConsent } from '../store/aiDisclosureStore';
 
 export interface SavedCrossing {
   id: string;
@@ -32,7 +33,9 @@ export async function generateCrossing(
   pastWishId?: string | null,
   token?: string
 ): Promise<{ id: string; question: string } | null> {
-  if (!token) return null;
+  // Same as getArcLine — background generation, skipped quietly until
+  // the person has agreed to AI processing.
+  if (!token || !hasAIConsent()) return null;
   try {
     return await request<{ id: string; question: string }>(
       '/crossing/generate',

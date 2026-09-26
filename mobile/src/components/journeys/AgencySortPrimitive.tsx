@@ -208,9 +208,8 @@ function makeStyles(colors: Colors) {
     chipText: { color: colors.text.primary, fontFamily: fonts.light, fontSize: fontSizes.xs },
     chipBucketLabel: {
       color: colors.text.muted,
-      fontFamily: fonts.light,
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xs,
-      fontStyle: 'italic',
       marginTop: spacing[1],
     },
     // Increased from spacing[4] — more breathing room reads as "this is

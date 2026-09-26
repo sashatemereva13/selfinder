@@ -26,6 +26,10 @@ import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../src/utils/appAcce
 import { getNudgeState, getNudgeCopy } from '../src/content/guideNudges';
 import { TypingDots } from '../src/components/shared/TypingDots';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
+import { BackLink } from '../src/components/shared/BackLink';
+import { ensureAIConsent } from '../src/store/aiDisclosureStore';
+import { useLocaleStore } from '../src/store/localeStore';
+import { formatDate } from '../src/utils/relativeTime';
 import { track } from '../src/utils/analytics';
 
 export default function GuideScreen() {
@@ -51,6 +55,7 @@ export default function GuideScreen() {
   const hasShownSecondVisit = useEngagementStore((s) => s.hasShownSecondVisit);
   const isNewVisitSinceLastOpen = useEngagementStore((s) => s.isNewVisitSinceLastOpen);
   const markSecondVisitShown = useEngagementStore((s) => s.markSecondVisitShown);
+  const locale = useLocaleStore((s) => s.locale);
 
   const [input, setInput] = useState('');
   const scrollRef = useRef<ScrollView>(null);
@@ -141,12 +146,42 @@ export default function GuideScreen() {
     );
   }
 
-  const handleSend = () => {
+  // Consent before the box is cleared, so "Not now" leaves what they wrote
+  // where it was (the store asks again itself, harmlessly, once granted).
+  const handleSend = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
+    if (!(await ensureAIConsent())) return;
     setInput('');
     send(philosopher, text);
   };
+
+  // Guide is always opened on top of something since onboarding stopped
+  // landing here (2026-09-26) — but a cold deep link could still arrive
+  // with nothing underneath, so fall back to Depths rather than a dead end.
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/depths');
+  };
+
+  // The plain "what Measure is" layer plus its button, for anyone who
+  // hasn't measured yet — shown under the greeting on an empty
+  // conversation, and under the philosopher's opening line from
+  // onboarding's meet step until the person has said anything themselves.
+  const showMeasureIntro = !currentResult && !messages.some((m) => m.role === 'user');
+  const measureIntro = showMeasureIntro ? (
+    <View>
+      <Text style={styles.measureExplainer}>
+        {t('guide.measureExplainer', { name: philosopher.name })}
+      </Text>
+      <Pressable
+        style={[styles.measureCta, { backgroundColor: accentButtonColor }]}
+        onPress={() => router.push('/(tabs)/depths/measure')}
+      >
+        <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
+      </Pressable>
+    </View>
+  ) : null;
 
   return (
     <KeyboardAvoidingView
@@ -162,6 +197,8 @@ export default function GuideScreen() {
     >
       {theme === 'dark' && <AmbientGlow />}
 
+      <BackLink onPress={handleBack} style={[styles.backRow, { width: columnWidth, alignSelf: 'center' }]} />
+
       <View style={[styles.header, { width: columnWidth, alignSelf: 'center' }]}>
         <View>
           <Text style={styles.headerMode}>{philosopher.mode}</Text>
@@ -174,7 +211,11 @@ export default function GuideScreen() {
         )}
       </View>
 
-      {metSnapshotRef.current?.hasMet && (
+      {/* Not while measureIntro is showing — for someone who hasn't
+          measured, this banner is a second "Measure" prompt stacked on the
+          first (onboarding's meet step now counts as meeting, so a
+          brand-new person would otherwise see both). */}
+      {metSnapshotRef.current?.hasMet && !showMeasureIntro && (
         <View style={[styles.nudgeBanner, { width: columnWidth, alignSelf: 'center' }]}>
           <Text style={styles.nudgeText}>{nudge.text}</Text>
           {nudge.secondActionLabel && nudge.secondRoute ? (
@@ -223,32 +264,22 @@ export default function GuideScreen() {
             </Text>
             {/* "Measure" is a proper noun in every philosopher's own voice
                 above (each firstMeeting line namedrops it before a new user
-                has any idea what it means) — this is the plain-language
-                layer underneath that voice, saying outright what tapping
-                the button actually does. Keyed off !currentResult, not
-                hasMet: someone who's already measured with philosopher A
-                and is now meeting philosopher B for the first time already
-                knows what Measure is — but someone who's met a philosopher
-                before without ever measuring still doesn't, so this has to
-                stay tied to "have they ever actually done Measure," not
-                "have they met this particular philosopher before." */}
-            {!currentResult && (
-              <Text style={styles.measureExplainer}>
-                {t('guide.measureExplainer', { name: philosopher.name })}
-              </Text>
-            )}
-            {!currentResult && (
-              <Pressable
-                style={[styles.measureCta, { backgroundColor: accentButtonColor }]}
-                onPress={() => router.push('/(tabs)/depths/measure')}
-              >
-                <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
-              </Pressable>
-            )}
+                has any idea what it means) — measureIntro is the plain-
+                language layer underneath that voice. Keyed off whether
+                they've ever actually measured, not whether they've met this
+                philosopher: someone who's met one before without measuring
+                still doesn't know what it is. */}
+            {measureIntro}
           </View>
         ) : (
-          messages.map((message, i) => (
+          <>
+          {messages.map((message, i) => (
             <View key={i} style={isLargeScreen && styles.turnRowLargeScreen}>
+              {message.readingAt && (
+                <Text style={styles.readingLabel}>
+                  {t('guide.afterYourReading', { date: formatDate(message.readingAt, locale) })}
+                </Text>
+              )}
               <Turn isUser={message.role === 'user'} styles={styles}>{message.content}</Turn>
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
                 <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
@@ -256,7 +287,9 @@ export default function GuideScreen() {
                 </Pressable>
               )}
             </View>
-          ))
+          ))}
+          {measureIntro}
+          </>
         )}
 
         {isLoading && (
@@ -324,6 +357,15 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     lineHeight: fontSizes.base * lineHeights.normal,
   },
+  backRow: { paddingHorizontal: spacing[5], marginBottom: spacing[3] },
+  // Faint and plain — a date stamp on the record, not part of what the
+  // philosopher said.
+  readingLabel: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginBottom: spacing[2],
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -387,8 +429,7 @@ function makeStyles(colors: Colors) {
   // drawn rule beside it was a redundant second signal for the same thing.
   greeting: {
     color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.normal,
   },

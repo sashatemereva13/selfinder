@@ -84,11 +84,22 @@ const RIM_RY_RATIO = 0.32; // ellipse foreshortening — matches AuraField's own
 // reason. Opacity bumped to fully opaque (1) at the same time — the
 // previous 0.8 combined with the ambient backdrop's own container-level
 // opacity (see ArcLinePage's coneBackdrop) was reading as barely there.
-const PLANE_RX_RATIO = 1.35;
-const PLANE_RY_RATIO = 0.55;
+// Exported (2026-09-12) so ArcLinePage can size its own tap-target
+// ellipse for the plane/present zone to match exactly what's drawn here —
+// see that file's own comment on why the tap area now follows the real
+// geometry instead of a generic box.
+export const PLANE_RX_RATIO = 1.35;
+export const PLANE_RY_RATIO = 0.55;
 
 // See curvedLabelPadding's own comment below for what this is for.
-const CURVED_LABEL_PADDING = fontSizes.xs * 1.5;
+// Exported (2026-09-12) so ArcLinePage can correct for it when computing
+// where this component's OWN internal geometry (vertex/rims) actually
+// lands within its rendered box — the View is height+padding*2 tall but
+// the SVG viewBox's y-origin is -padding, so the real drawn content sits
+// `padding` px lower inside the box than a naive top=0 assumption would
+// predict. Needed to align ArcLinePage's own tap-target ellipses exactly
+// on top of what's drawn here, not just visually close.
+export const CURVED_LABEL_PADDING = fontSizes.xs * 1.5;
 
 // coneHeight used to be derived purely from baseRx (width/2 * 1.15),
 // entirely independent of the `height` prop actually given to the SVG —
@@ -260,6 +271,21 @@ interface TimeConeProps {
     past?: string;
     plane?: string;
   };
+  // 2026-09-12, ArcLinePage's ambient hub cone only (see that file's own
+  // header comment for why this is opt-in, default off) — adds N extra
+  // faint rings beyond the normal future/past rim, evenly spaced and
+  // growing linearly outward, so the shape reads as several concentric
+  // cross-sections receding into the distance (closer to a classic
+  // light-cone diagram's own grid) rather than just "one rim + a
+  // vertex." Purely decorative — no new data, no new meaning attached;
+  // TimeConePage's own real-data cone (actual reading/wish dots at real
+  // depths) is deliberately unaffected, since adding evenly-spaced rings
+  // there would risk implying discrete time-steps the underlying data
+  // doesn't actually have. The slant lines themselves extend out to the
+  // OUTERMOST added ring (not just the base rim) so every ring visually
+  // connects to the cone's own sides rather than floating past where the
+  // lines stop.
+  extraRings?: number;
 }
 
 // onPointPress went unwired for a first static-only pass (2026-08-14:
@@ -284,10 +310,24 @@ interface TimeConeProps {
 const NOW_LABEL_CLEARANCE = 16;
 const NOW_LABEL_EXTRA_PUSH = 20;
 
-export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress, hideNowLabel, showEternalNowPlane, canvasWidth, curvedLabels }: TimeConeProps) {
+export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress, hideNowLabel, showEternalNowPlane, canvasWidth, curvedLabels, extraRings = 0 }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
   const strokeColor = colors.text.faint;
+  // extraRings' own radii, evenly spaced beyond the base rim — ring i
+  // (1-indexed) sits at (1 + i * EXTRA_RING_STEP) × the base rim's own
+  // rx/ry, so ring 1 is the closest addition, growing linearly outward
+  // from there. EXTRA_RING_STEP tuned so 3 rings spread out to roughly
+  // fill the available canvas width without the outermost one running
+  // past canvasWidth's own edge at ArcLinePage's real coneWidth/
+  // planeCanvasWidth ratio (1.4×) — see this file's own canvasWidth prop
+  // comment for why running past that edge would clip.
+  const EXTRA_RING_STEP = 0.22;
+  const extraRingScales = useMemo(
+    () => Array.from({ length: Math.max(0, extraRings) }, (_, i) => 1 + (i + 1) * EXTRA_RING_STEP),
+    [extraRings],
+  );
+  const outermostRingScale = extraRingScales.length > 0 ? extraRingScales[extraRingScales.length - 1] : 1;
   // Extra canvas width is split evenly on both sides so the cone's own
   // geometry (computed from `width` alone, unaware of canvasWidth) stays
   // centered in the wider box rather than shifting toward one edge.
@@ -397,15 +437,22 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             />
           )}
           {curvedLabels?.plane && (
-            // Narrower spanRatio than the future/past rims (0.55 vs the
-            // shared ARC_SPAN_RATIO, widened for their longer labels) —
-            // see topArcPathD's own comment on why the plane's shorter
-            // "the eternal now" needs its own, smaller span: with the
-            // shared wider span, clearing the quote text required a
-            // centerAngle far enough around the ellipse that the label
-            // read nearly vertically instead of horizontally (confirmed
-            // live 2026-09-06). centerAngle 1.2 rad here (~70°) is
-            // calibrated for THIS span, not the wider default.
+            // 2026-09-12 — recentered to centerAngle=0 (top-dead-center),
+            // at the user's own request: this used to sit off-angle at
+            // 1.35 rad specifically to clear ArcLinePage's own quote text,
+            // which sat centered on this same ellipse (see ArcLinePage's
+            // own header comment) — that quote is gone now, so the
+            // original reason for the off-center offset no longer
+            // applies. Off-center was also the actual cause of a real,
+            // reported bug: pushed that far around the ellipse (only
+            // ~0.75 rad of span to work with, per the comment this
+            // replaces), the label ran out of room before the ellipse's
+            // own edge and got visibly cut off. Recentered + widened
+            // spanRatio back toward the shared default (1.1, still
+            // narrower than ARC_SPAN_RATIO=1.45 since "THE ETERNAL NOW"
+            // is shorter than the future/past rim labels) gives it
+            // symmetric clearance on both sides instead of running out of
+            // room on one.
             <Path
               id="cone-plane-path"
               d={topArcPathD(
@@ -413,8 +460,8 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
                 geometry.vertexY,
                 geometry.baseRx * PLANE_RX_RATIO,
                 geometry.baseRy * PLANE_RY_RATIO,
-                1.35,
-                0.75
+                0,
+                1.1
               )}
             />
           )}
@@ -422,18 +469,21 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
 
         {/* Future cone — open, sparse by construction (only ever the
             active wish, never a fabricated forecast). Slant lines rise
-            from the vertex to the future rim. */}
+            from the vertex to the future rim — extended out to the
+            OUTERMOST extra ring (outermostRingScale, default 1 = just
+            the base rim, unchanged from before extraRings existed) so
+            every added ring visually connects to the cone's own sides. */}
         <Line
-          x1={geometry.centerX - geometry.baseRx}
-          y1={geometry.futureRimY}
+          x1={geometry.centerX - geometry.baseRx * outermostRingScale}
+          y1={geometry.vertexY - geometry.coneHeight * outermostRingScale}
           x2={geometry.centerX}
           y2={geometry.vertexY}
           stroke="url(#cone-fade-future)"
           strokeWidth={1}
         />
         <Line
-          x1={geometry.centerX + geometry.baseRx}
-          y1={geometry.futureRimY}
+          x1={geometry.centerX + geometry.baseRx * outermostRingScale}
+          y1={geometry.vertexY - geometry.coneHeight * outermostRingScale}
           x2={geometry.centerX}
           y2={geometry.vertexY}
           stroke="url(#cone-fade-future)"
@@ -449,6 +499,26 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           strokeOpacity={0.3}
           strokeWidth={1}
         />
+        {/* extraRings, future side — each one further from the vertex than
+            the base rim, at a proportionally larger rx/ry (same aspect
+            ratio, so it still reads as the same cone's own cross-
+            section, just farther away) and a slightly fainter stroke the
+            further out it sits, echoing the slant lines' own fade. Purely
+            decorative — see this prop's own comment on TimeConeProps for
+            why it's opt-in and ArcLinePage-only. */}
+        {extraRingScales.map((scale, i) => (
+          <SvgEllipse
+            key={`future-ring-${i}`}
+            cx={geometry.centerX}
+            cy={geometry.vertexY - geometry.coneHeight * scale}
+            rx={geometry.baseRx * scale}
+            ry={geometry.baseRy * scale}
+            fill="none"
+            stroke={strokeColor}
+            strokeOpacity={Math.max(0.08, 0.3 - (i + 1) * 0.08)}
+            strokeWidth={1}
+          />
+        ))}
         {/* startOffset 0% + textAnchor "start" — cone-future-rim-path IS
             the label's own arc now (topArcPathD), not a fraction of a
             larger ellipse path, so "the literal start of the path" is
@@ -465,18 +535,20 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
 
         {/* Past cone — dense, real, one point per remembered moment (the
             person's own account of it, never asserted as raw fact — see
-            RULES.md). Slant lines fall from the vertex to the past rim. */}
+            RULES.md). Slant lines fall from the vertex to the past rim —
+            extended out to the outermost extra ring, same reasoning as
+            the future side above. */}
         <Line
-          x1={geometry.centerX - geometry.baseRx}
-          y1={geometry.pastRimY}
+          x1={geometry.centerX - geometry.baseRx * outermostRingScale}
+          y1={geometry.vertexY + geometry.coneHeight * outermostRingScale}
           x2={geometry.centerX}
           y2={geometry.vertexY}
           stroke="url(#cone-fade-past)"
           strokeWidth={1}
         />
         <Line
-          x1={geometry.centerX + geometry.baseRx}
-          y1={geometry.pastRimY}
+          x1={geometry.centerX + geometry.baseRx * outermostRingScale}
+          y1={geometry.vertexY + geometry.coneHeight * outermostRingScale}
           x2={geometry.centerX}
           y2={geometry.vertexY}
           stroke="url(#cone-fade-past)"
@@ -492,6 +564,21 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           strokeOpacity={0.3}
           strokeWidth={1}
         />
+        {/* extraRings, past side — mirror of the future side's own rings
+            above. */}
+        {extraRingScales.map((scale, i) => (
+          <SvgEllipse
+            key={`past-ring-${i}`}
+            cx={geometry.centerX}
+            cy={geometry.vertexY + geometry.coneHeight * scale}
+            rx={geometry.baseRx * scale}
+            ry={geometry.baseRy * scale}
+            fill="none"
+            stroke={strokeColor}
+            strokeOpacity={Math.max(0.08, 0.3 - (i + 1) * 0.08)}
+            strokeWidth={1}
+          />
+        ))}
         {/* Same startOffset 0% / textAnchor "start" reasoning as the
             future rim's own label above — cone-past-rim-path
             (bottomArcPathD) IS this label's own short arc, not a

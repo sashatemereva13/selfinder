@@ -29,6 +29,19 @@ interface FactsPageProps {
   // catalog's own entry), just without a "you've made N" count yet.
   centerPurchaseCount: number | null;
   onPressCenter: () => void;
+  // 2026-09-13, at the user's own request — a philosopher-voiced remark
+  // generated from the WHOLE record (reading count/streak, most recent
+  // level, active wish; see src/api/arcLine.ts's own header comment),
+  // cached once per calendar day server-side. Used to live on
+  // ArcLinePage (the hub screen) layered over the light cone; removed
+  // from there because it competed with the cone's own tap affordances.
+  // Re-homed here since this page already opens on a factual summary of
+  // the whole record (introLine below) — this adds the philosopher's own
+  // reflective take on the same material, not a duplicate of it. Null
+  // while loading, signed-out, or no philosopher chosen yet — the page
+  // renders correctly without it either way (see the render's own
+  // conditional).
+  arcLine: string | null;
 }
 
 // Real, true facts about this person's OWN record — never an
@@ -47,6 +60,7 @@ export function FactsPage({
   onReadingPress,
   centerPurchaseCount,
   onPressCenter,
+  arcLine,
 }: FactsPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -68,6 +82,18 @@ export function FactsPage({
       <Text style={[sharedStyles.headline, styles.introLine]}>
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
+
+      {/* 2026-09-13 — see this page's own arcLine prop comment. The
+          philosopher's own voice (italic, quoted), same register
+          ArcLinePage's old coverPhilosopherLine used — right after the
+          plain factual summary above, so a reader gets "here is what's
+          true" then "here is what your philosopher makes of it,"
+          reflection layered on fact rather than repeating it. Only
+          rendered when a real line actually loaded — no placeholder/
+          fallback text, since an empty or generic stand-in here would
+          read as the app inventing a remark rather than genuinely
+          having none yet. */}
+      {arcLine && <Text style={styles.arcLine}>{`"${arcLine}"`}</Text>}
 
       {/* Center's real primary home (2026-08-27 restructure) — full row
           weight, same as products.tsx's own catalog rows, not a footnote.
@@ -197,6 +223,19 @@ function makeStyles(colors: Colors) {
       alignSelf: 'flex-start',
       lineHeight: fontSizes.md * lineHeights.normal,
       marginTop: spacing[3],
+      marginBottom: spacing[3],
+    },
+    // Philosopher voice — same register ArcLinePage's own
+    // coverPhilosopherLine used before arcLine moved here (2026-09-13):
+    // no fontStyle:'italic' (a silent no-op on this typeface, see that
+    // file's own comment for why), quote marks in the string carry the
+    // "this is spoken" signal instead.
+    arcLine: {
+      alignSelf: 'flex-start',
+      color: colors.text.primary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
       marginBottom: spacing[8],
     },
     // Same row weight as products.tsx's own catalog rows (label +

@@ -40,6 +40,10 @@ import { useWideColumnWidth } from "../../src/theme/responsive";
 import { usePhilosopherStore } from "../../src/store/philosopherStore";
 import { useLocaleStore } from "../../src/store/localeStore";
 import { PhilosopherPicker } from "../../src/components/shared/PhilosopherPicker";
+import { PhilosopherObject } from "../../src/components/shared/PhilosopherObject";
+import { PHILOSOPHER_MAP, getLocalizedPhilosopher } from "../../src/content/philosophers";
+import { useGuideChatStore } from "../../src/store/guideChatStore";
+import { useAppAccentRgb, useAppAccentTextRgb, useAppAccentButtonRgb } from "../../src/utils/appAccent";
 import { AmbientGlow } from "../../src/components/shared/AmbientGlow";
 import {
   getAuraFigureMetrics,
@@ -663,7 +667,7 @@ export default function OnboardingScreen() {
   // Reduce Motion skips the greet beat and mounts the intro already
   // fast-forwarded: the full settled composition on gentle fades, no
   // choreography to sit through.
-  const [step, setStep] = useState<"greet" | "intro" | "choose">(
+  const [step, setStep] = useState<"greet" | "intro" | "choose" | "meet">(
     reduceMotion ? "intro" : "greet",
   );
   // A tap anywhere during the intro jumps the whole timeline to its settled
@@ -766,6 +770,17 @@ export default function OnboardingScreen() {
   // empty margins.
   const columnWidth = useWideColumnWidth();
   const select = usePhilosopherStore((s) => s.select);
+  const markMet = usePhilosopherStore((s) => s.markMet);
+  // The philosopher tapped on "choose", held here rather than saved — see
+  // handleMeetChoice for why saving waits until the meet step's own exit.
+  const [pendingId, setPendingId] = useState<string | null>(null);
+  const [isLeaving, setIsLeaving] = useState(false);
+  const meetPhilosopher = pendingId
+    ? getLocalizedPhilosopher(PHILOSOPHER_MAP[pendingId], locale)
+    : null;
+  const accentRgb = useAppAccentRgb();
+  const accentTextColor = `rgb(${useAppAccentTextRgb()})`;
+  const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
 
   useEffect(() => {
     track("onboarding_viewed");
@@ -1022,13 +1037,48 @@ export default function OnboardingScreen() {
     FEEL_DOWN_LENGTH,
   );
 
-  const handleSelect = async (id: string) => {
+  // Choosing no longer ends onboarding — it opens the meet step, where the
+  // chosen philosopher speaks first (RULES.md, "The philosopher is a
+  // constant presence": the conversation starts at the moment of choosing,
+  // not on a separate screen afterward).
+  const handleSelect = (id: string) => {
     if (Platform.OS !== "web") {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    await select(id);
-    track("onboarding_completed", { philosopher: id });
-    router.replace("/guide");
+    setPendingId(id);
+    setStep("meet");
+    track("onboarding_meet_shown", { philosopher: id });
+  };
+
+  // The choice is saved only here, on the way out, not when it was tapped:
+  // saving sets `philosopher`, which is what the root layout keys its
+  // redirects on — saving any earlier would pull the person off this step
+  // mid-read, and would make "choose someone else" an undo of a saved
+  // choice rather than simply going back. Onboarding navigates itself
+  // (the root layout skips its own redirect while on this route): to
+  // Depths either way, with Measure pushed on top for "Take Measure" so
+  // its back link returns to Depths, never to onboarding.
+  const handleMeetChoice = async (choice: "measure" | "explore") => {
+    if (!pendingId || !meetPhilosopher || isLeaving) return;
+    setIsLeaving(true);
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    await select(pendingId);
+    // What was just read here IS the first meeting — Guide shouldn't
+    // repeat it; the line opens the conversation instead, where the
+    // person first heard it.
+    markMet(pendingId);
+    useGuideChatStore.getState().seedOpening(pendingId, meetPhilosopher.firstMeeting);
+    track("onboarding_completed", { philosopher: pendingId, choice });
+    router.replace("/(tabs)/depths");
+    if (choice === "measure") router.push("/(tabs)/depths/measure");
+  };
+
+  const handleChooseAgain = () => {
+    if (isLeaving) return;
+    track("onboarding_choose_again", { philosopher: pendingId });
+    setStep("choose");
   };
 
   // The fully-formed ring sits still and visible for a beat before handing
@@ -1511,6 +1561,89 @@ export default function OnboardingScreen() {
         </View>
       </Pressable>
     );
+  } else if (step === "meet" && meetPhilosopher) {
+    // The chosen philosopher's first words, before anything else in the app
+    // — their mark, carried over from the ring, then who they are, then
+    // what they say, then the two ways forward. Each arrives after the one
+    // before it (FadeIn delays) rather than all at once. Two layers, per
+    // RULES.md: their italic line carries the feeling, the plain line under
+    // it says what Measure actually is.
+    content = (
+      <View
+        style={[styles.chooseRoot, { paddingTop: insets.top + spacing[4] }]}
+      >
+        {theme === "dark" && <AmbientGlow />}
+        <Pressable
+          onPress={handleChooseAgain}
+          accessibilityRole="button"
+          hitSlop={spacing[3]}
+          style={styles.meetBackRow}
+        >
+          <Text style={styles.meetBackText}>{t("onboarding.chooseSomeoneElse")}</Text>
+        </Pressable>
+        <View
+          style={[
+            styles.meetBody,
+            {
+              width: columnWidth - spacing[6] * 2,
+              alignSelf: "center",
+              paddingBottom: spacing[8] + insets.bottom,
+            },
+          ]}
+        >
+          {/* 2026-09-26 — recomposed after it read as "overloaded with
+              words": Measure was named three times (in their line, in a
+              paragraph explaining it, on the button) and two text blocks of
+              nearly the same size competed. Now the philosopher asks one
+              short question, centred, as the one big thing on the screen;
+              the button answers it; the plain layer shrinks to a caption
+              under the button, describing exactly what that button does.
+              Their mode ("The Questioner") is gone — the picker said it a
+              moment ago. */}
+          <View style={styles.meetPresence}>
+            <Animated.View entering={FadeIn.duration(500).easing(SOFT_EASE)}>
+              <PhilosopherObject id={meetPhilosopher.id} rgb={accentRgb} size={64} />
+            </Animated.View>
+            <Animated.Text
+              entering={FadeIn.duration(600).delay(250).easing(SOFT_EASE)}
+              style={[styles.meetName, { color: accentTextColor }]}
+            >
+              {meetPhilosopher.name}
+            </Animated.Text>
+            <Animated.Text
+              entering={FadeIn.duration(900).delay(650).easing(SOFT_EASE)}
+              style={styles.meetLine}
+            >
+              {meetPhilosopher.firstMeeting}
+            </Animated.Text>
+          </View>
+          <Animated.View
+            entering={FadeIn.duration(700).delay(1400).easing(SOFT_EASE)}
+            style={styles.meetActions}
+          >
+            <Pressable
+              style={[styles.meetPrimary, { backgroundColor: accentButtonColor }]}
+              disabled={isLeaving}
+              onPress={() => handleMeetChoice("measure")}
+              accessibilityRole="button"
+              accessibilityHint={t("onboarding.measureCaption")}
+            >
+              <Text style={styles.meetPrimaryText}>{t("guide.takeMeasure")}</Text>
+            </Pressable>
+            <Text style={styles.meetCaption}>{t("onboarding.measureCaption")}</Text>
+            <Pressable
+              disabled={isLeaving}
+              onPress={() => handleMeetChoice("explore")}
+              accessibilityRole="button"
+              hitSlop={spacing[3]}
+              style={styles.meetSecondaryHit}
+            >
+              <Text style={styles.meetSecondaryText}>{t("onboarding.lookAroundFirst")}</Text>
+            </Pressable>
+          </Animated.View>
+        </View>
+      </View>
+    );
   } else {
     content = (
       <View
@@ -1550,6 +1683,7 @@ export default function OnboardingScreen() {
           ]}
         >
           <PhilosopherPicker
+            selectedId={pendingId}
             onSelect={handleSelect}
             onRingLayout={setPickerRingRect}
             hideOwnRing={travelActive && !handoffStarted}
@@ -1883,6 +2017,69 @@ function makeStyles(colors: Colors) {
   chooseBody: {
     flex: 1,
     justifyContent: "center",
+  },
+  // Same faint register as BackLink everywhere else — a way back, not a
+  // competing action.
+  meetBackRow: { alignSelf: "flex-start" },
+  meetBackText: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+  },
+  meetBody: {
+    flex: 1,
+  },
+  // The philosopher, centred in the space above the actions — their
+  // mark carried over from the ring, their name, then their one question
+  // as the largest text on the screen.
+  meetPresence: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  meetName: {
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    letterSpacing: letterSpacings.wide,
+    marginTop: spacing[4],
+  },
+  // Their voice — the thin Light face (fonts.voice), large and centred;
+  // the first message of the conversation (see handleMeetChoice).
+  meetLine: {
+    color: colors.text.primary,
+    fontFamily: fonts.voice,
+    fontSize: fontSizes.lg,
+    lineHeight: fontSizes.lg * 1.4,
+    textAlign: "center",
+    marginTop: spacing[6],
+  },
+  meetActions: {
+    alignItems: "center",
+  },
+  meetPrimary: {
+    width: "100%",
+    paddingVertical: spacing[4],
+    borderRadius: radius.full,
+    alignItems: "center",
+  },
+  meetPrimaryText: {
+    color: colors.onAccent,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.base,
+  },
+  // The plain layer, now describing the button right above it.
+  meetCaption: {
+    color: colors.text.muted,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    textAlign: "center",
+    marginTop: spacing[3],
+  },
+  meetSecondaryHit: { marginTop: spacing[6] },
+  meetSecondaryText: {
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
   },
   });
 }

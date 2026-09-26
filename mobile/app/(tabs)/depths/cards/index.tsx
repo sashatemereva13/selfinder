@@ -198,8 +198,7 @@ function makeStyles(colors: Colors) {
   },
   line: {
     color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     textAlign: 'center',

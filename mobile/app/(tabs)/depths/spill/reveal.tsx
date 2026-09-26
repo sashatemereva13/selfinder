@@ -35,14 +35,20 @@ export default function SpillRevealScreen() {
   const [keepState, setKeepState] = useState<KeepState>('idle');
 
   useEffect(() => {
-    if (!text) router.replace('/(tabs)/depths/spill');
+    if (!text) {
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)/depths/spill');
+    }
   }, [text]);
 
   if (!text) return null;
 
   const handleWriteAgain = () => {
     reset();
-    router.replace('/(tabs)/depths/spill');
+    // Back to the Spill intro already underneath — replace() used to stack
+    // a second copy of it, so the next "back" landed on the same screen.
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/depths/spill');
   };
 
   // "Keep this moment" only requires the same data-saving consent Measure/
@@ -75,7 +81,8 @@ export default function SpillRevealScreen() {
   // lands on.
   const handleDone = () => {
     reset();
-    router.replace('/(tabs)/depths');
+    // Back down to the existing Depths rather than a new copy on top.
+    router.dismissTo('/(tabs)/depths');
   };
 
   return (
@@ -151,8 +158,7 @@ function makeStyles(colors: Colors) {
   },
   text: {
     color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.loose,
     marginTop: spacing[4],

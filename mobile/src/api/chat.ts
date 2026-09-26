@@ -1,6 +1,7 @@
 import request from './client';
 import { Philosopher, Sphere } from '../types';
 import { useLocaleStore } from '../store/localeStore';
+import { requireAIConsent } from '../store/aiDisclosureStore';
 
 export interface ChatCompletionMessage {
   role: 'user' | 'assistant';
@@ -9,6 +10,10 @@ export interface ChatCompletionMessage {
   // message read as needing to vent rather than converse — see Guide's
   // screen for the "write it out instead" chip this drives.
   suggestSpill?: boolean;
+  // Set on an assistant message that is a Measure reading's reflection
+  // (the savedAt of that reading) — Guide shows a faint "after your
+  // reading" line above it. Client-only, stripped like suggestSpill.
+  readingAt?: string;
 }
 
 interface SendMessageResponse {
@@ -22,6 +27,7 @@ export async function sendMessage(
   philosopher: Philosopher,
   additionalContext = ''
 ): Promise<{ reply: string; suggestSpill: boolean }> {
+  await requireAIConsent();
   const systemPrompt = additionalContext
     ? `${philosopher.systemPrompt}\n\n${additionalContext}`
     : philosopher.systemPrompt;
@@ -64,7 +70,7 @@ export interface MeasureExchangeResponse {
 // response as the first (a reworded version of the same question), which
 // read as ignoring that the first reword didn't help either (confirmed on a
 // real device — see interview.tsx's own comment on this).
-export function sendMeasureExchange(
+export async function sendMeasureExchange(
   philosopher: Philosopher,
   sphere: Sphere,
   question: string,
@@ -72,6 +78,7 @@ export function sendMeasureExchange(
   canGoBack: boolean,
   priorAsideCount = 0
 ): Promise<MeasureExchangeResponse> {
+  await requireAIConsent();
   return request<MeasureExchangeResponse>('/measure/exchange', {
     systemPrompt: philosopher.systemPrompt,
     sphere,

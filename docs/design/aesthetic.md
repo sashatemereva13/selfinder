@@ -252,7 +252,9 @@ settled/rest state needs to snap.
 Not strictly "visual," but load-bearing for the aesthetic: prefer a real
 sentence over a label-colon-data row ("today, you read as reason" not
 "Your last reading — today: Reason · 412"). A philosopher's own voice
-(italic) sits above a plain, unitalicized clarifying line when a term
+(the thin Light weight, `fonts.voice` — never italic: Etude Noire has no
+italic face, so italic silently renders upright on iOS) sits above a
+plain clarifying line in Medium when a term
 needs explaining (e.g. "Measure" on first meeting) — two layers, not one
 replacing the other. See `RULES.md`'s Content/voice section for the full
 copy/voice rules, and `docs/pitch.md` for the outward-facing pitch itself;

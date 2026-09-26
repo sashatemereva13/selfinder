@@ -12,8 +12,6 @@ import { makeSharedArcPageStyles } from './arcPageShared';
 
 interface ClosingPageProps {
   activeWish: SavedWish | null; // read-only here
-  wishComposerOpen: boolean; // read-only here — gates the "invite a wish" row
-  setWishComposerOpen: (open: boolean) => void; // write-only mutation (opens WishCrossingPage's composer)
   latestReading: ReadingLogEntry; // caller only mounts this page when truthy
   latestLevelName: string | null;
   closingWriteSaved: boolean;
@@ -25,6 +23,19 @@ interface ClosingPageProps {
   // Text-safe — this page's "Write it now" link is bare Text on the page
   // background (no fill).
   accentTextRgb: string;
+  // 2026-09-13, at the user's own request — this page is the true end of
+  // the future pager (synthesis of the latest reading + wish already
+  // done), and until now offered nothing beyond a private free-write:
+  // every page in both of Your Arc's pagers only ever read history or
+  // held private material, none of them routed anywhere that DOES
+  // something new (unlike Depths, whose own reveal always offers
+  // Measure again/Talk about it as real next steps). This is that gap's
+  // first fix — a single, focused next step (not a full menu, per the
+  // user's own choice) pointing at Journeys, chosen specifically because
+  // Journeys' own content (an "arrived" answer from a completed Journey)
+  // is exactly the kind of forward-looking material this closing beat
+  // is already synthesizing toward.
+  onExploreJourney: () => void;
 }
 
 // The closing page (docs/your-arc-expansion-plan.md, Thread 2). Positioned
@@ -36,10 +47,21 @@ interface ClosingPageProps {
 // need exists" line; and one small optional act, a single free-text
 // prompt saved as a real Spill entry only if the person chooses to keep
 // it — never scored, never reflected back by the app.
+//
+// 2026-09-13 — this page used to also offer its own "name a wish" button
+// (closingWishInvite, wired to WishCrossingPage's own composer via
+// wishComposerOpen/setWishComposerOpen) when no active wish existed.
+// Removed at the user's own request: WishCrossingPage already owns this
+// action as its whole job (its own header comment: "the ACTIVE wish,
+// standing on its own"), and offering a second, differently-worded
+// invite to the same action here — encountered right after the first
+// one on a normal swipe-through with no wish yet — read as the app
+// repeating itself rather than two considered separate moments. The
+// synthesis/need lines below already name the gap in the reflective
+// voice this page is actually for; a live action button duplicating
+// another page's own job doesn't need to sit alongside them.
 export function ClosingPage({
   activeWish,
-  wishComposerOpen,
-  setWishComposerOpen,
   latestLevelName,
   closingWriteSaved,
   closingWriteInput,
@@ -48,6 +70,7 @@ export function ClosingPage({
   onSubmitClosingWrite,
   closingArrivalStyle,
   accentTextRgb,
+  onExploreJourney,
 }: ClosingPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -67,11 +90,6 @@ export function ClosingPage({
             : t('yourArc.closingSynthesisNoWish', { level: latestLevelName })}
         </Text>
         <Text style={styles.closingNeedLine}>{t('yourArc.closingNeedLine')}</Text>
-        {!activeWish && !wishComposerOpen && (
-          <Pressable style={styles.closingWishInvite} onPress={() => setWishComposerOpen(true)}>
-            <Text style={styles.closingWishInviteText}>{t('yourArc.closingWishInvite')}</Text>
-          </Pressable>
-        )}
         {closingWriteSaved ? (
           <Text style={styles.closingWriteSavedText}>{t('yourArc.closingWriteSaved')}</Text>
         ) : (
@@ -100,6 +118,25 @@ export function ClosingPage({
             </Pressable>
           </View>
         )}
+        {/* 2026-09-13 — see this page's own onExploreJourney prop comment.
+            Always visible here (not gated on closingWriteSaved) — this is
+            a genuinely separate next step from the free-write above, not
+            a follow-up to it, so it shouldn't wait on that action being
+            taken or skipped first. Uses the shared nextStepRow register
+            (arcPageShared.ts) — full label+description weight, not
+            wishRow's quieter single line, per RULES.md's own "a next
+            step meant to be genuinely adopted gets full row weight" rule. */}
+        <Pressable
+          style={[sharedStyles.nextStepRow, styles.exploreJourneySpacing]}
+          onPress={onExploreJourney}
+        >
+          <Text style={[sharedStyles.nextStepLabel, styles.exploreJourneyText]}>
+            {t('yourArc.closingExploreJourney')}
+          </Text>
+          <Text style={[sharedStyles.nextStepDescription, styles.exploreJourneyText]}>
+            {t('yourArc.closingExploreJourneyDescription')}
+          </Text>
+        </Pressable>
       </Animated.View>
     </ScrollView>
   );
@@ -123,20 +160,12 @@ function makeStyles(colors: Colors) {
     },
     closingNeedLine: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
       textAlign: 'center',
       marginTop: spacing[5],
       paddingHorizontal: spacing[4],
-    },
-    closingWishInvite: { marginTop: spacing[5] },
-    closingWishInviteText: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      textAlign: 'center',
     },
     closingWriteSection: { width: '100%', marginTop: spacing[8], alignItems: 'center' },
     closingPrompt: {
@@ -171,11 +200,15 @@ function makeStyles(colors: Colors) {
     },
     closingWriteSavedText: {
       color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       textAlign: 'center',
       marginTop: spacing[8],
     },
+    // sharedStyles.nextStepRow has no top margin of its own (other
+    // callers may sit at the top of their own section) — this page needs
+    // real separation from the free-write section above it.
+    exploreJourneySpacing: { marginTop: spacing[8], alignItems: 'center' },
+    exploreJourneyText: { textAlign: 'center' },
   });
 }

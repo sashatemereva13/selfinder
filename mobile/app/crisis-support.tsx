@@ -41,9 +41,10 @@ export default function CrisisSupportScreen() {
     >
       {/* Not the default router.back() — someone reaching this screen may
           not want to land back on whatever they were doing right before
-          (see routeToCrisisSupport.ts), so this replaces to Depths
-          instead of popping the stack. */}
-      <BackLink style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')} />
+          (see routeToCrisisSupport.ts), so this goes to Depths instead of
+          popping one screen — via dismissTo, which clears back down to the
+          existing Depths rather than stacking a second copy of the tabs. */}
+      <BackLink style={styles.backRow} onPress={() => router.dismissTo('/(tabs)/depths')} />
 
       <Text style={styles.kicker}>{t('crisisSupport.kicker')}</Text>
       <Text style={styles.title}>{t('crisisSupport.title')}</Text>
