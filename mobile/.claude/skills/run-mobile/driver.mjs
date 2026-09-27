@@ -9,6 +9,7 @@
 //   --tap "<text>"  click the element with that exact text
 //   --tapxy <x,y>   click viewport coordinates — for targets with no text,
 //                   like the philosopher symbols in the onboarding ring
+//   --wheel <dy>    scroll the view under the screen's middle by dy pixels
 //
 // Example — onboarding beats, then tap "walk" and catch the ring morph:
 //   node .claude/skills/run-mobile/driver.mjs /onboarding --fresh \
@@ -63,7 +64,7 @@ for (let i = 1; i < argv.length; i++) {
   const a = argv[i];
   if (a === "--fresh") fresh = true;
   else if (a === "--out") outDir = argv[++i];
-  else if (a === "--wait" || a === "--shot" || a === "--tap" || a === "--tapxy" || a === "--fill") actions.push([a, argv[++i]]);
+  else if (a === "--wait" || a === "--shot" || a === "--tap" || a === "--tapxy" || a === "--fill" || a === "--wheel") actions.push([a, argv[++i]]);
   else {
     console.error(`unknown arg: ${a}`);
     process.exit(2);
@@ -111,6 +112,12 @@ try {
       clock = Date.now();
     } else if (op === "--fill") {
       await page.keyboard.type(arg);
+      clock = Date.now();
+    } else if (op === "--wheel") {
+      // Scrolls whatever is under the middle of the viewport (RN web's
+      // ScrollViews are inner elements, not the document).
+      await page.mouse.move(195, 422);
+      await page.mouse.wheel(0, Number(arg));
       clock = Date.now();
     }
   }

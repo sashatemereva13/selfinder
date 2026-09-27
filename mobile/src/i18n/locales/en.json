@@ -148,10 +148,14 @@
   },
   "level": {
     "notFound": "This level couldn't be found.",
-    "levelScore": "Level · {{score}}",
     "hideDeeperRead": "Hide the deeper read ↑",
     "goDeeper": "Go deeper ↓",
-    "sourcesLink": "Where this comes from →"
+    "sourcesLink": "Where this comes from →",
+    "seenIn": "You'll see it in",
+    "tripsOn": "Where it trips",
+    "neighbours": "Its neighbours on the ring ↓",
+    "hideNeighbours": "Hide its neighbours ↑",
+    "seeOnTheRing": "See where it sits among all the states"
   },
   "sources": {
     "title": "Where this comes from",
