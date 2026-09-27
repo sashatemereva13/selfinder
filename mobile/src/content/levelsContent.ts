@@ -93,7 +93,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Peace settles into feeling everything without resisting any of it — but even that settling doesn't hold forever. No state stays, not even this one, and what a self feels when the state it thought was final turns out not to be is the same wound this whole map starts with. The ring closes here, not because the two ends match, but because neither end was ever the last stop.`,
+          `Enlightenment sits between peace and shame — this is where the ring closes. Peace feels everything without resisting any of it; shame, on the other side, is where the circle of this map begins. No state stays, not even this one, and neither end of the ring is the last stop. What enlightenment has that neither neighbour does is the sense of no separate self doing the feeling.`,
         ],
       },
     ],
@@ -151,7 +151,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Покой — это когда чувствуешь всё и ничему не сопротивляешься, но даже это не длится вечно. Ни одно состояние не остаётся навсегда, и это тоже. И то, что чувствует человек, когда состояние, казавшееся окончательным, таким не оказывается, — та же самая рана, с которой начинается вся эта карта. Круг замыкается здесь не потому, что два конца совпадают, а потому, что ни один из них никогда не был последней остановкой.`,
+              `Просветление находится между покоем и стыдом — здесь круг замыкается. Покой чувствует всё и ничему не сопротивляется; стыд по другую сторону — место, где начинается круг этой карты. Ни одно состояние не остаётся навсегда, и это тоже, и ни один конец круга не последняя остановка. Собственное просветления, чего нет у соседей, — ощущение, что нет отдельного «я», которое чувствует.`,
             ],
           },
         ],
@@ -214,7 +214,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Unconditional love is warmth without a direction, without needing anywhere to go — but it's still warmth in motion, still something happening. Peace is what's left once even that motion settles: nothing left to resist. What stays open is the last separation — peace still feels everything, and there's not yet no gap between what's felt and who is feeling it.`,
+          `Peace sits between unconditional love and enlightenment. Unconditional love is warmth moving outward; enlightenment is where the ring turns back toward its start. Peace is what's there when nothing is left to resist — everything felt, nothing pushed away. What it has that neither neighbour does is stillness.`,
         ],
       },
     ],
@@ -292,7 +292,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Безусловная любовь — это тепло без направления, которому некуда стремиться, но это всё ещё тепло в движении, всё ещё что-то происходящее. Покой — это то, что остаётся, когда даже это движение успокаивается: сопротивляться больше нечему. Открытым остаётся последнее разделение — покой всё ещё чувствует всё, и пока нет полного слияния между тем, что чувствуется, и тем, кто это чувствует.`,
+              `Покой находится между безусловной любовью и просветлением. Безусловная любовь — тепло, движущееся наружу; просветление — место, где круг поворачивает к своему началу. Покой — то, что есть, когда сопротивляться больше нечему: всё чувствуется, ничто не отталкивается. Его собственное, чего нет у соседей, — неподвижность.`,
             ],
           },
         ],
@@ -375,7 +375,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Love is warmth that goes somewhere — it has a direction, someone or something it's warm toward. Unconditional love drops even that: nothing to attach to, nowhere it has to go. What's still open is that it's still warmth in motion, still something happening, not yet settled.`,
+          `Unconditional love sits between love and peace. Love is warmth toward someone or something; peace is what's there when nothing is being resisted at all. Unconditional love is warmth that doesn't need an object — it doesn't attach, and it doesn't have to go anywhere. Its own quality is breadth: it takes in whatever is in front of it.`,
         ],
       },
     ],
@@ -452,7 +452,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Любовь — это тепло, у которого есть направление, кто-то или что-то, к чему оно обращено. Безусловная любовь отпускает и это: не к чему привязываться, некуда стремиться. Открытым остаётся то, что это всё ещё тепло в движении, всё ещё что-то происходящее, ещё не улёгшееся.`,
+              `Безусловная любовь находится между любовью и покоем. Любовь — тепло к кому-то или чему-то; покой — то, что есть, когда ничему не нужно сопротивляться. Безусловная любовь — тепло, которому не нужен предмет: оно не привязывается и ему не нужно никуда направляться. Её собственное — широта: она вмещает всё, что перед ней.`,
             ],
           },
         ],
@@ -515,7 +515,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "What it's for",
         paragraphs: [
-          `Ramana Maharshi: "Love of an object is of an inferior order and cannot endure." Any love aimed at something outside you — a person, an outcome, a version of yourself — fades the moment that object changes, because it was never really about the object.`,
+          `Any love aimed at something outside you — a person, an outcome, a version of yourself — moves when that thing moves. That isn't its weakness; it's what having a direction means. Love is how warmth finds its way to someone in particular.`,
           `Nisargadatta Maharaj: "Wisdom is knowing I am nothing, Love is knowing I am everything, and between the two my life moves." Worth sitting with directly — not a formula, a description of where love actually comes from once it isn't chasing anything.`,
         ],
       },
@@ -528,13 +528,13 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Where people get it wrong",
         paragraphs: [
-          `What most people call love at the lower end of this range is really attachment — glamour, possession, the specialness of a particular person or outcome. It's intense, and it fades the moment the object does, because it was never really about them.`,
+          `What often gets called love is really attachment — glamour, possession, the specialness of a particular person or outcome. It's intense, and it fades the moment the object does, because it was never really about them.`,
         ],
       },
       {
         heading: "Why here",
         paragraphs: [
-          `Reason organizes experience by explaining it — useful, but it still needs a reason to stand on. Love is warmth that doesn't require a reason to justify itself. What's still open is that this warmth still has a direction, someone or something it's warm toward.`,
+          `Love sits between reason and unconditional love. Reason organizes experience by explaining it; unconditional love is warmth with nowhere in particular to go. Love is warmth that goes somewhere — toward a person, a place, a thing. What it has that neither neighbour does is a direction: someone it's warm toward.`,
         ],
       },
     ],
@@ -601,7 +601,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Для чего это",
             paragraphs: [
-              `Рамана Махарши: «Любовь к объекту — низшего порядка и не может длиться». Любая любовь, направленная на что-то вне вас — человека, исход, версию себя, — гаснет в момент, когда объект меняется, потому что на самом деле она никогда не была про объект.`,
+              `Любая любовь, направленная на что-то вне вас — человека, исход, версию себя, — меняется, когда меняется её предмет. Это не её слабость, а то, что значит иметь направление: любовь — это способ, которым тепло находит кого-то конкретного.`,
               `Нисаргадатта Махарадж: «Мудрость — знать, что я ничто. Любовь — знать, что я всё. И между ними движется моя жизнь». Стоит подумать над этим напрямую — не как над формулой, а как над описанием того, откуда на самом деле берётся любовь, когда она перестаёт что-либо преследовать.`,
             ],
           },
@@ -614,13 +614,13 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "В чём люди ошибаются",
             paragraphs: [
-              `То, что большинство людей называют любовью в нижней части этого диапазона, на самом деле привязанность — очарование, обладание, особость конкретного человека или исхода. Она интенсивна и гаснет в момент, когда меняется объект, потому что на самом деле никогда не была про него.`,
+              `То, что часто называют любовью, на самом деле привязанность — очарование, обладание, особость конкретного человека или исхода. Она интенсивна и гаснет в момент, когда меняется объект, потому что на самом деле никогда не была про него.`,
             ],
           },
           {
             heading: "Почему тут",
             paragraphs: [
-              `Разум упорядочивает опыт, объясняя его, — это полезно, но ему всё ещё нужна причина, на которую можно опереться. Любовь — это тепло, которому не нужна причина, чтобы оправдать своё существование. Открытым остаётся то, что у этого тепла всё ещё есть направление — кто-то или что-то, к чему оно тянется.`,
+              `Любовь находится между разумом и безусловной любовью. Разум упорядочивает опыт, объясняя его; безусловная любовь — тепло, которому не нужно никуда направляться. Любовь — тепло, у которого есть направление: к человеку, месту, делу. Её собственное, чего нет у соседей, — адресат: тот, к кому она тёплая.`,
             ],
           },
         ],
@@ -693,7 +693,7 @@ export const LEVELS: LevelContent[] = [
         heading: "What it's for",
         paragraphs: [
           `Reason's real use isn't producing feelings, it's building ground you can trust — Carl Sagan's whole method rests on one line: extraordinary claims require extraordinary evidence. That single habit, applied honestly, sorts most of what's actually true in your life from what you've just been repeating.`,
-          `But even Einstein, whose career was reason's proof of concept, documented its edge plainly: "The mind can proceed only so far upon what it knows and can prove. There comes a point where the mind takes a leap... and comes out upon a higher plane of knowledge, but can never prove how it got there." Reason gets you to the edge. It doesn't cross it.`,
+          `But even Einstein, whose career was reason's proof of concept, documented its edge plainly: "The mind can proceed only so far upon what it knows and can prove. There comes a point where the mind takes a leap... but can never prove how it got there." Reason gets you to the edge. It doesn't cross it.`,
         ],
       },
       {
@@ -711,7 +711,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Acceptance stops arguing with what's real. Reason neighbors that stillness by picking experience back up and organizing it, now that it's stopped fighting it. What's still open: organizing still explains — nothing here is settled enough not to need the explaining.`,
+          `Reason sits between acceptance and love. Acceptance stops arguing with what's real; love is warmth that needs no reason to justify itself. Reason picks experience back up and makes sense of it. Its own gift, which neither neighbour offers, is an explanation that holds up — ground you can check.`,
         ],
       },
     ],
@@ -778,7 +778,7 @@ export const LEVELS: LevelContent[] = [
             heading: "Для чего это",
             paragraphs: [
               `Настоящая польза разума не в том, чтобы производить чувства, а в том, чтобы строить почву, которой можно доверять, — весь метод Карла Сагана держится на одной фразе: экстраординарные утверждения требуют экстраординарных доказательств. Одна эта привычка, применённая честно, отделяет большую часть по-настоящему истинного в вашей жизни от того, что вы просто повторяли.`,
-              `Но даже Эйнштейн, чья карьера была живым доказательством разума, прямо зафиксировал его предел: «Ум может продвинуться лишь настолько далеко, насколько позволяет то, что он знает и может доказать. Наступает момент, когда ум совершает скачок... и оказывается на более высокой плоскости знания, но никогда не может доказать, как он туда попал». Разум доводит вас до края. Он не переступает его.`,
+              `Но даже Эйнштейн, чья карьера была живым доказательством разума, прямо зафиксировал его предел: «Ум может продвинуться лишь настолько далеко, насколько позволяет то, что он знает и может доказать. Наступает момент, когда ум совершает скачок... но никогда не может доказать, как он туда попал». Разум доводит вас до края. Он не переступает его.`,
             ],
           },
           {
@@ -796,7 +796,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Принятие перестаёт спорить с тем, что реально. Разум соседствует с этой тишиной тем, что снова берётся за опыт и упорядочивает его — теперь, когда перестал с ним бороться. Открытым остаётся то, что упорядочивание всё ещё объясняет — здесь ничто ещё не устоялось настолько, чтобы объяснение стало не нужным.`,
+              `Разум находится между принятием и любовью. Принятие перестаёт спорить с тем, что есть; любовь — тепло, которому не нужна причина, чтобы себя оправдать. Разум снова берёт опыт в руки и придаёт ему смысл. Его дар, которого нет у соседей, — объяснение, которое выдерживает проверку: опора, которую можно проверить.`,
             ],
           },
         ],
@@ -886,7 +886,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Willingness spends the friction of resistance, leaning toward change before any proof it'll work. Acceptance is what's left once even trying stops being necessary — the argument with what's already true finally ends. What's still open: accepting reality isn't yet doing anything with it.`,
+          `Acceptance sits between willingness and reason. Willingness leans toward change; reason picks experience up and organizes it. Acceptance is where the argument with what's already true ends. What it has that neither neighbour does is rest in the facts as they are — no leaning, no explaining.`,
         ],
       },
     ],
@@ -977,7 +977,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Готовность расходует трение сопротивления, склоняясь к переменам ещё до всякого доказательства, что это сработает. Принятие — это то, что остаётся, когда даже попытка перестаёт быть нужной, — спор с тем, что уже истинно, наконец заканчивается. Открытым остаётся то, что принять реальность — ещё не значит что-то с ней делать.`,
+              `Принятие находится между готовностью и разумом. Готовность тянется к переменам; разум подбирает опыт и упорядочивает его. Принятие — это место, где спор с уже случившимся заканчивается. Его собственное, чего нет у соседей, — покой в фактах такими, какие они есть: без наклона, без объяснений.`,
             ],
           },
         ],
@@ -1073,7 +1073,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Neutrality doesn't need things to be different, but it doesn't move either. Willingness neighbors that stillness with a lean toward change, without the friction that usually makes change feel like effort. What's still open: willingness still has the shape of trying — it hasn't stopped needing to.`,
+          `Willingness sits between neutrality and acceptance. Neutrality doesn't move; acceptance has stopped arguing with what's real. Willingness is the lean between them — toward change, before there's any proof it will work, without the friction that usually makes change feel like effort. Its own quality is an openness to try.`,
         ],
       },
     ],
@@ -1151,7 +1151,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Нейтральность не нуждается в том, чтобы всё было иначе, но и не движется. Готовность соседствует с этой неподвижностью склонностью к переменам — без трения, которое обычно делает перемены похожими на усилие. Открытым остаётся то, что готовность всё ещё имеет форму попытки — она ещё не перестала нуждаться в том, чтобы пытаться.`,
+              `Готовность находится между нейтральностью и принятием. Нейтральность не движется; принятие перестало спорить с тем, что есть. Готовность — наклон между ними: к переменам, ещё до всяких доказательств, что они получатся, и без трения, из-за которого перемены обычно ощущаются как усилие. Её собственное — открытость попробовать.`,
             ],
           },
         ],
@@ -1234,7 +1234,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Courage meets something difficult standing up. Neutrality is what's left once nothing urgent is left to meet at all. What's still open: not needing things to be different isn't yet the same as leaning toward anything — neutrality doesn't move.`,
+          `Neutrality sits between courage and willingness. Courage meets something difficult standing up; willingness leans toward change without the strain that usually comes with it. Neutrality is the stillness between them: nothing urgent to meet, nothing it needs to change. What it has that neither neighbour does is ease — nowhere it has to be.`,
         ],
       },
     ],
@@ -1303,7 +1303,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Смелость встречает что-то трудное, не отступая. Нейтральность — это то, что остаётся, когда встречать уже нечего — ничего срочного не осталось. Открытым остаётся то, что не нуждаться в переменах — это ещё не то же самое, что склоняться к чему-то. Нейтральность не движется.`,
+              `Нейтральность находится между смелостью и готовностью. Смелость встречает трудное стоя; готовность тянется к переменам без обычного напряжения. Нейтральность — тишина между ними: встречать нечего, менять ничего не нужно. Её собственное, чего нет у соседей, — лёгкость: ей никуда не нужно.`,
             ],
           },
         ],
@@ -1377,7 +1377,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Pride's worth still needs a comparison to hold it up. Courage is worth that can finally face something hard without needing to win against anyone first. What's still open: courage still has to meet something difficult — nothing here is at rest yet.`,
+          `Courage sits between pride and neutrality. Pride's worth leans on comparison; neutrality doesn't need anything to be different at all. Courage is worth that can face something hard standing up. What it has that neither neighbour does is readiness — the pull to meet what's difficult head on.`,
         ],
       },
     ],
@@ -1475,7 +1475,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Ценность гордости всё ещё нуждается в сравнении, чтобы держаться. Смелость — это ценность, способная наконец встретить что-то трудное, не нуждаясь в победе над кем-то. Открытым остаётся то, что смелости всё ещё приходится встречать трудное — здесь пока ничто не находится в покое.`,
+              `Смелость находится между гордостью и нейтральностью. Ценность гордости опирается на сравнение; нейтральности вообще не нужно, чтобы что-то было иначе. Смелость — ценность, которая может встретить трудное стоя. Её собственное, чего нет у соседей, — готовность идти навстречу тому, что сложно.`,
             ],
           },
         ],
@@ -1578,7 +1578,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Anger defends a boundary from outside. Pride is the self trying to build a boundary from within — worth, not just defense, no longer needing someone to have crossed a line first. What's still open: that worth still needs a comparison to hold it up — it can't yet stand without one.`,
+          `Pride sits between anger and courage. Anger defends a boundary from outside; courage faces something hard without needing to win against anyone. Pride is the self building its worth from within, measured against others. What it has that neither neighbour does is a sense of standing — of having a place worth holding.`,
         ],
       },
     ],
@@ -1655,7 +1655,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Гнев защищает границу извне. Гордость — это попытка выстроить границу изнутри: ценность, а не просто защита, которой больше не нужно, чтобы кто-то сначала пересёк черту. Открытым остаётся то, что этой ценности всё ещё нужно сравнение, чтобы держаться, — сама по себе она пока стоять не может.`,
+              `Гордость находится между гневом и смелостью. Гнев защищает границу снаружи; смелость встречает трудное, не нуждаясь в победе над кем-то. Гордость — это «я», выстраивающее свою ценность изнутри, в сравнении с другими. Её собственное, чего нет у соседей, — чувство своего места: того, что есть за что держаться.`,
             ],
           },
         ],
@@ -1737,7 +1737,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Desire wants without a place to stand. Anger is what happens when that want meets something real enough to defend: an actual boundary, actually crossed. What's still open: a boundary defended from outside isn't yet a self that can hold its own worth from inside.`,
+          `Anger sits between desire and pride. Desire wants without anywhere to stand; pride builds a sense of worth from within. Anger is where a want meets something real enough to defend — an actual boundary, actually crossed. Its own gift is clarity about the line: neither neighbour knows as exactly where it runs.`,
         ],
       },
     ],
@@ -1820,7 +1820,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Желание хочет, не имея опоры. Гнев — это то, что происходит, когда это желание встречает что-то достаточно реальное, чтобы это защищать: настоящую границу, которую действительно нарушили. Открытым остаётся то, что граница, защищённая снаружи, — это ещё не «я», способное удерживать собственную ценность изнутри.`,
+              `Гнев находится между желанием и гордостью. Желание хочет, не имея опоры; гордость выстраивает ценность изнутри. Гнев — это когда желание встречает что-то достаточно реальное, чтобы это защищать: настоящую границу, которую действительно переступили. Его дар — ясность насчёт черты: ни один из соседей не знает так точно, где она проходит.`,
             ],
           },
         ],
@@ -1908,7 +1908,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Fear is alertness that only watches for threat, one direction only. Desire is that same alertness reaching toward something instead of only away from it. What's still open: reaching from lack means the want has no claim to stand on yet — nothing yet makes it legitimate.`,
+          `Desire sits between fear and anger. Fear only watches for threat; anger defends something real that's been crossed. Desire is the same alertness turned toward something instead of away from it — reaching, wanting, pulled forward. What it has that neither neighbour does is appetite: the plain force of wanting.`,
         ],
       },
     ],
@@ -1986,7 +1986,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Страх — это бдительность, которая лишь высматривает угрозу, в одну сторону. Желание — та же бдительность, только теперь она тянется к чему-то, а не только прочь от чего-то. Открытым остаётся то, что тянуться из нехватки значит, что этому хотению не на что опереться — пока ничто не делает его законным.`,
+              `Желание находится между страхом и гневом. Страх только высматривает угрозу; гнев защищает что-то реальное, через что переступили. Желание — та же настороженность, но обращённая к чему-то, а не прочь: тянуться, хотеть, двигаться вперёд. Его собственное, чего нет у соседей, — аппетит: простая сила хотения.`,
             ],
           },
         ],
@@ -2069,7 +2069,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Grief looks backward at what's gone. Fear turns that same vulnerability forward, toward what might still be lost. What's still open: forward-facing vulnerability still only watches for threat — nothing yet reaches for anything.`,
+          `Fear sits between grief and desire. Grief looks back at what's gone; desire reaches toward what it wants. Fear faces forward like desire, but it watches instead of reaching — alert to what might be lost, the way grief knows what was. Its own gift, which neither neighbour has in the same way, is attention: nothing gets past it.`,
         ],
       },
     ],
@@ -2145,7 +2145,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Горе смотрит назад, на то, что уже потеряно. Страх поворачивает ту же уязвимость вперёд — к тому, что ещё может быть потеряно. Открытым остаётся то, что эта обращённая вперёд уязвимость всё ещё только высматривает угрозу — она пока ни к чему не тянется.`,
+              `Страх находится между горем и желанием. Горе смотрит назад, на ушедшее; желание тянется к тому, чего хочется. Страх смотрит вперёд, как желание, но не тянется, а следит — насторожен к тому, что можно потерять, так же как горе знает, что было потеряно. Его дар, которого нет у соседей в такой мере, — внимание: мимо него ничего не проходит.`,
             ],
           },
         ],
@@ -2226,7 +2226,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Apathy is blankness — nothing here expects anything anymore. Grief is what apathy becomes once that blankness cracks and finally has a name again. What's still open: the thing named is a loss, still entirely about what's gone, not yet about what's next.`,
+          `Grief sits between apathy and fear. Apathy is blank; it expects nothing. Fear faces forward, toward what might be lost. Grief faces back, at what already has been, and gives it a name. What it has that neither neighbour does is its object: something real, loved, and gone.`,
         ],
       },
     ],
@@ -2311,7 +2311,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Апатия — это пустота: здесь уже никто ничего не ждёт. Горе — это то, во что превращается апатия, когда эта пустота даёт трещину и снова обретает имя. Открытым остаётся то, что названное — это потеря, всё ещё целиком о том, чего не стало, а не о том, что будет дальше.`,
+              `Горе находится между апатией и страхом. Апатия пуста — она ничего не ждёт. Страх смотрит вперёд, на то, что можно потерять. Горе смотрит назад, на то, что уже потеряно, и даёт этому имя. Его собственное, чего нет у соседей, — предмет: что-то настоящее, любимое и ушедшее.`,
             ],
           },
         ],
@@ -2401,7 +2401,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Guilt still has energy to judge. Apathy is what's left once even judging stops — nothing left to prosecute, so the case closes. What's still open: closing the case isn't the same as feeling anything again — there's nothing here yet to replace the judging with.`,
+          `Apathy sits between guilt and grief. Guilt has the energy to judge; grief gives what was lost a name. Apathy is the quiet between them — nothing left to prosecute, nothing named, a blankness that asks for nothing. What it has that neither neighbour does is rest from both the verdict and the ache.`,
         ],
       },
     ],
@@ -2469,7 +2469,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Вина всё ещё имеет силы, чтобы судить. Апатия — это то, что остаётся, когда даже осуждение прекращается: преследовать больше нечего, и дело закрывается. Открытым остаётся то, что закрыть дело — не то же самое, что снова начать что-то чувствовать. Здесь пока нечем заменить осуждение.`,
+              `Апатия находится между виной и горем. Вина способна судить; горе даёт потерянному имя. Апатия — тишина между ними: судить некого, называть нечего, пустота, которая ничего не просит. У неё есть то, чего нет у соседей, — передышка и от приговора, и от боли.`,
             ],
           },
         ],
@@ -2542,7 +2542,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `Shame condemns the whole self. Guilt narrows that down to something smaller than all of you — not everything you are, just something you did. What's still open: the mind is still the judge and the judged at once, with no rest from either job.`,
+          `Guilt sits between shame and apathy. Shame condemns the whole self; apathy has stopped judging at all. Guilt is between them: the mind as judge and judged at once, about something you did rather than everything you are. It has what shame doesn't — a boundary around the charge — and what apathy doesn't: enough energy left to care.`,
         ],
       },
     ],
@@ -2638,7 +2638,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `Стыд осуждает всё существо целиком. Вина сужает это до чего-то меньшего, чем ты весь, — не всё, чем ты являешься, а только то, что ты сделал. Открытым остаётся то, что ум всё ещё одновременно и судья, и подсудимый, — и нет отдыха ни от одной из этих ролей.`,
+              `Вина находится между стыдом и апатией. Стыд осуждает человека целиком; апатия перестаёт судить вовсе. Вина — между ними: ум одновременно судья и подсудимый, и речь о том, что вы сделали, а не о том, кто вы. У неё есть то, чего нет у стыда, — граница вокруг обвинения, и то, чего нет у апатии, — достаточно сил, чтобы это было важно.`,
             ],
           },
         ],
@@ -2740,7 +2740,7 @@ export const LEVELS: LevelContent[] = [
       {
         heading: "Why here",
         paragraphs: [
-          `What closes the loop back to shame isn't punishment for losing enlightenment — it's the oldest proof in this whole map that no position is where you're supposed to stay. If even the state everyone reaches for doesn't hold, then wherever you actually are right now was never a waiting room for somewhere realer. It was already the real thing. What stays open here: shame still condemns the whole self — the neighboring move is narrowing that down to something smaller than all of you.`,
+          `Shame sits between guilt and enlightenment — this is where the ring closes. Guilt narrows condemnation down to one thing you did rather than all of you. Enlightenment, on the other side, is the state people tend to imagine as the end, and it doesn't hold either: no state stays. Shame is the one that takes in the whole self at once. Neither neighbour is where you're supposed to be instead — wherever you actually are is already the real thing.`,
         ],
       },
     ],
@@ -2808,7 +2808,7 @@ export const LEVELS: LevelContent[] = [
           {
             heading: "Почему тут",
             paragraphs: [
-              `То, что замыкает круг обратно к стыду, — не наказание за утрату просветления. Это самое старое доказательство во всей этой карте: ни одна позиция не является тем местом, где нужно оставаться. Если даже состояние, к которому все тянутся, не держится вечно, — значит, то, где ты находишься прямо сейчас, никогда не было залом ожидания перед чем-то более настоящим. Это уже было настоящим. Открытым здесь остаётся то, что стыд всё ещё осуждает всё существо целиком, — соседний шаг сужает это до чего-то меньшего, чем ты весь.`,
+              `Стыд находится между виной и просветлением — здесь круг замыкается. Вина сужает осуждение до одного поступка, а не всего человека. Просветление по другую сторону — состояние, которое принято представлять себе концом пути, но и оно не держится: ни одно состояние не остаётся навсегда. Стыд охватывает всё «я» сразу. Ни один из соседей не то место, где вам «положено» быть вместо этого: где бы вы ни были сейчас, это уже настоящее.`,
             ],
           },
         ],
