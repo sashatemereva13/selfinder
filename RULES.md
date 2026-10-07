@@ -61,7 +61,15 @@ even though Shift has a direction. Concretely: copy says "shift toward,"
 never "raise," "up," "higher," or "get out of"; the current reading is
 the starting point of a shift, never the problem the shift solves; and no
 screen should imply someone who didn't shift, or chose a different
-destination, did it wrong.
+destination, did it wrong. **One deliberate exception (2026-10-07):** a
+level page's "Go deeper" read follows David R. Hawkins' own account
+closely, ranking language and level numbers included ("the lower
+levels," "level 400"), and is kept that way on purpose — it sits behind
+a tap, opens with "About this section" labelling it as his framework and
+his language rather than Selfinder's, and rewording a source to agree
+with us would misrepresent it. Everything Selfinder says in its own
+voice — the rest of the level page, its neighbours on the ring, every
+other screen — stays free of ranking.
 
 **The answers are already inside the person — Selfinder never supplies
 them, even in the paid tier.** Like Socrates questioning rather than
