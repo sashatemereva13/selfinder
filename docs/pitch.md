@@ -112,8 +112,8 @@ the record of it.
 **The sharper version (2026-08-14), and the one to lead with going forward:**
 Selfinder+ adds *dimensionality* — it lets you look at the present moment in
 light of your own past and your own future, instead of alone. There's a
-path that brought you to right now; there's what's calling you forward
-(your own stated wish, never the app's guess); Selfinder+ is what makes
+path that brought you to right now; there's what you're reaching toward
+(your own stated intention, never the app's guess); Selfinder+ is what makes
 that whole shape visible at once, not just the single point you're standing
 on. The metaphor worth using in copy and visuals: a light cone — a fixed
 past below, an open future above, meeting at "here and now." Borrowed
@@ -132,7 +132,7 @@ source, never the effect of something ahead of it.
 This is the same anti-diagnosis rule the whole product already lives by,
 just given its sharpest possible sentence: **Selfinder+ doesn't tell you
 who you are. It helps you notice where you are — between what has shaped
-you and what is calling you forward.** There is no fixed model of "who you
+you and what you're reaching toward.** There is no fixed model of "who you
 are" at the end of the record; you're continually re-finding yourself at
 the point where memory, present experience, and possibility meet.
 
@@ -143,13 +143,29 @@ who works free is a hobby; a doctor with a fee gets their advice followed —
 but that logic is for the free core's problem, not this one. Here, the
 better analogy is a save file: nobody feels bad paying for cloud saves.
 
-**Price: €7.99/month, €49.99/year** (decided 2026-08-14 — not yet live;
-no StoreKit/IAP integration exists as of this writing, see
+**Price: €7.99/month, €49.99/year**, with a 7-day free trial on the
+yearly plan (decided 2026-08-14, confirmed 2026-10-10 — not yet live; no
+StoreKit/IAP integration exists as of this writing, see
 `mobile/docs/shipping.md`).
+
+**What's free and what's Selfinder+ (2026-10-10).** The daily ritual is
+free forever — measuring, understanding your state, choosing, and both
+practices, *including shifting toward love*, every day, with every
+philosopher. People come for "shift toward love"; they have to feel it to
+believe it, and nobody should meet a paywall between them and relief.
+Selfinder+ is everything that grows over time: your whole Arc (the free
+tier keeps the last 14 days), your intentions, all twelve Journeys (the
+first is free), unlimited conversation with your philosopher, and a
+pattern from your history. One subscription, no separate purchases. Full
+detail: `RULES.md`, "The free/paid line".
 
 ---
 
 ## Who this is really for, at the root (2026-08-20)
+
+**The one person (2026-10-10): Jess** — see [`docs/persona.md`](persona.md).
+Jess is who Selfinder is built for first and who decides what gets built;
+this section stays true as the wider reason the product matters.
 
 The targeting language elsewhere in this doc and in ad copy — overthinkers,
 the self-aware, the 20-year-old figuring out who they are — is correct and
@@ -248,10 +264,12 @@ isn't a feature, it's the brand.
 problem — attention stuck in thought — completely, for free, forever. Selfinder+
 solves a different, smaller problem: once someone has a few readings, they
 want to watch the shape they make, the same pull as a game or a save file,
-not a wellness need. Subscription: Your Arc's full history and per-reading
-detail, additional philosophers, expanded sound and breathing. Launch free,
-watch first-party usage data, build the paywall around what people actually
-love. Monthly + discounted annual, intro offer.
+not a wellness need. Subscription (Selfinder+): your whole Arc — every
+reading and every shift over time, each moment with its own words — your
+intentions, the Journeys, and unlimited conversation. Never more
+philosophers or sounds behind a wall: the practice stays whole for free.
+Monthly + discounted annual, 7-day trial. Russia gets the free tier only
+(no store payments there).
 
 **Vision.** The app is the first room of something larger. The same practice
 that fits in a pocket scales to physical spaces — retreats, eventually a hotel:

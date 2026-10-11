@@ -187,8 +187,10 @@ wrong regardless of how clean it looks in isolation.
   is no vibration "between" two named levels.
 - **A reading lives in exactly one screen: Depths.** There is no separate
   "results"/reveal screen anymore — Measure finishing routes straight back
-  to Depths, which owns the aura, the headline reflection, the four wheel
-  rows, and the philosopher's one next step (the seam). Before this was
+  to Depths, which owns the aura, the headline reflection and the four
+  wheel rows — and nothing else: since 2026-10-08 Depths is only about
+  where you are now (the philosopher's next step moved to the minimap's
+  handle; the message star moved to Explore on 2026-10-09). Before this was
   fixed, reveal and Depths showed nearly identical content (the four
   spheres, the philosopher's combination message) and "see the full
   reading" was a lie — there was no fuller version, just a repeat. If a
@@ -197,31 +199,51 @@ wrong regardless of how clean it looks in isolation.
   a genuinely different job (a record, not another mirror). The reading's
   reflection also joins the conversation with the philosopher — that is
   the same words continuing, not a second mirror.
-- **Navigation is a map, not a menu (2026-09-26).** The tab bar is a
-  minimap — Depths, Journeys, Your Arc as three places joined by one
-  thread — and it opens into the full map: three territories (Your Arc's
-  sky, Journeys' contoured land, Depths' rings around you), each with its
-  own border and terrain, and the thread as the one thing crossing every
-  border. Every place in the app is on the map, in one shared list
-  (`src/content/mapPlaces.ts`) — no screen keeps its own separate menu of
-  the same destinations (Depths' scrolling action menu was removed for
-  exactly this, and its space given to the philosopher's seam). The
-  philosopher names one step in words; the map shows where it is. The
-  minimap opens the map by a tap on its handle or by dragging it up —
-  the map follows the finger (`mapProgress` in `mapStore.ts`). Full
-  reasoning, and the rules for the thread becoming personal later (a
-  record, never a reward; it only ever grows):
-  `docs/app-architecture-concept.md`, "Navigation as a map".
+- **Three places, one chain (2026-10-09 — replaces "Navigation is a
+  map").** The goal is a product someone can use straight away, the way
+  you use an iPhone: every screen has one job and one main action, and
+  the next step is always where the current one ends. The bottom menu has
+  three places, each with one job:
+  - **Today** (the `depths/` folder) — the daily chain, which leads
+    itself: **see where you are** (Measure → Today) → **understand it**
+    (your state's page) → **choose what to do with it** (`depths/choose`:
+    Use it / Shift toward love) → the session (`depths/session`) → back to
+    a quiet Today. Each screen's one action is the next step; the
+    philosopher's step on the minimap's handle is the way back into the
+    chain from anywhere.
+  - **Explore** (the `explore/` folder) — every experience someone visits
+    on their own, grouped by what they need right now, each group a verb:
+    **Settle** (Breathe, Tune In), **Say it** (talk with your
+    philosopher, Spill), **Understand** (the seventeen states, Deeper
+    questions — the Journeys, on their own screen), **Receive** (a
+    message · a symbol · the moon, one line). Nothing pushed.
+    The Journeys also meet people inside the ritual: at the end of a
+    Shift session, at most once a week, the philosopher names the one
+    Journey that fits the state, as the longer version of what was just
+    done (`src/content/journeyForState.ts`) — one quiet line, never a
+    button competing with "Done".
+  - **Your Arc** — what happened.
+  The account and settings open Explore, first and unmistakable (your
+  initial in a ring and your name — or "Sign in" and what it's for), the
+  way iOS Settings opens with your own account: not an icon in a screen's
+  corner, and not a seventh row among the experiences either.
+  No screen keeps its own menu of other destinations, and there is no
+  separate map overlay any more (removed 2026-10-09: with the chain
+  leading itself and everything else in Explore, it had no job left).
+  The idea of a personal map that grows as someone explores lives on as
+  Your Arc — a record, never a reward; it only ever grows.
 - **What-is and what-next don't share a shelf.** A *reference* (the
   reading's reflection, what was actually said) belongs right against the
   reading it explains; a *next step* belongs with the philosopher's
-  step or on the map. When repositioning anything, ask "is this what-is,
+  step, at the end of the screen it follows. When repositioning anything, ask "is this what-is,
   or what-next" before deciding where it sits.
 - **Talking about a reading is never a footnote.** Continuing a
   conversation about a reading is a deliberate product goal (the Your Arc
-  seed) — so after someone has read about their state it *is* the
-  philosopher's one step, and it's a full place on the map ("Talk with
-  …"), never a small link tucked under something else.
+  seed) — so it's the first place in Explore ("Talk with …"), never a
+  small link tucked under something else. It is not a required step, though:
+  since 2026-10-08 the philosopher's step goes from the state's page
+  straight to the Shift offer, because making talk a gate left people
+  stuck.
 
 ## Product / positioning
 
@@ -280,10 +302,11 @@ Selfinder is or why it costs money.
   - **Spill is the one deliberate absence** — the philosopher steps away
     for the minute of writing ("never judged" means no one watching) and
     returns on the reveal.
-  - **On Depths, the seam** — the philosopher stands in the middle,
-    between the reading and the thread, saying one line that points to
-    one step (`PhilosopherSeam.tsx`); the same step sits at the bottom of
-    the full map. **Everywhere else (Levels, Cards, Your Arc, the
+  - **At the end of each step, and on the minimap's handle** (2026-10-09)
+    — the philosopher hands over the next step where the current one ends
+    (e.g. the bottom of your state's page asks what you'll do with it),
+    and the step's name is the minimap handle's own label, so a person
+    always sees what to do. **Everywhere else (Levels, Cards, Your Arc, the
     Journeys catalog) — not built yet — a quiet strip above the
     minimap** holds the philosopher's note about the page you're on;
     tapping it opens the conversation over that page, and closing it
@@ -292,17 +315,17 @@ Selfinder is or why it costs money.
     rule below). Later visits: quieter — a note shown every time becomes
     wallpaper. Notes explain the page, never the person.
   This replaces scattered "Talk with X" links and the front-loaded
-  how-to-use overlay. Talking about a reading keeps its full weight — as
-  the philosopher's step once someone has read about their state, and as
-  a full place on the map (see "Talking about a reading is never a
+  how-to-use overlay. Talking about a reading keeps its full weight as the
+  first place in Explore (see "Talking about a reading is never a
   footnote").
 - **Shift is the flagship — what Selfinder will sell (2026-09-26).**
   Measure tells you where you are; Shift, guided by your philosopher, is
   what you come back for; Your Arc shows it happened. Lead with "shift
   toward love"; build other destinations over time (see "Shift has
-  destinations, not a summit" above). Free today like everything else
-  (see the fully-free bullet) — this is the future paid layer being built
-  properly, not a gate. **"Shift toward love" is the acquisition promise
+  destinations, not a summit" above). **The Shift practice itself stays
+  free forever** (2026-10-10 — see "The free/paid line" below): it's the
+  promise people come for, and they have to feel it to believe it; what
+  is sold is its *record* over time, in Your Arc. **"Shift toward love" is the acquisition promise
   — what brings someone in — not the step the app pushes after every
   reading** (2026-09-26): depending on where a reading lands, someone may
   not want to shift at all, and free will means that's theirs to decide.
@@ -311,13 +334,23 @@ Selfinder is or why it costs money.
   genuinely fun to read, because that's when curiosity is highest: they
   just learned what their state is called and want to know what it means.
   Shift stays one tap away on the menu for anyone who wants it.
+  **Two equal doors (2026-10-08).** Once someone has met their state
+  (read its page), the philosopher offers a choice, never a push: **Use
+  it** — put the state to work in their day (anger can power a workout)
+  — or **Shift toward love**. Same size, same weight, neither marked as
+  the right one; not choosing is also an answer, and the offer isn't
+  repeated that day. There is one Measure and no shortcut alternative to
+  it — Shift starts from the current reading. Full design:
+  `docs/shift-concept.md`.
 - **The philosopher always points to exactly one next step (2026-09-26).**
   Gently, in their own voice, about what to *do in the app* — never about
   how to feel. One suggestion is guidance; two is a menu. The menu itself
   stays always available, so a suggestion can be ignored without
-  friction: the philosopher is the guide, the menu is the map. By state:
-  no reading → Measure; just measured → understand the state; returning
-  after days → Measure.
+  friction: the philosopher is the guide, the menu is always there. By state:
+  no reading → Measure; just measured → understand the state; then →
+  choose (Use it / Shift toward love — `depths/choose`); once the offer has been seen →
+  rest (no action); returning after days → Measure. Talking is never a
+  gate between these (2026-10-08) — it stays the first place in Explore.
 - **Journeys are generated experiences, standalone from Your
   Arc — an open-ended, growing family, not a fixed set.** Every Journey
   is an environment for examining what is happening within the person in
@@ -413,17 +446,53 @@ Selfinder is or why it costs money.
   This is a noted gap, not designed or built yet — a future session
   should design where it appears, what it says, and how it avoids reading
   as a dark pattern, rather than bolting on a generic prompt.
-- **"What makes this a paid app?" is now a future-facing question, not a
-  present-tense one — don't let that erode the free experience while it
-  waits for an answer.** Everything is free right now, with no live
-  payment path (see the fully-free bullet above), but that's a legal/
-  business-entity gap, not a decision that depth stops mattering. Keep
-  building Your Arc and Journeys with the same care as before — polish,
-  a funnel-analytics touchpoint, richer history, a new Journey — the
-  seeds of a future paid layer are still worth planting, they just don't
-  gate anything yet. A change that makes free content feel already-
-  complete with nothing more to want is still worth a second look, same
-  as before this pivot.
+- **The free/paid line (decided 2026-10-10 — not live yet).** The legal
+  gap is closing: the founder joined Pépite with the student-entrepreneur
+  status (SNEE, France), which allows a legal structure while studying.
+  Until payments are actually built, everything stays free (the
+  fully-free bullet above still describes today). When they are, the
+  line is: **the daily ritual is free forever; what grows over time is
+  paid** — the same principle as "History is the product": paid depth
+  comes from the record, never from gating the practice or relief.
+  - **Free forever:** all of Today's chain, every day — Measure, Today,
+    your state's page, the sphere answers, Choose, and *both* sessions
+    (Use it, Shift toward love); all five philosophers (a relationship,
+    not a feature); Explore's practices (Breathe, Tune In, Spill, the
+    seventeen states, a message, a symbol, the moon); talking with your
+    philosopher up to a generous daily limit (each message has a real
+    AI cost); the last 14 days of Your Arc; crisis support, export and
+    deletion — always, regardless of payment.
+  - **Selfinder+ (one subscription):** your whole Arc — all your history
+    in the cone, every moment with its full words, Shift sessions' before
+    and after over months; intentions (the future cone); all twelve
+    Journeys, their results woven into your past — **the first Journey is
+    free**, a taste; unlimited conversation; a pattern from your history
+    (Center).
+  - **One product, not a menu:** the separate per-Journey purchases
+    (`journeyPurchases`, consumable) fold into the subscription.
+  - **Price:** €49.99/year or €7.99/month (as in `docs/pitch.md`), a
+    7-day free trial on the yearly plan.
+  - **When the offer appears:** only where the paid part is the natural
+    next thing — Your Arc reaching back past 14 days, the end of the first
+    Journey, wanting to set an intention. Never during or right after a
+    heavy reading or a session, never on launch, no countdowns.
+  - **Russia: free only.** Decided by the store account's country (the
+    storefront), not the app's language — a Russian speaker living in
+    France can subscribe. The subscription is unavailable in Russia in
+    App Store Connect and Play Console; in the app, one check decides
+    whether anything paid is ever mentioned (storefront is Russia, or
+    can't be read → no offers anywhere), so nothing there feels
+    withheld. Russian language and the full free tier stay fully
+    supported.
+  - **Payments are built directly, with no third-party payment SDK**
+    (no RevenueCat): StoreKit and Play Billing in the app, purchases
+    verified on Selfinder's own backend and written to the existing
+    `arcSubscription` fields (`source: 'apple'`/`'google'`). Nothing about
+    who paid leaves Selfinder's own servers beyond Apple and Google
+    themselves — the same trust line as "First-party analytics only".
+  - **Before selling:** the privacy policy names the legal entity and
+    payment processing (it currently says an individual runs Selfinder),
+    and the fully-free bullet above is rewritten, not left stale.
 - **Never diagnose, gate, or imply urgency like a medical or gamified
   app would.** No streaks, no badges, no guilt mechanics, no "you missed a
   day" — this is explicit positioning against wellness-app fatigue (see
@@ -540,6 +609,32 @@ Selfinder is or why it costs money.
   making — don't add reassurance copy for a judgment the design itself
   already doesn't imply; that's over-explaining, and it's also the kind
   of thing that draws attention to the judgment it's denying.
+- **The crisis safety net (2026-10-10) — practice, not therapy, still
+  means never leaving someone alone in danger.** Only danger to life
+  triggers it; heavy feelings are what the app is for and never
+  interrupt. Never an alarm, a block or a diagnosis — a quiet line to the
+  crisis screen (`CrisisLine.tsx` → `app/crisis-support.tsx`), which shows
+  the national line for the phone's *region* (not language), the local
+  emergency number, and findahelpline.com for everywhere else.
+  - **Every AI conversation** (Guide, Measure's exchanges, Journeys)
+    carries a SAFETY rule above everything in `UNIVERSAL_RULES`: the
+    philosopher steps out of character and answers as a caring person.
+  - **A classifier check** (`detectSelfHarm`) runs alongside — never
+    before — text already going to the AI: each conversation message and
+    Journey answer (`/api/chat/safety-check`), and Measure's answers
+    during scoring. After Measure, the crisis screen comes first and
+    "Continue to your reading" leads on.
+  - **Words promised to stay on the phone** (Spill before it's kept, a
+    Shift session's own words) are checked on the phone only, against a
+    short list of unmistakable phrases (`src/utils/safety.ts`).
+  - **The heavy states** — shame, guilt, apathy, grief — carry the quiet
+    line on their own, whatever was said: on Today, on their state pages,
+    at the end of a session that began there. Worded about how heavy they
+    can feel, never as "this state is dangerous".
+  - **Always reachable**: "Need help now?" in the conversation's header and
+    at the bottom of the account screen.
+  - **Nothing about a check is stored or logged** — only that the crisis
+    screen was opened.
 - **Selfinder is practice, not therapy, and says so.** Never use clinical
   or diagnostic language (symptoms, treatment, disorder) anywhere in the
   product. See `docs/pitch.md`, "Isn't this therapy?" — this is both the
