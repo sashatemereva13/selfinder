@@ -59,6 +59,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: build and push backend image
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -67,6 +68,16 @@ jobs:
           tags: |
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
             ${{ env.IMAGE_NAME }}:latest
+
+      # A tag can be moved later; the digest is what was actually shipped.
+      - name: record release identity
+        run: |
+          {
+            echo "### Backend release"
+            echo "- commit: \`${{ github.sha }}\`"
+            echo "- image: \`${{ env.IMAGE_NAME }}:${{ github.sha }}\`"
+            echo "- digest: \`${{ steps.build.outputs.digest }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: deploy backend container
         uses: appleboy/ssh-action@v1.2.1
@@ -81,17 +92,51 @@ jobs:
 
             docker pull ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
+            # Remember what's running now so a failed release can be undone.
+            PREVIOUS_IMAGE=$(docker inspect --format '{{.Config.Image}}' ${{ env.CONTAINER_NAME }} 2>/dev/null || true)
+
+            # 127.0.0.1 only: nginx proxies to it locally, and Docker-published
+            # ports bypass ufw, so publishing on all interfaces left the API and
+            # /metrics reachable over plain HTTP from the internet.
+            # PORT is passed explicitly so the listener always matches the
+            # published container port, whatever the env file says.
+            start_backend() {
+              docker run -d \
+                --name ${{ env.CONTAINER_NAME }} \
+                --restart unless-stopped \
+                --env-file "${{ env.BACKEND_ENV_FILE }}" \
+                -e PORT=${{ env.BACKEND_PORT }} \
+                -p 127.0.0.1:${{ env.BACKEND_PORT }}:${{ env.BACKEND_PORT }} \
+                --network monitoring \
+                "$1"
+            }
+
+            # Started isn't ready: the server only listens once MongoDB is
+            # connected, so poll instead of sleeping a fixed 3 seconds.
+            wait_healthy() {
+              for i in $(seq 1 30); do
+                if curl --fail --silent --show-error \
+                  "http://127.0.0.1:${{ env.BACKEND_PORT }}/api/health"; then
+                  return 0
+                fi
+                sleep 2
+              done
+              return 1
+            }
+
             docker stop ${{ env.CONTAINER_NAME }} || true
             docker rm ${{ env.CONTAINER_NAME }} || true
 
-            docker run -d \
-              --name ${{ env.CONTAINER_NAME }} \
-              --restart unless-stopped \
-              --env-file "${{ env.BACKEND_ENV_FILE }}" \
-              -p ${{ env.BACKEND_PORT }}:${{ env.BACKEND_PORT }} \
-              --network monitoring \
-              ${{ env.IMAGE_NAME }}:${{ github.sha }}
+            start_backend ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
-            sleep 3
-            curl --fail --silent --show-error \
-              "http://127.0.0.1:${{ env.BACKEND_PORT }}/api/health"
+            if ! wait_healthy; then
+              echo "New backend failed its health check — last logs:"
+              docker logs --tail=50 ${{ env.CONTAINER_NAME }} || true
+              docker rm -f ${{ env.CONTAINER_NAME }} || true
+              if [ -n "$PREVIOUS_IMAGE" ]; then
+                echo "Rolling back to $PREVIOUS_IMAGE"
+                start_backend "$PREVIOUS_IMAGE"
+                wait_healthy || echo "Rollback is unhealthy too — investigate by hand."
+              fi
+              exit 1
+            fi

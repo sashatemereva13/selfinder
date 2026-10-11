@@ -1,0 +1,29 @@
+# Both images build with the repo root as context (`docker build .` for the
+# frontend, `docker build -f backend/Dockerfile .` for the backend), so this
+# is the only .dockerignore Docker reads — a backend/.dockerignore would be
+# silently ignored. Anything not excluded here is visible to COPY.
+
+# Secrets — never let a local build bake them into an image layer
+**/.env
+**/.env.*
+!**/.env.example
+monitoring/secrets/
+
+# Installed or generated on the host — the Dockerfiles install their own
+**/node_modules
+frontend/dist
+**/npm-debug.log*
+
+# Not used by either image
+.git
+.github
+.claude
+.DS_Store
+**/.DS_Store
+mobile
+atlas
+docs
+terraform
+monitoring
+backend/tests
+*.md
