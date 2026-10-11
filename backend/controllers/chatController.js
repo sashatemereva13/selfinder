@@ -5,6 +5,7 @@ import { BADGE_COMMENT_PROMPTS } from "../data/badgeCommentPrompts.js";
 import { JOURNEY_LINE_PROMPTS } from "../data/journeyLinePrompts.js";
 import User from "../models/User.js";
 import MeasureResult from "../models/MeasureResult.js";
+import { detectSelfHarm } from "../utils/moderateWish.js";
 import { recommendPhilosopher } from "./measureController.js";
 import {
   VIBRATION_SCALE_REFERENCE,
@@ -284,6 +285,16 @@ export async function postChat(req, res) {
     req.log.error({ err }, "Chat request failed");
     res.status(500).json({ error: "AI request failed" });
   }
+}
+
+// The crisis safety net's stateless check (2026-10-10): is this text
+// someone saying they may harm themselves? Called by the app alongside
+// sending a conversation message or a Journey answer — text that's
+// already on its way to the AI, so nothing new leaves the phone. Returns
+// only a boolean; the text is never stored or logged.
+export async function postSafetyCheck(req, res) {
+  const { text } = req.body ?? {};
+  res.json({ crisis: await detectSelfHarm(text) });
 }
 
 export async function postBadgeComment(req, res) {
@@ -598,10 +609,26 @@ function buildInterviewInterpretation(rawScores) {
   };
 }
 
+// The phrase the scorer named as deciding a sphere's reading, returned
+// exactly as it appears in that sphere's answer (original casing), or null
+// if it doesn't appear there verbatim — a paraphrase must never be shown
+// as something the person said.
+function verbatimEvidence(phrase, qaPairs, sphere) {
+  if (typeof phrase !== "string") return null;
+  const wanted = phrase.trim().replace(/^["'“”‘’«»]+|["'“”‘’«».,;:!?]+$/g, "").trim();
+  if (wanted.length < 3) return null;
+  for (const pair of qaPairs) {
+    if (pair?.sphere !== sphere || typeof pair.answer !== "string") continue;
+    const at = pair.answer.toLowerCase().indexOf(wanted.toLowerCase());
+    if (at !== -1) return pair.answer.slice(at, at + wanted.length);
+  }
+  return null;
+}
+
 async function requestRawInterviewScores(scoringPrompt) {
   const response = await groq.chat.completions.create({
     model: models[0],
-    max_tokens: 1200,
+    max_tokens: 1500,
     temperature: 0.1,
     reasoning_effort: GPT_OSS_REASONING_EFFORT,
     messages: [
@@ -686,25 +713,34 @@ async function requestCombinationMessage(systemPrompt, interpretation, locale) {
     .map((line) => `${line.label}: ${line.vibrationLevel.name} (${line.vibrationScore})`)
     .join("\n");
 
-  const prompt = `A person just completed a self-reflection check-in. Their four spheres read:
+  // 2026-10-11 — rewritten to speak about this moment, never the
+  // person (RULES.md, "The answers are already inside the person"). The
+  // old version asked for "what it means", "the one real insight", what
+  // one part was "waiting on another to catch up with", "do not hedge" —
+  // interpretation, ladder language, and a passing moment turned into a
+  // verdict. Now: one picture of how the four sit together right now.
+  // No question at the end — Measure already asked four.
+  const prompt = `A person just completed a check-in. Right now, their four spheres read:
 ${lineSummary}
 
-Write ONE short reflection, in your voice, that holds all four of these
-together — not a summary of each one separately, but something that notices
-how they relate: where there's a gap between them, what one might be waiting
-on another to catch up with, or what it means that they're this different
-(or this aligned) right now.
+Write ONE reflection, in your voice, about THIS MOMENT — not about the
+person. Hold the four together as one picture: an image of how they sit
+with each other right now (close together or far apart, still or moving,
+one louder than the others).
 
-This is shown right next to the four scores themselves, so it must not
-re-describe them. Never name a sphere (body/mind/heart/spirit) or a level
-name or number from the list above — the person can already see those. State
-the one real insight directly, in plain language, not as a walk-through of
-each part in turn. Do not hedge with "may be" or "perhaps" — say what you
-actually see.
+Describe; do not interpret. Never say what it means, what the person is
+like, what they need, what they are waiting for, or what should happen
+next. Never say one part is behind, ahead of, higher or lower than
+another, or that one should catch up.
 
-Strict limit: ONE sentence, at most 30 words. Do not ask a question. Stay
-fully in character. Return only the reflection itself, no preamble, no
-quotation marks.`;
+It is a reading of now, and now will change — you may let that be felt
+("today", "for now"), but do not reassure or explain it.
+
+The four readings are shown right beside this, so never name a sphere
+(body/mind/heart/spirit) or a level, and never give a number. One
+sentence, at most 30 words. Do not ask a question. Stay fully in
+character. Return only the reflection itself, no preamble, no quotation
+marks.`;
 
   try {
     const response = await groq.chat.completions.create({
@@ -760,8 +796,18 @@ ${VIBRATION_SCALE_REFERENCE}
 Conversation:
 ${transcript}
 
+For each of the 4 spheres, also give "evidence": the few words (3 to 12)
+from THAT sphere's answer that most decided its vibration score — copied
+exactly, character for character, from the answer, never paraphrased,
+never combined from two places. If no single phrase decided it, use "".
+
 Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
-{"overall":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"body":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"mind":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"heart":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"spirit":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0}}`;
+{"overall":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0},"body":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0,"evidence":""},"mind":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0,"evidence":""},"heart":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0,"evidence":""},"spirit":{"calm":0,"clarity":0,"intensity":0,"grounding":0,"vibration":0,"evidence":""}}`;
+
+  // Checked alongside scoring, not after it — the answers are where
+  // someone says the most (crisis safety net, 2026-10-10). Only a boolean
+  // comes back; it's returned to the app and never saved with the reading.
+  const crisisCheck = detectSelfHarm(qaPairs.map((p) => p.answer).join("\n\n"));
 
   const MAX_ATTEMPTS = 2;
   let rawScores;
@@ -778,10 +824,16 @@ Return ONLY valid JSON. No explanation. No markdown. Exactly this shape:
   }
 
   const interpretation = buildInterviewInterpretation(rawScores);
+  // The words each sphere's reading was based on, kept only when they
+  // really are the person's own words, verbatim — shown lit on Depths as
+  // where the reading came from, never as a claim about the person.
+  for (const line of interpretation.lines) {
+    line.evidence = verbatimEvidence(rawScores[line.key]?.evidence, qaPairs, line.key);
+  }
   interpretation.combinationMessage = await requestCombinationMessage(systemPrompt, interpretation, locale);
   // null when the reading wasn't persisted (signed out, or consent not
   // given) — the client uses this to link a later Guide conversation back
   // to this specific reading, only when one actually exists to link to.
   interpretation.measureResultId = await saveMeasureResultIfConsented(req.user, interpretation, qaPairs);
-  res.json(interpretation);
+  res.json({ ...interpretation, crisis: await crisisCheck });
 }
