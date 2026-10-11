@@ -194,8 +194,7 @@ function makeStyles(colors: Colors) {
   },
   sourceWork: {
     color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.sm,
     lineHeight: fontSizes.sm * lineHeights.normal,
     marginBottom: spacing[2],

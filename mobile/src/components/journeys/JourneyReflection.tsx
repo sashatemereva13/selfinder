@@ -79,8 +79,7 @@ function makeStyles(colors: Colors) {
     secondLabel: { marginTop: spacing[8] },
     quote: {
       color: colors.text.primary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.md,
       lineHeight: fontSizes.md * lineHeights.normal,
       textAlign: 'center',

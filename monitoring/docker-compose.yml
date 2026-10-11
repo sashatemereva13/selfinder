@@ -96,9 +96,10 @@ services:
       # Grafana expands $VAR / ${VAR} in provisioning YAML against real
       # process env vars (plain env, not Docker's file-based secrets —
       # Grafana has no _FILE convention for provisioning values the way
-      # it does for GF_SECURITY_ADMIN_PASSWORD above). DISCORD_WEBHOOK_URL
-      # itself is supplied via docker-compose's own `env_file` below, kept
-      # out of this compose file and out of git.
+      # it does for GF_SECURITY_ADMIN_PASSWORD above). The value comes from
+      # monitoring/.env (gitignored) in two steps: Compose interpolates
+      # ${DISCORD_WEBHOOK_URL} from .env, then this `environment` entry
+      # injects it into the container. .env alone reaches no container.
       - DISCORD_WEBHOOK_URL=${DISCORD_WEBHOOK_URL}
     secrets:
       - grafana_admin_password

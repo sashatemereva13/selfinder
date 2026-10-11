@@ -163,10 +163,14 @@ is the real, always-on path, not a dev-only shortcut. When real IAP is
 added and gating comes back, StoreKit/Play Billing receipt sync should
 write to these same fields (`source: 'apple'`/`'google'` instead of
 `'manual'`/`'free'`) rather than introducing a separate entitlement
-mechanism — Your Arc as an auto-renewing subscription product, each
-Journey as Apple's "Consumable" IAP product type (the correct category
-for a repeatable, non-restoring purchase, distinct from
-"Non-Consumable"). Re-add a check in `(tabs)/your-arc/index.tsx`
+mechanism. **Decided 2026-10-10 (RULES.md, "The free/paid line"):** one
+auto-renewing subscription, Selfinder+, covering the whole Arc, the
+Journeys (no separate per-Journey purchases — the first Journey is free),
+intentions and unlimited conversation; built directly on StoreKit and
+Play Billing with purchases verified on Selfinder's own backend — no
+RevenueCat or other third-party payment SDK. Not available in Russia (set
+per region in App Store Connect and Play Console; the app shows no offers
+when the storefront is Russia or can't be read). Re-add a check in `(tabs)/your-arc/index.tsx`
 (`useArcSubscription`-equivalent) and in `control.tsx`/`center.tsx`
 (skip the auto-grant, show a real paywall instead) at that point — this
 section should be rewritten again then, not left stale.

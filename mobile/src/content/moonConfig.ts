@@ -151,8 +151,8 @@ interface FlowTool {
 
 const TOOLS: Record<'measure' | 'tunein' | 'levels', FlowTool> = {
   measure: { labelKey: 'depths.measureLabel', route: '/(tabs)/depths/measure' },
-  tunein: { labelKey: 'depths.tuneInLabel', route: '/(tabs)/depths/tunein' },
-  levels: { labelKey: 'depths.levelsLabel', route: '/(tabs)/depths/levels' },
+  tunein: { labelKey: 'depths.tuneInLabel', route: '/(tabs)/explore/tunein' },
+  levels: { labelKey: 'depths.levelsLabel', route: '/(tabs)/explore/levels' },
 };
 
 export function getFlowSuggestions(stage: MoonStage, band: MeasureBand | 'unknown'): FlowTool[] {

@@ -1,13 +1,14 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import type { Colors } from '../src/theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../src/theme/typography';
 import { spacing, radius } from '../src/theme/spacing';
-import { useLocaleStore } from '../src/store/localeStore';
+import { crisisResources } from '../src/utils/safety';
+import { track } from '../src/utils/analytics';
 import { BackLink } from '../src/components/shared/BackLink';
 
 // Shared infrastructure, not scoped to any one feature — routeToCrisisSupport.ts
@@ -24,44 +25,62 @@ import { BackLink } from '../src/components/shared/BackLink';
 // RULES.md's "practice, not therapy" positioning — this screen's own
 // voice matches that: plain, non-clinical, no diagnosis, no urgency
 // theater.
+// 2026-10-10 — the crisis safety net reaches here from the conversation,
+// Journeys, Measure, Spill, a Shift session, the heavy states' quiet
+// line, and the always-there "Need help now?" links — no longer only the
+// wish flow, so the copy is about the person, not a wish. The line shown
+// is the one for the phone's country (crisisResources), with the local
+// emergency number and a directory for everywhere else.
 export default function CrisisSupportScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  // from=measure: shown right after a reading, before it — the way on is
+  // the reading itself.
+  const { from } = useLocalSearchParams<{ from?: string }>();
+  const resources = crisisResources();
 
-  const findHelplineUrl = `https://findahelpline.com/countries/${locale === 'ru' ? 'ru' : 'us'}`;
+  useEffect(() => {
+    track('crisis_support_viewed', { from: from ?? 'other' });
+  }, [from]);
+
+  const leave = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/depths');
+  };
 
   return (
     <ScrollView
       style={styles.root}
       contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
     >
-      {/* Not the default router.back() — someone reaching this screen may
-          not want to land back on whatever they were doing right before
-          (see routeToCrisisSupport.ts), so this replaces to Depths
-          instead of popping the stack. */}
-      <BackLink style={styles.backRow} onPress={() => router.replace('/(tabs)/depths')} />
+      <BackLink style={styles.backRow} onPress={leave} />
 
       <Text style={styles.kicker}>{t('crisisSupport.kicker')}</Text>
       <Text style={styles.title}>{t('crisisSupport.title')}</Text>
       <Text style={styles.body}>{t('crisisSupport.body')}</Text>
 
-      {locale === 'en' ? (
-        <Pressable style={styles.resourceButton} onPress={() => Linking.openURL('tel:988')}>
-          <Text style={styles.resourceButtonLabel}>{t('crisisSupport.call988')}</Text>
-          <Text style={styles.resourceButtonSublabel}>{t('crisisSupport.call988Sublabel')}</Text>
+      {resources.line && (
+        <Pressable style={styles.resourceButton} onPress={() => Linking.openURL(`tel:${resources.line!.number}`)}>
+          <Text style={styles.resourceButtonLabel}>{t('crisisSupport.callLine', { name: resources.line.name })}</Text>
+          <Text style={styles.resourceButtonSublabel}>{t('crisisSupport.callLineSublabel')}</Text>
         </Pressable>
-      ) : null}
+      )}
 
-      <Pressable style={styles.resourceButton} onPress={() => Linking.openURL(findHelplineUrl)}>
+      <Pressable style={styles.resourceButton} onPress={() => Linking.openURL(resources.directoryUrl)}>
         <Text style={styles.resourceButtonLabel}>{t('crisisSupport.findHelpline')}</Text>
         <Text style={styles.resourceButtonSublabel}>{t('crisisSupport.findHelplineSublabel')}</Text>
       </Pressable>
 
-      <Text style={styles.footnote}>{t('crisisSupport.footnote')}</Text>
+      <Pressable onPress={() => Linking.openURL(`tel:${resources.emergency}`)} accessibilityRole="button">
+        <Text style={styles.emergency}>{t('crisisSupport.emergency', { number: resources.emergency })}</Text>
+      </Pressable>
+
+      <Pressable onPress={leave} accessibilityRole="button" style={styles.stayRow}>
+        <Text style={styles.stay}>{from === 'measure' ? t('crisisSupport.continueToReading') : t('crisisSupport.stay')} →</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -116,13 +135,17 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     marginTop: spacing[1],
   },
-  footnote: {
-    alignSelf: 'flex-start',
+  emergency: {
+    color: colors.text.secondary,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    marginTop: spacing[3],
+  },
+  stayRow: { marginTop: spacing[10] },
+  stay: {
     color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    lineHeight: fontSizes.xs * lineHeights.normal,
-    marginTop: spacing[6],
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
   },
   });
 }

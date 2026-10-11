@@ -1,15 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useThemeColors } from '../../../theme/useThemeColors';
 import type { Colors } from '../../../theme/colors';
 import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../theme/typography';
 import { spacing } from '../../../theme/spacing';
 import { ReadingLogEntry } from '../../../store/measureStore';
 import { SavedWish } from '../../../api/wish';
-import { TimeCone } from '../TimeCone';
 import { TimeConeRing } from '../TimeConeRing';
-import { CrossfadeSwitcher } from '../CrossfadeSwitcher';
 import { useTimeConeGeometry } from '../useTimeConeGeometry';
 import { getLocalizedLevelName, VIBRATION_LEVELS } from '../../../content/measureConfig';
 import { Locale } from '../../../store/localeStore';
@@ -33,10 +31,23 @@ const CONE_SIZE = 260;
 // kaleidoscope, generated fresh each time, never part of the record; the
 // cone is the opposite kind of thing — a shape drawn from the same real
 // history Your Arc's other pages already hold — so it belongs here, not
-// bundled with a bought-again experience. Every reading, unranked, as a
-// shape (the past cone), plus the one real, stated active wish reaching
-// forward (the future cone, never a forecast — see RULES.md's "no
-// fabricated trajectory" rule).
+// bundled with a bought-again experience.
+//
+// 2026-09-12, at the user's own request — this used to crossfade between
+// the full double-cone (TimeCone, an hourglass showing past+future
+// together) and a flat ring (TimeConeRing, one side at a time), toggled
+// by up/down arrows. The double-cone view is gone: ArcLinePage (Your
+// Arc's very first/hub page) already shows the whole two-cone shape as
+// its own ambient background, so repeating it here was the exact kind of
+// redundancy RULES.md's "one reading, one screen" reasoning warns
+// against elsewhere, just applied to a shape instead of a reading. This
+// page now shows ONLY the past ring, permanently — no arrows, no
+// facing-toggle, since there's nothing left to toggle between: the
+// future ring's own points (usually just the one active wish) never had
+// real per-point interaction anyway (handleConePointPress/
+// handleConePointLongPress below were always past-only), so keeping past
+// loses the least. Every reading, unranked, as a shape — tap or hold a
+// point for what it was.
 export function TimeConePage({ readingLog, allWishes, activeWish, locale }: TimeConePageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -46,7 +57,6 @@ export function TimeConePage({ readingLog, allWishes, activeWish, locale }: Time
   const timeConeGeometry = useTimeConeGeometry(readingLog, allWishes, activeWish);
 
   const [conePreview, setConePreview] = useState<{ date: string; label: string } | null>(null);
-  const [coneFacing, setConeFacing] = useState<'past' | 'future' | null>(null);
   const [selected, setSelected] = useState<ReadingLogEntry | null>(null);
 
   const handleConePointPress = (pointId: string) => {
@@ -82,45 +92,12 @@ export function TimeConePage({ readingLog, allWishes, activeWish, locale }: Time
       <Text style={styles.introLine}>{t('yourArc.coneIntroLine')}</Text>
 
       <View style={styles.timeConeWrap}>
-        <CrossfadeSwitcher
-          showSecond={coneFacing !== null}
-          first={
-            <TimeCone
-              width={CONE_SIZE}
-              height={CONE_SIZE * 1.3}
-              pastPoints={timeConeGeometry.pastPoints}
-              futurePoints={timeConeGeometry.futurePoints}
-            />
-          }
-          second={
-            <TimeConeRing
-              size={CONE_SIZE}
-              points={coneFacing === 'future' ? timeConeGeometry.futurePoints : timeConeGeometry.pastPoints}
-              onPointPress={coneFacing === 'past' ? handleConePointPress : undefined}
-              onPointLongPress={coneFacing === 'past' ? handleConePointLongPress : undefined}
-            />
-          }
+        <TimeConeRing
+          size={CONE_SIZE}
+          points={timeConeGeometry.pastPoints}
+          onPointPress={handleConePointPress}
+          onPointLongPress={handleConePointLongPress}
         />
-        <View style={styles.coneArrowLayer} pointerEvents="box-none">
-          {timeConeGeometry.futurePoints.length > 0 && (
-            <Pressable
-              hitSlop={16}
-              style={styles.coneArrowUp}
-              onPress={() => setConeFacing(coneFacing === 'future' ? null : 'future')}
-            >
-              <Text style={[styles.coneArrow, coneFacing === 'future' && styles.coneArrowActive]}>↑</Text>
-            </Pressable>
-          )}
-          {timeConeGeometry.pastPoints.length > 0 && (
-            <Pressable
-              hitSlop={16}
-              style={styles.coneArrowDown}
-              onPress={() => setConeFacing(coneFacing === 'past' ? null : 'past')}
-            >
-              <Text style={[styles.coneArrow, coneFacing === 'past' && styles.coneArrowActive]}>↓</Text>
-            </Pressable>
-          )}
-        </View>
       </View>
       {conePreview && (
         <Text style={styles.conePreviewText}>
@@ -160,20 +137,17 @@ function makeStyles(colors: Colors) {
       marginTop: spacing[3],
       marginBottom: spacing[8],
     },
+    // 2026-09-12 — height was CONE_SIZE*1.3 (sized for the old double-cone,
+    // taller than it is wide); TimeConeRing is a plain size×size square, so
+    // that extra height is now unclaimed dead space, not a real container
+    // constraint — removed rather than centering a square inside a
+    // rectangle that no longer describes anything on screen.
     timeConeWrap: {
       alignSelf: 'center',
       width: CONE_SIZE,
       marginTop: spacing[4],
       marginBottom: spacing[3],
-      height: CONE_SIZE * 1.3,
-      justifyContent: 'center',
-      position: 'relative',
     },
-    coneArrowLayer: { ...StyleSheet.absoluteFill, justifyContent: 'center', alignItems: 'center' },
-    coneArrowUp: { position: 'absolute', top: CONE_SIZE * 0.65 - 18 },
-    coneArrowDown: { position: 'absolute', top: CONE_SIZE * 0.65 + 18 },
-    coneArrow: { color: colors.text.muted, fontSize: fontSizes.lg },
-    coneArrowActive: { color: colors.text.primary },
     conePreviewText: {
       color: colors.text.primary,
       fontFamily: fonts.medium,

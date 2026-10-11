@@ -20,6 +20,18 @@ interface CrossingPageProps {
   wishFulfillPending: string | null;
   philosopherName: string | undefined;
   accentRgb: string;
+  // 2026-09-13, at the user's own request — a Crossing is generated FROM
+  // the current reading (handleGenerateCrossing in your-arc-future.tsx
+  // needs currentResult.measureResultId, and bails out silently if it's
+  // missing). Before this prop existed, the invite row rendered and was
+  // tappable purely off `activeWish && !crossing`, with no regard for
+  // whether a current reading actually existed — a real, confirmed dead
+  // end: someone opening Your Arc without having just measured could tap
+  // "Ask {philosopher} about this moment" and nothing would happen, with
+  // no error or explanation. This prop lets the invite row itself be
+  // honest about that missing precondition instead of failing silently
+  // one layer down.
+  hasCurrentReading: boolean;
   onGenerateCrossing: () => void;
   onSubmitCrossingAnswer: () => void;
   onToggleWishFulfilled: (wish: SavedWish) => void;
@@ -44,6 +56,7 @@ export function CrossingPage({
   wishFulfillPending,
   philosopherName,
   accentRgb,
+  hasCurrentReading,
   onGenerateCrossing,
   onSubmitCrossingAnswer,
   onToggleWishFulfilled,
@@ -53,14 +66,34 @@ export function CrossingPage({
   const sharedStyles = useMemo(() => makeSharedArcPageStyles(colors), [colors]);
   const styles = useMemo(() => makeStyles(colors), [colors]);
 
-  return (
-    <ScrollView contentContainerStyle={sharedStyles.pageContent}>
-      <Text style={styles.kicker}>{t('yourArc.crossingKicker')}</Text>
+  // 2026-09-13, at the user's own request — this page can render as
+  // literally one line (a missing-precondition message, kicker aside)
+  // with nothing else: no crossing exists yet AND no fulfilled wishes
+  // exist. That's the ONLY state genuinely this sparse — a real crossing
+  // (question+answer or the input row) or a fulfilled-wishes list both
+  // give the page real, potentially long content that should stay
+  // top-anchored like every other page in the pager, not be forced into
+  // a short/centered layout. Centering unconditionally would have looked
+  // wrong the moment either of those exists.
+  const isEmpty = !crossing && fulfilledWishes.length === 0;
 
-      {activeWish && !crossing && (
+  return (
+    <ScrollView contentContainerStyle={isEmpty ? sharedStyles.pageCentered : sharedStyles.pageContent}>
+      {/* pageCentered's own alignItems:'center' only centers each Text
+          element as a block — kicker's own alignSelf:'flex-start' (needed
+          for the normal top-anchored pageContent layout) would otherwise
+          still pin it to the left edge while everything else centers,
+          looking lopsided. Overridden back to center only in the empty
+          state; every other page using this kicker style stays
+          left-anchored as before. */}
+      <Text style={[styles.kicker, isEmpty && styles.kickerCentered]}>
+        {t('yourArc.crossingKicker')}
+      </Text>
+
+      {activeWish && !crossing && hasCurrentReading && (
         <View style={styles.crossingSection}>
           <Pressable style={styles.crossingInviteRow} onPress={onGenerateCrossing} disabled={crossingLoading}>
-            <Text style={styles.crossingInviteText}>
+            <Text style={[styles.crossingInviteText, isEmpty && styles.centeredText]}>
               {crossingLoading
                 ? t('yourArc.crossingLoading')
                 : t('yourArc.crossingInvite', { name: philosopherName ?? '' })}
@@ -69,8 +102,22 @@ export function CrossingPage({
         </View>
       )}
 
+      {/* 2026-09-13 — a wish with no current reading used to fall through
+          to this same "name a wish" message, which was actively wrong
+          (a wish already exists; reading is the missing piece) as well
+          as leaving the invite row above rendered-but-silently-dead (see
+          this component's own hasCurrentReading prop comment). Now
+          distinguishes the two real missing-precondition states instead
+          of collapsing them into one generic message. */}
       {!activeWish && (
-        <Text style={sharedStyles.aside}>{t('yourArc.crossingNeedsWish')}</Text>
+        <Text style={[sharedStyles.aside, isEmpty && styles.centeredText]}>
+          {t('yourArc.crossingNeedsWish')}
+        </Text>
+      )}
+      {activeWish && !crossing && !hasCurrentReading && (
+        <Text style={[sharedStyles.aside, isEmpty && styles.centeredText]}>
+          {t('yourArc.crossingNeedsReading', { name: philosopherName ?? '' })}
+        </Text>
       )}
 
       {crossing && (
@@ -148,12 +195,15 @@ function makeStyles(colors: Colors) {
       textTransform: 'uppercase',
       marginBottom: spacing[6],
     },
+    // Overrides kicker's own alignSelf/textAlign for the empty/centered
+    // layout only (see isEmpty's own comment above the render).
+    kickerCentered: { alignSelf: 'center', textAlign: 'center' },
+    centeredText: { textAlign: 'center' },
     crossingSection: { marginBottom: spacing[6] },
     crossingInviteRow: { paddingVertical: spacing[1] },
     crossingInviteText: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
     },
@@ -166,8 +216,7 @@ function makeStyles(colors: Colors) {
     },
     crossingQuestion: {
       color: colors.text.primary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.base,
       lineHeight: fontSizes.base * lineHeights.normal,
       marginTop: spacing[2],
@@ -228,8 +277,7 @@ function makeStyles(colors: Colors) {
     fulfilledWishText: {
       flex: 1,
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
     },

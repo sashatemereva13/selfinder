@@ -1,6 +1,19 @@
 import request from './client';
 import { useAuthStore } from '../store/authStore';
 
+// 2026-09-13 — WOOP (Wish-Outcome-Obstacle-Plan), persisted now instead
+// of the fully ephemeral client-side-only state it used to be (see
+// WishCrossingPage.tsx's own header comment for the research/rationale).
+// All 4 fields are the person's own words, unedited — same "never
+// interpreted, never rephrased" rule `text` already follows. Mirrors
+// backend/models/Wish.js's own woopSchema exactly.
+export interface WishWoop {
+  outcome: string;
+  obstacle: string;
+  planIf: string;
+  planThen: string;
+}
+
 export interface SavedWish {
   id: string;
   text: string;
@@ -16,6 +29,12 @@ export interface SavedWish {
   // Wish.js's own comment: distinct from a wish simply being superseded
   // by a newer active one.
   fulfilledAt: string | null;
+  // null = no WOOP done for this wish yet. Optional-at-the-type-level
+  // (`?`) rather than always-present-but-nullable purely for backward
+  // compatibility with any already-fetched SavedWish shape in local
+  // state before this field existed — new fetches always include it,
+  // per the backend's own `woop: null` default.
+  woop?: WishWoop | null;
 }
 
 export type SaveWishResult =
@@ -31,7 +50,18 @@ export type SaveWishResult =
 // swallowing a block the way the rest of this app's best-effort saves do,
 // since a block here needs to change what the person sees next, not just
 // fail quietly.
-export async function saveWishIfConsented(text: string, measureResultId: string | null): Promise<SaveWishResult> {
+// 2026-09-13 — accepts an optional `woop` param, sent alongside the wish
+// text in the same save call (both moderated together server-side, see
+// wishController.js's own buildModerationBlob — a flagged Obstacle now
+// blocks the WHOLE save, not just silently dropped). Only ever pass a
+// FULLY completed WOOP (all 4 fields, i.e. `planSet === true` at the
+// call site) — this function does no partial-completion handling of its
+// own.
+export async function saveWishIfConsented(
+  text: string,
+  measureResultId: string | null,
+  woop?: WishWoop | null
+): Promise<SaveWishResult> {
   const session = useAuthStore.getState().session;
   if (!session || !text.trim()) return { ok: false, blocked: false };
 
@@ -42,7 +72,7 @@ export async function saveWishIfConsented(text: string, measureResultId: string 
 
     const result = await request<{ id: string } | { blocked: true; category: 'concerning' | 'self-harm' }>(
       '/wish/save',
-      { text, measureResultId },
+      { text, measureResultId, woop: woop ?? undefined },
       { token: session.token }
     );
     if ('blocked' in result && result.blocked) {
@@ -51,6 +81,33 @@ export async function saveWishIfConsented(text: string, measureResultId: string 
     return { ok: true, id: (result as { id: string }).id };
   } catch (err) {
     console.error('Failed to save wish:', err);
+    return { ok: false, blocked: false };
+  }
+}
+
+// Adds/replaces WOOP on an already-saved wish (see wishController.js's
+// own setWishWoop comment for why this exists as a second, narrower
+// endpoint rather than only ever being sent alongside the initial save).
+// Same blocked/ok result shape as saveWishIfConsented — a flagged WOOP
+// here needs the same retry/crisis-redirect branching, not a silent
+// failure.
+export async function setWishWoop(
+  id: string,
+  woop: WishWoop,
+  token: string
+): Promise<{ ok: true } | { ok: false; blocked: true; category: 'concerning' | 'self-harm' } | { ok: false; blocked: false }> {
+  try {
+    const result = await request<{ id: string; woop: WishWoop } | { blocked: true; category: 'concerning' | 'self-harm' }>(
+      `/wish/${id}/woop`,
+      { woop },
+      { method: 'PATCH', token }
+    );
+    if ('blocked' in result && result.blocked) {
+      return { ok: false, blocked: true, category: result.category };
+    }
+    return { ok: true };
+  } catch (err) {
+    console.error('Failed to save WOOP:', err);
     return { ok: false, blocked: false };
   }
 }

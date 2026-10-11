@@ -119,8 +119,7 @@ function makeStyles(colors: Colors) {
     },
     detailReflection: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
       marginTop: spacing[1],
@@ -143,8 +142,7 @@ function makeStyles(colors: Colors) {
     momentQA: { gap: spacing[1] },
     momentQuestion: {
       color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xs,
       lineHeight: fontSizes.xs * lineHeights.normal,
     },
@@ -156,8 +154,7 @@ function makeStyles(colors: Colors) {
     },
     momentSpillText: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
     },

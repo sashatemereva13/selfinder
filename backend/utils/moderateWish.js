@@ -84,3 +84,31 @@ export async function moderateWish(text) {
     return { category: "concerning" };
   }
 }
+
+// Is someone saying they may harm themselves? (2026-10-10 — the crisis
+// safety net beyond the wish flow: the conversation, Journeys, Measure.)
+// The same classifier, asked only one question. Fails OPEN (false) —
+// unlike the wish gate, nothing is blocked here: this only decides
+// whether a quiet line pointing to help appears, and the AI's own safety
+// rule (UNIVERSAL_RULES) still answers as a person either way. The text
+// is classified and forgotten — nothing about it is stored or logged.
+export async function detectSelfHarm(text) {
+  if (typeof text !== "string" || !text.trim()) return false;
+  try {
+    const response = await groq.chat.completions.create({
+      model: MODERATION_MODEL,
+      max_tokens: 150,
+      temperature: 0,
+      reasoning_effort: MODERATION_REASONING_EFFORT,
+      messages: [
+        { role: "system", content: SYSTEM_PROMPT },
+        { role: "user", content: text.slice(0, 4000) },
+      ],
+    });
+    const raw = response.choices[0].message.content.trim();
+    const parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+    return parsed.category === "self-harm";
+  } catch {
+    return false;
+  }
+}

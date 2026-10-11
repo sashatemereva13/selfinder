@@ -1,4 +1,5 @@
 import { ReadingLogEntry } from '../../store/measureStore';
+import { WishWoop } from '../../api/wish';
 
 // Real, true colors from someone's own reading history, shaped for
 // ArcKaleidoscope.tsx's generative render — never an interpretation, same
@@ -92,4 +93,69 @@ export function seedFromLog(readingLog: ReadingLogEntry[], nonce: number = 0): n
   let s = nonce % 999999937;
   for (const e of readingLog) s = (s + e.ts) % 999999937;
   return s || 1;
+}
+
+// "While the past creates the colors, the future creates the shape" —
+// the user's own framing for how the kaleidoscope should connect forward
+// to a wish, not just backward to reading history (see RULES.md's Center
+// section for what's unchanged: still anti-diagnosis, still "you are
+// shaping your future," never a forecast). This reads real content from
+// the active wish's own WOOP (Wish-Outcome-Obstacle-Plan, see
+// WishCrossingPage.tsx) and turns it into a few bounded multipliers on
+// ArcKaleidoscope's EXISTING shape parameters (spread/tendril-chance/
+// jitter) — it never introduces a second seed or a second rand stream.
+// The same single rand() sequence from seedFromLog still drives
+// everything; only the fixed constants that sequence feeds into move,
+// deterministically, based on this wish's own words. This keeps "same
+// history -> same kaleidoscope" intact (no wish/WOOP -> byte-identical
+// output to before this feature existed) while still making a completed
+// WOOP visibly, not subliminally, felt in the result.
+//
+// Three signals, deliberately whole-WOOP rather than one dial per field
+// (a wish is one thing, not three independent inputs):
+//   - spreadFactor:  Outcome+Obstacle+Plan word count together -> how much
+//                    more open/expansive the petals are than the default.
+//                    A fuller WOOP reads as a more expansive shape; no
+//                    WOOP at all is spreadFactor 1 (today's unchanged
+//                    default).
+//   - tendrilChance: whether Obstacle names something real -> a higher
+//                    chance of the wispy trailing tendril per segment
+//                    ("something reaching outward, not fully smooth").
+//                    No obstacle named keeps today's 0.7 chance
+//                    (buildWedgeShapes' own `rand() > 0.3` line) exactly.
+//   - jitterFactor:  whether Plan (both if/then blanks) is complete ->
+//                    calmer, less jittery edges once a real plan exists.
+//                    No plan yet keeps today's jitter amounts unchanged
+//                    (jitterFactor 1).
+// Word-count bucketing intentionally coarse (short/medium/long) rather
+// than a continuous formula — "more words -> smoothly more spread" would
+// invite over-interpreting a difference that isn't really about length,
+// it's about whether real content exists at all.
+export interface WoopShapeParams {
+  spreadFactor: number; // multiplies buildWedgeShapes' own spread calculation
+  tendrilChance: number; // replaces the fixed 0.7 chance (rand() > 0.3) per segment
+  jitterFactor: number; // multiplies every jitter/wobble amount in petalPath/tendrilPath
+}
+
+const DEFAULT_WOOP_SHAPE_PARAMS: WoopShapeParams = { spreadFactor: 1, tendrilChance: 0.7, jitterFactor: 1 };
+
+function wordCount(text: string): number {
+  return text.trim().split(/\s+/).filter(Boolean).length;
+}
+
+export function woopShapeParams(woop: WishWoop | null | undefined): WoopShapeParams {
+  if (!woop) return DEFAULT_WOOP_SHAPE_PARAMS;
+
+  const totalWords = wordCount(woop.outcome) + wordCount(woop.obstacle) + wordCount(woop.planIf) + wordCount(woop.planThen);
+  // Coarse short/medium/long buckets, not a continuous scale — see this
+  // function's own header comment for why.
+  const spreadFactor = totalWords >= 40 ? 1.25 : totalWords >= 15 ? 1.12 : 1;
+
+  const obstacleNamed = woop.obstacle.trim().length > 0;
+  const tendrilChance = obstacleNamed ? 0.85 : DEFAULT_WOOP_SHAPE_PARAMS.tendrilChance;
+
+  const planComplete = woop.planIf.trim().length > 0 && woop.planThen.trim().length > 0;
+  const jitterFactor = planComplete ? 0.6 : 1;
+
+  return { spreadFactor, tendrilChance, jitterFactor };
 }

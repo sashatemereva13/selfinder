@@ -22,13 +22,19 @@ interface FactsPageProps {
   accentRgb: string;
   locale: Locale;
   onReadingPress: (rich: SavedMeasureResult) => void; // handleFactsReadingPress
-  // Center's real primary home (2026-08-27 restructure — see
-  // docs/app-architecture-concept.md, "Center's home"). null while
-  // useJourneyPurchases('center') is still loading/signed-out — the row
-  // still shows (Center needs no purchase to open, same as the Journeys
-  // catalog's own entry), just without a "you've made N" count yet.
-  centerPurchaseCount: number | null;
-  onPressCenter: () => void;
+  // 2026-09-13, at the user's own request — a philosopher-voiced remark
+  // generated from the WHOLE record (reading count/streak, most recent
+  // level, active wish; see src/api/arcLine.ts's own header comment),
+  // cached once per calendar day server-side. Used to live on
+  // ArcLinePage (the hub screen) layered over the light cone; removed
+  // from there because it competed with the cone's own tap affordances.
+  // Re-homed here since this page already opens on a factual summary of
+  // the whole record (introLine below) — this adds the philosopher's own
+  // reflective take on the same material, not a duplicate of it. Null
+  // while loading, signed-out, or no philosopher chosen yet — the page
+  // renders correctly without it either way (see the render's own
+  // conditional).
+  arcLine: string | null;
 }
 
 // Real, true facts about this person's OWN record — never an
@@ -45,8 +51,7 @@ export function FactsPage({
   accentRgb,
   locale,
   onReadingPress,
-  centerPurchaseCount,
-  onPressCenter,
+  arcLine,
 }: FactsPageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -69,19 +74,17 @@ export function FactsPage({
         {t('yourArc.introLine', { count: readingLog.length, sinceDate })}
       </Text>
 
-      {/* Center's real primary home (2026-08-27 restructure) — full row
-          weight, same as products.tsx's own catalog rows, not a footnote.
-          Center was originally part of Your Arc before spinning out into
-          its own one-time-purchase product; this is closer to a
-          reversion than a new idea — see docs/app-architecture-concept.md. */}
-      <Pressable style={styles.centerRow} onPress={onPressCenter}>
-        <Text style={styles.centerRowLabel}>{t('yourArc.centerRowLabel')}</Text>
-        <Text style={styles.centerRowDescription}>
-          {centerPurchaseCount && centerPurchaseCount > 0
-            ? t('yourArc.centerRowDescriptionReturning', { count: centerPurchaseCount })
-            : t('yourArc.centerRowDescriptionFirst')}
-        </Text>
-      </Pressable>
+      {/* 2026-09-13 — see this page's own arcLine prop comment. The
+          philosopher's own voice (italic, quoted), same register
+          ArcLinePage's old coverPhilosopherLine used — right after the
+          plain factual summary above, so a reader gets "here is what's
+          true" then "here is what your philosopher makes of it,"
+          reflection layered on fact rather than repeating it. Only
+          rendered when a real line actually loaded — no placeholder/
+          fallback text, since an empty or generic stand-in here would
+          read as the app inventing a remark rather than genuinely
+          having none yet. */}
+      {arcLine && <Text style={styles.arcLine}>{`"${arcLine}"`}</Text>}
 
       <View style={styles.factsSection}>
         {facts.map((fact) => {
@@ -197,26 +200,24 @@ function makeStyles(colors: Colors) {
       alignSelf: 'flex-start',
       lineHeight: fontSizes.md * lineHeights.normal,
       marginTop: spacing[3],
+      marginBottom: spacing[3],
+    },
+    // Philosopher voice — same register ArcLinePage's own
+    // coverPhilosopherLine used before arcLine moved here (2026-09-13):
+    // no fontStyle:'italic' (a silent no-op on this typeface, see that
+    // file's own comment for why), quote marks in the string carry the
+    // "this is spoken" signal instead.
+    arcLine: {
+      alignSelf: 'flex-start',
+      color: colors.text.primary,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      lineHeight: fontSizes.sm * lineHeights.normal,
       marginBottom: spacing[8],
     },
     // Same row weight as products.tsx's own catalog rows (label +
     // description, top border, no card) — this is a real entry point to a
     // purchase, not a footnote link.
-    centerRow: {
-      alignSelf: 'stretch',
-      paddingVertical: spacing[4],
-      borderTopWidth: 1,
-      borderTopColor: colors.bg.border,
-      marginBottom: spacing[6],
-    },
-    centerRowLabel: { color: colors.accent.ivory, fontFamily: fonts.medium, fontSize: fontSizes.md },
-    centerRowDescription: {
-      color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      marginTop: spacing[1],
-      lineHeight: fontSizes.sm * lineHeights.normal,
-    },
     factsSection: {
       alignSelf: 'flex-start',
       width: '100%',

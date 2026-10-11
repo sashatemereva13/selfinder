@@ -326,6 +326,54 @@ Account section, unlinked; a Journey's own reflection having no
 after-the-fact home at all today, since `JourneyReflection.tsx` is a
 terminal in-wizard screen, not something revisited from anywhere).
 
+## Navigation as a map (2026-09-26 — agreed direction, mocked, not built)
+
+The three tabs stay the three places, but the tab bar becomes a **map**:
+the philosopher is the guide (one next step, in words — see
+`PhilosopherSeam.tsx`), the map is the map (every place, always
+reachable, never only through the philosopher). Mockup:
+https://claude.ai/artifact/6m2BCVVzocbDsYx3nSzu7E (Design canvas —
+"Depths with the minimap" is clickable).
+
+- **Collapsed = the minimap**, in the tab bar's own space and height:
+  Depths, Journeys, Your Arc as three small places (each in its own faint
+  dashed ring), joined by a solid thread, a dot under the one you're in.
+  Tapping a place goes there; tapping the handle ("the map") expands it.
+  Wherever the philosopher is pointing glows once on arrival.
+- **Expanded = the full map**, the pattern games use (corner map to
+  orient, full map to choose). Three territories, top to bottom as a
+  metaphor — **Your Arc** as a sky with the time curve (past half solid,
+  future half dashed), **Journeys** as contoured land with each Journey a
+  side road, **Depths** as concentric rings around the figure (you), its
+  places on the main ring. Each territory has its own dashed border and
+  terrain, and its name sits inside it like a map label — not a left-edge
+  heading (that's what made the first version read as a list). Every
+  place is a real ≥44px button. The philosopher's line + one step sits
+  at the bottom of the expanded map too.
+- **The thread** is the one thing that crosses territory borders: it
+  starts at you in Depths, passes through Measure, climbs through
+  Journeys (every Journey branches off it), and ends at "Now" in Your
+  Arc — everything starts from where you are and becomes part of your
+  record over time.
+- **The thread becomes personal (agreed, not designed in detail).** It
+  should show the person's own record: e.g. a small bead on it for each
+  saved reading, a Journey's side road drawn in once they've finished
+  it, the Arc's past half growing as history accumulates. Hard limits,
+  because this is the exact place a "personal" visual turns into a
+  gamified one: **it is a record, never a reward** (no brightness-for-
+  activity, no levels, nothing that reads as a score — RULES.md "never
+  diagnoses, never judges"; no badges/streaks); **it only ever grows,
+  never fades or shrinks** while someone is away — dimming a thread for
+  absence is exactly the "you missed a day" guilt mechanic the rules
+  forbid; and it shows what *happened*, never an interpretation of it
+  (no "your thread is rising"), per "the answers are already inside the
+  person."
+- **Open:** whether Guide is its own place on the map or only reachable
+  via the philosopher's line; how Depths' own spiral menu relates to the
+  map's Depths territory (likely the same places, so the two should
+  share one list of destinations in code rather than drift apart); the
+  real typeface (the mockup substitutes Unbounded for Etude Noire).
+
 ## You becomes a profile page, not a tab
 
 Matches the proposal's own reasoning closely — nearly everything
@@ -404,7 +452,12 @@ link) rather than as a peer destination.
   (`src/components/PhilosopherPresence.tsx`) — a quiet name + badge row
   above the aura+spiral, always visible once a philosopher is chosen,
   always routes to `/guide`. Verified live: visible with zero readings,
-  tapping it reaches Guide correctly.
+  tapping it reaches Guide correctly. **Superseded 2026-09-26** by
+  `src/components/depths/PhilosopherSeam.tsx`: the philosopher now
+  stands in the middle of Depths, between the reading and the menu,
+  saying one line that points to one next step (see RULES.md, "The
+  philosopher is a constant presence" / "always points to exactly one
+  next step"). PhilosopherPresence was deleted.
 - **Resolved 2026-08-27, implemented**: the profile/settings icon is a
   persistent element visible from all three tabs, not just Depths —
   settings should be reachable from wherever someone is. Built as a

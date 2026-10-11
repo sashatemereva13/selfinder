@@ -8,6 +8,8 @@ on:
       - "frontend/**"
       - "Dockerfile"
       - "backend/**"
+      - "shared/**"
+      - ".dockerignore"
       - ".github/workflows/docker-image.yml"
   push:
     branches:
@@ -16,6 +18,8 @@ on:
       - "frontend/**"
       - "Dockerfile"
       - "backend/**"
+      - "shared/**"
+      - ".dockerignore"
       - ".github/workflows/docker-image.yml"
 
 permissions:
@@ -47,5 +51,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      # Same context as deploy-backend.yml: the repo root, because the
+      # Dockerfile copies backend/ and shared/ from there.
       - name: Build backend image
-        run: docker build -t selfinder-backend:${{ github.sha }} ./backend
+        run: docker build -f backend/Dockerfile -t selfinder-backend:${{ github.sha }} .
+
+      # No MongoDB here, so the server can't start — check the image itself.
+      - name: Check backend image contents
+        run: |
+          docker run --rm --entrypoint sh selfinder-backend:${{ github.sha }} -c '
+            test "$(id -u)" != 0 || { echo "runs as root"; exit 1; }
+            test ! -e /app/.env || { echo ".env baked into image"; exit 1; }
+            test -f /shared/package.json || { echo "shared/ missing"; exit 1; }
+          '

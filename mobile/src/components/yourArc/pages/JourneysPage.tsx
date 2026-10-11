@@ -19,7 +19,10 @@ interface JourneysPageProps {
 // name the person already knows the Journey by. Center isn't in
 // products.tsx's own catalog (it lives on Your Arc directly, see that
 // file's own 2026-08-28 comment) but still needs a label here.
-const JOURNEY_LABEL_KEYS: Record<JourneyKey, string> = {
+// Exported (2026-09-13) so WishCrossingPage's own Journey-suggestion row
+// can name which Journey an offered answer came from, without
+// duplicating this map a second time.
+export const JOURNEY_LABEL_KEYS: Record<JourneyKey, string> = {
   center: 'center.title',
   control: 'products.controlLabel',
   'the-choice': 'products.theChoiceLabel',

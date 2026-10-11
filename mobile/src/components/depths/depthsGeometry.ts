@@ -10,7 +10,6 @@ import {
   TOP_MARGIN,
 } from "./depthsSpiralGeometry";
 
-
 // Pre-baked assets, not the live AuraFigure component — react-native-svg's
 // filter engine doesn't reproduce the same result on-device, leaving the
 // body visibly tinted (see auraLevelImages.ts).
@@ -49,7 +48,7 @@ import {
 // this wasn't a clearance-math bug — the composition was simply taller
 // than the visible viewport at that scale. Shrinking it here is the
 // direct fix.
-export const BASE_AURA_DISPLAY_SIZE = 93;
+export const BASE_AURA_DISPLAY_SIZE = 170;
 // 2026-09-02 — how much of the spiral's own topmost region (curve +
 // wheel, whichever sits highest) is allowed to render past the fixed
 // zone's own visible top edge and get cropped there — at the user's own
@@ -62,7 +61,7 @@ export const BASE_AURA_DISPLAY_SIZE = 93;
 // (the onLayout measurement fix) and makeStyles (auraCoreWrap's own
 // negative marginTop) need it, and makeStyles is a separate top-level
 // function, not a closure over the component's own locals.
-export const BLEED_AMOUNT_PX = 10;
+export const BLEED_AMOUNT_PX = 0;
 // The composition's own canvas — width fills a real 390px phone's content
 // budget (columnWidth minus horizontal padding) the same way the old flat
 // spiral did, so the shape itself reads as a real, spacious presence
@@ -155,7 +154,7 @@ const SPIRAL_WIDTH = Math.min(
 // ellipticalClearance for why an ellipse: the aura figure is tall and
 // narrow, so a single scalar radius was either too tight sideways or too
 // loose vertically.
-const AURA_CLEARANCE_MARGIN = 45;
+const AURA_CLEARANCE_MARGIN = 40;
 
 // buildDepthsGeometry — 2026-09-02: the entire AURA_METRICS/AURA_FIELD_
 // GEOMETRY/SPIRAL_AURA_HALF_*/SPIRAL_RISE_HEIGHT/CORE_*/MENU_* constant
@@ -250,7 +249,7 @@ export function buildDepthsGeometry(auraDisplaySize: number) {
   // are — only the RATE the curve climbs at changes, so the wheel now
   // sits further from the feet in real pixels, giving the composition
   // more presence without the aura itself growing or Body's dot clipping.
-  const SPIRAL_HEIGHT_STRETCH = 3.2;
+  const SPIRAL_HEIGHT_STRETCH = 3;
   const spiralRiseHeight = (feetToHeadSpan * SPIRAL_HEIGHT_STRETCH) / H_CUT;
   // The wheel's own pixel diameter, scaled down together with the rest
   // of the composition (2026-09-02) — WHEEL_SIZE is a fixed constant

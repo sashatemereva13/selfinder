@@ -22,10 +22,14 @@ import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useGuideChatStore } from '../src/store/guideChatStore';
 import { useMeasureStore } from '../src/store/measureStore';
 import { useEngagementStore } from '../src/store/engagementStore';
+import { CrisisLine } from '../src/components/shared/CrisisLine';
 import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../src/utils/appAccent';
-import { getNudgeState, getNudgeCopy } from '../src/content/guideNudges';
 import { TypingDots } from '../src/components/shared/TypingDots';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
+import { BackLink } from '../src/components/shared/BackLink';
+import { ensureAIConsent } from '../src/store/aiDisclosureStore';
+import { useLocaleStore } from '../src/store/localeStore';
+import { formatDate } from '../src/utils/relativeTime';
 import { track } from '../src/utils/analytics';
 
 export default function GuideScreen() {
@@ -46,11 +50,12 @@ export default function GuideScreen() {
   const clearConversation = useGuideChatStore((s) => s.clearConversation);
   const flushPendingSave = useGuideChatStore((s) => s.flushPendingSave);
   const currentResult = useMeasureStore((s) => s.currentResult);
-  const previousResult = useMeasureStore((s) => s.previousResult);
   const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
   const hasShownSecondVisit = useEngagementStore((s) => s.hasShownSecondVisit);
   const isNewVisitSinceLastOpen = useEngagementStore((s) => s.isNewVisitSinceLastOpen);
   const markSecondVisitShown = useEngagementStore((s) => s.markSecondVisitShown);
+  const markTalkedAbout = useEngagementStore((s) => s.markTalkedAbout);
+  const locale = useLocaleStore((s) => s.locale);
 
   const [input, setInput] = useState('');
   const scrollRef = useRef<ScrollView>(null);
@@ -103,12 +108,12 @@ export default function GuideScreen() {
   );
 
   const messages = philosopher ? conversations[philosopher.id] ?? [] : [];
+  const lastCrisisIndex = messages.map((m) => !!m.crisis).lastIndexOf(true);
   // Text-safe — every use in this file colors real Text (the philosopher's
-  // name, nudge action links).
+  // name).
   const accentRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentRgb})`;
   const accentButtonColor = `rgb(${useAppAccentButtonRgb()})`;
-  const nudge = getNudgeCopy(philosopher?.id ?? 'socrates', getNudgeState(currentResult, previousResult));
 
   // Was a useEffect keyed on messages.length/isLoading, calling
   // scrollToEnd directly — that fires the instant React commits the new
@@ -141,12 +146,53 @@ export default function GuideScreen() {
     );
   }
 
-  const handleSend = () => {
+  // Consent before the box is cleared, so "Not now" leaves what they wrote
+  // where it was (the store asks again itself, harmlessly, once granted).
+  const handleSend = async () => {
     const text = input.trim();
     if (!text || isLoading) return;
+    if (!(await ensureAIConsent())) return;
     setInput('');
     send(philosopher, text);
+    // Saying something about today's reading is what moves the
+    // philosopher's step on to the Shift offer — opening the conversation
+    // alone doesn't (docs/shift-concept.md, §2).
+    // The reading's reflection in the conversation, or its details as
+    // context (a reading with no reflection joins as context only).
+    const aboutReading =
+      messages.some((m) => m.readingAt === currentResult?.savedAt) ||
+      !!useGuideChatStore.getState().readingContext[philosopher.id];
+    if (currentResult && aboutReading) {
+      markTalkedAbout(currentResult.savedAt);
+    }
   };
+
+  // Guide is always opened on top of something since onboarding stopped
+  // landing here (2026-09-26) — but a cold deep link could still arrive
+  // with nothing underneath, so fall back to Depths rather than a dead end.
+  const handleBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/(tabs)/depths');
+  };
+
+  // The plain "what Measure is" layer plus its button, for anyone who
+  // hasn't measured yet — shown under the greeting on an empty
+  // conversation, and under the philosopher's opening line from
+  // onboarding's meet step until the person has said anything themselves.
+  const showMeasureIntro = !currentResult && !messages.some((m) => m.role === 'user');
+  const measureIntro = showMeasureIntro ? (
+    <View>
+      <Text style={styles.measureExplainer}>
+        {t('guide.measureExplainer', { name: philosopher.name })}
+      </Text>
+      <Pressable
+        style={[styles.measureCta, { backgroundColor: accentButtonColor }]}
+        onPress={() => router.push('/(tabs)/depths/measure')}
+      >
+        <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
+      </Pressable>
+    </View>
+  ) : null;
 
   return (
     <KeyboardAvoidingView
@@ -162,37 +208,30 @@ export default function GuideScreen() {
     >
       {theme === 'dark' && <AmbientGlow />}
 
+      <BackLink onPress={handleBack} style={[styles.backRow, { width: columnWidth, alignSelf: 'center' }]} />
+
       <View style={[styles.header, { width: columnWidth, alignSelf: 'center' }]}>
         <View>
           <Text style={styles.headerMode}>{philosopher.mode}</Text>
           <Text style={[styles.headerName, { color: accentColor }]}>{philosopher.name}</Text>
         </View>
-        {messages.length > 0 && (
-          <Pressable onPress={() => clearConversation(philosopher.id)}>
-            <Text style={styles.clearLink}>{t('guide.clear')}</Text>
-          </Pressable>
-        )}
-      </View>
-
-      {metSnapshotRef.current?.hasMet && (
-        <View style={[styles.nudgeBanner, { width: columnWidth, alignSelf: 'center' }]}>
-          <Text style={styles.nudgeText}>{nudge.text}</Text>
-          {nudge.secondActionLabel && nudge.secondRoute ? (
-            <View style={styles.nudgeActionRow}>
-              <Pressable onPress={() => router.push(nudge.route)}>
-                <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
-              </Pressable>
-              <Pressable onPress={() => router.push(nudge.secondRoute!)}>
-                <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.secondActionLabel} →</Text>
-              </Pressable>
-            </View>
-          ) : (
-            <Pressable onPress={() => router.push(nudge.route)}>
-              <Text style={[styles.nudgeAction, { color: accentColor }]}>{nudge.actionLabel} →</Text>
+        <View style={styles.headerSide}>
+          {messages.length > 0 && (
+            <Pressable onPress={() => clearConversation(philosopher.id)}>
+              <Text style={styles.clearLink}>{t('guide.clear')}</Text>
             </Pressable>
           )}
+          {/* Always there, so no one has to say the right words first
+              (crisis safety net, 2026-10-10). */}
+          <CrisisLine kind="help" />
         </View>
-      )}
+      </View>
+
+      {/* The discovery nudge banner that sat here (Levels / Tune In /
+          Measure again) was removed 2026-10-08: a second "what next"
+          beside the philosopher's one step, pointing at an outdated path,
+          pulling people out of the conversation. Its time-aware "measure
+          again" lines moved into the step (depthsSeam.ts). */}
 
       <ScrollView
         ref={scrollRef}
@@ -223,40 +262,35 @@ export default function GuideScreen() {
             </Text>
             {/* "Measure" is a proper noun in every philosopher's own voice
                 above (each firstMeeting line namedrops it before a new user
-                has any idea what it means) — this is the plain-language
-                layer underneath that voice, saying outright what tapping
-                the button actually does. Keyed off !currentResult, not
-                hasMet: someone who's already measured with philosopher A
-                and is now meeting philosopher B for the first time already
-                knows what Measure is — but someone who's met a philosopher
-                before without ever measuring still doesn't, so this has to
-                stay tied to "have they ever actually done Measure," not
-                "have they met this particular philosopher before." */}
-            {!currentResult && (
-              <Text style={styles.measureExplainer}>
-                {t('guide.measureExplainer', { name: philosopher.name })}
-              </Text>
-            )}
-            {!currentResult && (
-              <Pressable
-                style={[styles.measureCta, { backgroundColor: accentButtonColor }]}
-                onPress={() => router.push('/(tabs)/depths/measure')}
-              >
-                <Text style={styles.measureCtaText}>{t('guide.takeMeasure')}</Text>
-              </Pressable>
-            )}
+                has any idea what it means) — measureIntro is the plain-
+                language layer underneath that voice. Keyed off whether
+                they've ever actually measured, not whether they've met this
+                philosopher: someone who's met one before without measuring
+                still doesn't know what it is. */}
+            {measureIntro}
           </View>
         ) : (
-          messages.map((message, i) => (
+          <>
+          {messages.map((message, i) => (
             <View key={i} style={isLargeScreen && styles.turnRowLargeScreen}>
+              {message.readingAt && (
+                <Text style={styles.readingLabel}>
+                  {t('guide.afterYourReading', { date: formatDate(message.readingAt, locale) })}
+                </Text>
+              )}
               <Turn isUser={message.role === 'user'} styles={styles}>{message.content}</Turn>
+              {/* Under the latest reply to words that said someone may be
+                  in danger — once, not under every such reply. */}
+              {message.crisis && i === lastCrisisIndex && <CrisisLine kind="crisis" style={styles.crisisLine} />}
               {message.suggestSpill && i === messages.length - 1 && !isLoading && (
-                <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/depths/spill')}>
+                <Pressable style={styles.spillCta} onPress={() => router.push('/(tabs)/explore/spill')}>
                   <Text style={styles.spillCtaText}>{t('guide.writeItOutInstead')}</Text>
                 </Pressable>
               )}
             </View>
-          ))
+          ))}
+          {measureIntro}
+          </>
         )}
 
         {isLoading && (
@@ -324,6 +358,15 @@ function makeStyles(colors: Colors) {
     textAlign: 'center',
     lineHeight: fontSizes.base * lineHeights.normal,
   },
+  backRow: { paddingHorizontal: spacing[5], marginBottom: spacing[3] },
+  // Faint and plain — a date stamp on the record, not part of what the
+  // philosopher said.
+  readingLabel: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    marginBottom: spacing[2],
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -339,35 +382,9 @@ function makeStyles(colors: Colors) {
     textTransform: 'uppercase',
   },
   headerName: { fontFamily: fonts.medium, fontSize: fontSizes.lg, marginTop: spacing[1] },
+  headerSide: { alignItems: 'flex-end', gap: spacing[2] },
+  crisisLine: { marginTop: spacing[2], marginBottom: spacing[2] },
   clearLink: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.sm, marginTop: spacing[2] },
-  // No border, no fill — plain text with spacing, same register as
-  // Depths' discoveryNudge. The tap affordance is the accent-colored
-  // action line beneath it, not a bordered box around the whole thing.
-  // paddingHorizontal (not marginHorizontal) to match header/scrollContent's
-  // own pattern — this box also gets an explicit `width: columnWidth`
-  // inline (see its usage), and combining a fixed width with an outer
-  // margin on the same box was clipping the margin on real devices
-  // (confirmed on iPhone — text ran flush to the screen edge) even though
-  // it happened to render fine in the web preview.
-  nudgeBanner: {
-    paddingHorizontal: spacing[5],
-    marginBottom: spacing[4],
-  },
-  nudgeText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
-  },
-  nudgeAction: {
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    marginTop: spacing[2],
-  },
-  nudgeActionRow: {
-    flexDirection: 'row',
-    gap: spacing[5],
-  },
   scroll: { flex: 1 },
   scrollContent: {
     flexGrow: 1,
@@ -387,8 +404,7 @@ function makeStyles(colors: Colors) {
   // drawn rule beside it was a redundant second signal for the same thing.
   greeting: {
     color: colors.text.primary,
-    fontFamily: fonts.light,
-    fontStyle: 'italic',
+    fontFamily: fonts.voice,
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.normal,
   },

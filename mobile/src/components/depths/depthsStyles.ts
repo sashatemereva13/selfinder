@@ -13,12 +13,16 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     root: {
       flex: 1,
       backgroundColor: colors.bg.base,
+      // The reading sits on the minimap, not floating above it: any height
+      // the fixed zone doesn't need goes above it (2026-10-09 — removing
+      // the "DEPTHS" kicker had freed height that reappeared as a gap
+      // between the aura's ground and the minimap).
+      justifyContent: "flex-end",
     },
     // 2026-09-01 — the fixed-zone half of the new fixed/scroll split (see
-    // this screen's own render comment). Never scrolls: the kicker,
-    // PhilosopherPresence, the reading's quote, and DepthsSpiralCore's own
-    // canvas (aura + sphere dots + wheel) all live here, permanently on
-    // screen. A plain View, not a ScrollView — height comes from its own
+    // this screen's own render comment). Never scrolls: the kicker, the
+    // reading's quote, DepthsSpiralCore's own canvas (aura + sphere dots +
+    // wheel), and PhilosopherSeam all live here, permanently on screen. A plain View, not a ScrollView — height comes from its own
     // content (the quote's text height plus CORE_GEOMETRY.totalHeight),
     // same as any normal flex column.
     fixedZone: {
@@ -31,19 +35,10 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       // root also contains scrollZone/the tab bar below, which must never
       // be clipped by this.
       overflow: "hidden",
-      // A thin line marking the fixed/scroll seam — signals "this part
-      // scrolls" without a generic scroll-indicator widget or a fade at
-      // the edge (the user explicitly didn't want a fade: the curve
-      // itself visibly continues from the scrollable menu up into the
-      // aura's own body, "the source of energy," and a fade would read
-      // as cutting that connection rather than just marking a boundary
-      // it passes through). Same colors.bg.border stroke already used
-      // for the wheel's own ring outline (VibrationSpectrum.tsx) — one
-      // shared thin-line register, not a new one. Deliberately NOT a
-      // gradient/fade — a flat 1px line the curve crosses over, same as
-      // any other line it crosses on its way down.
-      borderBottomWidth: 1,
-      borderBottomColor: colors.bg.border,
+      // (The thin line that used to mark the fixed/scroll seam here was
+      // removed 2026-09-26 along with the scrolling menu below it — there
+      // is no scroll left to signal, and the thread's curve now runs on
+      // unbroken from the aura into the art below.)
     },
     // The independently-scrollable bottom zone — DepthsSpiralMenu's own
     // canvas (action points + top loop), then the timestamp/explore-map/
@@ -53,9 +48,9 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     scrollZone: {
       flex: 1,
     },
-    scrollContent: {
-      paddingHorizontal: spacing[6],
-      paddingBottom: spacing[12],
+    // Below the reading — takes no height of its own now (see root).
+    lowerZone: {
+      position: "relative",
     },
     // Absolutely fills the same area ringWrap occupies (see ringWrap's own
     // `top` computed from groundY) rather than sizing itself from normal
@@ -68,12 +63,32 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     // center — pinned to groundY, so the aura's own feet land on the
     // ground the ring/cone are also built from, and the figure stands
     // normally above that line rather than being bisected by it.
+    // 2026-09-12 — width narrowed from full-canvas (left:0, right:0) to
+    // AURA_METRICS.width, centered. This Pressable is now also a real tap
+    // target (Option A: tapping the aura clears a selected sphere, see
+    // depths/index.tsx's own comment on arrivalSkipWrap) and it renders
+    // AFTER spiralOverlay, on top of it in z-order — at full canvas width
+    // it silently stole taps from Body/Spirit's own dots/labels, which
+    // sit closest to the aura's own vertical band (see labelLayout's own
+    // AURA_BODY_TOP/BOTTOM push-away logic in DepthsSpiralCore.tsx).
+    // Confirmed as a real, reported bug: tapping Body or Spirit while
+    // another sphere was already selected (the only time this Pressable
+    // is pointerEvents:"auto") cleared the selection instead of
+    // selecting the tapped sphere — the tap was landing on THIS layer,
+    // not the dot underneath it. AURA_METRICS.width already includes the
+    // figure's own side padding for its blur/glow (see AuraFigure.tsx's
+    // PAD_SIDE), so this is still generous, just no longer wider than
+    // the actual figure. `left` is computed explicitly (not alignSelf:
+    // "center") because this View is position:"absolute" — RN removes
+    // absolutely-positioned children from flex layout entirely, so
+    // alignSelf has no effect on them; centering an absolute child inside
+    // a wider absolute parent needs a real computed offset.
     arrivalSkipWrap: {
       position: "absolute",
-      left: 0,
-      right: 0,
       top: CORE_GEOMETRY.groundY - AURA_METRICS.height,
+      left: (CORE_GEOMETRY.width - AURA_METRICS.width) / 2,
       height: AURA_METRICS.height,
+      width: AURA_METRICS.width,
       alignItems: "center",
     },
     // Pre-reading branch's own equivalent of arrivalSkipWrap/ringWrap — no
@@ -158,16 +173,6 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       right: 0,
       bottom: 0,
     },
-    // DepthsSpiralMenu's own wrapper — the first thing in scrollZone's
-    // content, sized to MENU_GEOMETRY exactly so the seam-continuity math
-    // (see MENU_GEOMETRY's own chestY comment) holds: no extra
-    // margin/padding above this View, so it renders flush against
-    // auraCoreWrap's own bottom edge at scroll position 0.
-    menuWrap: {
-      width: MENU_GEOMETRY.width,
-      height: MENU_GEOMETRY.height,
-      alignSelf: "center",
-    },
     entryFade: {
       position: "absolute",
       top: 0,
@@ -202,12 +207,6 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       color: colors.text.faint,
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
-    },
-    sectionDivider: {
-      height: 1,
-      backgroundColor: colors.bg.border,
-      marginTop: spacing[10],
-      marginBottom: spacing[8],
     },
     // A sentence, styled like one — warm ivory (AURA_NEUTRAL_COLOR, the same
     // tone onboarding uses for "you feel" / "is an experience" before any
@@ -275,22 +274,30 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     // width read wrong regardless of the wheel not overlapping it — the
     // user's own request: the quote should stay confined to the screen's
     // LEFT side so it reads as its own contained block, not sprawl edge-
-    // to-edge. A plain, static percentage (tuned by the user directly to
-    // 45%) — no per-render computation, no dependency on wheel size/
-    // position.
+    // to-edge. A plain, static percentage — no per-render computation, no
+    // dependency on wheel size/position.
+    // 2026-09-12 — widened from 45% to 58%, at the user's own request: a
+    // long combinationMessage was visibly truncating ("...") against
+    // title's own numberOfLines cap below. The wheel bleeds off-canvas at
+    // top-right and never actually occupies this column's own top-left
+    // region (confirmed via DepthsSpiralCore's wheelPos comment — only
+    // its bottom-left quarter is visible, well clear of this width even
+    // at 58%), so there was real unclaimed horizontal space between the
+    // quote and the wheel to give back here without the two ever
+    // colliding or the wheel needing to shrink.
     quoteBubbleWrap: {
       position: "absolute",
       top: 0,
       left: 0,
-      width: "45%",
+      width: "68%",
       alignItems: "flex-start",
       justifyContent: "flex-start",
     },
     // Deliberately not styled as a heading — this is the philosopher speaking,
-    // a reflection to read, not a screen title to scan. Lighter weight and
-    // smaller size than a real title (see lastReadingLabel/kicker above it)
-    // keeps it quiet and personal rather than declarative — a large bold
-    // headline here read as closer to a verdict than a reflection.
+    // a reflection to read, not a screen title to scan. Lighter weight than
+    // a real title (see lastReadingLabel/kicker above it) keeps it quiet and
+    // personal rather than declarative — a large bold headline here read as
+    // closer to a verdict than a reflection.
     // 2026-09-03 — was fontSizes.sm (14px). Shrunk one more step (the user's
     // own framing: "the quote doesn't need to be bold and the font size can
     // be smaller") to free real horizontal room in the quote's own column —
@@ -299,12 +306,71 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     // (a real column-width cut was the other option considered, but this
     // reads as gentler: same words fit in less width at a smaller size,
     // rather than the same size wrapping onto more lines in a tighter box).
+    // 2026-09-12 — bumped to fontSizes.sm (14px) earlier the same session,
+    // after a size-hierarchy review found this had drifted into a real
+    // inversion: the quote (the philosopher's own reflection about THIS
+    // reading — arguably the single most important piece of content on the
+    // screen) had ended up tied for the SMALLEST text anywhere on Depths,
+    // identical to a sphere point's data label and an action-menu row's own
+    // label, while a generic "Explore the map" row (wideMenuLabel below)
+    // sat a full tier above it at fontSizes.base (16px).
+    // That fix overshot, per the user's own direct feedback minutes later
+    // on-device: "the quote is overpowering the aura-body." Landed here at
+    // 12 — a deliberately chosen intermediate value (no existing token
+    // between xs=11 and sm=14), splitting the difference between "tied for
+    // smallest text on the page" (the original bug) and "now the loudest
+    // thing in front of the aura" (this fix's own overcorrection). Kept
+    // fonts.light — the actual overpowering was about SIZE, not weight.
+    // NOT paired with narrowing quoteBubbleWrap's own 68% column back down
+    // — a narrower column at a given font size means MORE lines (taller
+    // block), which risks re-triggering the real Mind-label collision the
+    // 68% width was specifically widened to fix, and a taller block likely
+    // reads as MORE dominant regardless of width. Dropping the font size
+    // alone shrinks the block on every axis at once. numberOfLines (see
+    // depths/index.tsx's own render-site comment) may need re-verifying at
+    // this size — smaller text needs FEWER lines for the same sentence, so
+    // the existing cap is a safe upper bound, not to be raised further.
+    // 2026-10-08 — the reflection read as shrunk: small text squeezed into
+    // a narrow column with empty sky beneath it. Now the philosopher's
+    // voice weight (thin — it reads quieter than Medium at the same size,
+    // which is what lets it grow without overpowering the figure again),
+    // larger, and allowed up to 10 lines flowing down into that sky, the
+    // aura itself having moved lower.
     title: {
       color: colors.text.primary,
+      fontFamily: fonts.voice,
+      fontSize: fontSizes.base,
+      lineHeight: fontSizes.base * 1.45,
+      marginTop: spacing[2],
+    },
+    reflectionByline: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      marginTop: spacing[2],
+    },
+    reflectionName: {
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+    },
+    reflectionWhen: {
+      color: colors.text.faint,
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
-      lineHeight: fontSizes.xs * lineHeights.normal,
-      marginTop: spacing[2],
+    },
+    // The path, said once after the first reading — plain layer.
+    pathOnce: {
+      color: colors.text.secondary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      lineHeight: fontSizes.xs * 1.5,
+      marginTop: spacing[4],
+    },
+    answerHint: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      marginTop: spacing[3],
     },
     // The ring (AuraField's rings) and the aura share this one center
     // point — ring renders first so the aura sits visually on top of/
@@ -331,59 +397,6 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       alignItems: "center",
       justifyContent: "flex-end",
     },
-    // Still used by discoveryNudge/the wide menu rows below the spiral. position:
-    // relative so bottomEnergyWrap (below) can break out to the full
-    // screen width rather than being clipped to content's own padding.
-    stack: { position: "relative" },
-    // Breaks out of content's paddingHorizontal (spacing[6]) the same way
-    // PhilosopherPresence's own energyWrap does at the top of the page —
-    // the spirals should span the full device width, not just luckyWrap's
-    // own narrow column.
-    bottomEnergyWrap: {
-      position: "relative",
-      left: -spacing[6],
-      width: SCREEN_WIDTH,
-      marginTop: spacing[6],
-    },
-    discoveryNudge: {
-      alignItems: "center",
-      paddingVertical: spacing[3],
-      marginBottom: spacing[4],
-    },
-    discoveryNudgeText: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      textAlign: "center",
-    },
-    // 2026-09-03 — the closing line after sectionDivider. faint, not
-    // muted — quieter than discoveryNudgeText above (which is a real,
-    // occasionally-tappable row) since this is pure stillness, nothing to
-    // act on. Generous paddingVertical gives it real presence as an
-    // ending rather than reading as one more compressed row.
-    closingLine: {
-      color: colors.text.faint,
-      fontFamily: fonts.light,
-      fontStyle: "italic",
-      fontSize: fontSizes.sm,
-      textAlign: "center",
-      paddingVertical: spacing[6],
-    },
-    // The unified action-menu row style, in normal document flow below the
-    // spiral (2026-09-02) — Explore the map / Feeling lucky both use this.
-    // Left-aligned and same label/description size relationship the old
-    // centered luckyLabel/luckyDescription used (base/sm), just re-aligned
-    // to match the curve's own action rows (Stay with it/etc.) rather than
-    // reading as a smaller, centered footer — the deliberate "same weight,
-    // second group" hierarchy this pass introduced (see this block's own
-    // header comment above).
-    wideMenuRow: {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: spacing[4],
-      paddingVertical: spacing[3],
-    },
     // Text column — was the row's own direct children before the row
     // became flexDirection:'row' to make space for DepthsMenuSymbol at the
     // trailing edge (2026-09-02); wrapping label+description in their own
@@ -391,17 +404,6 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     // fixed slot on the right without the text stretching to fill it.
     wideMenuText: {
       flex: 1,
-    },
-    wideMenuLabel: {
-      color: colors.text.secondary,
-      fontFamily: fonts.medium,
-      fontSize: fontSizes.base,
-    },
-    wideMenuDescription: {
-      color: colors.text.muted,
-      fontFamily: fonts.light,
-      fontSize: fontSizes.sm,
-      marginTop: spacing[1],
     },
   });
 }

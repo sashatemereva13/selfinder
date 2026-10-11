@@ -1,6 +1,7 @@
 import request from './client';
 import { MeasureResult, QAPair } from '../types';
 import { useLocaleStore } from '../store/localeStore';
+import { requireAIConsent } from '../store/aiDisclosureStore';
 
 // Backend doesn't return `savedAt` — the caller stamps it on before persisting.
 // Passing a token lets the backend save the reading to the user's account
@@ -21,7 +22,8 @@ import { useLocaleStore } from '../store/localeStore';
 // observed so far.
 const INTERVIEW_TIMEOUT_MS = 45000;
 
-export function submitInterview(qaPairs: QAPair[], systemPrompt: string, token?: string | null) {
+export async function submitInterview(qaPairs: QAPair[], systemPrompt: string, token?: string | null) {
+  await requireAIConsent();
   return request<Omit<MeasureResult, 'savedAt'>>(
     '/measure/interview',
     { qaPairs, systemPrompt, locale: useLocaleStore.getState().locale },

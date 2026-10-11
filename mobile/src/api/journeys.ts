@@ -1,6 +1,7 @@
 import request from './client';
 import { JourneyKey, JourneySessionDTO, AgencySortResult, JourneyPurchase } from '../types';
 import { useLocaleStore } from '../store/localeStore';
+import { requireAIConsent } from '../store/aiDisclosureStore';
 
 export interface JourneyExchangeResponse {
   engaged: boolean;
@@ -38,10 +39,11 @@ interface JourneyExchangeParams {
 // (stageComplete) and decide whether its own reply is worth showing at
 // all (showAcknowledgment) — Measure's questions are static and every
 // answer advances immediately; neither is true for a Journey's stages.
-export function sendJourneyExchange(
+export async function sendJourneyExchange(
   params: JourneyExchangeParams,
   token: string
 ): Promise<JourneyExchangeResponse> {
+  await requireAIConsent();
   return request<JourneyExchangeResponse>(
     '/journeys/exchange',
     { ...params, locale: useLocaleStore.getState().locale },

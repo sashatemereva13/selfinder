@@ -11,6 +11,9 @@ import { ReadingLogEntry } from '../src/store/measureStore';
 import { useAuthStore } from '../src/store/authStore';
 import { getMeasureHistory } from '../src/api/user';
 import { ArcKaleidoscope } from '../src/components/journeys/ArcKaleidoscope';
+import { woopShapeParams } from '../src/components/journeys/kaleidoscopeData';
+import { listMyWishes, WishWoop } from '../src/api/wish';
+import { findActiveWish } from '../src/components/yourArc/crossingEligibility';
 import { LongPressToSave } from '../src/components/shared/LongPressToSave';
 import { ArcKaleidoscopeLoading } from '../src/components/shared/ArcKaleidoscopeLoading';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
@@ -119,10 +122,30 @@ function CenterScreen() {
   // Arc subscription required (see this file's own header comment for the
   // 2026-08-23 gate reversal). A fully signed-out visitor never reaches
   // this fetch at all (getMeasureHistory requires auth) — see the
-  // `!session` branch in the render below. Wishes are no longer fetched
-  // here — they only ever fed the light cone, which moved to Your Arc's
-  // own TimeConePage.tsx (2026-08-29).
+  // `!session` branch in the render below.
   const [serverReadingLog, setServerReadingLog] = useState<ReadingLogEntry[]>([]);
+  // 2026-09-13 — "past creates color, future creates shape" (see
+  // kaleidoscopeData.ts's own woopShapeParams comment). Wishes were
+  // previously never fetched here at all — they only ever fed the light
+  // cone, which moved to Your Arc's own TimeConePage.tsx (2026-08-29) —
+  // this is a new, small, best-effort fetch added specifically for this
+  // feature. No WOOP (or no wish at all) resolves to
+  // woopShapeParams(null)'s own defaults, which produce byte-identical
+  // shape output to before this feature existed.
+  const [activeWishWoop, setActiveWishWoop] = useState<WishWoop | null>(null);
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+    (async () => {
+      const wishes = await listMyWishes(session.token);
+      if (cancelled) return;
+      setActiveWishWoop(findActiveWish(wishes)?.woop ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+  const shapeParams = useMemo(() => woopShapeParams(activeWishWoop), [activeWishWoop]);
   useEffect(() => {
     if (!session) return;
     let cancelled = false;
@@ -174,7 +197,12 @@ function CenterScreen() {
     <View style={styles.experienceBlock}>
       <LongPressToSave captureChildren>
         <View style={styles.kaleidoscopeWrap}>
-          <ArcKaleidoscope readingLog={serverReadingLog} size={kaleidoscopeSize} seed={purchase?.seedNonce} />
+          <ArcKaleidoscope
+            readingLog={serverReadingLog}
+            size={kaleidoscopeSize}
+            seed={purchase?.seedNonce}
+            woopShapeParams={shapeParams}
+          />
         </View>
       </LongPressToSave>
     </View>
@@ -232,6 +260,22 @@ function CenterScreen() {
             {formatDate(new Date(mostRecentPurchase!.purchasedAt).getTime())}
           </Text>
           {renderExperience(mostRecentPurchase)}
+          {/* 2026-09-13, at the user's own request — this settled view had
+              no descriptive text at all near the kaleidoscope (introLine
+              only ever showed in the pre-purchase teaser branch above).
+              This names what Center actually IS, now that "the eternal
+              now" on Your Arc's own hub opens straight here (see
+              your-arc.tsx's own header comment): not a claim stated as
+              fact ("the past and future literally exist right now" would
+              be exactly the belief-requiring cosmological claim RULES.md
+              rules out), but something pointed at the person's own felt
+              experience instead — what already shaped them and what
+              they're already reaching for are both still live, right now,
+              in the pattern they're looking at. No wish/reading specifics
+              named (this screen doesn't fetch wish data — see this file's
+              own header comment on why) — general enough to stay true
+              regardless of what's actually in their record. */}
+          <Text style={styles.presentMomentLine}>{t('center.presentMomentLine')}</Text>
           <Pressable style={[styles.getButton, purchasing && { opacity: 0.5 }]} onPress={handleGetCenter} disabled={purchasing}>
             <Text style={styles.getButtonText}>{purchasing ? t('center.getCenterBusy') : t('center.getCenter')}</Text>
           </Pressable>
@@ -285,6 +329,17 @@ function makeStyles(colors: Colors) {
   },
   experienceBlock: { alignItems: 'center', width: '100%' },
   kaleidoscopeWrap: { alignSelf: 'center', marginBottom: spacing[6] },
+  // Same register as introLine above (sm/secondary/light) — this is the
+  // settled view's own equivalent, shown once the kaleidoscope is
+  // actually visible rather than only in the pre-purchase teaser.
+  presentMomentLine: {
+    alignSelf: 'flex-start',
+    color: colors.text.secondary,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
+    marginTop: spacing[2],
+  },
   getButton: {
     alignSelf: 'flex-start',
     marginTop: spacing[5],

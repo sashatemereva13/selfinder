@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, ThemeProvider, DarkTheme, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
@@ -14,10 +14,10 @@ import { useReminderStore } from '../src/store/reminderStore';
 import { useEngagementStore } from '../src/store/engagementStore';
 import { useLocaleStore } from '../src/store/localeStore';
 import { useThemeStore } from '../src/store/themeStore';
+import { useThemeColors } from '../src/theme/useThemeColors';
+import { SCREEN_TRANSITION } from '../src/theme/transitions';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
-import { AIDisclosureOverlay } from '../src/components/shared/AIDisclosureOverlay';
-import { useHowToUseStore } from '../src/store/howToUseStore';
-import { HowToUseOverlay } from '../src/components/shared/HowToUseOverlay';
+import { AIConsentSheet } from '../src/components/shared/AIConsentSheet';
 import { TuneInAudioController } from '../src/components/depths/TuneInAudioController';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
@@ -53,9 +53,11 @@ export default function RootLayout() {
   const { hydrated: engagementHydrated, hydrate: hydrateEngagement } = useEngagementStore();
   const { hydrated: localeHydrated, hydrate: hydrateLocale, locale } = useLocaleStore();
   const { hydrated: themeHydrated, hydrate: hydrateTheme, theme } = useThemeStore();
-  const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure, acknowledged: aiDisclosureAcknowledged } = useAIDisclosureStore();
-  const { hydrated: howToUseHydrated, hydrate: hydrateHowToUse, acknowledged: howToUseAcknowledged } = useHowToUseStore();
+  const { hydrated: aiDisclosureHydrated, hydrate: hydrateAIDisclosure } = useAIDisclosureStore();
   const router   = useRouter();
+  // The app's own background behind every screen and transition, never the
+  // navigator's default white.
+  const colors = useThemeColors();
   const segments = useSegments();
 
   // i18next's active language is kept in sync with localeStore rather than
@@ -76,13 +78,11 @@ export default function RootLayout() {
     hydrateLocale();
     hydrateTheme();
     hydrateAIDisclosure();
-    hydrateHowToUse();
   }, []);
 
   const ready =
     fontsLoaded && philoHydrated && measureHydrated && authHydrated && reminderHydrated
-    && engagementHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated
-    && howToUseHydrated;
+    && engagementHydrated && localeHydrated && themeHydrated && aiDisclosureHydrated;
 
   // Tops up the reminder's rolling window of scheduled notifications once
   // per cold start — a no-op inside refreshWindow itself if the reminder
@@ -125,44 +125,46 @@ export default function RootLayout() {
     // philosopher-presence affordance on Depths, not a tab), and profile
     // (the old you tab's replacement, reached via a profile icon instead
     // of a tab). 'products' was removed from this list once it moved to
-    // app/(tabs)/journeys/ — that route now falls under inTabs instead.
+    // app/(tabs)/explore/ (Journeys' catalog, now inside Practice) — that route now falls under inTabs instead.
     const inStandaloneRoute = [
       'sources', 'how-to-use', 'center', 'guide', 'profile',
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'your-arc-past', 'your-arc-future', 'crisis-support',
+      'your-arc', 'your-arc-past', 'your-arc-future', 'your-arc-moment', 'crisis-support',
       'journeys-grounding',
     ].includes(segments[0] as string);
+    // Onboarding is excluded from the second branch: it saves the chosen
+    // philosopher only on its own exit (see onboarding's meet step) and
+    // navigates itself right after — to Depths, or to Depths with Measure
+    // on top. Redirecting here too would race that navigation and could
+    // drop the Measure screen it just pushed.
     if (!philosopher && !inOnboarding) {
       router.replace('/onboarding');
-    } else if (philosopher && !inTabs && !inStandaloneRoute) {
+    } else if (philosopher && !inTabs && !inStandaloneRoute && !inOnboarding) {
       router.replace('/(tabs)/depths');
     }
   }, [ready, philosopher, segments]);
 
-  if (!ready) return null;
+  const base = theme === 'dark' ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...base,
+    colors: { ...base.colors, background: colors.bg.base, card: colors.bg.base, border: colors.bg.border },
+  };
 
-  // How-to-use shows FIRST, then AI disclosure — both become eligible at
-  // the same moment (right after choosing a philosopher, onboarding's own
-  // exit point), but how-to-use is general app orientation while the AI
-  // disclosure is specific to a feature (Guide/Measure) someone hasn't
-  // necessarily reached yet. Never both at once; showAIDisclosure only
-  // flips true once howToUseAcknowledged is already true.
-  const showHowToUse = Boolean(philosopher) && !howToUseAcknowledged;
-  // Onboarding itself never touches the AI provider (no Guide/Measure
-  // reachable from it) — the notice only needs to appear once a
-  // philosopher exists, which is the true first moment those features
-  // become reachable, regardless of account status. Gating on `philosopher`
-  // rather than a route means it also catches someone who somehow lands
-  // back on a fresh install's tabs without re-onboarding.
-  const showAIDisclosure = Boolean(philosopher) && howToUseAcknowledged && !aiDisclosureAcknowledged;
+  if (!ready) return null;
 
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
-        <Stack screenOptions={{ headerShown: false }}>
+        {/* The navigation library's own theme, in the app's colours — without
+            it, its containers (the tab navigator behind a fading scene,
+            a screen mid-transition) fell back to its default light
+            background, showing as a white flash, e.g. on "Measure again"
+            from another tab while the minimap hid (2026-10-10). */}
+        <ThemeProvider value={navigationTheme}>
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base }, ...SCREEN_TRANSITION }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
           <Stack.Screen name="(tabs)"     />
@@ -185,11 +187,19 @@ export default function RootLayout() {
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-past" />
           <Stack.Screen name="your-arc-future" />
+          <Stack.Screen name="your-arc-moment" />
           <Stack.Screen name="crisis-support" />
           <Stack.Screen name="journeys-grounding" />
         </Stack>
-        {showHowToUse && <HowToUseOverlay />}
-        {showAIDisclosure && <AIDisclosureOverlay />}
+        </ThemeProvider>
+        {/* Raised on demand by ensureAIConsent() — the first time
+            someone's own words are about to be sent to the AI provider,
+            not up front (see aiDisclosureStore.ts). The old one-time
+            how-to-use overlay that used to show here right after
+            onboarding is gone (2026-09-26): its tips were for screens a
+            new person hadn't seen yet; the page stays reachable from
+            profile. */}
+        <AIConsentSheet />
         {/* Mounted once at the app root, not inside the Tune In screen, so
             playback survives in-app navigation away from that screen — see
             TuneInAudioController's own comment for why this moved here. */}

@@ -3,7 +3,14 @@ import Animated, { useSharedValue, useAnimatedStyle, withTiming, withRepeat, Eas
 import Svg, { Defs, Filter, FeGaussianBlur, RadialGradient, Stop, G, Path, Circle } from 'react-native-svg';
 import { ReadingLogEntry } from '../../store/measureStore';
 import { useLevelColors } from '../../content/measureConfig';
-import { buildKaleidoscopeSegments, seedFromLog, KaleidoscopeSegment } from './kaleidoscopeData';
+import { buildKaleidoscopeSegments, seedFromLog, KaleidoscopeSegment, WoopShapeParams } from './kaleidoscopeData';
+
+// The exact "no WOOP" values from kaleidoscopeData.ts's own
+// DEFAULT_WOOP_SHAPE_PARAMS — duplicated as a literal default parameter
+// value here (rather than imported) only because it needs to be a
+// compile-time default for buildWedgeShapes' own signature; kept in sync
+// by hand since it's one small, rarely-touched object literal.
+const DEFAULT_SHAPE_PARAMS: WoopShapeParams = { spreadFactor: 1, tendrilChance: 0.7, jitterFactor: 1 };
 
 // A generated visualization, unique per person, built entirely from their
 // own real reading-history colors — "a kaleidoscope of their past self."
@@ -60,15 +67,22 @@ function polar(r: number, angleDeg: number): Point {
 // rim" envelope. Deliberately not a geometric primitive (circle/ellipse/
 // clean arc) — this is what reads as an organic shard catching light
 // rather than a pie-chart wedge.
-function petalPath(baseAngle: number, angleSpread: number, rInner: number, rOuter: number, rand: () => number): string {
+function petalPath(
+  baseAngle: number,
+  angleSpread: number,
+  rInner: number,
+  rOuter: number,
+  rand: () => number,
+  jitterFactor: number = 1
+): string {
   const pointCount = 5 + Math.floor(rand() * 3);
   const front: Point[] = [];
   for (let i = 0; i < pointCount; i++) {
     const t = i / pointCount;
     const widthEnvelope = Math.sin(t * Math.PI);
     const angle = baseAngle + (t - 0.5) * angleSpread * (0.4 + widthEnvelope * 0.6);
-    const jitterA = (rand() - 0.5) * angleSpread * 0.15;
-    const radius = rInner + (rOuter - rInner) * t + (rand() - 0.5) * (rOuter - rInner) * 0.08;
+    const jitterA = (rand() - 0.5) * angleSpread * 0.15 * jitterFactor;
+    const radius = rInner + (rOuter - rInner) * t + (rand() - 0.5) * (rOuter - rInner) * 0.08 * jitterFactor;
     front.push(polar(Math.max(rInner * 0.3, radius), angle + jitterA));
   }
   const back: Point[] = [];
@@ -94,13 +108,19 @@ function petalPath(baseAngle: number, angleSpread: number, rInner: number, rOute
 
 // A thin wobbly filament — the wispy trailing lines visible in real
 // kaleidoscope imagery, stroked not filled.
-function tendrilPath(baseAngle: number, rInner: number, rOuter: number, rand: () => number): string {
+function tendrilPath(
+  baseAngle: number,
+  rInner: number,
+  rOuter: number,
+  rand: () => number,
+  jitterFactor: number = 1
+): string {
   const steps = 6;
   let d = '';
   for (let i = 0; i <= steps; i++) {
     const t = i / steps;
     const r = rInner + (rOuter - rInner) * t;
-    const wobble = Math.sin(t * Math.PI * (1.5 + rand())) * (rOuter - rInner) * 0.06;
+    const wobble = Math.sin(t * Math.PI * (1.5 + rand())) * (rOuter - rInner) * 0.06 * jitterFactor;
     const a = baseAngle + wobble * 0.3;
     const p = polar(r, a);
     d += i === 0 ? `M ${p.x.toFixed(2)},${p.y.toFixed(2)} ` : `L ${p.x.toFixed(2)},${p.y.toFixed(2)} `;
@@ -121,11 +141,18 @@ interface Shape {
 // they represent more underlying readings), plus an occasional tendril.
 // Every shape's color is exactly one segment's own real level color —
 // layering/density is what builds up richer color, never a blended hue.
-function buildWedgeShapes(segments: KaleidoscopeSegment[], innerR: number, outerR: number, rand: () => number): Shape[] {
+function buildWedgeShapes(
+  segments: KaleidoscopeSegment[],
+  innerR: number,
+  outerR: number,
+  rand: () => number,
+  shapeParams: WoopShapeParams = DEFAULT_SHAPE_PARAMS
+): Shape[] {
   const shapes: Shape[] = [];
   const n = segments.length;
   if (n === 0) return shapes;
   const ringThickness = (outerR - innerR) / n;
+  const { spreadFactor, tendrilChance, jitterFactor } = shapeParams;
 
   segments.forEach((seg, i) => {
     const rIn = innerR + ringThickness * i;
@@ -133,19 +160,22 @@ function buildWedgeShapes(segments: KaleidoscopeSegment[], innerR: number, outer
     const petalCount = seg.kind === 'detail' ? 2 : 3;
     for (let p = 0; p < petalCount; p++) {
       const baseAngle = (rand() - 0.5) * WEDGE_ANGLE * 0.7;
-      const spread = WEDGE_ANGLE * (0.35 + rand() * 0.35);
+      const spread = WEDGE_ANGLE * (0.35 + rand() * 0.35) * spreadFactor;
       shapes.push({
         kind: 'petal',
-        d: petalPath(baseAngle, spread, rIn, rOut, rand),
+        d: petalPath(baseAngle, spread, rIn, rOut, rand, jitterFactor),
         color: seg.color,
         opacity: 0.16 + rand() * 0.22,
       });
     }
-    if (rand() > 0.3) {
+    // Replaces the fixed 0.7 chance (rand() > 0.3) with tendrilChance —
+    // when shapeParams is the default, tendrilChance is exactly 0.7, so
+    // this line is byte-identical in behavior to before this feature.
+    if (rand() < tendrilChance) {
       const a = (rand() - 0.5) * WEDGE_ANGLE * 0.8;
       shapes.push({
         kind: 'tendril',
-        d: tendrilPath(a, rIn, Math.min(outerR, rOut * 1.05), rand),
+        d: tendrilPath(a, rIn, Math.min(outerR, rOut * 1.05), rand, jitterFactor),
         color: seg.color,
         opacity: 0.35 + rand() * 0.25,
       });
@@ -158,6 +188,7 @@ export function ArcKaleidoscope({
   readingLog,
   size,
   seed: seedNonce,
+  woopShapeParams: shapeParams,
 }: {
   readingLog: ReadingLogEntry[];
   size: number;
@@ -168,6 +199,14 @@ export function ArcKaleidoscope({
   // kaleidoscope usage passes nothing, preserving the original
   // stable-per-history behavior.
   seed?: number;
+  // Optional, 2026-09-13 — see kaleidoscopeData.ts's own woopShapeParams
+  // comment for the full "past creates color, future creates shape"
+  // reasoning. Purely additive: omitted (every caller before Center's own
+  // wish-aware update) or undefined falls through buildWedgeShapes' own
+  // default parameter, producing byte-identical output to before this
+  // feature existed — never a second seed, only a deterministic
+  // modulation of the SAME rand() stream seedFromLog already produces.
+  woopShapeParams?: WoopShapeParams;
 }) {
   const levelColors = useLevelColors();
 
@@ -181,8 +220,8 @@ export function ArcKaleidoscope({
     const rand = makeRng(seed);
     const inner = size * 0.03;
     const outer = size * 0.49;
-    return { shapes: buildWedgeShapes(segments, inner, outer, rand), outerR: outer };
-  }, [readingLog, size, seedNonce]);
+    return { shapes: buildWedgeShapes(segments, inner, outer, rand, shapeParams), outerR: outer };
+  }, [readingLog, size, seedNonce, shapeParams]);
 
   const cx = size / 2;
   const cy = size / 2;

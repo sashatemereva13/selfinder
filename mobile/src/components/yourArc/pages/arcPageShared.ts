@@ -75,8 +75,7 @@ export function makeSharedArcPageStyles(colors: Colors) {
     // kind of material.
     quoteText: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
     },
@@ -109,8 +108,7 @@ export function makeSharedArcPageStyles(colors: Colors) {
     wishRow: { paddingVertical: spacing[1] },
     wishRowText: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
     },
@@ -138,8 +136,7 @@ export function makeSharedArcPageStyles(colors: Colors) {
     },
     wishText: {
       color: colors.text.secondary,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.sm,
       lineHeight: fontSizes.sm * lineHeights.normal,
       marginTop: spacing[2],
@@ -152,10 +149,33 @@ export function makeSharedArcPageStyles(colors: Colors) {
     },
     wishGroundRuleNote: {
       color: colors.text.faint,
-      fontFamily: fonts.light,
-      fontStyle: 'italic',
+      fontFamily: fonts.voice,
       fontSize: fontSizes.xs,
       marginTop: spacing[2],
+    },
+    // 2026-09-13 — a genuine "next step" row, added for ClosingPage's own
+    // "explore a Journey" action (see that file's own comment). Your Arc
+    // had no such row anywhere before this — every existing page only
+    // ever reads history (Facts, TimeCone, Journeys list) or holds
+    // private material (wishRow above); nothing routed anywhere that
+    // DOES something new. RULES.md's own rule ("a next step some users
+    // are meant to genuinely adopt gets full row weight, not a quieter
+    // afterthought") is why this is its own distinct, heavier register —
+    // label+description, not wishRow's quieter single italic line —
+    // matching the weight Depths' own "Measure again"/"Talk about it"
+    // rows carry, translated into Your Arc's plain-list idiom (no card,
+    // no icon system, since nothing else in this pager has either).
+    nextStepRow: { paddingVertical: spacing[2] },
+    nextStepLabel: {
+      color: colors.text.primary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.base,
+    },
+    nextStepDescription: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.sm,
+      marginTop: spacing[1],
     },
   });
 }
