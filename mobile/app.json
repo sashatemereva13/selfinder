@@ -2,7 +2,7 @@
   "expo": {
     "name": "Selfinder",
     "slug": "selfinder-app",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
