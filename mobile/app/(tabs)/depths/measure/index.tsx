@@ -98,7 +98,11 @@ export default function TodayScreen() {
         {hasMeasuredBefore && (
           <Pressable
             style={styles.spillLink}
-            onPress={() => router.push('/(tabs)/depths/spill')}
+            // "First", not "or" (2026-10-10): when the head is too loud to
+            // answer honestly, pouring it out is the way to the reading,
+            // not a way around it — Spill's reveal brings you back here.
+            // Spill never measures anything; this stays the one Measure.
+            onPress={() => router.push({ pathname: '/(tabs)/explore/spill', params: { then: 'measure' } })}
           >
             <Text style={styles.spillLinkText}>{t('measureIntro.orJustWriteItOut')}</Text>
           </Pressable>

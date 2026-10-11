@@ -6,27 +6,27 @@ import { useEngagementStore } from '../store/engagementStore';
 import { useGuideChatStore } from '../store/guideChatStore';
 import { useLocaleStore } from '../store/localeStore';
 import { getSeamLine, getSeamState, SeamState } from '../content/depthsSeam';
-import { MapPlaceId } from '../content/mapPlaces';
 import { getLocalizedLevelName } from '../content/measureConfig';
 import { buildReadingContext } from './readingContext';
 import { track } from './analytics';
 
 // The philosopher's one next step (RULES.md, "The philosopher always points
-// to exactly one next step") — shared by Depths' seam and the map, so the
-// line someone reads in the middle of Depths and the place that glows on
-// the map are always the same step.
+// to exactly one next step") — the minimap handle's label, and the way
+// back into Today's chain from anywhere in the app.
 export function usePhilosopherStep() {
   const { t } = useTranslation();
   const router = useRouter();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const levelPageSeenFor = useEngagementStore((s) => s.levelPageSeenFor);
+  const talkedFor = useEngagementStore((s) => s.talkedFor);
+  const offerSeenFor = useEngagementStore((s) => s.offerSeenFor);
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
   const addReading = useGuideChatStore((s) => s.addReading);
   const locale = useLocaleStore((s) => s.locale);
 
-  const state: SeamState = getSeamState(currentResult, levelPageSeenFor);
-  const line = philosopher ? getSeamLine(philosopher.id, state, locale) : '';
+  const state: SeamState = getSeamState(currentResult, { levelPageSeenFor, talkedFor, offerSeenFor });
+  const line = philosopher ? getSeamLine(philosopher.id, state, locale, currentResult?.savedAt) : '';
   const philosopherName = philosopher?.nameInstrumental ?? philosopher?.name ?? '';
 
   const actionLabel = (() => {
@@ -41,12 +41,15 @@ export function usePhilosopherStep() {
         });
       case 'talk':
         return t('depths.understandItDescription', { name: philosopherName });
+      case 'offer':
+        return t('shift.offerAction');
+      case 'rest':
+        return t('shift.restLabel');
     }
   })();
 
-  // Where this step lives on the map. "Learn" goes to the reading's own
-  // level page, which sits under Levels there.
-  const mapTarget: MapPlaceId = state === 'talk' ? 'talk' : state === 'learn' ? 'levels' : 'measure';
+  // Rest points nowhere: the handle shows its words with nothing to press.
+  const hasAction = state !== 'rest';
 
   // Opens the conversation. With a reading, it joins the conversation
   // first (the philosopher's reflection as their latest message, its
@@ -81,8 +84,13 @@ export function usePhilosopherStep() {
       case 'talk':
         openConversation();
         break;
+      case 'offer':
+        router.push('/(tabs)/depths/choose');
+        break;
+      case 'rest':
+        break;
     }
   };
 
-  return { philosopher, state, line, actionLabel, mapTarget, run, openConversation };
+  return { philosopher, state, line, actionLabel, hasAction, run, openConversation };
 }

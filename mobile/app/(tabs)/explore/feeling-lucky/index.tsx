@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import type { Colors } from '../../../../src/theme/colors';
 import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
-import { spacing } from '../../../../src/theme/spacing';
+import { spacing, radius } from '../../../../src/theme/spacing';
 import feelingLuckyListEn from '../../../../src/content/feelingLuckyList.json';
 import feelingLuckyListRu from '../../../../src/content/feelingLuckyList.ru.json';
 import { LongPressToSave } from '../../../../src/components/shared/LongPressToSave';
@@ -53,44 +53,40 @@ export default function FeelingLuckyScreen() {
     router.push('/guide');
   };
 
+  // The message sits in the middle of the screen and scrolls if it's
+  // long; the way to talk about it stays just above the minimap
+  // (2026-10-08 — the message used to sit high with the link right under
+  // it, leaving the rest of the screen empty).
   return (
-    <ScrollView
-      style={styles.root}
-      contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-    >
+    <View style={[styles.root, { paddingTop: insets.top + spacing[4] }]}>
       <BackLink style={styles.backRow} />
 
-      {/* Long-press the message itself to save it (2026-08-20 — replaces
-          the old visible Save/Share buttons app-wide, see
-          LongPressToSave's own header comment). */}
-      <LongPressToSave message={message} accentRgb={colors.accent.ivoryRgb}>
-        <View style={styles.messageWrap}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <LongPressToSave message={message} accentRgb={colors.accent.ivoryRgb}>
           <Text style={styles.message}>{message}</Text>
-        </View>
-      </LongPressToSave>
+        </LongPressToSave>
+        <Text style={styles.saveHint}>{t('feelingLucky.saveHint')}</Text>
+      </ScrollView>
 
       {philosopher && (
-        <Pressable style={styles.talkLinkWrap} onPress={handleTalkAboutIt}>
-          <Text style={styles.talkLink}>{t('feelingLucky.talkAboutIt', { name: philosopher.name })}</Text>
+        <Pressable
+          style={({ pressed }) => [styles.talkButton, pressed && styles.pressed]}
+          onPress={handleTalkAboutIt}
+          accessibilityRole="button"
+        >
+          <Text style={styles.talkText}>{t('feelingLucky.talkAboutIt', { name: philosopher.name })}</Text>
         </Pressable>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
-  root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { flexGrow: 1, padding: spacing[6], paddingBottom: spacing[12] },
-  backRow: { paddingBottom: spacing[8] },
-  messageWrap: { flex: 1, justifyContent: 'center', paddingVertical: spacing[8] },
-  talkLinkWrap: { alignItems: 'center', marginTop: spacing[6] },
-  talkLink: {
-    color: colors.text.secondary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
-  },
+  root: { flex: 1, backgroundColor: colors.bg.base, paddingHorizontal: spacing[6], paddingBottom: spacing[4] },
+  backRow: { alignSelf: 'flex-start' },
+  scroll: { flex: 1 },
+  scrollContent: { flexGrow: 1, justifyContent: 'center', paddingVertical: spacing[8] },
   message: {
     color: colors.text.primary,
     fontFamily: fonts.voice,
@@ -98,5 +94,21 @@ function makeStyles(colors: Colors) {
     lineHeight: fontSizes.lg * lineHeights.loose,
     textAlign: 'center',
   },
+  saveHint: {
+    color: colors.text.faint,
+    fontFamily: fonts.light,
+    fontSize: fontSizes.xs,
+    textAlign: 'center',
+    marginTop: spacing[6],
+  },
+  talkButton: {
+    borderWidth: 1,
+    borderColor: colors.bg.border,
+    borderRadius: radius.full,
+    paddingVertical: spacing[4],
+    alignItems: 'center',
+  },
+  pressed: { opacity: 0.6 },
+  talkText: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
   });
 }

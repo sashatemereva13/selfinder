@@ -14,6 +14,10 @@ export interface ChatCompletionMessage {
   // (the savedAt of that reading) — Guide shows a faint "after your
   // reading" line above it. Client-only, stripped like suggestSpill.
   readingAt?: string;
+  // Set on an assistant reply when the person's message said they may be
+  // in danger (crisis safety net, 2026-10-10) — Guide shows the quiet line
+  // to the crisis screen under it. Client-only, stripped like the others.
+  crisis?: boolean;
 }
 
 interface SendMessageResponse {

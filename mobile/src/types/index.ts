@@ -88,6 +88,10 @@ export interface MeasureLine {
   rawVibrationScore: number;
   vibrationScore: number;
   vibrationLevel: VibrationLevel;
+  // The words from this sphere's answer its reading was based on, verbatim
+  // (backend checks) — null/absent when none, or on readings from before
+  // 2026-10-08.
+  evidence?: string | null;
 }
 
 export interface MeasureResult {

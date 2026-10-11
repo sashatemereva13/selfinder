@@ -10,6 +10,7 @@ import Svg, {
   Path,
   Text as SvgText,
   TextPath,
+  G,
 } from 'react-native-svg';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { fonts, fontSizes, letterSpacings } from '../../theme/typography';
@@ -286,6 +287,10 @@ interface TimeConeProps {
   // connects to the cone's own sides rather than floating past where the
   // lines stop.
   extraRings?: number;
+  // The moment the dial is on (2026-10-09, docs/your-arc-concept.md §3):
+  // a point id, or 'now' for the vertex — drawn larger, with a soft ring.
+  focusedId?: string | null;
+  focusRgb?: string;
 }
 
 // onPointPress went unwired for a first static-only pass (2026-08-14:
@@ -310,9 +315,16 @@ interface TimeConeProps {
 const NOW_LABEL_CLEARANCE = 16;
 const NOW_LABEL_EXTRA_PUSH = 20;
 
-export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress, hideNowLabel, showEternalNowPlane, canvasWidth, curvedLabels, extraRings = 0 }: TimeConeProps) {
+export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress, onPointLongPress, hideNowLabel, showEternalNowPlane, canvasWidth, curvedLabels, extraRings = 0, focusedId, focusRgb }: TimeConeProps) {
   const colors = useThemeColors();
   const geometry = useMemo(() => buildTimeConeGeometry(width, height), [width, height]);
+  // The curved labels' paths shrink with the cone, so the text does too —
+  // at a fixed size they were cut off once Your Arc fitted the cone to a
+  // smaller space (2026-10-09). Tuned so the full labels fit at the
+  // ~290px width they were written for.
+  const labelScale = Math.max(0.65, Math.min(1, width / 290));
+  const labelFontSize = fontSizes.xs * labelScale;
+  const labelSpacing = 2 * labelScale;
   const strokeColor = colors.text.faint;
   // extraRings' own radii, evenly spaced beyond the base rim — ring i
   // (1-indexed) sits at (1 + i * EXTRA_RING_STEP) × the base rim's own
@@ -526,7 +538,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             for why this replaced the old 25%-of-a-full-ellipse approach,
             which rendered mirrored on native). */}
         {curvedLabels?.future && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
             <TextPath href="#cone-future-rim-path" startOffset="0%" textAnchor="start">
               {curvedLabels.future.toUpperCase()}
             </TextPath>
@@ -584,7 +596,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             (bottomArcPathD) IS this label's own short arc, not a
             fraction of a longer path. */}
         {curvedLabels?.past && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
             <TextPath href="#cone-past-rim-path" startOffset="0%" textAnchor="start">
               {curvedLabels.past.toUpperCase()}
             </TextPath>
@@ -618,7 +630,7 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             textAnchor "start"
             reasoning as the future/past rim labels above. */}
         {curvedLabels?.plane && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={fontSizes.xs} letterSpacing={2}>
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
             <TextPath href="#cone-plane-path" startOffset="0%" textAnchor="start">
               {curvedLabels.plane.toUpperCase()}
             </TextPath>
@@ -628,16 +640,43 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
         {/* The vertex itself — "here and now." A small, bright dot, same
             "core orb" register AuraFigure's own chest glow uses for "this
             is the person." */}
-        <SvgCircle cx={geometry.centerX} cy={geometry.vertexY} r={3} fill={colors.text.primary} />
+        <SvgCircle cx={geometry.centerX} cy={geometry.vertexY} r={focusedId === 'now' ? 4.5 : 3} fill={colors.text.primary} />
+        {focusedId === 'now' && (
+          <SvgCircle
+            cx={geometry.centerX}
+            cy={geometry.vertexY}
+            r={10}
+            fill="none"
+            stroke={focusRgb ? `rgb(${focusRgb})` : colors.text.primary}
+            strokeOpacity={0.8}
+            strokeWidth={1.2}
+          />
+        )}
 
         {pastPoints.map((p) => {
           const pos = timeConePointPosition(p, geometry, 'past');
           const fill = p.colorRgb ? `rgb(${p.colorRgb})` : colors.text.secondary;
-          return <SvgCircle key={p.id} cx={pos.x} cy={pos.y} r={2.2} fill={fill} />;
+          const focused = p.id === focusedId;
+          return (
+            <G key={p.id}>
+              <SvgCircle cx={pos.x} cy={pos.y} r={focused ? 4.5 : 2.2} fill={fill} />
+              {focused && (
+                <SvgCircle cx={pos.x} cy={pos.y} r={10} fill="none" stroke={fill} strokeOpacity={0.8} strokeWidth={1.2} />
+              )}
+            </G>
+          );
         })}
         {futurePoints.map((p) => {
           const pos = timeConePointPosition(p, geometry, 'future');
-          return <SvgCircle key={p.id} cx={pos.x} cy={pos.y} r={2.6} fill={colors.text.primary} />;
+          const focused = p.id === focusedId;
+          return (
+            <G key={p.id}>
+              <SvgCircle cx={pos.x} cy={pos.y} r={focused ? 4.5 : 2.6} fill={colors.text.primary} />
+              {focused && (
+                <SvgCircle cx={pos.x} cy={pos.y} r={10} fill="none" stroke={colors.text.primary} strokeOpacity={0.8} strokeWidth={1.2} />
+              )}
+            </G>
+          );
         })}
       </Svg>
       {/* "now" labels the vertex directly, not the page as a whole — this

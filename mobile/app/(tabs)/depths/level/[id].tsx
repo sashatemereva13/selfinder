@@ -28,6 +28,8 @@ import { VibrationSpectrum } from '../../../../src/components/depths/VibrationSp
 import { PhilosopherObject } from '../../../../src/components/shared/PhilosopherObject';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
+import { CrisisLine } from '../../../../src/components/shared/CrisisLine';
+import { HEAVY_STATES } from '../../../../src/utils/safety';
 
 function renderRich(text: string, styles: ReturnType<typeof makeStyles>): ReactNode[] {
   return text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean).map((part, i) => {
@@ -223,7 +225,7 @@ export default function LevelScreen() {
           {/* Where this state sits among all 17 — its position on the ring,
               not a number. Opens the full map of states. */}
           <Pressable
-            onPress={() => router.push('/(tabs)/depths/levels')}
+            onPress={() => router.push('/(tabs)/explore/levels')}
             accessibilityRole="button"
             accessibilityLabel={t('level.seeOnTheRing')}
             style={styles.ring}
@@ -287,7 +289,31 @@ export default function LevelScreen() {
           <Moment scrollY={scrollY} viewportH={viewportH} style={[styles.moment, { minHeight: viewportH * 0.5 }]}>
             <Text style={[styles.momentLabel, { color: accentTextColor }]}>{trySection.heading.toUpperCase()}</Text>
             {paragraphs(trySection.paragraphs)}
-            {philosopher && (
+            {/* The heavy states' pages carry the quiet line to help
+                (crisis safety net, 2026-10-10). */}
+            {HEAVY_STATES.includes(level.slug) && <CrisisLine kind="heavy" style={{ marginTop: spacing[4] }} />}
+            {/* On your own reading's page, the next step is handed over
+                right here, where the reading ends (2026-10-09, from
+                testing: it used to appear only in the minimap's handle,
+                after the page was closed — somewhere else, at another
+                moment). The philosopher asks; Choose holds the two
+                doors. Any other state's page keeps the conversation. */}
+            {philosopher && isOwnReading ? (
+              <View style={styles.handOff}>
+                <View style={styles.philosopherRow}>
+                  <PhilosopherObject id={philosopher.id} rgb={accentRgb} size={16} />
+                  <Text style={[styles.philosopherName, { color: accentTextColor }]}>{philosopher.name}</Text>
+                </View>
+                <Text style={styles.philosopherLine}>{getSeamLine(philosopher.id, 'offer', locale)}</Text>
+                <Pressable
+                  style={[styles.talkButton, { backgroundColor: accentColor }]}
+                  onPress={() => router.push('/(tabs)/depths/choose')}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.talkButtonText}>{t('shift.offerAction')} →</Text>
+                </Pressable>
+              </View>
+            ) : philosopher ? (
               <Pressable
                 style={[styles.talkButton, { backgroundColor: accentColor }]}
                 onPress={step.openConversation}
@@ -295,7 +321,7 @@ export default function LevelScreen() {
               >
                 <Text style={styles.talkButtonText}>{talkLabel} →</Text>
               </Pressable>
-            )}
+            ) : null}
           </Moment>
         )}
 
@@ -434,6 +460,7 @@ function makeStyles(colors: Colors) {
 
     // 6. The quiet end.
     endLinks: { marginTop: spacing[6], gap: spacing[6] },
+    handOff: { marginTop: spacing[8], gap: spacing[2] },
     endToggle: {
       fontFamily: fonts.medium,
       fontSize: fontSizes.sm,

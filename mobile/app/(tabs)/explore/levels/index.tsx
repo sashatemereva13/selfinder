@@ -29,7 +29,7 @@ export default function LevelsScreen() {
   const columnWidth = useWideColumnWidth();
 
   const goToLevel = (slug: string) => {
-    router.push({ pathname: '/(tabs)/depths/level/[id]', params: { id: slug } });
+    router.push({ pathname: '/(tabs)/explore/level/[id]', params: { id: slug } });
   };
 
   return (

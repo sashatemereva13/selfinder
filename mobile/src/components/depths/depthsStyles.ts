@@ -13,6 +13,11 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     root: {
       flex: 1,
       backgroundColor: colors.bg.base,
+      // The reading sits on the minimap, not floating above it: any height
+      // the fixed zone doesn't need goes above it (2026-10-09 — removing
+      // the "DEPTHS" kicker had freed height that reappeared as a gap
+      // between the aura's ground and the minimap).
+      justifyContent: "flex-end",
     },
     // 2026-09-01 — the fixed-zone half of the new fixed/scroll split (see
     // this screen's own render comment). Never scrolls: the kicker, the
@@ -43,12 +48,9 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     scrollZone: {
       flex: 1,
     },
-    // The philosopher's seam, centred in whatever height is left between
-    // the fixed zone and the minimap (see depths/index.tsx).
-    seamZone: {
-      justifyContent: "center",
-      paddingHorizontal: spacing[6],
-      paddingBottom: spacing[4],
+    // Below the reading — takes no height of its own now (see root).
+    lowerZone: {
+      position: "relative",
     },
     // Absolutely fills the same area ringWrap occupies (see ringWrap's own
     // `top` computed from groundY) rather than sizing itself from normal
@@ -328,12 +330,47 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
     // depths/index.tsx's own render-site comment) may need re-verifying at
     // this size — smaller text needs FEWER lines for the same sentence, so
     // the existing cap is a safe upper bound, not to be raised further.
+    // 2026-10-08 — the reflection read as shrunk: small text squeezed into
+    // a narrow column with empty sky beneath it. Now the philosopher's
+    // voice weight (thin — it reads quieter than Medium at the same size,
+    // which is what lets it grow without overpowering the figure again),
+    // larger, and allowed up to 10 lines flowing down into that sky, the
+    // aura itself having moved lower.
     title: {
       color: colors.text.primary,
-      fontFamily: fonts.light,
-      fontSize: 12,
-      lineHeight: 12 * lineHeights.normal,
+      fontFamily: fonts.voice,
+      fontSize: fontSizes.base,
+      lineHeight: fontSizes.base * 1.45,
       marginTop: spacing[2],
+    },
+    reflectionByline: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: spacing[2],
+      marginTop: spacing[2],
+    },
+    reflectionName: {
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+    },
+    reflectionWhen: {
+      color: colors.text.faint,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+    },
+    // The path, said once after the first reading — plain layer.
+    pathOnce: {
+      color: colors.text.secondary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      lineHeight: fontSizes.xs * 1.5,
+      marginTop: spacing[4],
+    },
+    answerHint: {
+      color: colors.text.muted,
+      fontFamily: fonts.light,
+      fontSize: fontSizes.xs,
+      marginTop: spacing[3],
     },
     // The ring (AuraField's rings) and the aura share this one center
     // point — ring renders first so the aura sits visually on top of/

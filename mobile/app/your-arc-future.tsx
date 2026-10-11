@@ -487,7 +487,7 @@ function YourArcFutureScreen() {
       onToggleWishFulfilled={handleToggleWishFulfilled}
       onPressTuneIn={() => {
         track('your_arc_tune_in_before_woop');
-        router.push('/(tabs)/depths/tunein');
+        router.push('/(tabs)/explore/tunein');
       }}
       journeySuggestion={journeySuggestion}
       onUseJourneySuggestion={() => track('your_arc_wish_from_journey_used')}
@@ -560,7 +560,7 @@ function YourArcFutureScreen() {
         accentTextRgb={accentTextRgb}
         onExploreJourney={() => {
           track('your_arc_closing_explore_journey');
-          router.push('/(tabs)/journeys');
+          router.push('/(tabs)/explore/journeys');
         }}
       />
     );

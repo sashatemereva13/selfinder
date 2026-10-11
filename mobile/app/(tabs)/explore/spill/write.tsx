@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -27,6 +27,7 @@ export default function SpillWriteScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
+  const { then } = useLocalSearchParams<{ then?: string }>();
   const setSpillText = useSpillStore((s) => s.setText);
   // Decorative-only — the progress-bar fill. Use wordColor below for the
   // actual typed-word Text.
@@ -48,7 +49,7 @@ export default function SpillWriteScreen() {
     finishedRef.current = true;
     setSpillText(finalText.trim());
     track('spill_completed');
-    router.replace('/(tabs)/depths/spill/reveal');
+    router.replace({ pathname: '/(tabs)/explore/spill/reveal', params: then ? { then } : {} });
   };
 
   useEffect(() => {

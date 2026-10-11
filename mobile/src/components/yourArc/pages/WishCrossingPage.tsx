@@ -52,7 +52,7 @@ interface WishCrossingPageProps {
   // 2026-09-12, at the user's own request — a quiet Tune In invite before
   // the WOOP invite (see this file's own WOOP section comment below for
   // why). Tune In only exists as one real screen (its own player/state,
-  // app/(tabs)/depths/tunein/index.tsx) — no lightweight embeddable
+  // app/(tabs)/explore/tunein/index.tsx) — no lightweight embeddable
   // version exists anywhere in the app — so this stays a plain
   // navigation callback, same "page stays navigation-agnostic, parent
   // owns the router" pattern FactsPage's own onPressCenter already uses,

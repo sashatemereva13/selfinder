@@ -7,6 +7,7 @@ import { useGuideChatStore } from './guideChatStore';
 import { useMeasureStore } from './measureStore';
 import { useEngagementStore } from './engagementStore';
 import { useReminderStore } from './reminderStore';
+import { useShiftStore } from './shiftStore';
 
 const STORAGE_KEY = 'selfinder_auth_session';
 
@@ -89,6 +90,7 @@ export const useAuthStore = create<AuthStore>((set) => ({
     await useMeasureStore.getState().resetSavedResults();
     await usePhilosopherStore.getState().resetSelection();
     await useEngagementStore.getState().resetAll();
+    await useShiftStore.getState().resetAll();
     // Not personal reading content, but still wrong-owner state: the
     // previous account's chosen reminder time/schedule shouldn't carry
     // over to whoever signs in (or stays signed out) next. Cancels the

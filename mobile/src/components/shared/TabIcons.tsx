@@ -67,3 +67,17 @@ export function YourArcTabIcon({ color }: { color: string }) {
     </Svg>
   );
 }
+
+// Two points on a ring — where you are, and where you could take it —
+// with the arc between them. Practice is choosing what to do with a
+// state: use it where it is, or move it.
+export function PracticeTabIcon({ color }: { color: string }) {
+  return (
+    <Svg width={24} height={24} viewBox="0 0 28 28">
+      <Circle cx={14} cy={14} r={10} stroke={color} strokeWidth={1.4} fill="none" opacity={0.5} />
+      <Path d="M7 21 Q14 14 21 7" stroke={color} strokeWidth={1.4} strokeLinecap="round" fill="none" />
+      <Circle cx={7} cy={21} r={1.8} fill={color} />
+      <Circle cx={21} cy={7} r={1.8} fill={color} />
+    </Svg>
+  );
+}

@@ -90,7 +90,7 @@ export default function CardsScreen() {
     // intent, not the text itself. Reset first so a stale draft from an
     // earlier Spill session doesn't leak in here.
     setSpillText('');
-    router.push('/(tabs)/depths/spill');
+    router.push('/(tabs)/explore/spill');
   };
 
   return (

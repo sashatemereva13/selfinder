@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
@@ -22,6 +22,9 @@ export default function SpillScreen() {
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
+  // 'measure' when Spill was opened from Measure's intro as the step before
+  // it — carried through write → reveal so the reveal can lead back.
+  const { then } = useLocalSearchParams<{ then?: string }>();
   const insets = useSafeAreaInsets();
   const reset = useSpillStore((s) => s.reset);
   const markDiscovered = useEngagementStore((s) => s.markDiscovered);
@@ -36,7 +39,7 @@ export default function SpillScreen() {
   const handleBegin = () => {
     reset();
     track('spill_started');
-    router.push('/(tabs)/depths/spill/write');
+    router.push({ pathname: '/(tabs)/explore/spill/write', params: then ? { then } : {} });
   };
 
   return (

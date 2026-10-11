@@ -365,7 +365,7 @@ export const WHEEL_SIZE = 340;
 // old value of 40, silently leaving the quote's column too narrow/with
 // dead space once the wheel moved closer to the edge). One named export
 // here is the only value either file should read.
-export const WHEEL_SIDE_MARGIN = -50;
+export const WHEEL_SIDE_MARGIN = -20;
 // How far the wheel's own center is lifted above its curve-anchored
 // position (WHEEL_H) — a fraction of WHEEL_SIZE, so it scales with the
 // wheel rather than a flat pixel count. 2026-09-02 — shared export for
@@ -376,7 +376,7 @@ export const WHEEL_SIDE_MARGIN = -50;
 // (dead empty space between the quote and the curve, since
 // wheelTopAboveFeet was still assuming a flat +wheelSize/2 straight
 // above WHEEL_H, not this lift).
-export const WHEEL_LIFT_RATIO = 0.09;
+export const WHEEL_LIFT_RATIO = -0.1;
 
 // A closed loop, at the very TOP of the curve past "Measure again"
 // (2026-08-31) — originally sized to visually connect with a quote-bubble

@@ -3,164 +3,157 @@ import { useTranslation } from 'react-i18next';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle } from 'react-native-svg';
 import { useThemeColors } from '../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../src/store/themeStore';
 import type { Colors } from '../../../src/theme/colors';
-import { fonts, fontSizes, lineHeights } from '../../../src/theme/typography';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../src/theme/typography';
 import { spacing } from '../../../src/theme/spacing';
 import { GatherIn } from '../../../src/components/shared/GatherIn';
 import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
-import { ProfileIcon } from '../../../src/components/shared/ProfileIcon';
-import { JourneyShelf } from '../../../src/components/journeys/JourneyShelf';
-import { type JourneySymbolId } from '../../../src/components/journeys/JourneySymbol';
-import { JourneyKey } from '../../../src/types';
+import { usePhilosopherStep } from '../../../src/utils/usePhilosopherStep';
+import { useAuthStore } from '../../../src/store/authStore';
+import { useAppAccentTextRgb } from '../../../src/utils/appAccent';
 
-// The three temporal groups a Journey's own movement belongs to (see
-// docs/journeys-concept.md's "Catalog" section) — PAST -> NOW (something
-// formed/happened/was lost, examined for how it exists now), PRESENT
-// (excavating what's underneath a current want/reaction, no history or
-// future projection required), FUTURE <- NOW (movement toward an
-// imagined future and back). Center sits outside all three — it's a
-// generated visualization of the record, not a question sequence, so it
-// doesn't have a "movement" in this sense at all.
-type TemporalGroup = 'past' | 'present' | 'future';
-
-interface Product {
-  // Checked against shared/journeyKeys.mjs's own list at the type level
-  // (via JourneyKey) — a typo'd future entry now fails `tsc --noEmit`.
-  key: JourneyKey;
-  labelKey: string;
-  descriptionKey: string;
-  // The physics/math symbol standing in for this Journey on its own card
-  // (see JourneySymbol.tsx's own header comment) — added 2026-09-09 at
-  // the user's own request, replacing plain text with a symbol the same
-  // way Cards' own "draw a symbol" deck does, each one chosen to
-  // structurally match the Journey's real psychological mechanism rather
-  // than illustrate the question literally.
-  symbolId: JourneySymbolId;
-  // A plain string, not a closed union of known routes — Journeys are an
-  // explicitly open-ended, growing family (2026-08-23 pivot, see RULES.md's
-  // Product/positioning section), so this list is expected to keep
-  // growing without needing this type edited for every new entry. This is
-  // a deliberately different axis from `key` above: `key` is checked
-  // against the shared enum of valid Journeys, `route` is just an
-  // arbitrary path string wired up per screen.
-  route: string;
-  // Absent only for Center — every question-sequence Journey belongs to
-  // exactly one of the three groups above.
-  temporal?: TemporalGroup;
-}
-
-// The catalog of Journeys — one-time-purchase experiences, standalone from
-// Your Arc's ongoing subscription (see RULES.md's Product/positioning
-// section for the full definition, and docs/journeys-concept.md for the
-// full architecture: a Journey is a designed sequence of questions, not
-// content Selfinder gives the user). Built as a real array (same
-// SOURCES/HOW_TO_USE_ENTRIES pattern as sources/index.tsx and
-// howToUseEntries.ts) so a future Journey is a new entry here, not a new
-// screen.
-//
-// 2026-08-23: replaced the earlier placeholder Either/Or and Identity
-// entries with this question-first catalog (label is the question in the
-// user's own voice, e.g. "What am I really trying to control?" — see
-// docs/journeys-concept.md's "Catalog" section for why).
-//
-// 2026-08-26: grouped by temporal orientation (see docs/journeys-
-// concept.md's "Catalog" section for the full reasoning) rather than one
-// flat list — 4 Past, 5 Present, 3 Future, an asymmetry that's itself
-// meaningful, not arbitrary. Order within the array still matches
-// docs/journeys-concept.md's own group tables; the render below groups
-// by `temporal`, not by array order alone, so the array itself doesn't
-// need to be re-sorted if a future addition lands out of group order.
-//
-// 2026-08-28: Center's own entry removed from this catalog — it moved to
-// a real, prominent home on Your Arc's own screen (2026-08-27
-// restructure, see docs/app-architecture-concept.md, "Center's home").
-// Listing it in both places read as duplication/confusion rather than
-// helpful cross-listing once tried live — Your Arc is now Center's one
-// true home, and this catalog is purely the 11-Journey question set.
-const PRODUCTS: Product[] = [
-  { key: 'control', labelKey: 'products.controlLabel', descriptionKey: 'products.controlDescription', symbolId: 'control', route: '/control', temporal: 'present' },
-  { key: 'the-choice', labelKey: 'products.theChoiceLabel', descriptionKey: 'products.theChoiceDescription', symbolId: 'theChoice', route: '/the-choice', temporal: 'present' },
-  { key: 'the-loop', labelKey: 'products.theLoopLabel', descriptionKey: 'products.theLoopDescription', symbolId: 'theLoop', route: '/the-loop', temporal: 'past' },
-  { key: 'whose-voice', labelKey: 'products.whoseVoiceLabel', descriptionKey: 'products.whoseVoiceDescription', symbolId: 'whoseVoice', route: '/whose-voice', temporal: 'past' },
-  { key: 'the-road-not-taken', labelKey: 'products.theRoadNotTakenLabel', descriptionKey: 'products.theRoadNotTakenDescription', symbolId: 'theRoadNotTaken', route: '/the-road-not-taken', temporal: 'past' },
-  { key: 'letting-go', labelKey: 'products.lettingGoLabel', descriptionKey: 'products.lettingGoDescription', symbolId: 'lettingGo', route: '/letting-go', temporal: 'past' },
-  { key: 'the-mirror', labelKey: 'products.theMirrorLabel', descriptionKey: 'products.theMirrorDescription', symbolId: 'theMirror', route: '/the-mirror', temporal: 'present' },
-  { key: 'the-unsaid', labelKey: 'products.theUnsaidLabel', descriptionKey: 'products.theUnsaidDescription', symbolId: 'theUnsaid', route: '/the-unsaid', temporal: 'present' },
-  { key: 'becoming', labelKey: 'products.becomingLabel', descriptionKey: 'products.becomingDescription', symbolId: 'becoming', route: '/becoming', temporal: 'future' },
-  { key: 'the-threshold', labelKey: 'products.theThresholdLabel', descriptionKey: 'products.theThresholdDescription', symbolId: 'theThreshold', route: '/the-threshold', temporal: 'future' },
-  { key: 'possible-selves', labelKey: 'products.possibleSelvesLabel', descriptionKey: 'products.possibleSelvesDescription', symbolId: 'possibleSelves', route: '/possible-selves', temporal: 'future' },
-  { key: 'enough', labelKey: 'products.enoughLabel', descriptionKey: 'products.enoughDescription', symbolId: 'enough', route: '/enough', temporal: 'present' },
+// Explore (2026-10-09 — RULES.md, "Three places, one chain"): every
+// experience someone visits on their own, outside Today's chain. Grouped
+// by what they need right now, each group named with a verb — choosing a
+// need first, then one of two or three places, is easier than one choice
+// among eleven. The three small "signs" share one line: each is a moment,
+// not a place to stay. The Journeys are one row here, with their own
+// screen (journeys.tsx).
+type Room = { key: string; route: string };
+const GROUPS: { key: string; rooms: Room[] }[] = [
+  {
+    key: 'settle',
+    rooms: [
+      { key: 'breathe', route: '/(tabs)/explore/breathing' },
+      { key: 'tunein', route: '/(tabs)/explore/tunein' },
+    ],
+  },
+  {
+    key: 'say',
+    rooms: [
+      // Opened through the step's openConversation, so today's reading
+      // joins the conversation the same way as anywhere else.
+      { key: 'talk', route: '/guide' },
+      { key: 'spill', route: '/(tabs)/explore/spill' },
+    ],
+  },
+  {
+    key: 'understand',
+    rooms: [
+      { key: 'levels', route: '/(tabs)/explore/levels' },
+      { key: 'journeys', route: '/(tabs)/explore/journeys' },
+    ],
+  },
+];
+const SIGNS: Room[] = [
+  { key: 'message', route: '/(tabs)/explore/feeling-lucky' },
+  { key: 'symbol', route: '/(tabs)/explore/cards' },
+  { key: 'moon', route: '/(tabs)/explore/moon' },
+  // Center, the kaleidoscope — a new pattern from your history each time
+  // (moved from Your Arc 2026-10-09, docs/your-arc-concept.md §6).
+  { key: 'pattern', route: '/center' },
 ];
 
-const TEMPORAL_GROUPS: { key: TemporalGroup; headingKey: string }[] = [
-  { key: 'past', headingKey: 'products.groupPast' },
-  { key: 'present', headingKey: 'products.groupPresent' },
-  { key: 'future', headingKey: 'products.groupFuture' },
-];
-
-// 2026-09-03: replaced the flat, vertically-stacked row list (grouped
-// under text headings, one full-width row per Journey) with three
-// horizontally-swiped shelves, one per time-orientation — see
-// JourneyShelf.tsx's own header comment for the full design rationale.
-// Past/Present/Future stays a VERTICAL sequence (all three shelves
-// visible together, nothing hidden behind an undiscovered swipe) while
-// each shelf's own Journeys swipe HORIZONTALLY as cards — the version the
-// user asked for after comparing three prototyped layouts (a refined flat
-// list, a single horizontal timeline, and a Depths-style radial orbit):
-// vertical time-order plus horizontal per-row browsing, without the
-// orbit's discoverability risk for a first-time visitor.
-export default function ProductsScreen() {
+export default function ExploreScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const step = usePhilosopherStep();
+  const session = useAuthStore((s) => s.session);
+  const accentTextRgb = useAppAccentTextRgb();
+  const accent = `rgb(${accentTextRgb})`;
+  const philosopherName = step.philosopher?.nameInstrumental ?? step.philosopher?.name ?? '';
+
+  const open = (room: Room) => (room.key === 'talk' ? step.openConversation() : router.push(room.route as never));
 
   return (
-    <View style={styles.rootWrap}>
-      <ProfileIcon />
-      <ScrollView
-        style={styles.root}
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}
-      >
+    <View style={styles.root}>
       {theme === 'dark' && <AmbientGlow />}
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: insets.top + spacing[4] }]}>
+        <GatherIn>
+          <Text style={styles.title} accessibilityRole="header">{t('explore.title')}</Text>
 
-      {/* The page gathers in top to bottom as it comes into view — title
-          first, then each shelf in turn (see GatherIn) — rather than all
-          of it, heavy carousels included, landing in one frame. */}
-      <GatherIn>
-      <Text style={styles.title} accessibilityRole="header">{t('products.title')}</Text>
-      {/* Where the per-card "Grounded in..." line used to be read by anyone
-          who wanted it — moved to its own page (2026-09-09, at the user's
-          own request) so every card can just be the question, with the
-          research attribution one tap away instead of printed on all 12
-          cards at once. See journeys-grounding.tsx's own header comment. */}
-      <Pressable onPress={() => router.push('/journeys-grounding')} style={styles.groundingLinkRow}>
-        <Text style={styles.groundingLink}>{t('products.groundingLink')}</Text>
-      </Pressable>
-      </GatherIn>
+          {/* You — the account and settings, first and unmistakable, the
+              way iOS Settings opens with your own account. A different
+              kind of thing from the experiences below, so it looks
+              different: a ring with your initial, your name. Signed out,
+              it says what signing in is for. */}
+          <Pressable
+            onPress={() => router.push('/profile')}
+            accessibilityRole="button"
+            accessibilityLabel={session ? session.username : t('explore.signIn')}
+            style={({ pressed }) => [styles.you, pressed && styles.pressed]}
+          >
+            <View style={styles.youRing}>
+              <Svg width={44} height={44} style={StyleSheet.absoluteFill}>
+                <Circle
+                  cx={22}
+                  cy={22}
+                  r={21}
+                  fill="none"
+                  stroke={accent}
+                  strokeWidth={1.2}
+                  strokeDasharray={session ? undefined : '2 4'}
+                />
+              </Svg>
+              {session ? (
+                <Text style={[styles.youInitial, { color: accent }]}>{session.username.charAt(0).toUpperCase()}</Text>
+              ) : (
+                <View style={[styles.youDot, { backgroundColor: accent }]} />
+              )}
+            </View>
+            <View style={styles.youText}>
+              <Text style={styles.label} numberOfLines={1}>{session ? session.username : t('explore.signIn')}</Text>
+              <Text style={styles.description}>
+                {session ? t('explore.youDescription') : t('explore.signInDescription')}
+              </Text>
+            </View>
+            <Text style={[styles.label, { color: accent }]}>→</Text>
+          </Pressable>
+        </GatherIn>
 
-      {TEMPORAL_GROUPS.map((group, i) => {
-        const items = PRODUCTS.filter((p) => p.temporal === group.key);
-        if (items.length === 0) return null;
-        return (
-          <GatherIn key={group.key} delay={140 + i * 140}>
-          <JourneyShelf
-            label={t(group.headingKey)}
-            items={items.map((product) => ({
-              key: product.key,
-              name: t(product.labelKey),
-              question: t(product.descriptionKey),
-              symbolId: product.symbolId,
-              onPress: () => router.push(product.route),
-            }))}
-          />
+        {GROUPS.map((group, i) => (
+          <GatherIn key={group.key} delay={120 + i * 120}>
+            <View style={styles.group}>
+              <Text style={styles.groupLabel}>{t(`explore.group_${group.key}`)}</Text>
+              {group.rooms.map((room) => (
+                <Pressable
+                  key={room.key}
+                  onPress={() => open(room)}
+                  accessibilityRole="button"
+                  style={({ pressed }) => [styles.room, pressed && styles.pressed]}
+                >
+                  <Text style={styles.label}>{t(`explore.${room.key}Label`, { name: philosopherName })}</Text>
+                  <Text style={styles.description}>{t(`explore.${room.key}Description`)}</Text>
+                </Pressable>
+              ))}
+            </View>
           </GatherIn>
-        );
-      })}
+        ))}
+
+        <GatherIn delay={120 + GROUPS.length * 120}>
+          <View style={styles.group}>
+            <Text style={styles.groupLabel}>{t('explore.group_receive')}</Text>
+            <View style={styles.signs}>
+              {SIGNS.map((room, i) => (
+                <View key={room.key} style={styles.signWrap}>
+                  {i > 0 && <Text style={styles.signDot}>·</Text>}
+                  <Pressable onPress={() => open(room)} accessibilityRole="button" hitSlop={spacing[2]}>
+                    {({ pressed }) => (
+                      <Text style={[styles.label, pressed && styles.pressed]}>{t(`explore.${room.key}Label`)}</Text>
+                    )}
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          </View>
+        </GatherIn>
       </ScrollView>
     </View>
   );
@@ -168,25 +161,33 @@ export default function ProductsScreen() {
 
 function makeStyles(colors: Colors) {
   return StyleSheet.create({
-  rootWrap: { flex: 1, backgroundColor: colors.bg.base },
-  root: { flex: 1, backgroundColor: colors.bg.base },
-  content: { paddingBottom: spacing[12] },
-  title: {
-    color: colors.text.primary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xl,
-    lineHeight: fontSizes.xl * lineHeights.tight,
-    paddingHorizontal: spacing[6],
-  },
-  groundingLinkRow: {
-    paddingHorizontal: spacing[6],
-    marginTop: spacing[2],
-    marginBottom: spacing[8],
-  },
-  groundingLink: {
-    color: colors.accent.ivory,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-  },
+    root: { flex: 1, backgroundColor: colors.bg.base },
+    content: { paddingHorizontal: spacing[6], paddingBottom: spacing[12] },
+    title: {
+      color: colors.text.primary,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xl,
+      lineHeight: fontSizes.xl * lineHeights.tight,
+    },
+    you: { flexDirection: 'row', alignItems: 'center', gap: spacing[4], marginTop: spacing[6] },
+    youRing: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+    youInitial: { fontFamily: fonts.medium, fontSize: fontSizes.base },
+    youDot: { width: 5, height: 5, borderRadius: 2.5 },
+    youText: { flex: 1, gap: 2 },
+    group: { marginTop: spacing[10], gap: spacing[4] },
+    groupLabel: {
+      color: colors.text.faint,
+      fontFamily: fonts.medium,
+      fontSize: 10,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
+    room: { gap: 2 },
+    pressed: { opacity: 0.6 },
+    label: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base },
+    description: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
+    signs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+    signWrap: { flexDirection: 'row', alignItems: 'center' },
+    signDot: { color: colors.text.faint, fontFamily: fonts.medium, fontSize: fontSizes.base, marginHorizontal: spacing[3] },
   });
 }

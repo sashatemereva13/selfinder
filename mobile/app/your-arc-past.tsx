@@ -16,7 +16,6 @@ import { listMySpillEntries, SavedSpillEntry } from '../src/api/spill';
 import { listMyWishes, SavedWish } from '../src/api/wish';
 import { listMyCrossings } from '../src/api/crossing';
 import { findActiveWish } from '../src/components/yourArc/crossingEligibility';
-import { useJourneyPurchases } from '../src/utils/useJourneyPurchases';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { listMyJourneySessions } from '../src/api/journeys';
 import { SavedMeasureResult, JourneySessionDTO } from '../src/types';
@@ -86,7 +85,6 @@ function YourArcPastScreen() {
   const currentResult = useMeasureStore((s) => s.currentResult);
   const session = useAuthStore((s) => s.session);
   const philosopher = usePhilosopherStore((s) => s.philosopher);
-  const centerPurchases = useJourneyPurchases('center');
   const accentRgb = useAppAccentRgb();
   const levelColors = useLevelColors();
 
@@ -252,8 +250,6 @@ function YourArcPastScreen() {
       accentRgb={accentRgb}
       locale={locale}
       onReadingPress={handleFactsReadingPress}
-      centerPurchaseCount={centerPurchases?.length ?? null}
-      onPressCenter={() => router.push('/center')}
       arcLine={arcLine}
     />
   );

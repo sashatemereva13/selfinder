@@ -18,6 +18,8 @@ import { spacing, radius } from '../../theme/spacing';
 import { useAuthStore } from '../../store/authStore';
 import { useAppAccentTextRgb, useAppAccentButtonRgb } from '../../utils/appAccent';
 import { sendJourneyExchange, getJourneySession } from '../../api/journeys';
+import { checkTextForCrisis } from '../../utils/safety';
+import { CrisisLine } from '../shared/CrisisLine';
 import { ensureAIConsent } from '../../store/aiDisclosureStore';
 import { JourneyKey, JourneyStage, JourneySessionDTO, AgencySortResult } from '../../types';
 import { TypingDots } from '../shared/TypingDots';
@@ -105,6 +107,7 @@ export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, o
   const [sendError, setSendError] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
   const isSendingRef = useRef(false);
+  const [crisisShown, setCrisisShown] = useState(false);
 
   const currentStage = stages[stageIndex];
   const isBeforeFirstAnswer = history.length === 0 && currentStageTurns.length === 0 && asides.length === 0 && !loadingSession;
@@ -161,6 +164,12 @@ export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, o
     // in the box instead of losing it to a failed send.
     if (!(await ensureAIConsent())) return;
     isSendingRef.current = true;
+    // Alongside the exchange, never blocking it (crisis safety net,
+    // 2026-10-10): if the answer said someone may be in danger, the quiet
+    // line to the crisis screen appears under the conversation.
+    checkTextForCrisis(answer.trim()).then((crisis) => {
+      if (crisis) setCrisisShown(true);
+    });
 
     try {
       setInput('');
@@ -357,6 +366,7 @@ export function JourneyWizard({ journey, purchaseId, stages, renderStageInput, o
         )}
 
         {sendError && <Text style={styles.errorText}>{sendError}</Text>}
+        {crisisShown && <CrisisLine kind="crisis" style={{ marginTop: 12 }} />}
       </ScrollView>
 
       {currentStage && !customInput && (

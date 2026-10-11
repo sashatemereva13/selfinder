@@ -50,10 +50,16 @@ import { useLocaleStore } from "../../../src/store/localeStore";
 import { Sphere } from "../../../src/types";
 import { LongPressToSave } from "../../../src/components/shared/LongPressToSave";
 import { AmbientGlow } from "../../../src/components/shared/AmbientGlow";
-import { PhilosopherSeam } from "../../../src/components/depths/PhilosopherSeam";
-import { usePhilosopherStep } from "../../../src/utils/usePhilosopherStep";
+import { SphereAnswer } from "../../../src/components/depths/SphereAnswer";
+import { getAnswerQuestion } from "../../../src/content/answerQuestions";
+import { useGuideChatStore } from "../../../src/store/guideChatStore";
+import { buildReadingContext } from "../../../src/utils/readingContext";
+import { HEAVY_STATES } from "../../../src/utils/safety";
+import { CrisisLine } from "../../../src/components/shared/CrisisLine";
+import { useEngagementStore } from "../../../src/store/engagementStore";
+import { getRelativeTimeBucket, formatDate } from "../../../src/utils/relativeTime";
+import { PhilosopherObject } from "../../../src/components/shared/PhilosopherObject";
 import { PhilosopherEnergy } from "../../../src/components/depths/PhilosopherEnergy";
-import { ProfileIcon } from "../../../src/components/shared/ProfileIcon";
 import {
   buildAuraFieldGeometry,
   RING_ORDER,
@@ -186,7 +192,28 @@ function DepthsContent() {
   const accentTextRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentTextRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
-  const step = usePhilosopherStep();
+  const sphereAnswerSeen = useEngagementStore((s) => s.discovered.sphereAnswer);
+  // The shape of the path, said once — after the very first reading,
+  // until its state's page has been opened (2026-10-09).
+  const totalMeasureCount = useEngagementStore((s) => s.totalMeasureCount);
+  const levelPageSeenFor = useEngagementStore((s) => s.levelPageSeenFor);
+  // "Tap yourself to see the whole reading again" is only needed the
+  // first time a sphere's answer is opened — snapshotted, since opening
+  // one is what marks it seen.
+  const showAnswerBackHint = useRef(!sphereAnswerSeen).current;
+  const addReading = useGuideChatStore((s) => s.addReading);
+  const addContext = useGuideChatStore((s) => s.addContext);
+  const sendToGuide = useGuideChatStore((s) => s.send);
+  // When the reflection was said, as a quiet word beside the
+  // philosopher's name — "today", "yesterday", then a date.
+  const reflectionWhen = (() => {
+    if (!currentResult) return "";
+    const bucket = getRelativeTimeBucket(currentResult.savedAt);
+    if (bucket === "today") return t("depths.whenToday");
+    if (bucket === "yesterday") return t("depths.whenYesterday");
+    return formatDate(currentResult.savedAt, locale);
+  })();
+  const markDiscovered = useEngagementStore((s) => s.markDiscovered);
   // Read synchronously (safe — no store mutation) so the very first paint
   // already starts hidden/scaled-down when arriving; the flag itself is
   // cleared in the effect below, not here, since calling the store's set()
@@ -396,6 +423,40 @@ function DepthsContent() {
   const handleSpherePointPress = (key: SphereKey) => {
     if (pulsingSphere) return; // one pulse at a time
     setPulsingSphere(key);
+    markDiscovered("sphereAnswer");
+  };
+  // "Why did I read as this?" — answered with the person's own words, not
+  // an interpretation (2026-10-08, from testing: the natural question after
+  // a reading is why, and the level page only answers what). While a
+  // sphere is selected, the reflection's place shows that sphere's level
+  // and what they actually said for it in Measure — a record of their own
+  // answer, which RULES.md allows precisely because it claims nothing.
+  const selectedAnswer = selectedSphere
+    ? currentResult?.qaPairs?.find((p) => p.sphere === selectedSphere)
+    : undefined;
+  const answerQuestion =
+    philosopher && selectedLine
+      ? getAnswerQuestion(philosopher.id, selectedLine.vibrationLevel.slug, locale)
+      : null;
+  // The person's question about an answer, sent to their philosopher in
+  // their own words when they tap it (2026-10-08): the reading joins the
+  // conversation first (as it does anywhere else), the answer it's about
+  // is added to what the philosopher knows, then the question is sent.
+  // The philosopher is told to help them find it, not to answer for them.
+  const askAboutAnswer = () => {
+    if (!philosopher || !currentResult || !selectedAnswer || !selectedLine || !answerQuestion) return;
+    addReading(philosopher.id, {
+      savedAt: currentResult.savedAt,
+      reflection: currentResult.combinationMessage ?? null,
+      context: buildReadingContext(currentResult),
+      measureResultId: currentResult.measureResultId,
+    });
+    addContext(
+      philosopher.id,
+      `The person is asking about what they said for their ${selectedLine.key} in this reading, which read as ${selectedLine.vibrationLevel.name}. They said: "${selectedAnswer.answer}". Only they can know the answer to their question: don't tell them what they feel or what mattered to them. Help them find it — point back to their own words, and ask.`,
+    );
+    router.push("/guide");
+    sendToGuide(philosopher, answerQuestion);
   };
   const handlePulseSettled = () => {
     setSelectedSphere((s) => (s === pulsingSphere ? null : pulsingSphere));
@@ -425,8 +486,8 @@ function DepthsContent() {
 
   // 2026-09-02 — fixedZone (the fixed/scroll split's own never-scrolling
   // zone) can no longer shrink or scroll its own content, unlike the old
-  // single ScrollView. Its natural height (kicker + PhilosopherSeam +
-  // quote + core geometry's own canvas) comfortably fits taller phones,
+  // single ScrollView. Its natural height (kicker + quote + core
+  // geometry's own canvas) comfortably fits taller phones,
   // but on the shortest supported device (iPhone SE, 667pt) it exceeds
   // the screen's own available height entirely, clipping behind the tab
   // bar with zero room left for scrollZone underneath (confirmed via a
@@ -463,10 +524,17 @@ function DepthsContent() {
   // within the same layout pass before paint on both web and native.
   const [rootHeight, setRootHeight] = useState(0);
   const [naturalContentHeight, setNaturalContentHeight] = useState(0);
-  // Room the philosopher's seam needs below the fixed zone (its large line
-  // runs to three lines on a narrow phone) — the fixed zone scales down
-  // before it ever squeezes this.
-  const MIN_SCROLL_ZONE_HEIGHT = 190;
+  // Room kept below the fixed zone. 0 since 2026-10-09: the message star
+  // lives in the aura's own field now and the reading sits directly on
+  // the minimap. (Was 190 while the philosopher's seam lived here, then 80.)
+  const MIN_SCROLL_ZONE_HEIGHT = 0;
+  // 2026-10-09 — the composition also GROWS to fill a screen taller than
+  // it, instead of leaving empty space above it. Only the canvas grows
+  // (the safe-area padding and text don't scale with it), so the growth is
+  // the spare height divided by the canvas's own height, capped so the
+  // figure never gets more than this much bigger than it was tuned at.
+  const MAX_GROW = 1.2;
+  const GROW_MARGIN_PX = 8;
   // Natural (scale-1) geometry — always built, used both for the first
   // measurement pass and as the render output whenever no shrink is
   // needed (the common case: taller phones never touch the branch
@@ -475,12 +543,15 @@ function DepthsContent() {
     () => buildDepthsGeometry(BASE_AURA_DISPLAY_SIZE),
     [],
   );
+  const spareHeight = rootHeight - MIN_SCROLL_ZONE_HEIGHT - naturalContentHeight;
   const fixedZoneScale =
     rootHeight > 0 && naturalContentHeight > 0
-      ? Math.min(
-          1,
-          (rootHeight - MIN_SCROLL_ZONE_HEIGHT) / naturalContentHeight,
-        )
+      ? spareHeight < 0
+        ? (rootHeight - MIN_SCROLL_ZONE_HEIGHT) / naturalContentHeight
+        : Math.min(
+            MAX_GROW,
+            1 + Math.max(0, spareHeight - GROW_MARGIN_PX) / naturalGeometry.core.totalHeight,
+          )
       : 1;
   // Guards the onLayout below from a feedback loop: once a shrink has
   // been applied, the measured View is rendering SCALED content (not
@@ -495,7 +566,9 @@ function DepthsContent() {
   // version already had via its own one-shot fixedContentHeight state).
   const hasShrunkRef = useRef(false);
   useEffect(() => {
-    if (fixedZoneScale < 1) hasShrunkRef.current = true;
+    // Grown counts too — a scaled render must never be re-measured as
+    // the natural height, in either direction.
+    if (fixedZoneScale !== 1) hasShrunkRef.current = true;
   }, [fixedZoneScale]);
   // Only recompute a second, scaled geometry object once a real shrink is
   // actually needed — on every taller device this just returns
@@ -503,7 +576,7 @@ function DepthsContent() {
   // second object identity churn on the common path.
   const geometry = useMemo(
     () =>
-      fixedZoneScale < 1
+      fixedZoneScale !== 1
         ? buildDepthsGeometry(BASE_AURA_DISPLAY_SIZE * fixedZoneScale)
         : naturalGeometry,
     [fixedZoneScale, naturalGeometry],
@@ -512,6 +585,8 @@ function DepthsContent() {
   const AURA_METRICS = geometry.auraMetrics;
   const SPIRAL_AURA_HALF_WIDTH = geometry.spiralAuraHalfWidth;
   const SPIRAL_AURA_HALF_HEIGHT = geometry.spiralAuraHalfHeight;
+  // (The message star that sat in the aura's field moved to Explore on
+  // 2026-10-09 — Today has one job: where you are, and the chain from it.)
   // Depends on `geometry` now too (not just `colors`) — several styles
   // below (auraCoreWrap, arrivalSkipWrap, groundWrap, menuWrap, ringWrap)
   // are sized/positioned directly off CORE_GEOMETRY/MENU_GEOMETRY/
@@ -529,7 +604,6 @@ function DepthsContent() {
       onLayout={(e) => setRootHeight(e.nativeEvent.layout.height)}
     >
       {theme === "dark" && <AmbientGlow />}
-      <ProfileIcon />
       {/* 2026-09-01 — replaces the old single root ScrollView with a
           fixed/scroll split (see the plan this implements: "the aura
           figure — 'the main event' — always on screen, never scrolled
@@ -611,9 +685,8 @@ function DepthsContent() {
             paddingTop: insets.top + spacing[4] * fixedZoneScale,
           }}
         >
-          <View style={styles.kickerRow}>
-            <Text style={styles.kicker} accessibilityRole="header">{t("depths.kicker")}</Text>
-          </View>
+          {/* The "DEPTHS" kicker was removed 2026-10-08 — the minimap
+              below already says where you are. */}
           {/* The standing orientation line ("What's happening inside you
             right now.") was removed 2026-08-30 — the goal now is for the
             screen itself (the spiral, the aura, the sphere points) to
@@ -822,13 +895,47 @@ function DepthsContent() {
                   reverify this is still true (screenshot-check the wheel
                   edge) if the column is ever widened again. */}
                 <View style={styles.quoteBubbleWrap} pointerEvents="box-none">
+                  {/* 2026-10-08 — who said it, and when. With the seam gone
+                      nothing else on Depths names the philosopher, and a
+                      reflection can be days old; only shown when it really
+                      is their reflection (not the level's own description,
+                      the fallback when none was generated). */}
+                  {selectedAnswer && selectedSphere && selectedLine ? (
+                    // One sphere selected: only what was said for it, the
+                    // words its reading was based on lit, and the
+                    // philosopher's one question (see SphereAnswer).
+                    <SphereAnswer
+                      answer={selectedAnswer.answer}
+                      evidence={selectedLine.evidence}
+                      color={sphereColors[selectedSphere]}
+                      philosopherId={philosopher?.id}
+                      philosopherRgb={accentTextRgb}
+                      question={answerQuestion}
+                      showBackHint={showAnswerBackHint}
+                      backHint={t("depths.backToWholeReading")}
+                      askLabel={t("depths.askPhilosopher", { name: philosopher?.name ?? "" })}
+                      onAsk={askAboutAnswer}
+                    />
+                  ) : (
+                  <>
+                  {currentResult?.combinationMessage && philosopher && (
+                    <View style={styles.reflectionByline}>
+                      <PhilosopherObject id={philosopher.id} rgb={accentRgb} size={14} />
+                      <Text style={[styles.reflectionName, { color: levelColor }]}>
+                        {philosopher.name}
+                      </Text>
+                      <Text style={styles.reflectionWhen}>
+                        {reflectionWhen}
+                      </Text>
+                    </View>
+                  )}
                   {headlineMessage ? (
                     <LongPressToSave
                       message={headlineMessage}
                       accentRgb={levelRgb}
                     >
                       <Text
-                        numberOfLines={8}
+                        numberOfLines={10}
                         style={[styles.title, { color: levelColor }]}
                       >
                         {headlineMessage}
@@ -836,11 +943,30 @@ function DepthsContent() {
                     </LongPressToSave>
                   ) : (
                     <Text
-                      numberOfLines={8}
+                      numberOfLines={10}
                       style={[styles.title, { color: levelColor }]}
                     >
                       {headlineMessage}
                     </Text>
+                  )}
+                  {totalMeasureCount <= 1 &&
+                    !!currentResult &&
+                    levelPageSeenFor !== currentResult.savedAt && (
+                      <Text style={styles.pathOnce}>{t("depths.pathOnce")}</Text>
+                    )}
+                  {/* A reading in a heavy state carries the quiet line to
+                      help, whatever was said (crisis safety net,
+                      2026-10-10) — today's reading only. */}
+                  {currentResult &&
+                    HEAVY_STATES.includes(currentResult.vibrationLevel.slug) &&
+                    getRelativeTimeBucket(currentResult.savedAt) === "today" && (
+                      <CrisisLine kind="heavy" style={{ marginTop: spacing[3] }} />
+                    )}
+                  {/* Invites the "why" until it's been found once. */}
+                  {!sphereAnswerSeen && !!currentResult?.qaPairs?.length && (
+                    <Text style={styles.answerHint}>{t("depths.tapSphereHint")}</Text>
+                  )}
+                  </>
                   )}
                 </View>
               </View>
@@ -897,34 +1023,18 @@ function DepthsContent() {
         </View>
       </View>
 
-      {/* The philosopher's place on Depths — all the space between the
-          reading and the minimap (2026-09-26). This zone first held the
-          scrolling action menu (replaced by the map), then briefly just the
-          menu's spiral art as a decorative thread; the user found the line
-          unnecessary and gave the space to the philosopher speaking
-          instead: their one line, larger, centred in the room it has. */}
+      {/* 2026-10-08 — Depths is only about where you are now. The space
+          below the reading held the scrolling action menu, then the
+          philosopher's seam; both moved out — every destination is on the
+          map, and the philosopher's one step now sits on the minimap's
+          handle (see MapBar). */}
       <View
         style={[
-          styles.scrollZone,
-          styles.seamZone,
+          styles.lowerZone,
           { width: columnWidth, alignSelf: "center" },
         ]}
-      >
-        {philosopher && (
-          <PhilosopherSeam
-            key={step.state}
-            philosopher={philosopher}
-            line={step.line}
-            actionLabel={step.actionLabel}
-            onAction={step.run}
-            onOpenConversation={step.openConversation}
-            accentTextColor={accentColor}
-            accentRgb={accentRgb}
-            visible={!isArriving}
-            size="large"
-          />
-        )}
-      </View>
+        pointerEvents="box-none"
+      />
 
       {/* topFade (the gradient that used to cover content sliding under
           the status bar/notch from behind) was removed 2026-09-01, once
@@ -1235,10 +1345,15 @@ function AuraGlow({ color }: { color: string }) {
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Svg width="100%" height="100%">
         <Defs>
+          {/* Fully transparent by 0.62 of the radius: centred at 62%
+              down, the box's bottom edge is only 38% away (0.69 of r),
+              and the glow used to still be visible there — a hard edge
+              under the feet and a faint box around the body
+              (2026-10-09). */}
           <RadialGradient id="auraFocusGlow" cx="50%" cy="62%" r="55%">
             <Stop offset="0" stopColor={color} stopOpacity={0.22} />
-            <Stop offset="0.5" stopColor={color} stopOpacity={0.08} />
-            <Stop offset="1" stopColor={color} stopOpacity={0} />
+            <Stop offset="0.32" stopColor={color} stopOpacity={0.08} />
+            <Stop offset="0.62" stopColor={color} stopOpacity={0} />
           </RadialGradient>
         </Defs>
         <SvgRect width="100%" height="100%" fill="url(#auraFocusGlow)" />

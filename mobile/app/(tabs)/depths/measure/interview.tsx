@@ -130,7 +130,13 @@ export default function InterviewScreen() {
     setIsScoring(true);
     setScoringError(null);
     try {
-      const result = await submitInterview(pairs, philosopher?.systemPrompt ?? '', authToken);
+      // `crisis` (crisis safety net, 2026-10-10) is the server's check of
+      // these answers — kept out of the saved reading, used once below.
+      const { crisis, ...result } = (await submitInterview(
+        pairs,
+        philosopher?.systemPrompt ?? '',
+        authToken,
+      )) as Awaited<ReturnType<typeof submitInterview>> & { crisis?: boolean };
       const savedAt = new Date().toISOString();
       const saved = { ...result, qaPairs: pairs, savedAt };
       await saveResult(saved);
@@ -161,6 +167,10 @@ export default function InterviewScreen() {
       // led into stale screens. Depths replays its arrival by rebuilding
       // itself when it comes back into view (see DepthsScreen).
       router.dismissTo('/(tabs)/depths');
+      // If the answers said someone may be in danger, the crisis screen
+      // comes first, over the reading — "Continue to your reading" is the
+      // way on, and the reading is there underneath, saved.
+      if (crisis) router.push({ pathname: '/crisis-support', params: { from: 'measure' } });
     } catch (err) {
       console.error('Measure interview scoring request failed:', err);
       setIsScoring(false);

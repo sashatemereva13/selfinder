@@ -19,6 +19,7 @@ import { AccountSection } from '../src/components/AccountSection';
 import { DailyReminderSection } from '../src/components/account/DailyReminderSection';
 import { AmbientGlow } from '../src/components/shared/AmbientGlow';
 import { BackLink } from '../src/components/shared/BackLink';
+import { CrisisLine } from '../src/components/shared/CrisisLine';
 
 // Both directions ride the same crossfade duration/ease as PhilosopherPicker's
 // own ring fade-in (see ownRingOpacity in PhilosopherPicker.tsx) — opening
@@ -115,12 +116,10 @@ export default function ProfileScreen() {
         // firing — consistent with taps being eaten by keyboard dismissal.
         keyboardShouldPersistTaps="handled"
       >
-        {/* Now a top-level route reached from all three tabs via the
-            shared ProfileIcon (see docs/app-architecture-concept.md),
-            not a tab itself — the default router.back() is correct here
-            (unlike your-arc.tsx's explicit destination), since this is
-            always PUSHED from wherever the icon was tapped, so popping
-            the stack genuinely returns there. */}
+        {/* A top-level route reached from Explore's last row ("You",
+            2026-10-09), not a tab itself — the default router.back() is
+            correct here, since this is always PUSHED from Explore, so
+            popping the stack genuinely returns there. */}
         <BackLink style={styles.backRow} />
 
         {/* "Walking with", not "Your guide" — the walk is the app's one
@@ -258,6 +257,9 @@ export default function ProfileScreen() {
             above it would read as the same label twice in a row. */}
         <View style={styles.divider} />
         <AccountSection />
+        {/* Always there, last (crisis safety net, 2026-10-10). */}
+        <View style={styles.divider} />
+        <CrisisLine kind="help" />
       </ScrollView>
     </KeyboardAvoidingView>
   );

@@ -41,7 +41,7 @@ export function formatRelativeDay(isoString: string): string {
 export type RelativeTimeBucket = 'today' | 'yesterday' | 'thisWeek' | 'longerAgo';
 
 // Coarser than formatRelativeDay's display string — just enough buckets for
-// the Guide nudge copy to pick a philosopher line by, not a full calendar
+// the philosopher's "measure again" line to pick by, not a full calendar
 // vocabulary. thisWeek covers 2-6 days; longerAgo is a week or more.
 export function getRelativeTimeBucket(isoString: string): RelativeTimeBucket {
   const diffDays = daysSince(isoString);

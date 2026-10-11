@@ -14,7 +14,9 @@ import { spacing } from "../../../theme/spacing";
 import { useAppAccentTextRgb } from "../../../utils/appAccent";
 import {
   TimeCone,
+  TimeConePoint,
   buildTimeConeGeometry,
+  CURVED_LABEL_PADDING,
   PLANE_RX_RATIO,
   PLANE_RY_RATIO,
 } from "../TimeCone";
@@ -23,6 +25,20 @@ interface ArcLinePageProps {
   onJumpToPresent: () => void;
   onJumpToPast: () => void;
   onJumpToFuture: () => void;
+  // The record on arrival (2026-10-09, docs/your-arc-concept.md §3) — the
+  // person's real points in the cone, and the one the dial is on.
+  pastPoints?: TimeConePoint[];
+  futurePoints?: TimeConePoint[];
+  focusedId?: string | null;
+  focusRgb?: string;
+  // The past and present ellipses stop being tap targets once the dial
+  // moves through time — they stay drawn, as part of the image.
+  pastAndPresentTappable?: boolean;
+  // The height this page actually has (2026-10-09) — once Your Arc put
+  // the moment's name and the dial under the cone, sizing from the
+  // window's width alone made the cone taller than its space, clipped at
+  // both ends. When given, the cone also fits this height.
+  availableHeight?: number;
 }
 
 // Your Arc's opening page (2026-08-22: previously Cover, above the
@@ -58,6 +74,12 @@ export function ArcLinePage({
   onJumpToPresent,
   onJumpToPast,
   onJumpToFuture,
+  pastPoints = [],
+  futurePoints = [],
+  focusedId,
+  focusRgb,
+  pastAndPresentTappable = true,
+  availableHeight,
 }: ArcLinePageProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -68,7 +90,14 @@ export function ArcLinePage({
   // page's whole background, not an inline illustration alongside text,
   // so it's sized off the real viewport (capped so it doesn't blow out on
   // a tablet-width screen) rather than a fixed constant.
-  const coneWidth = Math.min(width * 0.75, 300);
+  // The whole drawing is about coneWidth × 1.3 × 1.66 (the outermost
+  // extra ring, see EXTRA_RINGS below) tall, plus room for the curved
+  // labels and the zones' own ellipses — so when the available height is
+  // known, the width is also capped by it.
+  const fitHeightWidth = availableHeight
+    ? (availableHeight - spacing[6] * 2 - 40) / (1.3 * 1.66)
+    : Infinity;
+  const coneWidth = Math.max(120, Math.min(width * 0.75, 300, fitHeightWidth));
   const coneHeight = coneWidth * 1.3;
   // 2026-09-12 — how many extra concentric rings TimeCone draws beyond
   // its own base rim (see that component's own extraRings prop comment).
@@ -113,7 +142,20 @@ export function ArcLinePage({
   const planeRy = cone.baseRy * PLANE_RY_RATIO;
 
   return (
-    <ScrollView contentContainerStyle={styles.arcLinePageContent}>
+    <ScrollView
+      contentContainerStyle={[
+        styles.arcLinePageContent,
+        // With a known height, the block is exactly as tall as the
+        // drawing and centred in the space — the cone (anchored to the
+        // block's top) and the zone ellipses (centred in it) only line up
+        // when the block's height matches the drawing's.
+        availableHeight !== undefined && {
+          flexGrow: 0,
+          height: coneRenderHeight + CURVED_LABEL_PADDING * 2,
+          marginTop: Math.max(0, (availableHeight - coneRenderHeight - CURVED_LABEL_PADDING * 2) / 2),
+        },
+      ]}
+    >
       {/* No explicit height here (was `height: coneHeight`) — TimeCone's
           own View is now taller than coneHeight by CURVED_LABEL_PADDING*2
           (see that component's own comment: curved labels' ascenders/
@@ -135,8 +177,10 @@ export function ArcLinePage({
           width={coneWidth}
           height={coneRenderHeight}
           canvasWidth={planeCanvasWidth}
-          pastPoints={[]}
-          futurePoints={[]}
+          pastPoints={pastPoints}
+          futurePoints={futurePoints}
+          focusedId={focusedId}
+          focusRgb={focusRgb}
           hideNowLabel
           showEternalNowPlane
           extraRings={EXTRA_RINGS}
@@ -255,6 +299,7 @@ export function ArcLinePage({
           </Svg>
         </Pressable>
         <Pressable
+          disabled={!pastAndPresentTappable}
           onPress={onJumpToPresent}
           style={[
             styles.presentZone,
@@ -298,6 +343,7 @@ export function ArcLinePage({
               borderRadius: pastRy,
             },
           ]}
+          disabled={!pastAndPresentTappable}
           onPress={onJumpToPast}
           accessibilityRole="button"
           accessibilityLabel={t("yourArc.zonePastLabel")}

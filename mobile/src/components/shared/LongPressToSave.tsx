@@ -44,6 +44,19 @@ export function LongPressToSave({ children, message, accentRgb, captureChildren 
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [errorText, setErrorText] = useState<string | null>(null);
 
+  // A quick double tap saves too (2026-10-08) — easier to find than a
+  // long-press, and what the message screen's own hint names.
+  const lastTapRef = useRef(0);
+  const handlePress = () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      lastTapRef.current = 0;
+      handleLongPress();
+    } else {
+      lastTapRef.current = now;
+    }
+  };
+
   const handleLongPress = async () => {
     if (status === 'saving') return;
     setStatus('saving');
@@ -76,14 +89,14 @@ export function LongPressToSave({ children, message, accentRgb, captureChildren 
   return (
     <View>
       {captureChildren ? (
-        <Pressable onLongPress={handleLongPress} {...a11yProps}>
+        <Pressable onPress={handlePress} onLongPress={handleLongPress} {...a11yProps}>
           <View ref={targetRef} collapsable={false}>
             {children}
           </View>
         </Pressable>
       ) : (
         <>
-          <Pressable onLongPress={handleLongPress} {...a11yProps}>
+          <Pressable onPress={handlePress} onLongPress={handleLongPress} {...a11yProps}>
             {children}
           </Pressable>
           {/* Off-screen capture target — same pattern SaveMessageAction

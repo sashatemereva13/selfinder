@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import type { Colors } from '../../../../src/theme/colors';
@@ -9,6 +9,8 @@ import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/t
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useSpillStore } from '../../../../src/store/spillStore';
+import { mentionsCrisisOnDevice } from '../../../../src/utils/safety';
+import { CrisisLine } from '../../../../src/components/shared/CrisisLine';
 import { useGuideChatStore } from '../../../../src/store/guideChatStore';
 import { useAuthStore } from '../../../../src/store/authStore';
 import { saveSpillEntryIfConsented } from '../../../../src/api/spill';
@@ -23,6 +25,8 @@ export default function SpillRevealScreen() {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
+  const { then } = useLocalSearchParams<{ then?: string }>();
+  const thenMeasure = then === 'measure';
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const text = useSpillStore((s) => s.text);
@@ -37,7 +41,7 @@ export default function SpillRevealScreen() {
   useEffect(() => {
     if (!text) {
       if (router.canGoBack()) router.back();
-      else router.replace('/(tabs)/depths/spill');
+      else router.replace('/(tabs)/explore/spill');
     }
   }, [text]);
 
@@ -48,7 +52,7 @@ export default function SpillRevealScreen() {
     // Back to the Spill intro already underneath — replace() used to stack
     // a second copy of it, so the next "back" landed on the same screen.
     if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/depths/spill');
+    else router.replace('/(tabs)/explore/spill');
   };
 
   // "Keep this moment" only requires the same data-saving consent Measure/
@@ -79,6 +83,16 @@ export default function SpillRevealScreen() {
   // used first — see spillStore/api/spill.ts) and returns to Depths, the
   // same "back to home" destination every other finished flow in the app
   // lands on.
+  // Spill opened as the step before Measure (see measure/index.tsx): the
+  // head is clearer now, so the way on is back to the reading. Lands on
+  // Measure's intro rather than straight into the interview — that's where
+  // consent is asked, and arriving there is its own short breath.
+  const handleMeasureNow = () => {
+    reset();
+    track('spill_then_measure');
+    router.dismissTo('/(tabs)/depths/measure');
+  };
+
   const handleDone = () => {
     reset();
     // Back down to the existing Depths rather than a new copy on top.
@@ -95,14 +109,24 @@ export default function SpillRevealScreen() {
     >
       <Text style={styles.kicker}>{t('spillReveal.whatCameOut')}</Text>
       <Text style={styles.text}>{text}</Text>
+      {/* Checked on the phone only — a Spill reaches the server only if
+          it's kept (crisis safety net, 2026-10-10). */}
+      {mentionsCrisisOnDevice(text) && <CrisisLine kind="crisis" style={{ marginTop: 16 }} />}
 
       <View style={styles.actions}>
+        {thenMeasure && (
+          <Pressable style={[styles.button, { backgroundColor: accentColor }]} onPress={handleMeasureNow}>
+            <Text style={styles.buttonText}>{t('spillReveal.measureNow')}</Text>
+          </Pressable>
+        )}
         {philosopher && (
           <Pressable
-            style={[styles.button, { backgroundColor: accentColor }]}
+            style={thenMeasure ? styles.secondaryButton : [styles.button, { backgroundColor: accentColor }]}
             onPress={handleTalkToPhilosopher}
           >
-            <Text style={styles.buttonText}>{t('spillReveal.talkToAboutThis', { name: philosopher.name })}</Text>
+            <Text style={thenMeasure ? styles.secondaryButtonText : styles.buttonText}>
+              {t('spillReveal.talkToAboutThis', { name: philosopher.name })}
+            </Text>
           </Pressable>
         )}
         <Pressable style={styles.secondaryButton} onPress={handleWriteAgain}>

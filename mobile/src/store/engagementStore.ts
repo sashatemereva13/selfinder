@@ -16,7 +16,12 @@ const RECENT_READINGS_CAP = 5;
 export const HEAVY_REGISTER_THRESHOLD = 200;
 const SESSION_GAP_MS = 20 * 60 * 1000; // 20 minutes — a real new sitting-down, not a background blip
 
-export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill' | 'breathing';
+// 'message' — the message particle on Depths has been tapped at least
+// once, so its caption no longer needs to introduce it (MessageParticle).
+// 'sphereAnswer' — a sphere on Depths has been tapped to see what was said
+// for it, so the hint inviting that can go. 'ring' — unused since the
+// map's ring was removed (2026-10-09); kept so stored profiles still parse.
+export type DiscoverableFeature = 'levels' | 'tuneIn' | 'spill' | 'breathing' | 'message' | 'sphereAnswer' | 'ring' | 'arcCone';
 
 // Depths' own tool-row keys (see buildToolGroups in depths/index.tsx) that
 // the "today's-walk" breadcrumb tracks — deliberately its own union, not a
@@ -59,6 +64,17 @@ interface EngagementState {
   // your state" after a reading until this matches that reading, then
   // moves on to the next step.
   levelPageSeenFor: string | null;
+  // savedAt of the reading a message was actually sent about in the
+  // conversation — opening the conversation alone doesn't count (the step
+  // used to sit on "talk" forever after it was opened).
+  talkedFor: string | null;
+  // savedAt of the reading the Shift offer was shown for — the offer is
+  // asked once a day per reading, and leaving it unanswered is an answer
+  // (docs/shift-concept.md, §3).
+  offerSeenFor: string | null;
+  // When a Journey was last offered at the end of a Shift session — the
+  // offer appears at most once every JOURNEY_OFFER_GAP_DAYS.
+  journeyOfferedAt: string | null;
 }
 
 interface EngagementStore extends EngagementState {
@@ -77,6 +93,9 @@ interface EngagementStore extends EngagementState {
   recordTalkAboutIt: () => Promise<void>;
   markToolVisited: (tool: BreadcrumbTool) => Promise<void>;
   markLevelPageSeen: (readingSavedAt: string) => Promise<void>;
+  markTalkedAbout: (readingSavedAt: string) => Promise<void>;
+  markOfferSeen: (readingSavedAt: string) => Promise<void>;
+  markJourneyOffered: () => Promise<void>;
   resetAll: () => Promise<void>;
 }
 
@@ -85,12 +104,15 @@ const DEFAULT_STATE: EngagementState = {
   firstMeasureAt: null,
   lastMeasureAt: null,
   recentReadings: [],
-  discovered: { levels: false, tuneIn: false, spill: false, breathing: false },
+  discovered: { levels: false, tuneIn: false, spill: false, breathing: false, message: false, sphereAnswer: false, ring: false, arcCone: false },
   hasShownSecondVisit: false,
   hasShownFirstRunCarry: false,
   talkAboutItCount: 0,
   toolLastVisitedAt: {},
   levelPageSeenFor: null,
+  talkedFor: null,
+  offerSeenFor: null,
+  journeyOfferedAt: null,
 };
 
 function readState(raw: string | null): EngagementState {
@@ -107,6 +129,10 @@ function readState(raw: string | null): EngagementState {
         tuneIn: !!parsed.discovered?.tuneIn,
         spill: !!parsed.discovered?.spill,
         breathing: !!parsed.discovered?.breathing,
+        message: !!parsed.discovered?.message,
+        sphereAnswer: !!parsed.discovered?.sphereAnswer,
+        ring: !!parsed.discovered?.ring,
+        arcCone: !!parsed.discovered?.arcCone,
       },
       hasShownSecondVisit: !!parsed.hasShownSecondVisit,
       hasShownFirstRunCarry: !!parsed.hasShownFirstRunCarry,
@@ -119,6 +145,9 @@ function readState(raw: string | null): EngagementState {
           typeof parsed.toolLastVisitedAt?.breathing === 'string' ? parsed.toolLastVisitedAt.breathing : undefined,
       },
       levelPageSeenFor: typeof parsed.levelPageSeenFor === 'string' ? parsed.levelPageSeenFor : null,
+      talkedFor: typeof parsed.talkedFor === 'string' ? parsed.talkedFor : null,
+      offerSeenFor: typeof parsed.offerSeenFor === 'string' ? parsed.offerSeenFor : null,
+      journeyOfferedAt: typeof parsed.journeyOfferedAt === 'string' ? parsed.journeyOfferedAt : null,
     };
   } catch {
     return DEFAULT_STATE;
@@ -229,6 +258,28 @@ export const useEngagementStore = create<EngagementStore>((set, get) => ({
     const current = get();
     if (current.levelPageSeenFor === readingSavedAt) return;
     const next: EngagementState = { ...current, levelPageSeenFor: readingSavedAt };
+    set(next);
+    await persist(next);
+  },
+
+  markTalkedAbout: async (readingSavedAt) => {
+    const current = get();
+    if (current.talkedFor === readingSavedAt) return;
+    const next: EngagementState = { ...current, talkedFor: readingSavedAt };
+    set(next);
+    await persist(next);
+  },
+
+  markOfferSeen: async (readingSavedAt) => {
+    const current = get();
+    if (current.offerSeenFor === readingSavedAt) return;
+    const next: EngagementState = { ...current, offerSeenFor: readingSavedAt };
+    set(next);
+    await persist(next);
+  },
+
+  markJourneyOffered: async () => {
+    const next: EngagementState = { ...get(), journeyOfferedAt: new Date().toISOString() };
     set(next);
     await persist(next);
   },

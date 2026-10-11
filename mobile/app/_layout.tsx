@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, ThemeProvider, DarkTheme, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationBar } from 'expo-navigation-bar';
@@ -18,7 +18,6 @@ import { useThemeColors } from '../src/theme/useThemeColors';
 import { SCREEN_TRANSITION } from '../src/theme/transitions';
 import { useAIDisclosureStore } from '../src/store/aiDisclosureStore';
 import { AIConsentSheet } from '../src/components/shared/AIConsentSheet';
-import { MapOverlay } from '../src/components/map/MapOverlay';
 import { TuneInAudioController } from '../src/components/depths/TuneInAudioController';
 import '../src/i18n';
 import { setI18nLocale } from '../src/i18n';
@@ -126,13 +125,13 @@ export default function RootLayout() {
     // philosopher-presence affordance on Depths, not a tab), and profile
     // (the old you tab's replacement, reached via a profile icon instead
     // of a tab). 'products' was removed from this list once it moved to
-    // app/(tabs)/journeys/ — that route now falls under inTabs instead.
+    // app/(tabs)/explore/ (Journeys' catalog, now inside Practice) — that route now falls under inTabs instead.
     const inStandaloneRoute = [
       'sources', 'how-to-use', 'center', 'guide', 'profile',
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'your-arc-past', 'your-arc-future', 'crisis-support',
+      'your-arc', 'your-arc-past', 'your-arc-future', 'your-arc-moment', 'crisis-support',
       'journeys-grounding',
     ].includes(segments[0] as string);
     // Onboarding is excluded from the second branch: it saves the chosen
@@ -147,12 +146,24 @@ export default function RootLayout() {
     }
   }, [ready, philosopher, segments]);
 
+  const base = theme === 'dark' ? DarkTheme : DefaultTheme;
+  const navigationTheme = {
+    ...base,
+    colors: { ...base.colors, background: colors.bg.base, card: colors.bg.base, border: colors.bg.border },
+  };
+
   if (!ready) return null;
 
   return (
     <SafeAreaProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+        {/* The navigation library's own theme, in the app's colours — without
+            it, its containers (the tab navigator behind a fading scene,
+            a screen mid-transition) fell back to its default light
+            background, showing as a white flash, e.g. on "Measure again"
+            from another tab while the minimap hid (2026-10-10). */}
+        <ThemeProvider value={navigationTheme}>
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg.base }, ...SCREEN_TRANSITION }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="onboarding" />
@@ -176,9 +187,11 @@ export default function RootLayout() {
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-past" />
           <Stack.Screen name="your-arc-future" />
+          <Stack.Screen name="your-arc-moment" />
           <Stack.Screen name="crisis-support" />
           <Stack.Screen name="journeys-grounding" />
         </Stack>
+        </ThemeProvider>
         {/* Raised on demand by ensureAIConsent() — the first time
             someone's own words are about to be sent to the AI provider,
             not up front (see aiDisclosureStore.ts). The old one-time
@@ -186,10 +199,6 @@ export default function RootLayout() {
             onboarding is gone (2026-09-26): its tips were for screens a
             new person hadn't seen yet; the page stays reachable from
             profile. */}
-        {/* The expanded map, opened from the minimap inside the tabs —
-            drawn here so it covers the whole screen. Below the consent
-            sheet: a place picked on the map can lead straight to a send. */}
-        <MapOverlay />
         <AIConsentSheet />
         {/* Mounted once at the app root, not inside the Tune In screen, so
             playback survives in-app navigation away from that screen — see

@@ -3,13 +3,17 @@ import { useTranslation } from 'react-i18next';
 import { useThemeColors } from '../../src/theme/useThemeColors';
 import { fonts } from '../../src/theme/typography';
 import { useAppAccentTextRgb } from '../../src/utils/appAccent';
-import { DepthsTabIcon, JourneysTabIcon, YourArcTabIcon } from '../../src/components/shared/TabIcons';
+import { DepthsTabIcon, PracticeTabIcon, YourArcTabIcon } from '../../src/components/shared/TabIcons';
 import { MapBar, MapBarProps } from '../../src/components/map/MapBar';
 
 // Guide and You no longer have bottom-tab slots — see
 // docs/app-architecture-concept.md. Guide is reached via the persistent
 // philosopher-presence affordance on Depths (Phase 2), You via the
-// profile icon (Phase 5). This tab bar is now Depths / Journeys / Your Arc.
+// profile icon (Phase 5). Since 2026-10-09 the tab bar is three places,
+// each with one job: Today (the daily chain — see where you are,
+// understand it, choose what to do with it; the depths/ folder) · Explore
+// (every separate experience, visited on your own; Journeys inside) · Your
+// Arc (what happened).
 export default function TabsLayout() {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -54,17 +58,17 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="depths"
         options={{
-          title: t('common.tabDepths'),
-          tabBarAccessibilityLabel: t('common.tabDepths'),
+          title: t('common.tabToday'),
+          tabBarAccessibilityLabel: t('common.tabToday'),
           tabBarIcon: ({ color }) => <DepthsTabIcon color={color as string} />,
         }}
       />
       <Tabs.Screen
-        name="journeys"
+        name="explore"
         options={{
-          title: t('common.tabJourneys'),
-          tabBarAccessibilityLabel: t('common.tabJourneys'),
-          tabBarIcon: ({ color }) => <JourneysTabIcon color={color as string} />,
+          title: t('common.tabExplore'),
+          tabBarAccessibilityLabel: t('common.tabExplore'),
+          tabBarIcon: ({ color }) => <PracticeTabIcon color={color as string} />,
         }}
       />
       <Tabs.Screen

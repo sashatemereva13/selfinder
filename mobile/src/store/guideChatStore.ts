@@ -4,6 +4,7 @@ import { saveConversationIfConsented } from '../api/conversation';
 import { Philosopher } from '../types';
 import { track } from '../utils/analytics';
 import { ensureAIConsent } from './aiDisclosureStore';
+import { checkTextForCrisis } from '../utils/safety';
 
 // Mirrors web's ChatContext.jsx: in-memory only, no persistence — resets on
 // app restart. Keyed by philosopher id so switching your guide (via the You
@@ -48,6 +49,10 @@ interface GuideChatStore {
     philosopherId: string,
     reading: { savedAt: string; reflection: string | null; context: string; measureResultId?: string | null }
   ) => void;
+  // Adds to what the philosopher knows about the reading this
+  // conversation is about — e.g. the one Measure answer the person is
+  // asking about from Depths. Not repeated if already there.
+  addContext: (philosopherId: string, context: string) => void;
   clearConversation: (philosopherId: string) => void;
   resetAll: () => void;
   setPendingMeasureResultId: (philosopherId: string, measureResultId: string | null | undefined) => void;
@@ -84,13 +89,18 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
 
     try {
       const context = [get().readingContext[philosopher.id], additionalContext].filter(Boolean).join('\n\n');
-      const { reply, suggestSpill } = await sendMessage(withUserMessage, philosopher, context);
+      // The crisis check runs alongside the reply, not before it — no
+      // extra wait (crisis safety net, 2026-10-10).
+      const [{ reply, suggestSpill }, crisis] = await Promise.all([
+        sendMessage(withUserMessage, philosopher, context),
+        checkTextForCrisis(trimmed),
+      ]);
       set((state) => ({
         conversations: {
           ...state.conversations,
           [philosopher.id]: [
             ...withUserMessage,
-            { role: 'assistant', content: reply, suggestSpill },
+            { role: 'assistant', content: reply, suggestSpill, ...(crisis ? { crisis: true } : {}) },
           ],
         },
         isLoading: false,
@@ -121,6 +131,16 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
           : state.conversations,
       readingContext: { ...state.readingContext, [philosopherId]: context },
       pendingMeasureResultId: { ...state.pendingMeasureResultId, [philosopherId]: measureResultId ?? null },
+    }));
+  },
+
+  addContext: (philosopherId, context) => {
+    const base = get().readingContext[philosopherId];
+    set((state) => ({
+      readingContext: {
+        ...state.readingContext,
+        [philosopherId]: base?.includes(context) ? base : [base, context].filter(Boolean).join('\n\n'),
+      },
     }));
   },
 

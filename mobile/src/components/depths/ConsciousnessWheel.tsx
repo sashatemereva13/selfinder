@@ -70,8 +70,15 @@ const CENTER = SIZE / 2;
 
 export function ConsciousnessWheel({
   onSelectLevel,
+  initialSlug,
+  onChange,
 }: {
   onSelectLevel?: (slug: string) => void;
+  // Where the dot starts (default: neutrality), and a callback whenever it
+  // settles on a level — used by Shift's return, where the person places
+  // themselves after a session.
+  initialSlug?: string;
+  onChange?: (slug: string) => void;
 }) {
   const { t } = useTranslation();
   const colors = useThemeColors();
@@ -83,12 +90,18 @@ export function ConsciousnessWheel({
   // but deliberately unloaded starting point, rather than defaulting to
   // Shame or Enlightenment, which would make one extreme look like the
   // wheel's "resting" position.
-  const startIndex = VIBRATION_LEVELS.findIndex((l) => l.slug === 'neutrality');
+  const startIndex = Math.max(
+    0,
+    VIBRATION_LEVELS.findIndex((l) => l.slug === (initialSlug ?? 'neutrality')),
+  );
   const [activeIndex, setActiveIndex] = useState(startIndex);
   const dragAngle = useSharedValue(angleFor(startIndex, TOTAL));
   const didPan = useSharedValue(false);
 
-  const updateIndex = (index: number) => setActiveIndex(index);
+  const updateIndex = (index: number) => {
+    setActiveIndex(index);
+    onChange?.(VIBRATION_LEVELS[index].slug);
+  };
 
   const pan = Gesture.Pan()
     // Without a minimum distance, Pan can win the very first frame of a
@@ -164,7 +177,7 @@ export function ConsciousnessWheel({
   const stepIndex = (direction: 1 | -1) => {
     const next = (activeIndex + direction + TOTAL) % TOTAL;
     dragAngle.value = withSpring(angleFor(next, TOTAL), { damping: 14 });
-    setActiveIndex(next);
+    updateIndex(next);
   };
 
   return (
@@ -228,13 +241,15 @@ export function ConsciousnessWheel({
       <Text style={[styles.levelName, { color: activeTextColor }]}>
         {getLocalizedLevelName(activeLevel, locale)}
       </Text>
-      <Text
-        style={styles.levelLink}
-        accessibilityRole="link"
-        onPress={() => onSelectLevel?.(activeLevel.slug)}
-      >
-        {t('levels.readAbout', { name: getLocalizedLevelName(activeLevel, locale) })}
-      </Text>
+      {onSelectLevel && (
+        <Text
+          style={styles.levelLink}
+          accessibilityRole="link"
+          onPress={() => onSelectLevel(activeLevel.slug)}
+        >
+          {t('levels.readAbout', { name: getLocalizedLevelName(activeLevel, locale) })}
+        </Text>
+      )}
     </View>
   );
 }
