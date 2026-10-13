@@ -738,7 +738,8 @@ It is a reading of now, and now will change — you may let that be felt
 
 The four readings are shown right beside this, so never name a sphere
 (body/mind/heart/spirit) or a level, and never give a number. One
-sentence, at most 30 words. Do not ask a question. Stay fully in
+sentence, at most 15 words — it sits under the state's name on Today, and
+a short picture is read; a long one is skipped. Do not ask a question. Stay fully in
 character. Return only the reflection itself, no preamble, no quotation
 marks.`;
 
