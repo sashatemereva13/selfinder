@@ -7,6 +7,7 @@ import Animated, {
   withTiming,
   withDelay,
   cancelAnimation,
+  Easing,
 } from "react-native-reanimated";
 import { useThemeColors } from "../../theme/useThemeColors";
 import { fonts, fontSizes } from "../../theme/typography";
@@ -74,6 +75,8 @@ export function DepthsSpiralCore({
   selectedWheelLevelName,
   isAggregateReading = false,
   onWheelLevelPress,
+  hideIdleWheelLabel = false,
+  invitePulse = false,
 }: DepthsSpiralCoreProps) {
   const colors = useThemeColors();
   // 2026-09-02 — the wheel now sits at the canvas's own right edge with
@@ -546,7 +549,12 @@ export function DepthsSpiralCore({
               dotScale={0.7}
               isAggregate={isAggregateReading}
               centerLabel={
-                selectedWheelLevelName ?? lastWheelName.current ?? fonts.light
+                // Today's headline already names the overall state
+                // (2026-10-12) — the wheel names a state only while one
+                // sphere is selected, so the name never appears twice.
+                hideIdleWheelLabel && isAggregateReading
+                  ? undefined
+                  : (selectedWheelLevelName ?? lastWheelName.current ?? undefined)
               }
               onCenterLabelPress={onWheelLevelPress}
             />
@@ -599,6 +607,12 @@ export function DepthsSpiralCore({
 
           return (
             <View key={point.key}>
+              {/* Each sphere pulses once on arrival, one after another,
+                  until someone has tapped one — the invitation to touch
+                  that replaced the "Tap a sphere" hint (2026-10-12). */}
+              {invitePulse && interactive && (
+                <InvitePulse x={x} y={y} color={dotColor} delayMs={400 + i * 380} />
+              )}
               <Pressable
                 style={[
                   styles.hitArea,
@@ -705,7 +719,35 @@ export function DepthsSpiralCore({
   );
 }
 
+function InvitePulse({ x, y, color, delayMs }: { x: number; y: number; color: string; delayMs: number }) {
+  const t = useSharedValue(0);
+  useEffect(() => {
+    t.value = withDelay(delayMs, withTiming(1, { duration: 1100, easing: Easing.out(Easing.quad) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const style = useAnimatedStyle(() => ({
+    opacity: t.value === 0 ? 0 : 0.55 * (1 - t.value),
+    transform: [{ scale: 1 + t.value * 2.6 }],
+  }));
+  const r = 7;
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[
+        { position: "absolute", left: x - r, top: y - r, width: r * 2, height: r * 2, borderRadius: r, backgroundColor: color },
+        style,
+      ]}
+    />
+  );
+}
+
 interface DepthsSpiralCoreProps {
+  // Today names the overall state in its headline, so the wheel's own
+  // label shows only while a sphere is selected.
+  hideIdleWheelLabel?: boolean;
+  // One staggered pulse per sphere point on arrival — the invitation to
+  // tap them.
+  invitePulse?: boolean;
   width: number;
   height: number;
   points: SpiralSpherePoint[]; // length 4, SLOT_ORDER order

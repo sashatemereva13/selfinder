@@ -37,9 +37,15 @@ export function ShiftDoors() {
 
   const isToday = !!currentResult && getRelativeTimeBucket(currentResult.savedAt) === 'today';
 
+  // Counts as answered when you LEAVE the doors — into a session or back
+  // — not when they open (2026-10-12, from the first-run walk: marking it
+  // on arrival made the handle say "That's today's walk" while the doors
+  // were still waiting to be chosen).
   useFocusEffect(
     useCallback(() => {
-      if (currentResult && isToday) markOfferSeen(currentResult.savedAt);
+      return () => {
+        if (currentResult && isToday) markOfferSeen(currentResult.savedAt);
+      };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [currentResult?.savedAt, isToday])
   );

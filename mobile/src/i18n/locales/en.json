@@ -131,9 +131,7 @@
     "whenToday": "today",
     "whenYesterday": "yesterday",
     "backToWholeReading": "Tap yourself to see the whole reading again",
-    "tapSphereHint": "Tap a sphere to see what you said there",
-    "askPhilosopher": "Ask {{name}}",
-    "pathOnce": "First, where you are. Then what it's for. Then you choose what to do with it."
+    "askPhilosopher": "Ask {{name}}"
   },
   "cards": {
     "backLabel": "Draw again",
@@ -325,7 +323,8 @@
     "momentUsed": "You used it",
     "momentGratitude": "Three small things",
     "momentAct": "One kind thing",
-    "momentWhere": "Where it could go"
+    "momentWhere": "Where it could go",
+    "coneIntroEmpty": "Each time you measure, a point gathers here — below, where you have been; above, what you are reaching toward."
   },
   "saveMessage": {
     "saveImageLabel": "Save image",
@@ -351,7 +350,7 @@
   "tuneIn": {
     "lockScreenArtist": "Selfinder — Tune In",
     "play": "Play",
-    "title": "Tune your field with frequency",
+    "title": "Let a sound settle you",
     "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",
     "volume": "Volume",
     "sleepTimer": "Sleep timer",
@@ -499,7 +498,7 @@
     "title": "The map of consciousness",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
     "note": "These connections describe what's true between neighboring states, not a route everyone has to walk — you can move from Anger to Love and back to Reason without passing through everything between, and that's not doing it wrong.",
-    "wheelLabel": "Vibration level wheel",
+    "wheelLabel": "Wheel of the seventeen states",
     "wheelHint": "Swipe up or down to move between the seventeen levels",
     "readAbout": "Read about {{name}} →"
   },

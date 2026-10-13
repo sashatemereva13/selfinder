@@ -358,13 +358,12 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
     },
-    // The path, said once after the first reading — plain layer.
-    pathOnce: {
-      color: colors.text.secondary,
+    // Today's headline: the overall state's name, read first (2026-10-12).
+    headline: {
       fontFamily: fonts.medium,
-      fontSize: fontSizes.xs,
-      lineHeight: fontSizes.xs * 1.5,
-      marginTop: spacing[4],
+      fontSize: fontSizes.xl,
+      lineHeight: fontSizes.xl * 1.15,
+      marginBottom: spacing[2],
     },
     answerHint: {
       color: colors.text.muted,

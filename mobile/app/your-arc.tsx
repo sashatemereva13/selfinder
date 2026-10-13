@@ -50,6 +50,16 @@ const hashAngle = (id: string) => {
 };
 // Nothing sits right on the vertex — that's now.
 const MIN_DEPTH = 0.12;
+// Distance from now is real time on one fixed scale (2026-10-12): today
+// sits close to the vertex, a point reaches the rim at about three months,
+// and the scale is logarithmic so recent weeks keep their room. (It used
+// to be relative to the oldest point, which put a first reading — minutes
+// old — at the far rim, as if it were long ago.)
+const RIM_DAYS = 90;
+const depthFor = (ts: number, now: number) => {
+  const days = Math.max(0, (now - ts) / 86_400_000);
+  return MIN_DEPTH + (1 - MIN_DEPTH) * Math.min(1, Math.log1p(days) / Math.log1p(RIM_DAYS));
+};
 
 export default function YourArcRoute() {
   const colors = useThemeColors();
@@ -120,11 +130,9 @@ function YourArcScreen() {
   const pastPoints: TimeConePoint[] = useMemo(() => {
     const now = Date.now();
     const pastStops = stops.filter((s) => s.kind !== 'now');
-    const oldest = pastStops.length ? pastStops[0].ts : now;
-    const span = Math.max(now - oldest, 1);
     return pastStops.map((s) => ({
       id: s.id,
-      depth: MIN_DEPTH + (1 - MIN_DEPTH) * Math.min(1, (now - s.ts) / span),
+      depth: depthFor(s.ts, now),
       angle: hashAngle(s.id),
       colorRgb: levelColors[s.kind === 'shift' ? s.toSlug! : s.slug!],
     }));
@@ -173,13 +181,32 @@ function YourArcScreen() {
       </View>
 
       <View style={styles.below}>
-        {showIntro && <Text style={styles.intro}>{t('yourArc.coneIntro')}</Text>}
+        {/* Before there's anything to turn through, the line says what
+            will gather here instead of mentioning a dial that isn't there. */}
+        {stops.length <= 1 ? (
+          <Text style={styles.intro}>{t('yourArc.coneIntroEmpty')}</Text>
+        ) : (
+          showIntro && <Text style={styles.intro}>{t('yourArc.coneIntro')}</Text>
+        )}
 
         {/* What the dial is on — named, and opened on tap. */}
-        <Pressable onPress={openFocused} accessibilityRole="button" style={styles.focus}>
+        {/* The state's name opens that state's page; the line under it
+            opens the moment, or Today (2026-10-12 — the whole block used
+            to be one tap, so tapping "Neutrality" on now jumped to Today
+            instead of showing what Neutrality is). */}
+        <View style={styles.focus}>
           <Text style={styles.focusWhen}>
             {focused.kind === 'now' ? t('yourArc.now') : shortDate(focused.ts)}
           </Text>
+          <Pressable
+            disabled={!focusSlug}
+            onPress={() => {
+              if (focused.kind === 'shift') openFocused();
+              else if (focusSlug) router.push({ pathname: '/level/[id]', params: { id: focusSlug } });
+            }}
+            accessibilityRole="button"
+            hitSlop={spacing[2]}
+          >
           <Text style={[styles.focusName, { color: focusTextColor }]}>
             {focused.kind === 'shift'
               ? `${nameOf(focused.slug)} → ${nameOf(focused.toSlug)}`
@@ -189,10 +216,13 @@ function YourArcScreen() {
                   : t('yourArc.nowNoReading')
                 : nameOf(focused.slug)}
           </Text>
-          <Text style={styles.focusAction}>
-            {focused.kind === 'now' ? t('yourArc.openToday') : t('yourArc.openMoment')} →
-          </Text>
-        </Pressable>
+          </Pressable>
+          <Pressable onPress={openFocused} accessibilityRole="button" hitSlop={spacing[2]}>
+            <Text style={styles.focusAction}>
+              {focused.kind === 'now' ? t('yourArc.openToday') : t('yourArc.openMoment')} →
+            </Text>
+          </Pressable>
+        </View>
 
         {stops.length > 1 && (
           // Only the top of the wheel shows (2026-10-09 — the whole wheel

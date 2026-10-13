@@ -131,7 +131,7 @@ export default function RootLayout() {
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'your-arc-past', 'your-arc-future', 'your-arc-moment', 'crisis-support',
+      'your-arc', 'your-arc-past', 'your-arc-future', 'your-arc-moment', 'level', 'crisis-support',
       'journeys-grounding',
     ].includes(segments[0] as string);
     // Onboarding is excluded from the second branch: it saves the chosen

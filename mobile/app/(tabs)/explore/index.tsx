@@ -140,18 +140,22 @@ export default function ExploreScreen() {
         <GatherIn delay={120 + GROUPS.length * 120}>
           <View style={styles.group}>
             <Text style={styles.groupLabel}>{t('explore.group_receive')}</Text>
-            <View style={styles.signs}>
-              {SIGNS.map((room, i) => (
-                <View key={room.key} style={styles.signWrap}>
-                  {i > 0 && <Text style={styles.signDot}>·</Text>}
-                  <Pressable onPress={() => open(room)} accessibilityRole="button" hitSlop={spacing[2]}>
-                    {({ pressed }) => (
-                      <Text style={[styles.label, pressed && styles.pressed]}>{t(`explore.${room.key}Label`)}</Text>
-                    )}
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+            {/* Two rows of two (2026-10-12) — one wrapping line put a
+                separator dot at the start of its second line. */}
+            {[SIGNS.slice(0, 2), SIGNS.slice(2, 4)].map((row, r) => (
+              <View key={r} style={styles.signs}>
+                {row.map((room, i) => (
+                  <View key={room.key} style={styles.signWrap}>
+                    {i > 0 && <Text style={styles.signDot}>·</Text>}
+                    <Pressable onPress={() => open(room)} accessibilityRole="button" hitSlop={spacing[2]}>
+                      {({ pressed }) => (
+                        <Text style={[styles.label, pressed && styles.pressed]}>{t(`explore.${room.key}Label`)}</Text>
+                      )}
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ))}
           </View>
         </GatherIn>
       </ScrollView>
@@ -186,7 +190,7 @@ function makeStyles(colors: Colors) {
     pressed: { opacity: 0.6 },
     label: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base },
     description: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-    signs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+    signs: { flexDirection: 'row', alignItems: 'center' },
     signWrap: { flexDirection: 'row', alignItems: 'center' },
     signDot: { color: colors.text.faint, fontFamily: fonts.medium, fontSize: fontSizes.base, marginHorizontal: spacing[3] },
   });

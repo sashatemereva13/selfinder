@@ -596,11 +596,15 @@ Selfinder is or why it costs money.
   "state," "how you feel," "shift toward" — never "vibration,"
   "frequency," "your field," or "energy." Those words may stay in code
   identifiers (`vibrationLevel`, `VibrationSpectrum`) where renaming buys
-  nothing, but never on screen. Known strings still to replace:
-  `measureIntro.kicker` ("Frequency Check-In"), `measure.readingYourField`,
-  `measure.somethingWentWrong`, `tuneIn.title`, `levels.wheelLabel`
-  (accessibility label), and the "lower vibrations to higher vibrations"
-  entry in `feelingLuckyList.json` (also a ranking — doubly off-brief).
+  nothing, but never on screen. (The last known strings — Measure's
+  title, `tuneIn.title`, `levels.wheelLabel` — were replaced by
+  2026-10-12.) **One deliberate exception: the message list**
+  (`feelingLuckyList.json` and its Russian twin, behind "A message" in
+  Explore and the daily reminder) is the founder's own writing and is
+  **never changed** — no edits, removals, rewording or reordering, in
+  either language, even where it uses vibration language, ranks states,
+  or speaks about the reader. It's presented as a message received, not
+  as Selfinder's own voice; leave it exactly as written.
 - **Never diagnose, never judge, never say "you should."** Consistent
   with the anti-judgment visual rules (no bare score, no gradient bar) —
   the copy register carries the same rule. A line like "a moment, not a
