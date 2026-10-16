@@ -62,7 +62,7 @@ interface MoonPhaseContent {
 export const MOON_PHASE_CONTENT: Record<MoonPhaseName, MoonPhaseContent> = {
   'New Moon': {
     nature: 'The sky holds no moon. Seeds lie underground, invisible, already alive.',
-    reflection: 'Something in you wants to move, before you can say toward what. What is the pull, not yet the plan?',
+    reflection: 'Notice whether something wants to move, before you can say toward what. What is the pull, not yet the plan?',
     practice: 'Name one direction — not a plan, just a direction — and let it stay unforced today.',
   },
   'Waxing Crescent': {
@@ -72,7 +72,7 @@ export const MOON_PHASE_CONTENT: Record<MoonPhaseName, MoonPhaseContent> = {
   },
   'First Quarter': {
     nature: 'Light and dark split the sky evenly. Neither has won yet.',
-    reflection: 'What old way of doing this has actually already stopped working, even if you haven’t admitted it yet?',
+    reflection: 'Is there an old way of doing this that has already stopped working?',
     practice: 'Name one decision you’ve been avoiding, and remove one thing that lets you keep avoiding it.',
   },
   'Waxing Gibbous': {
@@ -118,7 +118,7 @@ const MOON_PHASE_NAME_RU: Record<MoonPhaseName, string> = {
 const MOON_PHASE_CONTENT_RU: Record<MoonPhaseName, MoonPhaseContent> = {
   'New Moon': {
     nature: 'Луны на небе нет. Семена лежат под землёй, невидимые, но уже живые.',
-    reflection: 'Что-то в вас хочет двигаться — раньше, чем вы можете сказать, куда. Каково это притяжение — ещё не план?',
+    reflection: 'Заметьте, не хочет ли что-то двигаться — раньше, чем вы можете сказать, куда. Каково это притяжение — ещё не план?',
     practice: 'Назовите одно направление — не план, просто направление — и пусть сегодня оно остаётся без усилия.',
   },
   'Waxing Crescent': {
@@ -128,7 +128,7 @@ const MOON_PHASE_CONTENT_RU: Record<MoonPhaseName, MoonPhaseContent> = {
   },
   'First Quarter': {
     nature: 'Свет и тьма делят небо поровну. Ни одна сторона ещё не взяла верх.',
-    reflection: 'Какой старый способ делать это на самом деле уже перестал работать, даже если вы этого ещё не признали?',
+    reflection: 'Есть ли старый способ делать это, который уже перестал работать?',
     practice: 'Назовите одно решение, которого вы избегали, и уберите одну вещь, которая позволяет его избегать.',
   },
   'Waxing Gibbous': {
