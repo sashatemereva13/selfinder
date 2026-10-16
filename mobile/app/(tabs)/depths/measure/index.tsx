@@ -14,7 +14,7 @@ import { ensureAIConsent } from '../../../../src/store/aiDisclosureStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
-import { AuraSettle } from '../../../../src/components/depths/AuraSettle';
+import { MeasureSpheres } from '../../../../src/components/depths/MeasureSpheres';
 import { track } from '../../../../src/utils/analytics';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
@@ -69,10 +69,14 @@ export default function TodayScreen() {
             a 4–8 exchange conversation. scanPhrases[0] is the
             philosopher's own hand-written body-sphere line. */}
         <View style={styles.presence}>
-          <AuraSettle />
+          <MeasureSpheres />
           {philosopher?.scanPhrases?.[0]?.phrase && (
             <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
           )}
+          {/* The plain line under the philosopher's voice (RULES.md, two
+              layers) — moved up from under the button (2026-10-16), which
+              left the bottom of the screen crowded. */}
+          <Text style={styles.caption}>{t('measureIntro.caption')}</Text>
           {/* "Last time, you read as …" was removed (2026-10-16): it primed
               the answer before the person looked at now. Last time lives
               in Your Arc. */}
@@ -87,7 +91,6 @@ export default function TodayScreen() {
         >
           <Text style={styles.buttonText}>{t('measureIntro.beginConversation')}</Text>
         </Pressable>
-        <Text style={styles.caption}>{t('measureIntro.caption')}</Text>
 
         {hasMeasuredBefore && (
           <Pressable
@@ -164,18 +167,19 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,
     textAlign: 'center',
-    marginTop: spacing[3],
+    marginTop: -spacing[2],
     maxWidth: 260,
     alignSelf: 'center',
   },
+  // A quiet second way in, set apart from the button.
   spillLink: {
     alignItems: 'center',
-    paddingTop: spacing[4],
+    paddingTop: spacing[6],
   },
   spillLinkText: {
-    color: colors.text.secondary,
+    color: colors.text.muted,
     fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
+    fontSize: fontSizes.xs,
   },
   });
 }
