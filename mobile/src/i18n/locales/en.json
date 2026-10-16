@@ -477,11 +477,9 @@
     "wishRetryNote": "That doesn't sound like a wish for yourself — want to try again?"
   },
   "measureIntro": {
-    "kicker": "Measure",
-    "lastReading": "Last time, you read as {{level}}.",
     "beginConversation": "Begin the conversation",
     "orJustWriteItOut": "Too loud to answer? Pour it out first →",
-    "caption": "Share what is actually true, not what you think it should be."
+    "caption": "Four questions — body, mind, heart, spirit. Answer with what’s true right now."
   },
   "spill": {
     "kicker": "Spill",

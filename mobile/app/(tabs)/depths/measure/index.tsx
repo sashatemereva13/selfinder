@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
+import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -16,8 +16,6 @@ import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
 import { AuraSettle } from '../../../../src/components/depths/AuraSettle';
 import { track } from '../../../../src/utils/analytics';
-import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
-import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function TodayScreen() {
@@ -25,7 +23,6 @@ export default function TodayScreen() {
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
@@ -64,7 +61,8 @@ export default function TodayScreen() {
           The minimap hides on Measure (see MapBar) — this is a focused
           conversation, and the back link is the way out. */}
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
-        <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
+        {/* No "MEASURE" label (2026-10-16) — the philosopher's line marks
+            the arrival, as on Breathe, Tune In and Spill. */}
 
         {/* The one arrival beat for the whole walk — see this file's history:
             the per-sphere AttentionScan gate it replaced ran four times in
@@ -75,13 +73,9 @@ export default function TodayScreen() {
           {philosopher?.scanPhrases?.[0]?.phrase && (
             <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
           )}
-          {currentResult && (
-            <Text style={styles.lastReading}>
-              {t('measureIntro.lastReading', {
-                level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
-              })}
-            </Text>
-          )}
+          {/* "Last time, you read as …" was removed (2026-10-16): it primed
+              the answer before the person looked at now. Last time lives
+              in Your Arc. */}
         </View>
       </View>
 
@@ -137,13 +131,7 @@ function makeStyles(colors: Colors) {
   footer: {
     paddingHorizontal: spacing[6],
   },
-  kicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
+
   // Same register as AttentionScan's own phrase text (interview.tsx no
   // longer renders that component at all, but this screen inherits its
   // one surviving job — the philosopher's wordless-arrival line).
@@ -157,18 +145,7 @@ function makeStyles(colors: Colors) {
     // rather than leaving one word alone on the second.
     maxWidth: 260,
   },
-  // textAlign: 'center' — matches scanPhrase directly above it (review,
-  // 2026-08-19: the two sat right on top of each other with different
-  // alignment, reading as visually off). lastReading continues that same
-  // spoken-aloud moment (scanPhrase is the philosopher's own line), not a
-  // return to the left-aligned kicker/title/copy block further up, so it
-  // takes scanPhrase's centered register rather than the title block's.
-  lastReading: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-  },
+
   button: {
     paddingVertical: spacing[4],
     borderRadius: radius.full,
