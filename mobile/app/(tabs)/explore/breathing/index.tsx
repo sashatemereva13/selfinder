@@ -20,6 +20,7 @@ import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
+import { PhilosopherLine } from '../../../../src/components/shared/PhilosopherLine';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -189,8 +190,9 @@ export default function BreathingScreen() {
       >
         <BackLink style={styles.backRow} />
 
-        <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
-        <Text style={styles.title}>{t('breathing.title')}</Text>
+        {/* The philosopher's line (2026-10-16) in place of the
+            "REGULATION LAYER" label and title. */}
+        <PhilosopherLine room="breathe" />
 
         <View style={styles.pickerRow}>
           {BREATHING_PATTERNS.map((p, i) => (
@@ -204,7 +206,6 @@ export default function BreathingScreen() {
 
         <View style={styles.centerBlock}>
           <Text style={styles.subtitle}>{pattern.subtitle}</Text>
-          <Text style={styles.useFor}>{pattern.useFor}</Text>
 
           {/* Body-focus prompt (review, 2026-08-19) — shown only before a
               session starts, only once a reading actually exists to name
@@ -243,7 +244,9 @@ export default function BreathingScreen() {
             <Text style={styles.directionPrompt}>{t('breathing.directionPrompt')}</Text>
           )}
 
-          <Text style={styles.howToNote}>{pattern.howTo}</Text>
+          {/* How to breathe, only before beginning — once the orb moves,
+              it carries the instruction. */}
+          {!active && <Text style={styles.howToNote}>{pattern.howTo}</Text>}
         </View>
       </View>
     </View>

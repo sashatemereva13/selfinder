@@ -6,8 +6,8 @@ import type { ShiftDoor } from './shiftContent';
 // breath's rhythm (RULES.md, Content/voice). The cues guide attention and
 // breath; they never say what the person feels.
 //
-// Written in Marcus Aurelius' voice first (2026-10-08) — the other four
-// philosophers fall back to his words until theirs are written.
+// Each philosopher's own words for the lines that carry a philosophy are
+// in VOICES below (all five since 2026-10-14).
 //
 // A session is a list of steps: timed cues (auto-advance; a tap moves on
 // early), optional writing moments (wait for the person), then the return
@@ -124,10 +124,6 @@ const WHAT_FOR_AFTER: Cue[] = [
   c(12, 'You do not have to say it aloud.', 'Не нужно произносить его вслух.'),
 ];
 
-const CLOSING: Record<ShiftDoor, Line> = {
-  love: { en: 'That is the work for today. The rest belongs to the day.', ru: 'На сегодня это вся работа. Остальное принадлежит дню.' },
-  use: { en: 'It goes with you into the day.', ru: 'Оно идёт с вами в этот день.' },
-};
 
 const PROMPTS = {
   gratitude: { en: 'One word for each, if you like.', ru: 'По одному слову на каждую, если хотите.' },
@@ -160,33 +156,105 @@ const WHERE_HINTS: Record<string, Line> = {
 };
 const ELSE: Line = { en: 'Or something else entirely.', ru: 'Или что-то совсем другое.' };
 
-export function buildSession(door: ShiftDoor, slug: string, levelName: string, locale: Locale): SessionStep[] {
+// Each philosopher's own words for the seven moments that carry a
+// philosophy (2026-10-14, reviewed in docs/drafts/shift-voices.md) — the
+// practice instructions and the per-state "what it's for" lines stay
+// shared. Marcus Aurelius' are the originals; the others used to borrow
+// them ("I began my notebook…" from Socrates).
+type VoiceKey = 'opening' | 'warmth' | 'gratitude' | 'widen' | 'whatFor' | 'closingLove' | 'closingUse';
+const VOICES: Record<string, Record<VoiceKey, Line>> = {
+  stoics: {
+    opening: { en: 'Sit as you are. Nothing here needs to be done well.', ru: 'Сядьте как есть. Здесь ничего не нужно делать хорошо.' },
+    warmth: { en: 'This is yours. It was already here.', ru: 'Это ваше. Оно уже было здесь.' },
+    gratitude: { en: 'I began my notebook by thanking each person for what they taught me.', ru: 'Свою тетрадь я начал с благодарности — каждому, за то, чему он меня научил.' },
+    widen: { en: 'We are made for one another, like hands, like feet.', ru: 'Мы созданы друг для друга, как руки, как ноги.' },
+    whatFor: { en: 'Let the answer come in its own time.', ru: 'Пусть ответ придёт в своё время.' },
+    closingLove: { en: 'That is the work for today. The rest belongs to the day.', ru: 'На сегодня это вся работа. Остальное принадлежит дню.' },
+    closingUse: { en: 'It goes with you into the day.', ru: 'Оно идёт с вами в этот день.' },
+  },
+  socrates: {
+    opening: { en: 'Sit with me a moment. We are not here to be clever.', ru: 'Посидите со мной немного. Мы здесь не затем, чтобы быть умными.' },
+    warmth: { en: 'Was this warmth taught to you — or was it already there?', ru: 'Этому теплу вас научили — или оно уже было?' },
+    gratitude: { en: 'Tell me — what did today give you that you did not ask for?', ru: 'Скажите — что дал вам сегодняшний день, о чём вы не просили?' },
+    widen: { en: 'Is it so strange that warmth, once found, wants to travel?', ru: 'Так ли странно, что тепло, однажды найденное, хочет идти дальше?' },
+    whatFor: { en: 'I will not answer it for you. I only ask.', ru: 'Я не отвечу за вас. Я лишь спрашиваю.' },
+    closingLove: { en: 'Enough for today. We can go on asking tomorrow.', ru: 'На сегодня довольно. Завтра можно спрашивать дальше.' },
+    closingUse: { en: 'Now you know a little more of what it is for. Go and see.', ru: 'Теперь вы чуть больше знаете, для чего оно. Идите и посмотрите.' },
+  },
+  kierkegaard: {
+    opening: { en: 'Be still for a moment, as the lily is still. It does not hurry, and it is not less for it.', ru: 'Побудьте в тишине, как лилия. Она не торопится — и не становится от этого меньше.' },
+    warmth: { en: 'Love is not a feeling you wait for. It is a deed — and you have just begun it.', ru: 'Любовь — не чувство, которого ждут. Это поступок — и вы его только что начали.' },
+    gratitude: { en: 'Gratitude is a way of standing before your own life. Stand there for a moment.', ru: 'Благодарность — это способ стоять перед собственной жизнью. Постойте так немного.' },
+    widen: { en: 'The neighbour is the one you pass without noticing. Notice them now.', ru: 'Ближний — это тот, мимо кого проходишь не замечая. Заметьте его сейчас.' },
+    whatFor: { en: 'Only you can answer this. No one else can stand in your place.', ru: 'Ответить можете только вы. Никто не встанет на ваше место.' },
+    closingLove: { en: 'Life is lived forwards. Take this with you.', ru: 'Жизнь проживается вперёд. Возьмите это с собой.' },
+    closingUse: { en: 'Now it is yours to choose what it becomes.', ru: 'Теперь выбирать вам, чем оно станет.' },
+  },
+  camus: {
+    opening: { en: 'Sit down. Feel the weight of your body — it\'s the one thing here that\'s certain.', ru: 'Сядьте. Почувствуйте вес своего тела — единственное, в чём здесь можно быть уверенным.' },
+    warmth: { en: 'In the midst of winter, I found there was in me an invincible summer. Find yours.', ru: 'Посреди зимы я обнаружил в себе непобедимое лето. Найдите своё.' },
+    gratitude: { en: 'Even on a heavy day, the sun was warm somewhere on you. Find three of those.', ru: 'Даже в тяжёлый день солнце где-то вас грело. Найдите три таких момента.' },
+    widen: { en: 'We\'re all in the same absurd boat. It\'s warmer when we notice each other.', ru: 'Мы все в одной и той же нелепой лодке. Теплее, когда замечаешь друг друга.' },
+    whatFor: { en: 'Don\'t look for the meaning. Look for what you actually feel.', ru: 'Не ищите смысл. Ищите то, что вы на самом деле чувствуете.' },
+    closingLove: { en: 'That\'s it. Now go and live the rest of the day — that\'s the point.', ru: 'Вот и всё. Теперь идите и проживите остаток дня — в этом и смысл.' },
+    closingUse: { en: 'Take it with you. Lucidly.', ru: 'Возьмите это с собой. С ясной головой.' },
+  },
+  aristotle: {
+    opening: { en: 'We become what we repeatedly do. Begin, then, with a breath.', ru: 'Мы становимся тем, что делаем снова и снова. Начнём же с вдоха.' },
+    warmth: { en: 'Warmth, like every virtue, grows with practice. You have just practised it.', ru: 'Тепло, как всякая добродетель, растёт от упражнения. Вы только что упражнялись.' },
+    gratitude: { en: 'Gratitude is a habit like any other — practised, it grows. Practise it now: three things.', ru: 'Благодарность — привычка, как любая другая: упражняясь, она растёт. Упражняйтесь сейчас: три вещи.' },
+    widen: { en: 'A friend is another self. So, in a smaller way, is a stranger.', ru: 'Друг — это второе я. В меньшей мере — и незнакомец.' },
+    whatFor: { en: 'Take your time — a good answer is a considered one.', ru: 'Не спешите: хороший ответ — обдуманный.' },
+    closingLove: { en: 'One day\'s practice is done. The rest is done by returning.', ru: 'Упражнение этого дня окончено. Остальное делается возвращением.' },
+    closingUse: { en: 'Now put it into action — that is where it becomes yours.', ru: 'Теперь воплотите это в действие — там оно и становится вашим.' },
+  },
+};
+
+// A cue's time on screen follows its length, so a longer line in one
+// voice isn't cut short.
+const secondsFor = (line: Line, min: number) =>
+  Math.min(22, Math.max(min, Math.round(line.en.split(' ').length * 0.55 + 6)));
+
+export function buildSession(
+  door: ShiftDoor,
+  slug: string,
+  levelName: string,
+  locale: Locale,
+  philosopherId?: string,
+): SessionStep[] {
   const say = (line: Line) => (line[locale] ?? line.en).replace('{{level}}', levelName.charAt(0).toUpperCase() + levelName.slice(1));
   const cues = (stage: Stage, list: Cue[], breathGuide = false): SessionStep[] =>
     list.map((cue) => ({ kind: 'cue', stage, text: say(cue), seconds: cue.seconds, breathGuide }));
   const family = FAMILY[slug] ?? 'steady';
+  const voice = VOICES[philosopherId ?? ''] ?? VOICES.stoics;
+  const v = (key: VoiceKey, min: number): Cue => ({ ...voice[key], seconds: secondsFor(voice[key], min) });
+  const arrive = [v('opening', 8), ...ARRIVE.slice(1)];
+  const warmth = [...FIND_WARMTH.slice(0, -1), v('warmth', 15)];
+  const gratitude = [v('gratitude', 15), ...GRATITUDE.slice(1)];
+  const widen = [...WIDEN.slice(0, -1), v('widen', 15)];
+  const whatForAfter = [v('whatFor', 18), ...WHAT_FOR_AFTER.slice(1)];
 
   if (door === 'love') {
     return [
-      ...cues('arrive', ARRIVE, true),
+      ...cues('arrive', arrive, true),
       ...cues('meet', MEET[family]),
       ...(family === 'open' ? cues('warmth', [FIND_WARMTH_FROM_OPEN]) : []),
-      ...cues('warmth', FIND_WARMTH),
-      ...cues('gratitude', GRATITUDE),
+      ...cues('warmth', warmth),
+      ...cues('gratitude', gratitude),
       { kind: 'input', stage: 'gratitude', id: 'gratitude', prompt: say(PROMPTS.gratitude) },
-      ...cues('widen', WIDEN),
+      ...cues('widen', widen),
       { kind: 'input', stage: 'act', id: 'act', prompt: say(PROMPTS.act) },
       { kind: 'return' },
-      { kind: 'closing', text: say(CLOSING.love) },
+      { kind: 'closing', text: say(voice.closingLove) },
     ];
   }
   return [
-    ...cues('arrive', ARRIVE.slice(0, 4), true),
+    ...cues('arrive', arrive.slice(0, 4), true),
     ...cues('meet', MEET[family]),
     { kind: 'cue', stage: 'whatFor', text: say(WHAT_FOR[slug] ?? WHAT_FOR.neutrality), seconds: 20 },
-    ...cues('whatFor', WHAT_FOR_AFTER),
+    ...cues('whatFor', whatForAfter),
     { kind: 'input', stage: 'where', id: 'where', prompt: say(PROMPTS.where), hint: `${say(WHERE_HINTS[slug] ?? WHERE_HINTS.neutrality)} ${say(ELSE)}` },
     { kind: 'return' },
-    { kind: 'closing', text: say(CLOSING.use) },
+    { kind: 'closing', text: say(voice.closingUse) },
   ];
 }

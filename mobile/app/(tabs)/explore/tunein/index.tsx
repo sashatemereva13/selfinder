@@ -23,6 +23,7 @@ import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
+import { PhilosopherLine } from '../../../../src/components/shared/PhilosopherLine';
 import { tuneInArtworkReady } from '../../../../src/components/depths/TuneInAudioController';
 import { VOLUME_STEPS, TIMER_OPTIONS, players, useTuneInStore } from '../../../../src/store/tuneInStore';
 
@@ -129,6 +130,8 @@ export default function TuneInScreen() {
   // so the lock screen just gets no artwork for the brief window before
   // this settles rather than a value that could crash the native layer.
   const [artworkUri, setArtworkUri] = useState<string | undefined>(undefined);
+  // Volume and timer fold into one quiet line, opened on tap (2026-10-16).
+  const [controlsOpen, setControlsOpen] = useState(false);
 
   useEffect(() => {
     markDiscovered('tuneIn');
@@ -236,11 +239,10 @@ export default function TuneInScreen() {
       >
         <BackLink style={styles.backRow} />
 
-        <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
-        <Text style={styles.title}>{t('tuneIn.title')}</Text>
-        <Text style={styles.introLine}>
-          {t('tuneIn.introLine')}
-        </Text>
+        {/* The philosopher's line (2026-10-16) in place of the
+            "REGULATION LAYER" label, title and the Hz explanation. */}
+        <PhilosopherLine room="tunein" />
+        <Text style={styles.headphones}>{t('tuneIn.bestWithHeadphones')}</Text>
 
         <View style={styles.pickerRow}>
           {TUNE_IN_STATES.map((state, i) => (
@@ -257,6 +259,14 @@ export default function TuneInScreen() {
           <Text style={styles.intent}>{getLocalizedTuneInState(activeState, locale).intent}</Text>
         </View>
 
+        <Pressable onPress={() => setControlsOpen((o) => !o)} accessibilityRole="button" style={styles.controlsLine}>
+          <Text style={styles.volumeLabel}>
+            {timerMinutes !== null ? t('tuneIn.minutesShort', { count: timerMinutes }) : ''} · {t('tuneIn.volume')}{' '}
+            {controlsOpen ? '↑' : '↓'}
+          </Text>
+        </Pressable>
+        {controlsOpen && (
+        <>
         <View style={styles.volumeRow}>
           <Text style={styles.volumeLabel}>{t('tuneIn.volume')}</Text>
           <View style={styles.volumeSteps}>
@@ -285,6 +295,10 @@ export default function TuneInScreen() {
               </Pressable>
             ))}
           </View>
+        </View>
+        </>
+        )}
+        <View style={styles.timerSection}>
           {remainingSeconds !== null && (
             <Text style={styles.timerCountdown}>
               {t('tuneIn.fadingOutIn', {
@@ -423,16 +437,13 @@ function makeStyles(colors: Colors) {
   volumeDotActive: { backgroundColor: colors.accent.ivory },
   timerSection: { alignItems: 'center', gap: spacing[3], marginBottom: spacing[8] },
   timerChipRow: { flexDirection: 'row', gap: spacing[2] },
-  timerChip: {
-    paddingHorizontal: spacing[3],
-    paddingVertical: spacing[2],
-    borderRadius: radius.full,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-  },
-  timerChipActive: { borderColor: colors.accent.ivory },
+  // Plain words, not bordered pills (no-cards rule, 2026-10-16).
+  timerChip: { paddingHorizontal: spacing[2], paddingVertical: spacing[1] },
+  timerChipActive: {},
   timerChipText: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.xs },
   timerChipTextActive: { color: colors.accent.ivory },
+  headphones: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.xs, alignSelf: 'flex-start', marginTop: -spacing[4], marginBottom: spacing[6] },
+  controlsLine: { alignSelf: 'center', paddingVertical: spacing[2], marginBottom: spacing[2] },
   timerCountdown: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
   });
 }

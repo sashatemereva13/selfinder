@@ -40,11 +40,27 @@ export function getJourneyForState(slug: string): JourneyRef | null {
 // invitation, not a routine.
 export const JOURNEY_OFFER_GAP_DAYS = 7;
 
-// Marcus Aurelius' voice first; the others fall back to it until written.
+// The offer's lead-in, in each philosopher's voice (2026-10-14).
 const OFFER: Record<string, Record<Locale, string>> = {
   stoics: {
     en: 'If you want to go further with this one day, there is a longer walk:',
     ru: 'Если однажды захотите пойти с этим дальше, есть путь подлиннее:',
+  },
+  socrates: {
+    en: 'If you want to keep asking one day, there is a longer conversation:',
+    ru: 'Если однажды захотите спрашивать дальше, есть разговор подлиннее:',
+  },
+  kierkegaard: {
+    en: 'If one day you want to go further, there is a longer path — walked alone, as every real one is:',
+    ru: 'Если однажды захотите пойти дальше, есть путь подлиннее — его проходят в одиночку, как и всякий настоящий:',
+  },
+  camus: {
+    en: "If you ever want to stay with this longer, there's a longer walk:",
+    ru: 'Если когда-нибудь захотите побыть с этим подольше, есть путь подлиннее:',
+  },
+  aristotle: {
+    en: 'If you want to go further, there is a longer inquiry:',
+    ru: 'Если захотите пойти дальше, есть исследование подлиннее:',
   },
 };
 export function getJourneyOfferLine(philosopherId: string, locale: Locale): string {

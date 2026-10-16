@@ -56,6 +56,8 @@ import { useGuideChatStore } from "../../../src/store/guideChatStore";
 import { buildReadingContext } from "../../../src/utils/readingContext";
 import { HEAVY_STATES } from "../../../src/utils/safety";
 import { getSeamLine } from "../../../src/content/depthsSeam";
+import { ShiftMark } from "../../../src/components/shift/ShiftMark";
+import { useShiftStore } from "../../../src/store/shiftStore";
 import { CrisisLine } from "../../../src/components/shared/CrisisLine";
 import { useEngagementStore } from "../../../src/store/engagementStore";
 import { getRelativeTimeBucket, formatDate } from "../../../src/utils/relativeTime";
@@ -202,6 +204,18 @@ function DepthsContent() {
   // first time a sphere's answer is opened — snapshotted, since opening
   // one is what marks it seen.
   const showAnswerBackHint = useRef(!sphereAnswerSeen).current;
+  // Today shifts with the person (2026-10-14): once a session has been
+  // walked from today's reading, Today carries its before and after, and a
+  // plain sentence of what was done — a record, never what it means.
+  const shiftSessions = useShiftStore((s) => s.sessions);
+  const hydrateShifts = useShiftStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrateShifts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const todaysShift = currentResult
+    ? [...shiftSessions].reverse().find((s) => s.readingAt === currentResult.savedAt)
+    : undefined;
   const addReading = useGuideChatStore((s) => s.addReading);
   const addContext = useGuideChatStore((s) => s.addContext);
   const sendToGuide = useGuideChatStore((s) => s.send);
@@ -788,7 +802,7 @@ function DepthsContent() {
                       selectedWheelLevelName={wheelLevelName}
                       isAggregateReading={!selectedSphere}
                       hideIdleWheelLabel
-                      invitePulse={!isArriving && !sphereAnswerSeen && !!currentResult?.qaPairs?.length}
+                      invitePulse={!isArriving && !sphereAnswerSeen && !todaysShift && !!currentResult?.qaPairs?.length}
                       onWheelLevelPress={
                         wheelLevelSlug
                           ? () => goToLevel(wheelLevelSlug)
@@ -962,6 +976,22 @@ function DepthsContent() {
                     >
                       {headlineMessage}
                     </Text>
+                  )}
+                  {todaysShift && (
+                    <View style={styles.todaysShift}>
+                      {/* The two points only when the person moved — if they
+                          stayed, the headline already names where. */}
+                      {todaysShift.fromSlug !== todaysShift.toSlug && (
+                        <ShiftMark fromSlug={todaysShift.fromSlug} toSlug={todaysShift.toSlug} width={180} />
+                      )}
+                      <Text style={styles.todaysShiftLine}>
+                        {todaysShift.door === "love"
+                          ? t("depths.todayShifted")
+                          : t("depths.todayUsed", {
+                              level: getLocalizedLevelName(currentResult!.vibrationLevel, locale).toLowerCase(),
+                            })}
+                      </Text>
+                    </View>
                   )}
                   {/* A reading in a heavy state carries the quiet line to
                       help, whatever was said (crisis safety net,

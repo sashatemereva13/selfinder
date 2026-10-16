@@ -171,7 +171,7 @@ any score for the session, streaks or "sessions completed" counts.
 Status 2026-10-08: 1–3 built — the doors on Practice
 (`src/components/practice/ShiftDoors.tsx`), the session
 (`app/(tabs)/practice/session.tsx`, cues in
-`src/content/shiftSession.ts`, Marcus Aurelius' voice only), sessions
+`src/content/shiftSession.ts`; all five voices since 2026-10-14), sessions
 kept on the phone (`src/store/shiftStore.ts`). No sound yet.
 
 1. `offer` and `rest` states in `depthsSeam.ts` (+ "talk" done only on a

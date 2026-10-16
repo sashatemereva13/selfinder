@@ -34,6 +34,7 @@ import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../src/components/shared/BackLink';
 import { ConsciousnessWheel } from '../../../src/components/depths/ConsciousnessWheel';
 import { SessionSound } from '../../../src/components/shift/SessionSound';
+import { ShiftMark } from '../../../src/components/shift/ShiftMark';
 
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 // About six breaths a minute — five seconds in, five out.
@@ -67,7 +68,7 @@ export default function ShiftSessionScreen() {
   const steps = useMemo(
     () =>
       currentResult
-        ? buildSession(door, fromSlug, getLocalizedLevelName(currentResult.vibrationLevel, locale), locale)
+        ? buildSession(door, fromSlug, getLocalizedLevelName(currentResult.vibrationLevel, locale), locale, philosopher?.id)
         : [],
     // Built once per session — a locale switch mid-session shouldn't restart it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -248,6 +249,12 @@ export default function ShiftSessionScreen() {
 
       {step.kind === 'closing' && (
         <Animated.View entering={FadeIn.duration(900).easing(SOFT_EASE)} style={styles.closingArea}>
+          {/* What was just done: where the walk started and where the
+              person placed themselves (2026-10-14) — the last thing seen
+              is their own walk. */}
+          <View style={styles.closingMark}>
+            <ShiftMark fromSlug={fromSlug} toSlug={toSlugRef.current} />
+          </View>
           {philosopher && <Text style={styles.name}>{philosopher.name}</Text>}
           <Text style={styles.cue}>{step.text}</Text>
           {journeyOffer && philosopher && (
@@ -364,6 +371,7 @@ function makeStyles(colors: Colors) {
     returnArea: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing[6] },
     closingArea: { flex: 1, justifyContent: 'center', gap: spacing[4] },
     closingCrisis: { alignSelf: 'center' },
+    closingMark: { alignItems: 'center', marginBottom: spacing[6] },
     journeyOffer: { alignItems: 'center', gap: spacing[1], marginTop: spacing[4] },
     journeyLine: { color: colors.text.muted, fontFamily: fonts.voice, fontSize: fontSizes.sm, textAlign: 'center' },
     journeyLink: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm, textAlign: 'center' },

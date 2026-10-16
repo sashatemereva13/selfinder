@@ -131,7 +131,9 @@
     "whenToday": "today",
     "whenYesterday": "yesterday",
     "backToWholeReading": "Tap yourself to see the whole reading again",
-    "askPhilosopher": "Ask {{name}}"
+    "askPhilosopher": "Ask {{name}}",
+    "todayShifted": "Today, you shifted toward love.",
+    "todayUsed": "Today, you put {{level}} to use."
   },
   "cards": {
     "backLabel": "Draw again",
@@ -139,7 +141,9 @@
     "notice": "Notice",
     "talkAboutIt": "Talk to {{name}} about it →",
     "talkAboutItMessage": "I drew a symbol just now — {{name}}: \"{{line}}\" Can we talk about it?",
-    "spillAboutIt": "Write about it instead →"
+    "spillAboutIt": "Write about it instead →",
+    "talkShort": "Talk about it",
+    "writeShort": "Write about it"
   },
   "moon": {
     "kicker": "Moon",
@@ -150,7 +154,8 @@
     "nature": "Nature",
     "reflection": "Reflection",
     "practice": "Practice",
-    "startWithMeasure": "Start with Measure"
+    "startWithMeasure": "Start with Measure",
+    "tonight": "Tonight the moon is a {{phase}}."
   },
   "level": {
     "notFound": "This level couldn't be found.",
@@ -271,7 +276,7 @@
     "arcLineDialLabel": "Your Arc",
     "zonePresentLabel": "The eternal now",
     "zonePastLabel": "How you've told it",
-    "zoneFutureLabel": "What's calling you forward",
+    "zoneFutureLabel": "What you're reaching toward",
     "closingDialLabel": "Held",
     "detailDialLabel": "That day",
     "tuneInBeforeWoopInvite": "Or settle first, with a sound",
@@ -354,7 +359,9 @@
     "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",
     "volume": "Volume",
     "sleepTimer": "Sleep timer",
-    "fadingOutIn": "Fading out in {{time}}"
+    "fadingOutIn": "Fading out in {{time}}",
+    "bestWithHeadphones": "Best with headphones",
+    "minutesShort": "{{count}} min"
   },
   "products": {
     "title": "Journeys",
@@ -480,7 +487,8 @@
     "kicker": "Spill",
     "title": "Write without looking back",
     "copy1": "For one minute, just keep writing. Whatever comes, in any order, without editing it — you'll only ever see the word you're writing right now, nothing before it. When the minute is up, you can read the whole thing back.",
-    "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it."
+    "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it.",
+    "howItWorks": "One minute. You’ll only see the word you’re writing — when it’s up, you can read it all back."
   },
   "spillReveal": {
     "whatCameOut": "What came out",
@@ -495,12 +503,13 @@
   },
   "levels": {
     "kicker": "Levels",
-    "title": "The map of consciousness",
+    "title": "The seventeen states",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
     "note": "These connections describe what's true between neighboring states, not a route everyone has to walk — you can move from Anger to Love and back to Reason without passing through everything between, and that's not doing it wrong.",
     "wheelLabel": "Wheel of the seventeen states",
     "wheelHint": "Swipe up or down to move between the seventeen levels",
-    "readAbout": "Read about {{name}} →"
+    "readAbout": "Read about {{name}} →",
+    "howToExplore": "Drag around the ring to find a state. Tap its name to read about it."
   },
   "feelingLucky": {
     "talkAboutIt": "Talk to {{name}} about it →",
