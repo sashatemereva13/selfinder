@@ -35,6 +35,7 @@ import { BackLink } from '../../../src/components/shared/BackLink';
 import { ConsciousnessWheel } from '../../../src/components/depths/ConsciousnessWheel';
 import { SessionSound } from '../../../src/components/shift/SessionSound';
 import { ShiftMark } from '../../../src/components/shift/ShiftMark';
+import { BreathingLight } from '../../../src/components/shared/BreathingLight';
 
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 // About six breaths a minute — five seconds in, five out.
@@ -125,10 +126,7 @@ export default function ShiftSessionScreen() {
     const timer = setInterval(() => setInhaling((v) => !v), HALF_BREATH_MS);
     return () => clearInterval(timer);
   }, []);
-  const lightStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.7 + breath.value * 0.45 }],
-    opacity: 0.55 + breath.value * 0.35,
-  }));
+
 
   if (!currentResult || !step) {
     return (
@@ -172,18 +170,7 @@ export default function ShiftSessionScreen() {
 
       {showLight && (
         <View style={styles.lightWrap} pointerEvents="none">
-          <Animated.View style={[styles.light, lightStyle]}>
-            <Svg width={LIGHT} height={LIGHT}>
-              <Defs>
-                <RadialGradient id="breath" cx="50%" cy="50%" r="50%">
-                  <Stop offset="0" stopColor={`rgb(${rgb})`} stopOpacity={0.55} />
-                  <Stop offset="0.45" stopColor={`rgb(${rgb})`} stopOpacity={0.18} />
-                  <Stop offset="1" stopColor={`rgb(${rgb})`} stopOpacity={0} />
-                </RadialGradient>
-              </Defs>
-              <Circle cx={LIGHT / 2} cy={LIGHT / 2} r={LIGHT / 2} fill="url(#breath)" />
-            </Svg>
-          </Animated.View>
+          <BreathingLight breath={breath} rgb={rgb} />
           {step.kind === 'cue' && step.breathGuide && (
             <Animated.Text
               key={inhaling ? 'in' : 'out'}

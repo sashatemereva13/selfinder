@@ -8,20 +8,22 @@ import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography'
 import { spacing } from '../../../../src/theme/spacing';
 import { MoonPhaseDisc } from '../../../../src/components/depths/MoonPhaseDisc';
 import { BackLink } from '../../../../src/components/shared/BackLink';
-import { getMoonPhaseFraction, getMoonPhaseInfo, MOON_PHASE_CONTENT } from '../../../../src/content/moonConfig';
+import { getMoonPhaseFraction, getMoonPhaseInfo, getMoonPhaseContent, getMoonPhaseName } from '../../../../src/content/moonConfig';
+import { useLocaleStore } from '../../../../src/store/localeStore';
 
 export default function MoonScreen() {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const locale = useLocaleStore((s) => s.locale);
 
   const moon = useMemo(() => {
     const now = new Date();
     const fraction = getMoonPhaseFraction(now);
     const { name } = getMoonPhaseInfo(fraction);
-    return { fraction, name, content: MOON_PHASE_CONTENT[name] };
-  }, []);
+    return { fraction, name: getMoonPhaseName(name, locale), content: getMoonPhaseContent(name, locale) };
+  }, [locale]);
 
   // 2026-10-16 — the moon tonight, in sentences: the moon itself, a real
   // sentence naming its phase, then its reflection and one practice. The

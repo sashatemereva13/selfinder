@@ -154,7 +154,7 @@
     "reflection": "Размышление",
     "practice": "Практика",
     "startWithMeasure": "Начните с «Где я»",
-    "tonight": "Сегодня луна — {{phase}}."
+    "tonight": "Сегодня на небе — {{phase}}."
   },
   "level": {
     "notFound": "Не удалось найти этот уровень.",
