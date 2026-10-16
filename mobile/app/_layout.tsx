@@ -170,7 +170,6 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)"     />
           <Stack.Screen name="sources"    />
           <Stack.Screen name="how-to-use" />
-          <Stack.Screen name="products"   />
           <Stack.Screen name="center"     />
           <Stack.Screen name="control"    />
           <Stack.Screen name="the-choice" />
