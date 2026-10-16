@@ -1989,9 +1989,7 @@ function makeStyles(colors: Colors) {
     paddingVertical: spacing[4],
     borderRadius: radius.full,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.accent.ivory,
-    backgroundColor: "transparent",
+    backgroundColor: colors.bg.elevated,
   },
   beginButtonText: {
     color: colors.accent.ivory,

@@ -78,6 +78,9 @@ import {
 import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
+import { AURA_FIGURE_SIZE, BASE_AURA_DISPLAY_SIZE as COMPOSITION_SIZE } from "../../../src/components/depths/depthsGeometry";
+// The figure's size relative to the composition it stands in.
+const FIGURE_SCALE = AURA_FIGURE_SIZE / COMPOSITION_SIZE;
 import {
   SLOT_ORDER,
   H_CUT,
@@ -1693,7 +1696,19 @@ function AuraWithDots({
       style={[styles.auraWrap, overlay && styles.auraWrapOverlay]}
       pointerEvents="none"
     >
-      <View style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}>
+      {/* Drawn at AURA_FIGURE_SIZE within the box the composition was laid
+          out for — scaled from its feet, so it stays standing on the same
+          ground at the centre of its rings. */}
+      <View
+        style={{
+          width: AURA_METRICS.width,
+          height: AURA_METRICS.height,
+          transform: [
+            { translateY: (AURA_METRICS.height * (1 - FIGURE_SCALE)) / 2 },
+            { scale: FIGURE_SCALE },
+          ],
+        }}
+      >
         <Image
           source={source}
           style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}

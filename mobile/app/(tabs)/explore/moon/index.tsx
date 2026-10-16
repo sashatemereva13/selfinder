@@ -4,8 +4,8 @@ import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import type { Colors } from '../../../../src/theme/colors';
-import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
-import { spacing } from '../../../../src/theme/spacing';
+import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
+import { spacing, radius } from '../../../../src/theme/spacing';
 import { MoonPhaseDisc } from '../../../../src/components/depths/MoonPhaseDisc';
 import { BackLink } from '../../../../src/components/shared/BackLink';
 import { getMoonPhaseFraction, getMoonPhaseInfo, getMoonPhaseContent, getMoonPhaseName } from '../../../../src/content/moonConfig';
@@ -41,11 +41,20 @@ export default function MoonScreen() {
         <MoonPhaseDisc fraction={moon.fraction} />
       </View>
 
-      <Text style={styles.tonight}>
-        {t('moon.tonight', { phase: moon.name.toLowerCase() })} {moon.content.nature}
-      </Text>
-      <Text style={styles.body}>{moon.content.reflection}</Text>
-      <Text style={styles.practice}>{moon.content.practice}</Text>
+      <Text style={styles.tonight}>{t('moon.tonight', { phase: moon.name.toLowerCase() })}</Text>
+
+      {/* The three sections, back on borderless cards (2026-10-16 — the
+          rule is "no borders", not "no surfaces"). */}
+      {[
+        { key: 'nature', text: moon.content.nature },
+        { key: 'reflection', text: moon.content.reflection },
+        { key: 'practice', text: moon.content.practice },
+      ].map((section) => (
+        <View key={section.key} style={styles.card}>
+          <Text style={styles.cardLabel}>{t(`moon.${section.key}`)}</Text>
+          <Text style={styles.cardBody}>{section.text}</Text>
+        </View>
+      ))}
     </ScrollView>
   );
 }
@@ -62,17 +71,24 @@ function makeStyles(colors: Colors) {
       fontSize: fontSizes.lg,
       lineHeight: fontSizes.lg * 1.35,
     },
-    body: {
-      color: colors.text.secondary,
+    card: {
+      backgroundColor: colors.bg.elevated,
+      borderRadius: radius.lg,
+      padding: spacing[5],
+      gap: spacing[2],
+    },
+    cardLabel: {
+      color: colors.text.muted,
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xs,
+      letterSpacing: letterSpacings.kicker,
+      textTransform: 'uppercase',
+    },
+    cardBody: {
+      color: colors.text.primary,
       fontFamily: fonts.light,
       fontSize: fontSizes.base,
       lineHeight: fontSizes.base * lineHeights.normal,
-    },
-    practice: {
-      color: colors.text.muted,
-      fontFamily: fonts.medium,
-      fontSize: fontSizes.sm,
-      lineHeight: fontSizes.sm * lineHeights.normal,
     },
   });
 }

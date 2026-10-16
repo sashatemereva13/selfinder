@@ -476,8 +476,6 @@ function makeStyles(colors: Colors) {
     minHeight: 44,
     maxHeight: 120,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
     backgroundColor: colors.bg.elevated,
     color: colors.text.primary,
     fontFamily: fonts.light,

@@ -128,8 +128,7 @@ function makeStyles(colors: Colors) {
     },
     doors: { gap: spacing[3], marginTop: spacing[2] },
     door: {
-      borderWidth: 1,
-      borderColor: colors.bg.border,
+      backgroundColor: colors.bg.elevated,
       borderRadius: radius.full,
       paddingVertical: spacing[4],
       paddingHorizontal: spacing[6],

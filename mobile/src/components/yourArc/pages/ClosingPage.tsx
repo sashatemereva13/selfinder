@@ -179,8 +179,6 @@ function makeStyles(colors: Colors) {
       width: '100%',
       minHeight: 80,
       borderRadius: radius.md,
-      borderWidth: 1,
-      borderColor: colors.bg.border,
       backgroundColor: colors.bg.elevated,
       color: colors.text.primary,
       fontFamily: fonts.light,

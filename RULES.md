@@ -176,8 +176,12 @@ wrong regardless of how clean it looks in isolation.
 - **Motion gathers, condenses, becomes — never slides or pops.** Causality
   over coincidence. No idle motion without meaning (cut dead time instead
   of padding it with animation).
-- **No cards.** No bordered/filled boxes as the default separator — space
-  and typography do that job.
+- **No borders (clarified 2026-10-16 — this rule used to read "No
+  cards").** No outlines, hairlines or bordered boxes. A filled,
+  borderless surface (`colors.bg.elevated`, rounded) is fine where
+  something is genuinely an object — a symbol on its card, a message.
+  Space and typography still separate ordinary content; a surface is for
+  a thing, not a way of dividing a page.
 - **Never show a bare numeric score next to a level name** — position on
   a ring instead. This is a deliberate anti-judgment rule: Selfinder
   never implies a vibration is good or bad.

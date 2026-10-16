@@ -174,9 +174,13 @@ function makeStyles(colors: Colors) {
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
-    // No box any more (no-cards rule, 2026-10-16) — the symbol and its
-    // words sit straight on the page.
-    paddingHorizontal: spacing[2],
+    // The card itself — a filled surface with no border (2026-10-16: the
+    // rule is "no borders", not "no surfaces"; the symbol belongs on its
+    // card).
+    backgroundColor: colors.bg.elevated,
+    borderRadius: radius.lg,
+    paddingVertical: spacing[8],
+    paddingHorizontal: spacing[6],
   },
   symbolWrap: { marginBottom: spacing[6] },
   name: {
