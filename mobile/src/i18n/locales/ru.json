@@ -560,7 +560,8 @@
     "done": "Готово",
     "breatheIn": "вдох",
     "breatheOut": "выдох",
-    "useAction": "Применить: {{level}}"
+    "useAction": "Применить: {{level}}",
+    "useActionHeavy": "Побыть с этим: {{level}}"
   },
   "explore": {
     "title": "Обзор",

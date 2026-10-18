@@ -554,7 +554,8 @@
     "done": "Done",
     "breatheIn": "breathe in",
     "breatheOut": "breathe out",
-    "useAction": "Put {{level}} to use"
+    "useAction": "Put {{level}} to use",
+    "useActionHeavy": "Be with {{level}}"
   },
   "explore": {
     "title": "Explore",

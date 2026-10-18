@@ -312,7 +312,10 @@ export default function LevelScreen() {
                   accessibilityRole="button"
                 >
                   <Text style={styles.talkButtonText}>
-                    {t('shift.useAction', { level: level.name.toLowerCase() })} →
+                    {t(HEAVY_STATES.includes(level.slug) ? 'shift.useActionHeavy' : 'shift.useAction', {
+                      level: level.name.toLowerCase(),
+                    })}{' '}
+                    →
                   </Text>
                 </Pressable>
               </View>

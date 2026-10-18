@@ -10,6 +10,7 @@ import { useLocaleStore } from '../store/localeStore';
 import { getSeamLine, getSeamState, SeamState } from '../content/depthsSeam';
 import { getLocalizedLevelName } from '../content/measureConfig';
 import { buildReadingContext } from './readingContext';
+import { HEAVY_STATES } from './safety';
 import { track } from './analytics';
 
 // The philosopher's one next step (RULES.md, "The philosopher always points
@@ -52,7 +53,9 @@ export function usePhilosopherStep() {
       case 'talk':
         return t('depths.understandItDescription', { name: philosopherName });
       case 'use':
-        return t('shift.useAction', {
+        // Softer for the heavy states (2026-10-18): "put grief to use"
+        // sounds harsh for what the session actually does with it.
+        return t(HEAVY_STATES.includes(currentResult?.vibrationLevel.slug ?? '') ? 'shift.useActionHeavy' : 'shift.useAction', {
           level: currentResult ? getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase() : '',
         });
       case 'shift':
