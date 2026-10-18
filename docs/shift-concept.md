@@ -53,7 +53,14 @@ person about how the app works. Shift starts from the current reading.
 If the reading is from an earlier day, the philosopher's step is Measure
 first (as it already is), and the offer follows from the new reading.
 
-## 3. The offer
+## 3. The offer (superseded 2026-10-18)
+
+**Since 2026-10-18 the two doors are a sequence, one step per screen:**
+the state's page hands over to Use it; the end of Use it offers Shift
+toward love as the next step (one quiet line); Shift toward love is also
+always reachable from Explore → Settle. The Choose screen is gone. The
+reasoning below is kept as history.
+
 
 A question from the philosopher, in their voice, with two answers of
 equal visual weight — same size, same style, side by side or stacked

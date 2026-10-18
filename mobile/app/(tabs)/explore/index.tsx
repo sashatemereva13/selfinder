@@ -13,6 +13,8 @@ import { GatherIn } from '../../../src/components/shared/GatherIn';
 import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { usePhilosopherStep } from '../../../src/utils/usePhilosopherStep';
 import { useAuthStore } from '../../../src/store/authStore';
+import { useMeasureStore } from '../../../src/store/measureStore';
+import { getRelativeTimeBucket } from '../../../src/utils/relativeTime';
 import { useAppAccentTextRgb } from '../../../src/utils/appAccent';
 
 // Explore (2026-10-09 — RULES.md, "Three places, one chain"): every
@@ -29,6 +31,10 @@ const GROUPS: { key: string; rooms: Room[] }[] = [
     rooms: [
       { key: 'breathe', route: '/(tabs)/explore/breathing' },
       { key: 'tunein', route: '/(tabs)/explore/tunein' },
+      // Shift toward love, reachable on its own (2026-10-18) — in Today's
+      // chain it comes after Use it; here it's there whenever wanted. It
+      // starts from today's reading, so without one it opens Measure.
+      { key: 'shift', route: '/(tabs)/depths/session' },
     ],
   },
   {
@@ -70,7 +76,17 @@ export default function ExploreScreen() {
   const accent = `rgb(${accentTextRgb})`;
   const philosopherName = step.philosopher?.nameInstrumental ?? step.philosopher?.name ?? '';
 
-  const open = (room: Room) => (room.key === 'talk' ? step.openConversation() : router.push(room.route as never));
+  const currentResult = useMeasureStore((s) => s.currentResult);
+  const hasTodaysReading = !!currentResult && getRelativeTimeBucket(currentResult.savedAt) === 'today';
+  const open = (room: Room) => {
+    if (room.key === 'talk') return step.openConversation();
+    if (room.key === 'shift') {
+      return hasTodaysReading
+        ? router.push({ pathname: '/(tabs)/depths/session', params: { door: 'love' } })
+        : router.push('/(tabs)/depths/measure');
+    }
+    router.push(room.route as never);
+  };
 
   return (
     <View style={styles.root}>

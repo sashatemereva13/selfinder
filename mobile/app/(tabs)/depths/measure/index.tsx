@@ -27,12 +27,10 @@ export default function TodayScreen() {
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const resetInterview = useMeasureStore((s) => s.resetInterview);
-  const currentResult = useMeasureStore((s) => s.currentResult);
   const columnWidth = useReadingColumnWidth();
 
   const accentRgb = useAppAccentButtonRgb();
   const accentColor = `rgb(${accentRgb})`;
-  const hasMeasuredBefore = Boolean(currentResult);
 
   // Consent is asked here, before the interview opens, rather than at the
   // first answer — Measure's exchange deliberately fails open (see
@@ -92,18 +90,8 @@ export default function TodayScreen() {
           <Text style={styles.buttonText}>{t('measureIntro.beginConversation')}</Text>
         </Pressable>
 
-        {hasMeasuredBefore && (
-          <Pressable
-            style={styles.spillLink}
-            // "First", not "or" (2026-10-10): when the head is too loud to
-            // answer honestly, pouring it out is the way to the reading,
-            // not a way around it — Spill's reveal brings you back here.
-            // Spill never measures anything; this stays the one Measure.
-            onPress={() => router.push({ pathname: '/(tabs)/explore/spill', params: { then: 'measure' } })}
-          >
-            <Text style={styles.spillLinkText}>{t('measureIntro.orJustWriteItOut')}</Text>
-          </Pressable>
-        )}
+        {/* The Spill link that sat here is gone (2026-10-18): Spill isn't a
+            way into Measure — it clears the head, and stands on its own. */}
       </View>
     </View>
   );
@@ -171,15 +159,6 @@ function makeStyles(colors: Colors) {
     maxWidth: 260,
     alignSelf: 'center',
   },
-  // A quiet second way in, set apart from the button.
-  spillLink: {
-    alignItems: 'center',
-    paddingTop: spacing[6],
-  },
-  spillLinkText: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-  },
+
   });
 }

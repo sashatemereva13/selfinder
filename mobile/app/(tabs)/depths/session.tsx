@@ -26,6 +26,7 @@ import { getLocalizedLevelName, useLevelColors } from '../../../src/content/meas
 import { buildSession } from '../../../src/content/shiftSession';
 import { getJourneyForState, getJourneyOfferLine, JOURNEY_OFFER_GAP_DAYS } from '../../../src/content/journeyForState';
 import { useEngagementStore } from '../../../src/store/engagementStore';
+import { getSeamLine } from '../../../src/content/depthsSeam';
 import { HEAVY_STATES, mentionsCrisisOnDevice } from '../../../src/utils/safety';
 import { CrisisLine } from '../../../src/components/shared/CrisisLine';
 import type { ShiftDoor } from '../../../src/content/shiftContent';
@@ -82,8 +83,20 @@ export default function ShiftSessionScreen() {
   // The Journey that fits this state, offered under the closing line at
   // most once a week — decided once, when the session opens, so marking
   // it offered doesn't make it vanish while it's on screen.
+  // After Use it, the next step is Shift toward love (2026-10-18 — one
+  // step per screen; the doors became a sequence), offered as one quiet
+  // line on the closing screen — unless the reading is love itself, or a
+  // Shift was already walked from this reading. The Journey offer waits
+  // for a session with no next step, so only one quiet line ever shows.
+  const offerShiftNext =
+    door === 'use' &&
+    fromSlug !== 'love' &&
+    !useShiftStore
+      .getState()
+      .sessions.some((x) => x.readingAt === currentResult?.savedAt && x.door === 'love');
   const journeyOffer = useRef(
     (() => {
+      if (offerShiftNext) return null;
       const last = useEngagementStore.getState().journeyOfferedAt;
       const due = !last || Date.now() - new Date(last).getTime() > JOURNEY_OFFER_GAP_DAYS * 86_400_000;
       return due ? getJourneyForState(fromSlug) : null;
@@ -244,6 +257,21 @@ export default function ShiftSessionScreen() {
           </View>
           {philosopher && <Text style={styles.name}>{philosopher.name}</Text>}
           <Text style={styles.cue}>{step.text}</Text>
+          {offerShiftNext && philosopher && (
+            <View style={styles.journeyOffer}>
+              <Text style={styles.journeyLine}>{getSeamLine(philosopher.id, 'shift', locale)}</Text>
+              <Pressable
+                onPress={() => {
+                  track('shift_next_taken', { level: fromSlug });
+                  router.replace({ pathname: '/(tabs)/depths/session', params: { door: 'love' } });
+                }}
+                accessibilityRole="link"
+                hitSlop={spacing[2]}
+              >
+                <Text style={styles.journeyLink}>{t('shift.loveLabel')} →</Text>
+              </Pressable>
+            </View>
+          )}
           {journeyOffer && philosopher && (
             <JourneyOffer
               line={getJourneyOfferLine(philosopher.id, locale)}

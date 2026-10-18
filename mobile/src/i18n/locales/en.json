@@ -478,7 +478,6 @@
   },
   "measureIntro": {
     "beginConversation": "Begin the conversation",
-    "orJustWriteItOut": "Too loud to answer? Pour it out first →",
     "caption": "Answer with what’s true right now."
   },
   "spill": {
@@ -545,14 +544,7 @@
     "handleFirst": "Find your starting point"
   },
   "shift": {
-    "offerAction": "What to do with it",
-    "restLabel": "That's today's walk",
-    "useLabel": "Use it",
-    "useCaption": "Put it to work in your day",
-    "useCaptionAtLove": "Give your warmth somewhere to go",
     "loveLabel": "Shift toward love",
-    "loveCaption": "Move toward warmth and calm",
-    "loveCaptionFromOpen": "Give the stillness a direction — toward someone",
     "tapToContinue": "Tap to move on",
     "writePlaceholder": "Only if you want to — it stays on your phone",
     "continue": "Continue",
@@ -562,7 +554,7 @@
     "done": "Done",
     "breatheIn": "breathe in",
     "breatheOut": "breathe out",
-    "needsReading": "Measure first — then choose what to do with it."
+    "useAction": "Put {{level}} to use"
   },
   "explore": {
     "title": "Explore",
@@ -593,6 +585,8 @@
     "journeysDescription": "Twelve longer walks, with your philosopher",
     "deeperTitle": "Deeper questions",
     "deeperIntro": "Each one is a longer walk — a path of questions toward something one question alone would not reach.",
-    "patternLabel": "A pattern"
+    "patternLabel": "A pattern",
+    "shiftLabel": "Shift toward love",
+    "shiftDescription": "Starts from today’s reading"
   }
 }
