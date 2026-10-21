@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useDerivedValue,
   withTiming,
   Easing,
   SharedValue,
@@ -20,6 +21,9 @@ import { track } from '../../../../src/utils/analytics';
 import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
+import { PhilosopherLine } from '../../../../src/components/shared/PhilosopherLine';
+import { BreathingLight } from '../../../../src/components/shared/BreathingLight';
+import { useAppAccentRgb } from '../../../../src/utils/appAccent';
 import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -35,6 +39,10 @@ const SETTLE_MS = 800;
 const HALO_REST_SCALE = 1;
 const HALO_PEAK_SCALE = 6;
 
+// The same breathing light as the Shift sessions (2026-10-16 — Breathe
+// had its own orb and halo; one breathing visual makes the app behave
+// predictably). The pattern's own timing still drives it: `scale` runs
+// BASE_SCALE..PEAK_SCALE and is mapped to the light's 0..1 breath.
 function BreathingOrb({
   scale,
   onPress,
@@ -46,31 +54,16 @@ function BreathingOrb({
 }) {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const coreStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
-  const haloStyle = useAnimatedStyle(() => {
-    const t = (scale.value - BASE_SCALE) / (PEAK_SCALE - BASE_SCALE);
-    // Squared, not cubed like Tune In's faster pulse — phases here already
-    // run 4-8s, slow enough that the halo doesn't need as much correction,
-    // and over-easing risked visibly lagging the real breath cue it's tied to.
-    const spread = t * t;
-    return {
-      transform: [{ scale: HALO_REST_SCALE + spread * (HALO_PEAK_SCALE - HALO_REST_SCALE) }],
-      opacity: 0.3 - spread * 0.28,
-    };
-  });
-
+  const accentRgb = useAppAccentRgb();
+  const breath = useDerivedValue(() =>
+    Math.min(1, Math.max(0, (scale.value - BASE_SCALE) / (PEAK_SCALE - BASE_SCALE))),
+  );
   return (
-    <View style={styles.orbWrap} pointerEvents="box-none">
-      <Animated.View style={[styles.orbHalo, haloStyle]} pointerEvents="none" />
-      <Animated.View style={[styles.orbCore, coreStyle]} pointerEvents="none" />
-      {/* Sits at the core's resting size, not scaled with it — the breath
-          cue's own growth/shrink shouldn't distort or reflow the label. */}
-      <Pressable style={styles.orbTapTarget} onPress={onPress}>
-        <Text style={styles.orbCoreLabel}>{label}</Text>
+    <BreathingLight breath={breath} rgb={accentRgb}>
+      <Pressable style={styles.orbTapTarget} onPress={onPress} accessibilityRole="button">
+        <Text style={styles.orbLabel}>{label}</Text>
       </Pressable>
-    </View>
+    </BreathingLight>
   );
 }
 
@@ -189,8 +182,9 @@ export default function BreathingScreen() {
       >
         <BackLink style={styles.backRow} />
 
-        <Text style={styles.kicker}>{t('common.regulationLayer')}</Text>
-        <Text style={styles.title}>{t('breathing.title')}</Text>
+        {/* The philosopher's line (2026-10-16) in place of the
+            "REGULATION LAYER" label and title. */}
+        <PhilosopherLine room="breathe" />
 
         <View style={styles.pickerRow}>
           {BREATHING_PATTERNS.map((p, i) => (
@@ -204,7 +198,6 @@ export default function BreathingScreen() {
 
         <View style={styles.centerBlock}>
           <Text style={styles.subtitle}>{pattern.subtitle}</Text>
-          <Text style={styles.useFor}>{pattern.useFor}</Text>
 
           {/* Body-focus prompt (review, 2026-08-19) — shown only before a
               session starts, only once a reading actually exists to name
@@ -243,7 +236,9 @@ export default function BreathingScreen() {
             <Text style={styles.directionPrompt}>{t('breathing.directionPrompt')}</Text>
           )}
 
-          <Text style={styles.howToNote}>{pattern.howTo}</Text>
+          {/* How to breathe, only before beginning — once the orb moves,
+              it carries the instruction. */}
+          {!active && <Text style={styles.howToNote}>{pattern.howTo}</Text>}
         </View>
       </View>
     </View>
@@ -363,6 +358,7 @@ function makeStyles(colors: Colors) {
     justifyContent: 'center',
   },
   orbCoreLabel: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  orbLabel: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base },
   phaseLabel: {
     color: colors.text.primary,
     fontFamily: fonts.medium,

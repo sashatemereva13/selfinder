@@ -121,10 +121,11 @@ export default function CardsScreen() {
       <LongPressToSave message={line} accentRgb={cardRgb}>
         <Animated.View style={[styles.cardPlane, cardFadeStyle]}>
           <View style={styles.symbolWrap}>
-            <AnimatedCardSymbol id={card.id} rgb={cardRgb} size={240} />
+            <AnimatedCardSymbol id={card.id} rgb={cardRgb} size={200} />
           </View>
 
-          <Text style={styles.kind}>{t(card.kind === 'statement' ? 'cards.receive' : 'cards.notice')}</Text>
+          {/* No "Receive"/"Notice" label any more (2026-10-16): every card
+              invites noticing now, so the label said nothing. */}
           <Text style={[styles.name, { color: `rgb(${cardRgb})` }]}>{name}</Text>
           <Text style={styles.line}>{line}</Text>
         </Animated.View>
@@ -140,29 +141,26 @@ export default function CardsScreen() {
           a shelf just because they're nearby." When there's no
           philosopher set, Write about it centers alone rather than
           leaving a lopsided half-row. */}
-      <View style={[styles.actionsWrap, !philosopher && styles.actionsWrapSingle]}>
+      {/* One quiet line of what to do with it, then "Draw again" kept
+          clear of the bottom menu (2026-10-16 — the paired columns with a
+          rule between them, and "Draw again" under the menu, are gone). */}
+      <View style={styles.actions}>
         {philosopher && (
-          <Pressable style={styles.actionCol} onPress={handleTalkAboutIt}>
-            <Text style={styles.actionLabel}>{t('cards.talkAboutIt', { name: philosopher.name })}</Text>
-          </Pressable>
+          <>
+            <Pressable onPress={handleTalkAboutIt} accessibilityRole="button" hitSlop={spacing[2]}>
+              <Text style={styles.actionLabel}>{t('cards.talkShort')}</Text>
+            </Pressable>
+            <Text style={styles.actionDot}>·</Text>
+          </>
         )}
-        <Pressable
-          style={[
-            philosopher ? styles.actionCol : styles.actionColSingle,
-            philosopher && styles.actionColDivider,
-          ]}
-          onPress={handleSpillAboutIt}
-        >
-          <Text style={styles.actionLabel}>{t('cards.spillAboutIt')}</Text>
+        <Pressable onPress={handleSpillAboutIt} accessibilityRole="button" hitSlop={spacing[2]}>
+          <Text style={styles.actionLabel}>{t('cards.writeShort')}</Text>
         </Pressable>
       </View>
 
-      <View style={styles.drawAgainWrap}>
-        <Text style={styles.drawAgainDivider}>· · ·</Text>
-        <Pressable style={styles.drawAgainRow} onPress={handleDrawAgain}>
-          <Text style={styles.drawAgainLabel}>{t('cards.backLabel')}</Text>
-        </Pressable>
-      </View>
+      <Pressable style={styles.drawAgainRow} onPress={handleDrawAgain} accessibilityRole="button">
+        <Text style={styles.drawAgainLabel}>{t('cards.backLabel')}</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -176,82 +174,32 @@ function makeStyles(colors: Colors) {
     width: '100%',
     maxWidth: 380,
     alignItems: 'center',
+    // The card itself — a filled surface with no border (2026-10-16: the
+    // rule is "no borders", not "no surfaces"; the symbol belongs on its
+    // card).
     backgroundColor: colors.bg.elevated,
     borderRadius: radius.lg,
     paddingVertical: spacing[8],
     paddingHorizontal: spacing[6],
-    marginBottom: spacing[6],
   },
   symbolWrap: { marginBottom: spacing[6] },
-  kind: {
-    color: colors.text.faint,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.wide,
-    textTransform: 'uppercase',
-    marginBottom: spacing[2],
-  },
   name: {
     fontFamily: fonts.medium,
     fontSize: fontSizes.sm,
     marginBottom: spacing[3],
   },
   line: {
-    color: colors.text.muted,
+    color: colors.text.primary,
     fontFamily: fonts.voice,
-    fontSize: fontSizes.sm,
-    lineHeight: fontSizes.sm * lineHeights.normal,
+    fontSize: fontSizes.base,
+    lineHeight: fontSizes.base * 1.45,
     textAlign: 'center',
-    maxWidth: 280,
+    maxWidth: 300,
   },
-  // Two real alternatives, side by side — equal width so neither reads as
-  // the "more correct" option, with a vertical rule between them (same
-  // "quiet, structural, not decorative" divider register as
-  // drawAgainDivider's dots) instead of just a gap, so the pairing itself
-  // is visible, not implied by proximity alone.
-  actionsWrap: {
-    flexDirection: 'row',
-    width: '100%',
-    maxWidth: 380,
-    marginTop: spacing[8],
-  },
-  actionsWrapSingle: { justifyContent: 'center' },
-  actionCol: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[3],
-  },
-  // No philosopher set — Write about it renders alone, so it shouldn't
-  // stretch to fill the row's full width the way a real paired column
-  // would; a plain centered block instead.
-  actionColSingle: {
-    alignItems: 'center',
-    paddingVertical: spacing[3],
-    paddingHorizontal: spacing[3],
-  },
-  // Only applied to the second column, and only when a first column
-  // actually exists (philosopher set) — a leading rule before the very
-  // first action, or a stray rule on a lone centered action, would both
-  // read as a mistake rather than a deliberate pairing.
-  actionColDivider: {
-    borderLeftWidth: 1,
-    borderLeftColor: colors.bg.border,
-  },
-  actionLabel: {
-    color: colors.text.secondary,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-  },
-  drawAgainWrap: { alignItems: 'center', gap: spacing[3], marginTop: spacing[8] },
-  drawAgainDivider: { color: colors.text.faint, fontSize: fontSizes.sm, letterSpacing: letterSpacings.wide },
-  drawAgainRow: { paddingVertical: spacing[2] },
-  drawAgainLabel: {
-    color: colors.text.faint,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.xs,
-    textAlign: 'center',
-  },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing[3], marginTop: spacing[8] },
+  actionDot: { color: colors.text.faint, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  actionLabel: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm },
+  drawAgainRow: { marginTop: 'auto', paddingTop: spacing[8], paddingVertical: spacing[3] },
+  drawAgainLabel: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.xs, textAlign: 'center' },
   });
 }

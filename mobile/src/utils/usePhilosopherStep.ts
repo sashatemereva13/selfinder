@@ -1,13 +1,16 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { usePhilosopherStore } from '../store/philosopherStore';
 import { useMeasureStore } from '../store/measureStore';
 import { useEngagementStore } from '../store/engagementStore';
 import { useGuideChatStore } from '../store/guideChatStore';
+import { useShiftStore } from '../store/shiftStore';
 import { useLocaleStore } from '../store/localeStore';
 import { getSeamLine, getSeamState, SeamState } from '../content/depthsSeam';
 import { getLocalizedLevelName } from '../content/measureConfig';
 import { buildReadingContext } from './readingContext';
+import { HEAVY_STATES } from './safety';
 import { track } from './analytics';
 
 // The philosopher's one next step (RULES.md, "The philosopher always points
@@ -19,13 +22,21 @@ export function usePhilosopherStep() {
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const currentResult = useMeasureStore((s) => s.currentResult);
   const levelPageSeenFor = useEngagementStore((s) => s.levelPageSeenFor);
-  const talkedFor = useEngagementStore((s) => s.talkedFor);
-  const offerSeenFor = useEngagementStore((s) => s.offerSeenFor);
+  // Which of today's two practices have been walked from this reading —
+  // the step moves on through them in order (2026-10-18).
+  const sessions = useShiftStore((s) => s.sessions);
+  const hydrateShifts = useShiftStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrateShifts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const usedFor = !!currentResult && sessions.some((x) => x.readingAt === currentResult.savedAt && x.door === 'use');
+  const shiftedFor = !!currentResult && sessions.some((x) => x.readingAt === currentResult.savedAt && x.door === 'love');
   const recordTalkAboutIt = useEngagementStore((s) => s.recordTalkAboutIt);
   const addReading = useGuideChatStore((s) => s.addReading);
   const locale = useLocaleStore((s) => s.locale);
 
-  const state: SeamState = getSeamState(currentResult, { levelPageSeenFor, talkedFor, offerSeenFor });
+  const state: SeamState = getSeamState(currentResult, { levelPageSeenFor, usedFor, shiftedFor });
   const line = philosopher ? getSeamLine(philosopher.id, state, locale, currentResult?.savedAt) : '';
   const philosopherName = philosopher?.nameInstrumental ?? philosopher?.name ?? '';
 
@@ -41,15 +52,19 @@ export function usePhilosopherStep() {
         });
       case 'talk':
         return t('depths.understandItDescription', { name: philosopherName });
-      case 'offer':
-        return t('shift.offerAction');
-      case 'rest':
-        return t('shift.restLabel');
+      case 'use':
+        // Softer for the heavy states (2026-10-18): "put grief to use"
+        // sounds harsh for what the session actually does with it.
+        return t(HEAVY_STATES.includes(currentResult?.vibrationLevel.slug ?? '') ? 'shift.useActionHeavy' : 'shift.useAction', {
+          level: currentResult ? getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase() : '',
+        });
+      case 'shift':
+        return t('shift.loveLabel');
     }
   })();
 
-  // Rest points nowhere: the handle shows its words with nothing to press.
-  const hasAction = state !== 'rest';
+  // Every step leads somewhere — the day never ends (2026-10-18).
+  const hasAction = true;
 
   // Opens the conversation. With a reading, it joins the conversation
   // first (the philosopher's reflection as their latest message, its
@@ -84,10 +99,11 @@ export function usePhilosopherStep() {
       case 'talk':
         openConversation();
         break;
-      case 'offer':
-        router.push('/(tabs)/depths/choose');
+      case 'use':
+        router.push({ pathname: '/(tabs)/depths/session', params: { door: 'use' } });
         break;
-      case 'rest':
+      case 'shift':
+        router.push({ pathname: '/(tabs)/depths/session', params: { door: 'love' } });
         break;
     }
   };

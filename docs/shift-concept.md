@@ -53,7 +53,14 @@ person about how the app works. Shift starts from the current reading.
 If the reading is from an earlier day, the philosopher's step is Measure
 first (as it already is), and the offer follows from the new reading.
 
-## 3. The offer
+## 3. The offer (superseded 2026-10-18)
+
+**Since 2026-10-18 the two doors are a sequence, one step per screen:**
+the state's page hands over to Use it; the end of Use it offers Shift
+toward love as the next step (one quiet line); Shift toward love is also
+always reachable from Explore → Settle. The Choose screen is gone. The
+reasoning below is kept as history.
+
 
 A question from the philosopher, in their voice, with two answers of
 equal visual weight — same size, same style, side by side or stacked
@@ -171,7 +178,7 @@ any score for the session, streaks or "sessions completed" counts.
 Status 2026-10-08: 1–3 built — the doors on Practice
 (`src/components/practice/ShiftDoors.tsx`), the session
 (`app/(tabs)/practice/session.tsx`, cues in
-`src/content/shiftSession.ts`, Marcus Aurelius' voice only), sessions
+`src/content/shiftSession.ts`; all five voices since 2026-10-14), sessions
 kept on the phone (`src/store/shiftStore.ts`). No sound yet.
 
 1. `offer` and `rest` states in `depthsSeam.ts` (+ "talk" done only on a

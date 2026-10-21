@@ -102,8 +102,7 @@ function makeStyles(colors: Colors) {
     marginTop: spacing[6],
   },
   talkButton: {
-    borderWidth: 1,
-    borderColor: colors.bg.border,
+    backgroundColor: colors.bg.elevated,
     borderRadius: radius.full,
     paddingVertical: spacing[4],
     alignItems: 'center',

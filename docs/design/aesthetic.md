@@ -208,7 +208,11 @@ as pointless, not alive, and got cut.)
 
 ## Structural rules
 
-**No cards.** No bordered/filled rectangles as the default way to
+**No borders (clarified 2026-10-16 — this rule used to read "No
+cards").** The founder's meaning: no outlines, hairlines or bordered
+boxes. A filled, borderless surface is fine where something is an
+object — a symbol on its card, a message. Still: no bordered/filled
+rectangles as the default way to
 separate content (`borderWidth` + `backgroundColor: colors.bg.elevated`
 boxes). Separate things with space, typographic hierarchy, and group
 labels instead — the philosopher-picker screen and onboarding never use

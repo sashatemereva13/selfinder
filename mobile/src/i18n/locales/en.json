@@ -131,9 +131,9 @@
     "whenToday": "today",
     "whenYesterday": "yesterday",
     "backToWholeReading": "Tap yourself to see the whole reading again",
-    "tapSphereHint": "Tap a sphere to see what you said there",
     "askPhilosopher": "Ask {{name}}",
-    "pathOnce": "First, where you are. Then what it's for. Then you choose what to do with it."
+    "todayShifted": "Today, you shifted toward love.",
+    "todayUsed": "Today, you put {{level}} to use."
   },
   "cards": {
     "backLabel": "Draw again",
@@ -141,7 +141,9 @@
     "notice": "Notice",
     "talkAboutIt": "Talk to {{name}} about it →",
     "talkAboutItMessage": "I drew a symbol just now — {{name}}: \"{{line}}\" Can we talk about it?",
-    "spillAboutIt": "Write about it instead →"
+    "spillAboutIt": "Write about it instead →",
+    "talkShort": "Talk about it",
+    "writeShort": "Write about it"
   },
   "moon": {
     "kicker": "Moon",
@@ -152,7 +154,8 @@
     "nature": "Nature",
     "reflection": "Reflection",
     "practice": "Practice",
-    "startWithMeasure": "Start with Measure"
+    "startWithMeasure": "Start with Measure",
+    "tonight": "Tonight the moon is a {{phase}}."
   },
   "level": {
     "notFound": "This level couldn't be found.",
@@ -273,7 +276,7 @@
     "arcLineDialLabel": "Your Arc",
     "zonePresentLabel": "The eternal now",
     "zonePastLabel": "How you've told it",
-    "zoneFutureLabel": "What's calling you forward",
+    "zoneFutureLabel": "What you're reaching toward",
     "closingDialLabel": "Held",
     "detailDialLabel": "That day",
     "tuneInBeforeWoopInvite": "Or settle first, with a sound",
@@ -325,7 +328,8 @@
     "momentUsed": "You used it",
     "momentGratitude": "Three small things",
     "momentAct": "One kind thing",
-    "momentWhere": "Where it could go"
+    "momentWhere": "Where it could go",
+    "coneIntroEmpty": "Each time you measure, a point gathers here — below, where you have been; above, what you are reaching toward."
   },
   "saveMessage": {
     "saveImageLabel": "Save image",
@@ -351,11 +355,13 @@
   "tuneIn": {
     "lockScreenArtist": "Selfinder — Tune In",
     "play": "Play",
-    "title": "Tune your field with frequency",
+    "title": "Let a sound settle you",
     "introLine": "Two tones a few Hz apart, one per ear — your brain reads the gap as a single slow pulse. Needs stereo headphones.",
     "volume": "Volume",
     "sleepTimer": "Sleep timer",
-    "fadingOutIn": "Fading out in {{time}}"
+    "fadingOutIn": "Fading out in {{time}}",
+    "bestWithHeadphones": "Best with headphones",
+    "minutesShort": "{{count}} min"
   },
   "products": {
     "title": "Journeys",
@@ -471,17 +477,15 @@
     "wishRetryNote": "That doesn't sound like a wish for yourself — want to try again?"
   },
   "measureIntro": {
-    "kicker": "Measure",
-    "lastReading": "Last time, you read as {{level}}.",
     "beginConversation": "Begin the conversation",
-    "orJustWriteItOut": "Too loud to answer? Pour it out first →",
-    "caption": "Share what is actually true, not what you think it should be."
+    "caption": "Answer with what’s true right now."
   },
   "spill": {
     "kicker": "Spill",
     "title": "Write without looking back",
     "copy1": "For one minute, just keep writing. Whatever comes, in any order, without editing it — you'll only ever see the word you're writing right now, nothing before it. When the minute is up, you can read the whole thing back.",
-    "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it."
+    "copy2": "There's no wrong way to do this. Typos, half-thoughts, and repeats are part of it.",
+    "howItWorks": "One minute. You’ll only see the word you’re writing — when it’s up, you can read it all back."
   },
   "spillReveal": {
     "whatCameOut": "What came out",
@@ -496,12 +500,13 @@
   },
   "levels": {
     "kicker": "Levels",
-    "title": "The map of consciousness",
+    "title": "The seventeen states",
     "copy": "Seventeen states, none of them better or worse than another — drag around the wheel to see where each one sits.",
     "note": "These connections describe what's true between neighboring states, not a route everyone has to walk — you can move from Anger to Love and back to Reason without passing through everything between, and that's not doing it wrong.",
-    "wheelLabel": "Vibration level wheel",
+    "wheelLabel": "Wheel of the seventeen states",
     "wheelHint": "Swipe up or down to move between the seventeen levels",
-    "readAbout": "Read about {{name}} →"
+    "readAbout": "Read about {{name}} →",
+    "howToExplore": "Drag around the ring to find a state. Tap its name to read about it."
   },
   "feelingLucky": {
     "talkAboutIt": "Talk to {{name}} about it →",
@@ -539,14 +544,7 @@
     "handleFirst": "Find your starting point"
   },
   "shift": {
-    "offerAction": "What to do with it",
-    "restLabel": "That's today's walk",
-    "useLabel": "Use it",
-    "useCaption": "Put it to work in your day",
-    "useCaptionAtLove": "Give your warmth somewhere to go",
     "loveLabel": "Shift toward love",
-    "loveCaption": "Move toward warmth and calm",
-    "loveCaptionFromOpen": "Give the stillness a direction — toward someone",
     "tapToContinue": "Tap to move on",
     "writePlaceholder": "Only if you want to — it stays on your phone",
     "continue": "Continue",
@@ -556,7 +554,8 @@
     "done": "Done",
     "breatheIn": "breathe in",
     "breatheOut": "breathe out",
-    "needsReading": "Measure first — then choose what to do with it."
+    "useAction": "Put {{level}} to use",
+    "useActionHeavy": "Be with {{level}}"
   },
   "explore": {
     "title": "Explore",
@@ -587,6 +586,8 @@
     "journeysDescription": "Twelve longer walks, with your philosopher",
     "deeperTitle": "Deeper questions",
     "deeperIntro": "Each one is a longer walk — a path of questions toward something one question alone would not reach.",
-    "patternLabel": "A pattern"
+    "patternLabel": "A pattern",
+    "shiftLabel": "Shift toward love",
+    "shiftDescription": "Starts from today’s reading"
   }
 }

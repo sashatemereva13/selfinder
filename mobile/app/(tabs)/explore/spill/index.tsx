@@ -13,6 +13,7 @@ import { useEngagementStore } from '../../../../src/store/engagementStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
+import { PhilosopherLine } from '../../../../src/components/shared/PhilosopherLine';
 import { track } from '../../../../src/utils/analytics';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
@@ -49,14 +50,11 @@ export default function SpillScreen() {
       <BackLink style={[styles.backRow, { paddingTop: insets.top + spacing[4] }]} />
 
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
-        <Text style={styles.kicker}>{t('spill.kicker')}</Text>
-        <Text style={styles.title}>{t('spill.title')}</Text>
-        <Text style={styles.copy}>
-          {t('spill.copy1')}
-        </Text>
-        <Text style={styles.copy}>
-          {t('spill.copy2')}
-        </Text>
+        {/* The philosopher steps away for the minute (2026-10-16), and one
+            plain line says how it works — instead of the "SPILL" label, a
+            title and two paragraphs. */}
+        <PhilosopherLine room="spill" />
+        <Text style={styles.copy}>{t('spill.howItWorks')}</Text>
       </View>
 
       <View style={[styles.footer, { width: columnWidth, alignSelf: 'center' }]}>
@@ -101,11 +99,12 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.md,
     lineHeight: fontSizes.md * lineHeights.tight,
   },
+  // The plain layer under the philosopher's line — short, quieter.
   copy: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.base,
-    lineHeight: fontSizes.base * lineHeights.normal,
+    color: colors.text.muted,
+    fontFamily: fonts.medium,
+    fontSize: fontSizes.sm,
+    lineHeight: fontSizes.sm * lineHeights.normal,
   },
   button: {
     paddingVertical: spacing[4],

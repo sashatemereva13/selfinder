@@ -116,12 +116,18 @@ export function MapBar({ state, navigation, insets }: MapBarProps) {
           accessibilityLabel={handleLabel}
           hitSlop={{ top: 8, bottom: 8, left: 12, right: 12 }}
         >
-          <Text
-            style={[styles.handleText, { color: step.hasAction ? `rgb(${accentRgb})` : colors.text.muted }]}
-            numberOfLines={1}
-          >
-            {step.hasAction ? `${handleLabel} →` : handleLabel}
-          </Text>
+          {step.hasAction ? (
+            <Text style={[styles.handleText, { color: `rgb(${accentRgb})` }]} numberOfLines={1}>
+              {handleLabel} →
+            </Text>
+          ) : (
+            // At rest, the philosopher's own closing line for the day
+            // (2026-10-14) — quieter, in their voice, nothing to press —
+            // instead of a system-sounding "That's today's walk".
+            <Text style={styles.restText} numberOfLines={2}>
+              {step.line || handleLabel}
+            </Text>
+          )}
         </Pressable>
       </View>
 
@@ -223,7 +229,8 @@ function makeStyles(colors: Colors) {
       alignSelf: 'center',
       maxWidth: '90%',
       paddingHorizontal: spacing[4],
-      height: 34,
+      minHeight: 34,
+      paddingVertical: spacing[1],
       alignItems: 'center',
       justifyContent: 'center',
     },
@@ -231,6 +238,13 @@ function makeStyles(colors: Colors) {
       fontFamily: fonts.medium,
       fontSize: 11,
       letterSpacing: 0.3,
+    },
+    restText: {
+      color: colors.text.muted,
+      fontFamily: fonts.voice,
+      fontSize: 12,
+      lineHeight: 12 * 1.35,
+      textAlign: 'center',
     },
     stations: { height: 66 },
     station: {

@@ -176,8 +176,12 @@ wrong regardless of how clean it looks in isolation.
 - **Motion gathers, condenses, becomes — never slides or pops.** Causality
   over coincidence. No idle motion without meaning (cut dead time instead
   of padding it with animation).
-- **No cards.** No bordered/filled boxes as the default separator — space
-  and typography do that job.
+- **No borders (clarified 2026-10-16 — this rule used to read "No
+  cards").** No outlines, hairlines or bordered boxes. A filled,
+  borderless surface (`colors.bg.elevated`, rounded) is fine where
+  something is genuinely an object — a symbol on its card, a message.
+  Space and typography still separate ordinary content; a surface is for
+  a thing, not a way of dividing a page.
 - **Never show a bare numeric score next to a level name** — position on
   a ring instead. This is a deliberate anti-judgment rule: Selfinder
   never implies a vibration is good or bad.
@@ -206,14 +210,17 @@ wrong regardless of how clean it looks in isolation.
   three places, each with one job:
   - **Today** (the `depths/` folder) — the daily chain, which leads
     itself: **see where you are** (Measure → Today) → **understand it**
-    (your state's page) → **choose what to do with it** (`depths/choose`:
-    Use it / Shift toward love) → the session (`depths/session`) → back to
-    a quiet Today. Each screen's one action is the next step; the
+    (your state's page) → **Use it** (`depths/session`, door `use`) →
+    **Shift toward love**, if wanted (door `love`) → back to Today, which
+    records what was walked. One step per screen (2026-10-18 — the
+    two-door Choose screen became this sequence); the pieces can be
+    walked at different times of the day. Each screen's one action is the next step; the
     philosopher's step on the minimap's handle is the way back into the
     chain from anywhere.
   - **Explore** (the `explore/` folder) — every experience someone visits
     on their own, grouped by what they need right now, each group a verb:
-    **Settle** (Breathe, Tune In), **Say it** (talk with your
+    **Settle** (Breathe, Tune In, Shift toward love — reachable here on
+    its own, from today's reading), **Say it** (talk with your
     philosopher, Spill), **Understand** (the seventeen states, Deeper
     questions — the Journeys, on their own screen), **Receive** (a
     message · a symbol · the moon, one line). Nothing pushed.
@@ -334,13 +341,18 @@ Selfinder is or why it costs money.
   genuinely fun to read, because that's when curiosity is highest: they
   just learned what their state is called and want to know what it means.
   Shift stays one tap away on the menu for anyone who wants it.
-  **Two equal doors (2026-10-08).** Once someone has met their state
-  (read its page), the philosopher offers a choice, never a push: **Use
-  it** — put the state to work in their day (anger can power a workout)
-  — or **Shift toward love**. Same size, same weight, neither marked as
-  the right one; not choosing is also an answer, and the offer isn't
-  repeated that day. There is one Measure and no shortcut alternative to
-  it — Shift starts from the current reading. Full design:
+  **A sequence, not a choice (2026-10-18 — replaces "Two equal doors",
+  2026-10-08).** One step per screen: once someone has met their state
+  (read its page), the philosopher hands over to **Use it** — put the
+  state to work in their day (anger can power a workout); after it,
+  **Shift toward love** is offered as the next step, never pushed. Use it
+  comes first because it starts from where the person already is; Shift
+  is the next thing, not the better one. Stopping at any point is a
+  complete walk, and nothing says otherwise. Shift toward love is also
+  always reachable on its own from Explore. The pieces can be walked at
+  different times of the day — that's how the app fits several short
+  visits (`docs/persona.md`). There is one Measure and no shortcut
+  alternative to it — Shift starts from the current reading. Full design:
   `docs/shift-concept.md`.
 - **The philosopher always points to exactly one next step (2026-09-26).**
   Gently, in their own voice, about what to *do in the app* — never about
@@ -348,8 +360,10 @@ Selfinder is or why it costs money.
   stays always available, so a suggestion can be ignored without
   friction: the philosopher is the guide, the menu is always there. By state:
   no reading → Measure; just measured → understand the state; then →
-  choose (Use it / Shift toward love — `depths/choose`); once the offer has been seen →
-  rest (no action); returning after days → Measure. Talking is never a
+  Use it; then → Shift toward love (not at love itself); once both are
+  walked → Measure again. **The day never ends** (2026-10-18): there is
+  always a next step to come back to, because on a hard day she comes
+  back several times; returning after days → Measure. Talking is never a
   gate between these (2026-10-08) — it stays the first place in Explore.
 - **Journeys are generated experiences, standalone from Your
   Arc — an open-ended, growing family, not a fixed set.** Every Journey
@@ -596,11 +610,15 @@ Selfinder is or why it costs money.
   "state," "how you feel," "shift toward" — never "vibration,"
   "frequency," "your field," or "energy." Those words may stay in code
   identifiers (`vibrationLevel`, `VibrationSpectrum`) where renaming buys
-  nothing, but never on screen. Known strings still to replace:
-  `measureIntro.kicker` ("Frequency Check-In"), `measure.readingYourField`,
-  `measure.somethingWentWrong`, `tuneIn.title`, `levels.wheelLabel`
-  (accessibility label), and the "lower vibrations to higher vibrations"
-  entry in `feelingLuckyList.json` (also a ranking — doubly off-brief).
+  nothing, but never on screen. (The last known strings — Measure's
+  title, `tuneIn.title`, `levels.wheelLabel` — were replaced by
+  2026-10-12.) **One deliberate exception: the message list**
+  (`feelingLuckyList.json` and its Russian twin, behind "A message" in
+  Explore and the daily reminder) is the founder's own writing and is
+  **never changed** — no edits, removals, rewording or reordering, in
+  either language, even where it uses vibration language, ranks states,
+  or speaks about the reader. It's presented as a message received, not
+  as Selfinder's own voice; leave it exactly as written.
 - **Never diagnose, never judge, never say "you should."** Consistent
   with the anti-judgment visual rules (no bare score, no gradient bar) —
   the copy register carries the same rule. A line like "a moment, not a

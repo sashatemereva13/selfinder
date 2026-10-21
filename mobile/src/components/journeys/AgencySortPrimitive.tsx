@@ -110,7 +110,9 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
     bucketPulse.value = withTiming(selectedItem ? 1 : 0, { duration: 250, easing: SOFT_EASE });
   }, [selectedItem, bucketPulse]);
   const bucketPulseStyle = useAnimatedStyle(() => ({
-    borderColor: bucketPulse.value > 0.5 ? accentColor : colors.bg.border,
+    // Borderless (2026-10-16): the drop zones light up with a tint of the
+    // accent instead of an outline when something is ready to place.
+    backgroundColor: bucketPulse.value > 0.5 ? `rgba(${accentRgb},0.16)` : colors.bg.elevated,
     opacity: 0.4 + bucketPulse.value * 0.6,
   }));
 
@@ -153,7 +155,7 @@ export function AgencySortPrimitive({ items, onSubmit }: AgencySortPrimitiveProp
               <Pressable
                 style={[
                   styles.chip,
-                  isSelected && { borderColor: accentColor },
+                  isSelected && { backgroundColor: `rgba(${accentRgb},0.22)` },
                   assignedTo && styles.chipAssigned,
                 ]}
                 onPress={() => setSelectedItem(isSelected ? null : item)}
@@ -197,8 +199,7 @@ function makeStyles(colors: Colors) {
     root: { paddingHorizontal: spacing[5], paddingBottom: spacing[4], gap: spacing[5] },
     chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing[2], justifyContent: 'center' },
     chip: {
-      borderWidth: 1,
-      borderColor: colors.bg.border,
+      backgroundColor: colors.bg.elevated,
       borderRadius: radius.md,
       paddingHorizontal: spacing[3],
       paddingVertical: spacing[2],
@@ -221,8 +222,7 @@ function makeStyles(colors: Colors) {
     // a 1px border, quiet by default (colors.bg.border, low opacity),
     // brightening to the accent color while a chip is selected.
     bucketRow: {
-      borderWidth: 1,
-      borderColor: colors.bg.border,
+      backgroundColor: colors.bg.elevated,
       borderRadius: radius.md,
     },
     bucketRowInner: { alignItems: 'center', paddingVertical: spacing[3], paddingHorizontal: spacing[3] },

@@ -55,6 +55,9 @@ import { getAnswerQuestion } from "../../../src/content/answerQuestions";
 import { useGuideChatStore } from "../../../src/store/guideChatStore";
 import { buildReadingContext } from "../../../src/utils/readingContext";
 import { HEAVY_STATES } from "../../../src/utils/safety";
+import { getSeamLine } from "../../../src/content/depthsSeam";
+import { ShiftMark } from "../../../src/components/shift/ShiftMark";
+import { useShiftStore } from "../../../src/store/shiftStore";
 import { CrisisLine } from "../../../src/components/shared/CrisisLine";
 import { useEngagementStore } from "../../../src/store/engagementStore";
 import { getRelativeTimeBucket, formatDate } from "../../../src/utils/relativeTime";
@@ -75,6 +78,9 @@ import {
 import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
+import { AURA_FIGURE_SIZE, BASE_AURA_DISPLAY_SIZE as COMPOSITION_SIZE } from "../../../src/components/depths/depthsGeometry";
+// The figure's size relative to the composition it stands in.
+const FIGURE_SCALE = AURA_FIGURE_SIZE / COMPOSITION_SIZE;
 import {
   SLOT_ORDER,
   H_CUT,
@@ -201,6 +207,18 @@ function DepthsContent() {
   // first time a sphere's answer is opened — snapshotted, since opening
   // one is what marks it seen.
   const showAnswerBackHint = useRef(!sphereAnswerSeen).current;
+  // Today shifts with the person (2026-10-14): once a session has been
+  // walked from today's reading, Today carries its before and after, and a
+  // plain sentence of what was done — a record, never what it means.
+  const shiftSessions = useShiftStore((s) => s.sessions);
+  const hydrateShifts = useShiftStore((s) => s.hydrate);
+  useEffect(() => {
+    hydrateShifts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const todaysShift = currentResult
+    ? [...shiftSessions].reverse().find((s) => s.readingAt === currentResult.savedAt)
+    : undefined;
   const addReading = useGuideChatStore((s) => s.addReading);
   const addContext = useGuideChatStore((s) => s.addContext);
   const sendToGuide = useGuideChatStore((s) => s.send);
@@ -533,7 +551,9 @@ function DepthsContent() {
   // (the safe-area padding and text don't scale with it), so the growth is
   // the spare height divided by the canvas's own height, capped so the
   // figure never gets more than this much bigger than it was tuned at.
-  const MAX_GROW = 1.2;
+  // Was 1.2 — the figure read as too big on a tall phone (2026-10-12);
+  // the headline takes the room instead.
+  const MAX_GROW = 1.06;
   const GROW_MARGIN_PX = 8;
   // Natural (scale-1) geometry — always built, used both for the first
   // measurement pass and as the render output whenever no shrink is
@@ -784,6 +804,8 @@ function DepthsContent() {
                       selectedWheelLevelSlug={wheelLevelSlug}
                       selectedWheelLevelName={wheelLevelName}
                       isAggregateReading={!selectedSphere}
+                      hideIdleWheelLabel
+                      invitePulse={!isArriving && !sphereAnswerSeen && !todaysShift && !!currentResult?.qaPairs?.length}
                       onWheelLevelPress={
                         wheelLevelSlug
                           ? () => goToLevel(wheelLevelSlug)
@@ -895,6 +917,15 @@ function DepthsContent() {
                   reverify this is still true (screenshot-check the wheel
                   edge) if the column is ever widened again. */}
                 <View style={styles.quoteBubbleWrap} pointerEvents="box-none">
+                  {/* The headline (2026-10-12): the overall state, the one
+                      answer to "where am I" — read first, before the
+                      philosopher's reflection holds all four together. */}
+                  {lastLevel && (
+                    <Text style={[styles.headline, { color: levelColor }]} accessibilityRole="header">
+                      {getLocalizedLevelName(currentResult!.vibrationLevel, locale).charAt(0).toUpperCase() +
+                        getLocalizedLevelName(currentResult!.vibrationLevel, locale).slice(1)}
+                    </Text>
+                  )}
                   {/* 2026-10-08 — who said it, and when. With the seam gone
                       nothing else on Depths names the philosopher, and a
                       reflection can be days old; only shown when it really
@@ -935,7 +966,7 @@ function DepthsContent() {
                       accentRgb={levelRgb}
                     >
                       <Text
-                        numberOfLines={10}
+                        numberOfLines={5}
                         style={[styles.title, { color: levelColor }]}
                       >
                         {headlineMessage}
@@ -943,17 +974,28 @@ function DepthsContent() {
                     </LongPressToSave>
                   ) : (
                     <Text
-                      numberOfLines={10}
+                      numberOfLines={5}
                       style={[styles.title, { color: levelColor }]}
                     >
                       {headlineMessage}
                     </Text>
                   )}
-                  {totalMeasureCount <= 1 &&
-                    !!currentResult &&
-                    levelPageSeenFor !== currentResult.savedAt && (
-                      <Text style={styles.pathOnce}>{t("depths.pathOnce")}</Text>
-                    )}
+                  {todaysShift && (
+                    <View style={styles.todaysShift}>
+                      {/* The two points only when the person moved — if they
+                          stayed, the headline already names where. */}
+                      {todaysShift.fromSlug !== todaysShift.toSlug && (
+                        <ShiftMark fromSlug={todaysShift.fromSlug} toSlug={todaysShift.toSlug} width={180} />
+                      )}
+                      <Text style={styles.todaysShiftLine}>
+                        {todaysShift.door === "love"
+                          ? t("depths.todayShifted")
+                          : t("depths.todayUsed", {
+                              level: getLocalizedLevelName(currentResult!.vibrationLevel, locale).toLowerCase(),
+                            })}
+                      </Text>
+                    </View>
+                  )}
                   {/* A reading in a heavy state carries the quiet line to
                       help, whatever was said (crisis safety net,
                       2026-10-10) — today's reading only. */}
@@ -962,10 +1004,10 @@ function DepthsContent() {
                     getRelativeTimeBucket(currentResult.savedAt) === "today" && (
                       <CrisisLine kind="heavy" style={{ marginTop: spacing[3] }} />
                     )}
-                  {/* Invites the "why" until it's been found once. */}
-                  {!sphereAnswerSeen && !!currentResult?.qaPairs?.length && (
-                    <Text style={styles.answerHint}>{t("depths.tapSphereHint")}</Text>
-                  )}
+                  {/* The instruction lines that sat here — the path line and
+                      "Tap a sphere to see what you said there" — were
+                      removed 2026-10-12: the handle walks the path, and the
+                      spheres pulse once on arrival to invite a tap. */}
                   </>
                   )}
                 </View>
@@ -973,9 +1015,28 @@ function DepthsContent() {
             </>
           ) : (
             <>
-              <Text style={styles.lastReadingLabel}>
-                {t("depths.beforeFirstReading")}
-              </Text>
+              {/* Before a first reading, the philosopher's own line holds
+                  the place the reflection will take (2026-10-12 — it used
+                  to be a small "Before your first reading" label over an
+                  empty half-screen). */}
+              {philosopher ? (
+                <View
+                  style={[styles.quoteBubbleWrap, { top: insets.top + spacing[4] * fixedZoneScale }]}
+                  pointerEvents="none"
+                >
+                  <View style={styles.reflectionByline}>
+                    <PhilosopherObject id={philosopher.id} rgb={accentRgb} size={14} />
+                    <Text style={[styles.reflectionName, { color: accentColor }]}>{philosopher.name}</Text>
+                  </View>
+                  <Text style={[styles.title, { color: colors.text.primary }]}>
+                    {getSeamLine(philosopher.id, "firstMeasure", locale)}
+                  </Text>
+                </View>
+              ) : (
+                <Text style={styles.lastReadingLabel}>
+                  {t("depths.beforeFirstReading")}
+                </Text>
+              )}
               {/* Same overlay approach as the reading branch above — the
                 spiral is absolutely positioned inside a wrapper sized/
                 positioned identically to how AuraWithDots itself sits
@@ -1635,7 +1696,19 @@ function AuraWithDots({
       style={[styles.auraWrap, overlay && styles.auraWrapOverlay]}
       pointerEvents="none"
     >
-      <View style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}>
+      {/* Drawn at AURA_FIGURE_SIZE within the box the composition was laid
+          out for — scaled from its feet, so it stays standing on the same
+          ground at the centre of its rings. */}
+      <View
+        style={{
+          width: AURA_METRICS.width,
+          height: AURA_METRICS.height,
+          transform: [
+            { translateY: (AURA_METRICS.height * (1 - FIGURE_SCALE)) / 2 },
+            { scale: FIGURE_SCALE },
+          ],
+        }}
+      >
         <Image
           source={source}
           style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}

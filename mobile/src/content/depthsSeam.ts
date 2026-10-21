@@ -15,16 +15,18 @@ import { getRelativeTimeBucket } from '../utils/relativeTime';
 //                 right after learning what the state is called)
 // talk          — today's reading, level page read → talk it through
 //                 (done once a message is actually sent about it)
-// offer         — level page read → the Shift offer: Use it, or Shift toward love
-//                 (docs/shift-concept.md). Asked once per reading.
-// rest          — the offer has been seen, answered or not → nothing more
-//                 to point to today; the step is quiet
-// measureAgain  — the latest reading is from an earlier day → Measure
-export type SeamState = 'firstMeasure' | 'learn' | 'talk' | 'offer' | 'rest' | 'measureAgain';
+// use           — level page read → Use it (2026-10-18: one step per
+//                 screen — the two-door Choose screen became a sequence)
+// shift         — Use it done → Shift toward love, if they want it (not
+//                 at love itself: there's nowhere to shift toward)
+// measureAgain  — the latest reading is from an earlier day, or today's
+//                 walk is complete → Measure again. The day never ends:
+//                 there is always a next step to come back to.
+export type SeamState = 'firstMeasure' | 'learn' | 'talk' | 'use' | 'shift' | 'measureAgain';
 
 export function getSeamState(
   currentResult: MeasureResult | null,
-  seen: { levelPageSeenFor: string | null; talkedFor: string | null; offerSeenFor: string | null }
+  seen: { levelPageSeenFor: string | null; usedFor: boolean; shiftedFor: boolean }
 ): SeamState {
   if (!currentResult) return 'firstMeasure';
   const at = currentResult.savedAt;
@@ -34,8 +36,9 @@ export function getSeamState(
   // testing: having talked before the step could notice, it was stuck on
   // "talk" with no way on). The conversation stays a full place on the
   // map; 'talk' remains a state for when it should lead again.
-  if (seen.offerSeenFor !== at) return 'offer';
-  return 'rest';
+  if (!seen.usedFor) return 'use';
+  if (!seen.shiftedFor && currentResult.vibrationLevel.slug !== 'love') return 'shift';
+  return 'measureAgain';
 }
 
 type Line = Record<Locale, string>;
@@ -54,13 +57,13 @@ const SEAM_LINES: Record<string, Record<SeamState, Line>> = {
       en: "You've read about it. Does it sound like you?",
       ru: 'Вы прочли о нём. Это похоже на вас?',
     },
-    offer: {
-      en: 'You know its name and what it is for. What would you like to do with it?',
-      ru: 'Вы знаете его имя и для чего оно. Что вы хотите с ним сделать?',
+    use: {
+      en: 'You know what it is for. Shall we see what it can do?',
+      ru: 'Вы знаете, для чего оно. Посмотрим, на что оно способно?',
     },
-    rest: {
-      en: 'Enough for today. The questions will keep.',
-      ru: 'На сегодня довольно. Вопросы подождут.',
+    shift: {
+      en: 'And now — would you like to walk toward love?',
+      ru: 'А теперь — хотите пойти к любви?',
     },
     measureAgain: {
       en: 'That was then. Where do you stand now?',
@@ -80,13 +83,13 @@ const SEAM_LINES: Record<string, Record<SeamState, Line>> = {
       en: 'You have studied it. Now say plainly what you make of it.',
       ru: 'Вы изучили его. Теперь скажите прямо, что вы об этом думаете.',
     },
-    offer: {
-      en: 'What is in your power now is what you do with it. Choose.',
-      ru: 'В вашей власти теперь — что вы с этим сделаете. Выбирайте.',
+    use: {
+      en: 'What is in your power now is what you do with it. Begin.',
+      ru: 'В вашей власти теперь — что вы с этим сделаете. Начните.',
     },
-    rest: {
-      en: 'The day’s work is done. Rest is part of the discipline.',
-      ru: 'Дневная работа сделана. Отдых — тоже часть дисциплины.',
+    shift: {
+      en: 'If you wish, turn now toward love.',
+      ru: 'Если хотите, повернитесь теперь к любви.',
     },
     measureAgain: {
       en: 'What was true then need not be true now. Look again.',
@@ -106,13 +109,13 @@ const SEAM_LINES: Record<string, Record<SeamState, Line>> = {
       en: 'Knowing about it is one thing. Tell me what it is like from inside.',
       ru: 'Знать о нём — одно. Расскажите, каково это изнутри.',
     },
-    offer: {
-      en: 'There is a choice in front of you now, and it is yours alone.',
-      ru: 'Перед вами выбор, и он только ваш.',
+    use: {
+      en: 'Knowing is not yet doing. Take it up.',
+      ru: 'Знать — ещё не значит делать. Возьмите это в руки.',
     },
-    rest: {
-      en: 'You looked at today honestly. That is enough.',
-      ru: 'Вы честно взглянули на этот день. Этого довольно.',
+    shift: {
+      en: 'There is another step, if you choose it: toward love.',
+      ru: 'Есть ещё шаг, если вы его выберете: к любви.',
     },
     measureAgain: {
       en: 'Whoever looked last time has had time to change. Look again.',
@@ -132,13 +135,13 @@ const SEAM_LINES: Record<string, Record<SeamState, Line>> = {
       en: "Now you know what the books say. Tell me what it's actually like.",
       ru: 'Теперь вы знаете, что пишут в книгах. Расскажите, как это на самом деле.',
     },
-    offer: {
-      en: "So that's where you are. Now — what do you want to do with it?",
-      ru: 'Вот где вы. А теперь — что вы хотите с этим делать?',
+    use: {
+      en: "So that's what it's for. Now put it to work.",
+      ru: 'Вот для чего оно. Теперь пустите его в дело.',
     },
-    rest: {
-      en: "That's today. Go and live the rest of it.",
-      ru: 'Это было сегодня. Идите и проживите остальное.',
+    shift: {
+      en: "If there's time, there's another walk — toward love.",
+      ru: 'Если есть время, есть ещё одна прогулка — к любви.',
     },
     measureAgain: {
       en: 'The ground has moved since you last looked. Look again.',
@@ -158,13 +161,13 @@ const SEAM_LINES: Record<string, Record<SeamState, Line>> = {
       en: 'Knowledge grows useful once it is put into words. Talk it through with me.',
       ru: 'Знание становится полезным, когда его выговоришь. Обсудите это со мной.',
     },
-    offer: {
-      en: 'You understand it now. What remains is to choose what to do with it.',
-      ru: 'Теперь вы это понимаете. Осталось выбрать, что с этим делать.',
+    use: {
+      en: 'A state is for something. Put this one to its use.',
+      ru: 'Всякое состояние для чего-то нужно. Пустите это в дело.',
     },
-    rest: {
-      en: 'Enough for one day. Come back tomorrow and look again.',
-      ru: 'Достаточно для одного дня. Возвращайтесь завтра и взгляните снова.',
+    shift: {
+      en: 'Having used it, you may now practise love.',
+      ru: 'Применив это, теперь можно упражняться в любви.',
     },
     measureAgain: {
       en: "A new day, a new reading. Let's see where you are today.",

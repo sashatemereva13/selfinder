@@ -13,6 +13,8 @@ import { GatherIn } from '../../../src/components/shared/GatherIn';
 import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { usePhilosopherStep } from '../../../src/utils/usePhilosopherStep';
 import { useAuthStore } from '../../../src/store/authStore';
+import { useMeasureStore } from '../../../src/store/measureStore';
+import { getRelativeTimeBucket } from '../../../src/utils/relativeTime';
 import { useAppAccentTextRgb } from '../../../src/utils/appAccent';
 
 // Explore (2026-10-09 — RULES.md, "Three places, one chain"): every
@@ -29,6 +31,10 @@ const GROUPS: { key: string; rooms: Room[] }[] = [
     rooms: [
       { key: 'breathe', route: '/(tabs)/explore/breathing' },
       { key: 'tunein', route: '/(tabs)/explore/tunein' },
+      // Shift toward love, reachable on its own (2026-10-18) — in Today's
+      // chain it comes after Use it; here it's there whenever wanted. It
+      // starts from today's reading, so without one it opens Measure.
+      { key: 'shift', route: '/(tabs)/depths/session' },
     ],
   },
   {
@@ -70,7 +76,17 @@ export default function ExploreScreen() {
   const accent = `rgb(${accentTextRgb})`;
   const philosopherName = step.philosopher?.nameInstrumental ?? step.philosopher?.name ?? '';
 
-  const open = (room: Room) => (room.key === 'talk' ? step.openConversation() : router.push(room.route as never));
+  const currentResult = useMeasureStore((s) => s.currentResult);
+  const hasTodaysReading = !!currentResult && getRelativeTimeBucket(currentResult.savedAt) === 'today';
+  const open = (room: Room) => {
+    if (room.key === 'talk') return step.openConversation();
+    if (room.key === 'shift') {
+      return hasTodaysReading
+        ? router.push({ pathname: '/(tabs)/depths/session', params: { door: 'love' } })
+        : router.push('/(tabs)/depths/measure');
+    }
+    router.push(room.route as never);
+  };
 
   return (
     <View style={styles.root}>
@@ -140,18 +156,22 @@ export default function ExploreScreen() {
         <GatherIn delay={120 + GROUPS.length * 120}>
           <View style={styles.group}>
             <Text style={styles.groupLabel}>{t('explore.group_receive')}</Text>
-            <View style={styles.signs}>
-              {SIGNS.map((room, i) => (
-                <View key={room.key} style={styles.signWrap}>
-                  {i > 0 && <Text style={styles.signDot}>·</Text>}
-                  <Pressable onPress={() => open(room)} accessibilityRole="button" hitSlop={spacing[2]}>
-                    {({ pressed }) => (
-                      <Text style={[styles.label, pressed && styles.pressed]}>{t(`explore.${room.key}Label`)}</Text>
-                    )}
-                  </Pressable>
-                </View>
-              ))}
-            </View>
+            {/* Two rows of two (2026-10-12) — one wrapping line put a
+                separator dot at the start of its second line. */}
+            {[SIGNS.slice(0, 2), SIGNS.slice(2, 4)].map((row, r) => (
+              <View key={r} style={styles.signs}>
+                {row.map((room, i) => (
+                  <View key={room.key} style={styles.signWrap}>
+                    {i > 0 && <Text style={styles.signDot}>·</Text>}
+                    <Pressable onPress={() => open(room)} accessibilityRole="button" hitSlop={spacing[2]}>
+                      {({ pressed }) => (
+                        <Text style={[styles.label, pressed && styles.pressed]}>{t(`explore.${room.key}Label`)}</Text>
+                      )}
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            ))}
           </View>
         </GatherIn>
       </ScrollView>
@@ -186,7 +206,7 @@ function makeStyles(colors: Colors) {
     pressed: { opacity: 0.6 },
     label: { color: colors.text.primary, fontFamily: fonts.medium, fontSize: fontSizes.base },
     description: { color: colors.text.muted, fontFamily: fonts.light, fontSize: fontSizes.xs },
-    signs: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' },
+    signs: { flexDirection: 'row', alignItems: 'center' },
     signWrap: { flexDirection: 'row', alignItems: 'center' },
     signDot: { color: colors.text.faint, fontFamily: fonts.medium, fontSize: fontSizes.base, marginHorizontal: spacing[3] },
   });

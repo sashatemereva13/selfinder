@@ -296,21 +296,27 @@ export default function LevelScreen() {
                 right here, where the reading ends (2026-10-09, from
                 testing: it used to appear only in the minimap's handle,
                 after the page was closed — somewhere else, at another
-                moment). The philosopher asks; Choose holds the two
-                doors. Any other state's page keeps the conversation. */}
+                moment). Since 2026-10-18 it leads straight into Use it —
+                one step per screen, no two-door choice. Any other
+                state's page keeps the conversation. */}
             {philosopher && isOwnReading ? (
               <View style={styles.handOff}>
                 <View style={styles.philosopherRow}>
                   <PhilosopherObject id={philosopher.id} rgb={accentRgb} size={16} />
                   <Text style={[styles.philosopherName, { color: accentTextColor }]}>{philosopher.name}</Text>
                 </View>
-                <Text style={styles.philosopherLine}>{getSeamLine(philosopher.id, 'offer', locale)}</Text>
+                <Text style={styles.philosopherLine}>{getSeamLine(philosopher.id, 'use', locale)}</Text>
                 <Pressable
                   style={[styles.talkButton, { backgroundColor: accentColor }]}
-                  onPress={() => router.push('/(tabs)/depths/choose')}
+                  onPress={() => router.push({ pathname: '/(tabs)/depths/session', params: { door: 'use' } })}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.talkButtonText}>{t('shift.offerAction')} →</Text>
+                  <Text style={styles.talkButtonText}>
+                    {t(HEAVY_STATES.includes(level.slug) ? 'shift.useActionHeavy' : 'shift.useAction', {
+                      level: level.name.toLowerCase(),
+                    })}{' '}
+                    →
+                  </Text>
                 </Pressable>
               </View>
             ) : philosopher ? (

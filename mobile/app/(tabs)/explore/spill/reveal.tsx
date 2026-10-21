@@ -199,11 +199,10 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.base,
   },
   secondaryButton: {
+    backgroundColor: colors.bg.elevated,
     paddingVertical: spacing[4],
     borderRadius: radius.full,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.bg.border,
   },
   secondaryButtonText: {
     color: colors.text.secondary,

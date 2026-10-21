@@ -26,6 +26,7 @@ import { getLocalizedLevelName, useLevelColors } from '../../../src/content/meas
 import { buildSession } from '../../../src/content/shiftSession';
 import { getJourneyForState, getJourneyOfferLine, JOURNEY_OFFER_GAP_DAYS } from '../../../src/content/journeyForState';
 import { useEngagementStore } from '../../../src/store/engagementStore';
+import { getSeamLine } from '../../../src/content/depthsSeam';
 import { HEAVY_STATES, mentionsCrisisOnDevice } from '../../../src/utils/safety';
 import { CrisisLine } from '../../../src/components/shared/CrisisLine';
 import type { ShiftDoor } from '../../../src/content/shiftContent';
@@ -34,6 +35,8 @@ import { AmbientGlow } from '../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../src/components/shared/BackLink';
 import { ConsciousnessWheel } from '../../../src/components/depths/ConsciousnessWheel';
 import { SessionSound } from '../../../src/components/shift/SessionSound';
+import { ShiftMark } from '../../../src/components/shift/ShiftMark';
+import { BreathingLight } from '../../../src/components/shared/BreathingLight';
 
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
 // About six breaths a minute — five seconds in, five out.
@@ -67,7 +70,7 @@ export default function ShiftSessionScreen() {
   const steps = useMemo(
     () =>
       currentResult
-        ? buildSession(door, fromSlug, getLocalizedLevelName(currentResult.vibrationLevel, locale), locale)
+        ? buildSession(door, fromSlug, getLocalizedLevelName(currentResult.vibrationLevel, locale), locale, philosopher?.id)
         : [],
     // Built once per session — a locale switch mid-session shouldn't restart it.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,8 +83,20 @@ export default function ShiftSessionScreen() {
   // The Journey that fits this state, offered under the closing line at
   // most once a week — decided once, when the session opens, so marking
   // it offered doesn't make it vanish while it's on screen.
+  // After Use it, the next step is Shift toward love (2026-10-18 — one
+  // step per screen; the doors became a sequence), offered as one quiet
+  // line on the closing screen — unless the reading is love itself, or a
+  // Shift was already walked from this reading. The Journey offer waits
+  // for a session with no next step, so only one quiet line ever shows.
+  const offerShiftNext =
+    door === 'use' &&
+    fromSlug !== 'love' &&
+    !useShiftStore
+      .getState()
+      .sessions.some((x) => x.readingAt === currentResult?.savedAt && x.door === 'love');
   const journeyOffer = useRef(
     (() => {
+      if (offerShiftNext) return null;
       const last = useEngagementStore.getState().journeyOfferedAt;
       const due = !last || Date.now() - new Date(last).getTime() > JOURNEY_OFFER_GAP_DAYS * 86_400_000;
       return due ? getJourneyForState(fromSlug) : null;
@@ -124,10 +139,7 @@ export default function ShiftSessionScreen() {
     const timer = setInterval(() => setInhaling((v) => !v), HALF_BREATH_MS);
     return () => clearInterval(timer);
   }, []);
-  const lightStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 0.7 + breath.value * 0.45 }],
-    opacity: 0.55 + breath.value * 0.35,
-  }));
+
 
   if (!currentResult || !step) {
     return (
@@ -171,18 +183,7 @@ export default function ShiftSessionScreen() {
 
       {showLight && (
         <View style={styles.lightWrap} pointerEvents="none">
-          <Animated.View style={[styles.light, lightStyle]}>
-            <Svg width={LIGHT} height={LIGHT}>
-              <Defs>
-                <RadialGradient id="breath" cx="50%" cy="50%" r="50%">
-                  <Stop offset="0" stopColor={`rgb(${rgb})`} stopOpacity={0.55} />
-                  <Stop offset="0.45" stopColor={`rgb(${rgb})`} stopOpacity={0.18} />
-                  <Stop offset="1" stopColor={`rgb(${rgb})`} stopOpacity={0} />
-                </RadialGradient>
-              </Defs>
-              <Circle cx={LIGHT / 2} cy={LIGHT / 2} r={LIGHT / 2} fill="url(#breath)" />
-            </Svg>
-          </Animated.View>
+          <BreathingLight breath={breath} rgb={rgb} />
           {step.kind === 'cue' && step.breathGuide && (
             <Animated.Text
               key={inhaling ? 'in' : 'out'}
@@ -248,8 +249,29 @@ export default function ShiftSessionScreen() {
 
       {step.kind === 'closing' && (
         <Animated.View entering={FadeIn.duration(900).easing(SOFT_EASE)} style={styles.closingArea}>
+          {/* What was just done: where the walk started and where the
+              person placed themselves (2026-10-14) — the last thing seen
+              is their own walk. */}
+          <View style={styles.closingMark}>
+            <ShiftMark fromSlug={fromSlug} toSlug={toSlugRef.current} />
+          </View>
           {philosopher && <Text style={styles.name}>{philosopher.name}</Text>}
           <Text style={styles.cue}>{step.text}</Text>
+          {offerShiftNext && philosopher && (
+            <View style={styles.journeyOffer}>
+              <Text style={styles.journeyLine}>{getSeamLine(philosopher.id, 'shift', locale)}</Text>
+              <Pressable
+                onPress={() => {
+                  track('shift_next_taken', { level: fromSlug });
+                  router.replace({ pathname: '/(tabs)/depths/session', params: { door: 'love' } });
+                }}
+                accessibilityRole="link"
+                hitSlop={spacing[2]}
+              >
+                <Text style={styles.journeyLink}>{t('shift.loveLabel')} →</Text>
+              </Pressable>
+            </View>
+          )}
           {journeyOffer && philosopher && (
             <JourneyOffer
               line={getJourneyOfferLine(philosopher.id, locale)}
@@ -355,23 +377,24 @@ function makeStyles(colors: Colors) {
       color: colors.text.primary,
       fontFamily: fonts.medium,
       fontSize: fontSizes.base,
-      borderBottomWidth: 1,
-      borderBottomColor: colors.bg.border,
+      backgroundColor: colors.bg.elevated,
+      borderRadius: radius.md,
       paddingVertical: spacing[3],
+      paddingHorizontal: spacing[4],
       textAlign: 'center',
       maxHeight: 120,
     },
     returnArea: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: spacing[6] },
     closingArea: { flex: 1, justifyContent: 'center', gap: spacing[4] },
     closingCrisis: { alignSelf: 'center' },
+    closingMark: { alignItems: 'center', marginBottom: spacing[6] },
     journeyOffer: { alignItems: 'center', gap: spacing[1], marginTop: spacing[4] },
     journeyLine: { color: colors.text.muted, fontFamily: fonts.voice, fontSize: fontSizes.sm, textAlign: 'center' },
     journeyLink: { color: colors.text.secondary, fontFamily: fonts.medium, fontSize: fontSizes.sm, textAlign: 'center' },
     name: { color: colors.text.muted, fontFamily: fonts.medium, fontSize: fontSizes.xs, textAlign: 'center' },
     button: {
+      backgroundColor: colors.bg.elevated,
       alignSelf: 'stretch',
-      borderWidth: 1,
-      borderColor: colors.bg.border,
       borderRadius: radius.full,
       paddingVertical: spacing[4],
       alignItems: 'center',

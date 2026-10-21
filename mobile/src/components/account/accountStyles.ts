@@ -30,9 +30,7 @@ export function makeStyles(colors: Colors) {
   input: {
     minHeight: 44,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.base,
+    backgroundColor: colors.bg.elevated,
     color: colors.text.primary,
     fontFamily: fonts.light,
     fontSize: fontSizes.base,
@@ -46,9 +44,7 @@ export function makeStyles(colors: Colors) {
     alignItems: 'center',
     minHeight: 44,
     borderRadius: radius.md,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
-    backgroundColor: colors.bg.base,
+    backgroundColor: colors.bg.elevated,
     paddingRight: spacing[4],
   },
   passwordInputField: {
@@ -67,11 +63,10 @@ export function makeStyles(colors: Colors) {
   consentBlock: { gap: spacing[2] },
   consentRow: { flexDirection: 'row', alignItems: 'center', gap: spacing[3] },
   checkbox: {
+    backgroundColor: colors.bg.elevated,
     width: 18,
     height: 18,
     borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.bg.border,
   },
   consentRowText: { color: colors.text.secondary, fontFamily: fonts.light, fontSize: fontSizes.sm },
   consentLinkText: {

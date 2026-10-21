@@ -62,7 +62,7 @@ interface MoonPhaseContent {
 export const MOON_PHASE_CONTENT: Record<MoonPhaseName, MoonPhaseContent> = {
   'New Moon': {
     nature: 'The sky holds no moon. Seeds lie underground, invisible, already alive.',
-    reflection: 'Something in you wants to move, before you can say toward what. What is the pull, not yet the plan?',
+    reflection: 'Notice whether something wants to move, before you can say toward what. What is the pull, not yet the plan?',
     practice: 'Name one direction — not a plan, just a direction — and let it stay unforced today.',
   },
   'Waxing Crescent': {
@@ -72,7 +72,7 @@ export const MOON_PHASE_CONTENT: Record<MoonPhaseName, MoonPhaseContent> = {
   },
   'First Quarter': {
     nature: 'Light and dark split the sky evenly. Neither has won yet.',
-    reflection: 'What old way of doing this has actually already stopped working, even if you haven’t admitted it yet?',
+    reflection: 'Is there an old way of doing this that has already stopped working?',
     practice: 'Name one decision you’ve been avoiding, and remove one thing that lets you keep avoiding it.',
   },
   'Waxing Gibbous': {
@@ -101,6 +101,70 @@ export const MOON_PHASE_CONTENT: Record<MoonPhaseName, MoonPhaseContent> = {
     practice: 'Protect one block of time today for nothing — no input, no output.',
   },
 };
+
+// Russian (2026-10-16) — the phase names and their three lines, so the
+// moon reads in the person's language like the rest of the app.
+const MOON_PHASE_NAME_RU: Record<MoonPhaseName, string> = {
+  'New Moon': 'Новолуние',
+  'Waxing Crescent': 'Растущий серп',
+  'First Quarter': 'Первая четверть',
+  'Waxing Gibbous': 'Растущая луна',
+  'Full Moon': 'Полнолуние',
+  'Waning Gibbous': 'Убывающая луна',
+  'Last Quarter': 'Последняя четверть',
+  'Waning Crescent': 'Убывающий серп',
+};
+
+const MOON_PHASE_CONTENT_RU: Record<MoonPhaseName, MoonPhaseContent> = {
+  'New Moon': {
+    nature: 'Луны на небе нет. Семена лежат под землёй, невидимые, но уже живые.',
+    reflection: 'Заметьте, не хочет ли что-то двигаться — раньше, чем вы можете сказать, куда. Каково это притяжение — ещё не план?',
+    practice: 'Назовите одно направление — не план, просто направление — и пусть сегодня оно остаётся без усилия.',
+  },
+  'Waxing Crescent': {
+    nature: 'Возвращается тонкая полоска света. Ничего ещё не определено, но темнота уже не полная.',
+    reflection: 'Какую раннюю искру сейчас нужно уберечь от вашего собственного нетерпения?',
+    practice: 'Выберите одно маленькое повторяемое действие и сделайте его один раз — не весь план, только раз.',
+  },
+  'First Quarter': {
+    nature: 'Свет и тьма делят небо поровну. Ни одна сторона ещё не взяла верх.',
+    reflection: 'Есть ли старый способ делать это, который уже перестал работать?',
+    practice: 'Назовите одно решение, которого вы избегали, и уберите одну вещь, которая позволяет его избегать.',
+  },
+  'Waxing Gibbous': {
+    nature: 'Почти полная, почти целая, но ещё нет — у ожидания своё напряжение.',
+    reflection: 'Что почти готово? Какая одна поправка сделает это правдой, а не почти-правдой?',
+    practice: 'Доработайте одну деталь того, что вы строите, вместо того чтобы начинать новое.',
+  },
+  'Full Moon': {
+    nature: 'Освещён весь лик. Сегодня ничего не прячется.',
+    reflection: 'Что стало видно теперь, хотя раньше в этом цикле это было легко обойти?',
+    practice: 'Скажите вслух или запишите, что вы знаете теперь и чего не знали в новолуние.',
+  },
+  'Waning Gibbous': {
+    nature: 'Свет начинает убывать, но медленно — почти весь он ещё здесь.',
+    reflection: 'Чему научил этот цикл — тому, что становится реальнее, когда передаёшь это дальше или применяешь?',
+    practice: 'Поделитесь одним, чему научились, — с кем-то или с собой, письменно.',
+  },
+  'Last Quarter': {
+    nature: 'Снова половина неба, но теперь движение в другую сторону — к темноте, а не от неё.',
+    reflection: 'Что уже закончилось, но всё ещё занимает в вас место — привычка, история, обязательство?',
+    practice: 'Уберите одну вещь — предмет, обязательство, убеждение, — которая уже сослужила свою службу.',
+  },
+  'Waning Crescent': {
+    nature: 'Последняя тонкая полоска, прежде чем небо снова потемнеет.',
+    reflection: 'Что изменилось бы, если бы отдых был частью пути, а не задержкой на нём?',
+    practice: 'Сберегите сегодня один отрезок времени ни для чего — ничего не получать и ничего не отдавать.',
+  },
+};
+
+export function getMoonPhaseName(name: MoonPhaseName, locale: 'en' | 'ru'): string {
+  return locale === 'ru' ? MOON_PHASE_NAME_RU[name] : name;
+}
+
+export function getMoonPhaseContent(name: MoonPhaseName, locale: 'en' | 'ru'): MoonPhaseContent {
+  return locale === 'ru' ? MOON_PHASE_CONTENT_RU[name] : MOON_PHASE_CONTENT[name];
+}
 
 export type MeasureBand = 'low' | 'mid' | 'high';
 

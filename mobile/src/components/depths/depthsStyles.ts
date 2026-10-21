@@ -358,13 +358,20 @@ export function makeStyles(colors: Colors, geometry: DepthsGeometry) {
       fontFamily: fonts.light,
       fontSize: fontSizes.xs,
     },
-    // The path, said once after the first reading — plain layer.
-    pathOnce: {
+    // Today once the walk is done: the session's before and after, and
+    // what was done, in one plain sentence (2026-10-14).
+    todaysShift: { alignItems: "flex-start", marginTop: spacing[4], gap: spacing[1] },
+    todaysShiftLine: {
       color: colors.text.secondary,
       fontFamily: fonts.medium,
       fontSize: fontSizes.xs,
-      lineHeight: fontSizes.xs * 1.5,
-      marginTop: spacing[4],
+    },
+    // Today's headline: the overall state's name, read first (2026-10-12).
+    headline: {
+      fontFamily: fonts.medium,
+      fontSize: fontSizes.xl,
+      lineHeight: fontSizes.xl * 1.15,
+      marginBottom: spacing[2],
     },
     answerHint: {
       color: colors.text.muted,

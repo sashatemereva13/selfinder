@@ -7,6 +7,23 @@ this file is what's next.
 
 ---
 
+## After the MVP: widgets, voice, good days (decided 2026-10-18)
+
+For Jess's day (`docs/persona.md`) — several short visits, phone in hand.
+None of this is part of the MVP.
+
+- **Home- and lock-screen widgets (iPhone first).** Small: today's state
+  in its colour and the one next step, tap to open it. Medium: the same,
+  plus Spill. Lock screen: the state alone. Native WidgetKit (Swift) with
+  data shared from the app (App Group); a new build. Estimate: 3–5 days;
+  Android separately, later.
+- **Speaking instead of typing.** For the MVP the iPhone keyboard's own
+  microphone is enough. Later: a hold-to-speak button in Measure, Spill
+  and the conversation using on-device speech recognition (~1–2 days, new
+  build); keeping the recording itself (a voice Spill) is a larger step.
+- **Good days vs hard days.** The walk should feel different on a good
+  day (staying sharp while things move) — needs design first.
+
 ## Android cold-start: onboarding's first-launch transition feels slow
 
 **Status:** root-caused, not yet fixed — deliberately deferred, see below.

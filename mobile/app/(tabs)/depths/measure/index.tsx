@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useThemeColors } from '../../../../src/theme/useThemeColors';
 import { useThemeStore } from '../../../../src/store/themeStore';
 import type { Colors } from '../../../../src/theme/colors';
-import { fonts, fontSizes, letterSpacings, lineHeights } from '../../../../src/theme/typography';
+import { fonts, fontSizes, lineHeights } from '../../../../src/theme/typography';
 import { spacing, radius } from '../../../../src/theme/spacing';
 import { usePhilosopherStore } from '../../../../src/store/philosopherStore';
 import { useMeasureStore } from '../../../../src/store/measureStore';
@@ -14,10 +14,8 @@ import { ensureAIConsent } from '../../../../src/store/aiDisclosureStore';
 import { useAppAccentButtonRgb } from '../../../../src/utils/appAccent';
 import { AmbientGlow } from '../../../../src/components/shared/AmbientGlow';
 import { BackLink } from '../../../../src/components/shared/BackLink';
-import { AuraSettle } from '../../../../src/components/depths/AuraSettle';
+import { MeasureSpheres } from '../../../../src/components/depths/MeasureSpheres';
 import { track } from '../../../../src/utils/analytics';
-import { getLocalizedLevelName } from '../../../../src/content/measureConfig';
-import { useLocaleStore } from '../../../../src/store/localeStore';
 import { useReadingColumnWidth } from '../../../../src/theme/responsive';
 
 export default function TodayScreen() {
@@ -25,17 +23,14 @@ export default function TodayScreen() {
   const colors = useThemeColors();
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const locale = useLocaleStore((s) => s.locale);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const philosopher = usePhilosopherStore((s) => s.philosopher);
   const resetInterview = useMeasureStore((s) => s.resetInterview);
-  const currentResult = useMeasureStore((s) => s.currentResult);
   const columnWidth = useReadingColumnWidth();
 
   const accentRgb = useAppAccentButtonRgb();
   const accentColor = `rgb(${accentRgb})`;
-  const hasMeasuredBefore = Boolean(currentResult);
 
   // Consent is asked here, before the interview opens, rather than at the
   // first answer — Measure's exchange deliberately fails open (see
@@ -64,24 +59,25 @@ export default function TodayScreen() {
           The minimap hides on Measure (see MapBar) — this is a focused
           conversation, and the back link is the way out. */}
       <View style={[styles.body, { width: columnWidth, alignSelf: 'center' }]}>
-        <Text style={styles.kicker}>{t('measureIntro.kicker')}</Text>
+        {/* No "MEASURE" label (2026-10-16) — the philosopher's line marks
+            the arrival, as on Breathe, Tune In and Spill. */}
 
         {/* The one arrival beat for the whole walk — see this file's history:
             the per-sphere AttentionScan gate it replaced ran four times in
             a 4–8 exchange conversation. scanPhrases[0] is the
             philosopher's own hand-written body-sphere line. */}
         <View style={styles.presence}>
-          <AuraSettle />
+          <MeasureSpheres />
           {philosopher?.scanPhrases?.[0]?.phrase && (
             <Text style={styles.scanPhrase}>{philosopher.scanPhrases[0].phrase}</Text>
           )}
-          {currentResult && (
-            <Text style={styles.lastReading}>
-              {t('measureIntro.lastReading', {
-                level: getLocalizedLevelName(currentResult.vibrationLevel, locale).toLowerCase(),
-              })}
-            </Text>
-          )}
+          {/* The plain line under the philosopher's voice (RULES.md, two
+              layers) — moved up from under the button (2026-10-16), which
+              left the bottom of the screen crowded. */}
+          <Text style={styles.caption}>{t('measureIntro.caption')}</Text>
+          {/* "Last time, you read as …" was removed (2026-10-16): it primed
+              the answer before the person looked at now. Last time lives
+              in Your Arc. */}
         </View>
       </View>
 
@@ -93,20 +89,9 @@ export default function TodayScreen() {
         >
           <Text style={styles.buttonText}>{t('measureIntro.beginConversation')}</Text>
         </Pressable>
-        <Text style={styles.caption}>{t('measureIntro.caption')}</Text>
 
-        {hasMeasuredBefore && (
-          <Pressable
-            style={styles.spillLink}
-            // "First", not "or" (2026-10-10): when the head is too loud to
-            // answer honestly, pouring it out is the way to the reading,
-            // not a way around it — Spill's reveal brings you back here.
-            // Spill never measures anything; this stays the one Measure.
-            onPress={() => router.push({ pathname: '/(tabs)/explore/spill', params: { then: 'measure' } })}
-          >
-            <Text style={styles.spillLinkText}>{t('measureIntro.orJustWriteItOut')}</Text>
-          </Pressable>
-        )}
+        {/* The Spill link that sat here is gone (2026-10-18): Spill isn't a
+            way into Measure — it clears the head, and stands on its own. */}
       </View>
     </View>
   );
@@ -137,13 +122,7 @@ function makeStyles(colors: Colors) {
   footer: {
     paddingHorizontal: spacing[6],
   },
-  kicker: {
-    color: colors.text.muted,
-    fontFamily: fonts.medium,
-    fontSize: fontSizes.xs,
-    letterSpacing: letterSpacings.kicker,
-    textTransform: 'uppercase',
-  },
+
   // Same register as AttentionScan's own phrase text (interview.tsx no
   // longer renders that component at all, but this screen inherits its
   // one surviving job — the philosopher's wordless-arrival line).
@@ -157,18 +136,7 @@ function makeStyles(colors: Colors) {
     // rather than leaving one word alone on the second.
     maxWidth: 260,
   },
-  // textAlign: 'center' — matches scanPhrase directly above it (review,
-  // 2026-08-19: the two sat right on top of each other with different
-  // alignment, reading as visually off). lastReading continues that same
-  // spoken-aloud moment (scanPhrase is the philosopher's own line), not a
-  // return to the left-aligned kicker/title/copy block further up, so it
-  // takes scanPhrase's centered register rather than the title block's.
-  lastReading: {
-    color: colors.text.muted,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-    textAlign: 'center',
-  },
+
   button: {
     paddingVertical: spacing[4],
     borderRadius: radius.full,
@@ -187,18 +155,10 @@ function makeStyles(colors: Colors) {
     fontSize: fontSizes.xs,
     lineHeight: fontSizes.xs * lineHeights.normal,
     textAlign: 'center',
-    marginTop: spacing[3],
+    marginTop: -spacing[2],
     maxWidth: 260,
     alignSelf: 'center',
   },
-  spillLink: {
-    alignItems: 'center',
-    paddingTop: spacing[4],
-  },
-  spillLinkText: {
-    color: colors.text.secondary,
-    fontFamily: fonts.light,
-    fontSize: fontSizes.sm,
-  },
+
   });
 }
