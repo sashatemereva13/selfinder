@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments, ThemeProvider, DarkTheme, DefaultTheme } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
@@ -93,6 +93,19 @@ export default function RootLayout() {
     if (!ready || !philosopher) return;
     refreshWindow(philosopher);
   }, [ready, philosopher]);
+
+  // Keeps an active person signed in (2026-10-21): on open, and each time
+  // the app comes back to the foreground, a token more than a day old is
+  // swapped for a fresh 30-day one (a no-op otherwise, and when signed out).
+  useEffect(() => {
+    if (!authHydrated) return;
+    const refresh = () => useAuthStore.getState().refreshIfStale();
+    refresh();
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    return () => sub.remove();
+  }, [authHydrated]);
 
   // Android-only — expo-navigation-bar's setStyle is a synchronous native
   // call, not the async setButtonStyleAsync some older docs reference (that

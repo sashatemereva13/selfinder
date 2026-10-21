@@ -133,6 +133,9 @@ export interface AuthSession {
   token: string;
   username: string;
   role: string;
+  // When this token was last issued or refreshed (ms) — kept on the phone
+  // only, so the app knows when to ask for a fresh one.
+  refreshedAt?: number;
 }
 
 export interface ConsentState {

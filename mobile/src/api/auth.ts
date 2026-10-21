@@ -19,6 +19,11 @@ export function login(username: string, password: string): Promise<AuthSession> 
   return request<AuthSession>('/auth/login', { username, password });
 }
 
+// A fresh 30-day token for a sign-in that's still valid.
+export function refresh(token: string): Promise<AuthSession> {
+  return request<AuthSession>('/auth/refresh', {}, { token });
+}
+
 export function changePassword(
   token: string,
   currentPassword: string,

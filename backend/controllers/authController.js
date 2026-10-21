@@ -13,7 +13,7 @@ function signToken(user) {
   return jwt.sign(
     { id: user.id, username: user.username, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: "7d" }
+    { expiresIn: "30d" }
   );
 }
 
@@ -112,6 +112,16 @@ export async function login(req, res) {
 }
 
 // Requires the current password — for a logged-in user updating their password.
+// A fresh 30-day token for a session that's still valid (2026-10-21) — the
+// app asks for one when it opens and its token is more than a day old, so
+// anyone who opens it at least once a month stays signed in. An account
+// that no longer exists gets a 401, the same as an expired token.
+export async function refresh(req, res) {
+  const user = await User.findOne({ id: req.user.id });
+  if (!user) return res.status(401).json({ error: "Token invalid or expired" });
+  res.json({ token: signToken(user), username: user.username, role: user.role });
+}
+
 export async function changePassword(req, res) {
   const { currentPassword, newPassword } = req.body;
 
@@ -127,7 +137,9 @@ export async function changePassword(req, res) {
 
   const valid = await bcrypt.compare(currentPassword, user.passwordHash);
   if (!valid) {
-    return res.status(401).json({ error: "Current password is incorrect" });
+    // 403, not 401: the session itself is fine — a 401 would make the app
+    // treat this as an expired sign-in.
+    return res.status(403).json({ error: "Current password is incorrect" });
   }
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);

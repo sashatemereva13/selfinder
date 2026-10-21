@@ -10,6 +10,7 @@ import { AuthSession, UserProfile } from '../../types';
 import { PRIVACY_POLICY_URL } from '../../utils/privacyPolicy';
 import { PasswordInput } from './PasswordInput';
 import { makeStyles } from './accountStyles';
+import { errorText } from '../../api/client';
 
 // Was hardcoded to 'en-GB' — meant every date rendered in British-English
 // format regardless of the app's own language, the one date-formatting
@@ -99,7 +100,7 @@ export function LoggedInAccount({
       await refreshProfile();
       setEmailMsg(t('account.emailSaved'));
     } catch (err) {
-      setEmailError(err instanceof Error ? err.message : t('account.failedToUpdateEmail'));
+      setEmailError(errorText(err, t('account.failedToUpdateEmail')));
     } finally {
       setEmailBusy(false);
     }
@@ -115,7 +116,7 @@ export function LoggedInAccount({
       setCurrentPassword('');
       setNewPassword('');
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : t('account.failedToChangePassword'));
+      setPasswordError(errorText(err, t('account.failedToChangePassword')));
     } finally {
       setPasswordBusy(false);
     }
@@ -131,12 +132,10 @@ export function LoggedInAccount({
         message: JSON.stringify(data, null, 2),
       });
     } catch (err) {
-      // Was a fixed generic string regardless of what actually failed —
-      // every other handler in this file already surfaces err.message
-      // directly (client.ts now throws specific, actionable messages for
-      // a timeout vs. a connection failure vs. a real server error; see
-      // its own REQUEST_TIMEOUT_MS comment). This was the one outlier.
-      setExportError(err instanceof Error ? err.message : t('account.exportFailed'));
+      // A timeout, a connection failure or a server error each get their
+      // own safe message from client.ts; anything else (the share sheet
+      // failing, say) gets the fallback — never a raw error's text.
+      setExportError(errorText(err, t('account.exportFailed')));
     } finally {
       setExporting(false);
     }

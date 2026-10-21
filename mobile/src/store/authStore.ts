@@ -10,6 +10,10 @@ import { useReminderStore } from './reminderStore';
 import { useShiftStore } from './shiftStore';
 
 const STORAGE_KEY = 'selfinder_auth_session';
+// Tokens last 30 days (backend/controllers/authController.js). The app
+// asks for a fresh one when it opens and its token is more than a day old,
+// so anyone who opens it at least once a month stays signed in.
+const REFRESH_AFTER_MS = 24 * 60 * 60 * 1000;
 
 interface AuthStore {
   session: AuthSession | null;
@@ -18,6 +22,8 @@ interface AuthStore {
   register: (username: string, password: string, privacyPolicyAccepted: boolean, email?: string) => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshIfStale: () => Promise<void>;
+  expire: (token: string) => Promise<void>;
 }
 
 async function persist(session: AuthSession | null) {
@@ -30,7 +36,9 @@ async function persist(session: AuthSession | null) {
   }
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+let refreshing = false;
+
+export const useAuthStore = create<AuthStore>((set, get) => ({
   session: null,
   hydrated: false,
 
@@ -49,13 +57,13 @@ export const useAuthStore = create<AuthStore>((set) => ({
   },
 
   register: async (username, password, privacyPolicyAccepted, email) => {
-    const session = await authApi.register(username, password, privacyPolicyAccepted, email);
+    const session = { ...(await authApi.register(username, password, privacyPolicyAccepted, email)), refreshedAt: Date.now() };
     await persist(session);
     set({ session });
   },
 
   login: async (username, password) => {
-    const session = await authApi.login(username, password);
+    const session = { ...(await authApi.login(username, password)), refreshedAt: Date.now() };
     await persist(session);
     set({ session });
     // Best-effort: repopulate local reading state from this account's
@@ -72,6 +80,38 @@ export const useAuthStore = create<AuthStore>((set) => ({
     // bug is driven by measureStore, not engagementStore). Revisit as a
     // separate follow-up if that staleness turns out to matter.
     await useMeasureStore.getState().repopulateFromServer(session.token);
+  },
+
+  refreshIfStale: async () => {
+    const current = get().session;
+    if (!current || refreshing) return;
+    // A session saved before refreshing existed has no refreshedAt — it's
+    // treated as stale, so it gets a 30-day token on the first open.
+    if (current.refreshedAt && Date.now() - current.refreshedAt < REFRESH_AFTER_MS) return;
+    refreshing = true;
+    try {
+      const fresh = { ...(await authApi.refresh(current.token)), refreshedAt: Date.now() };
+      // Only if nothing changed meanwhile (a logout, another account).
+      if (get().session?.token !== current.token) return;
+      await persist(fresh);
+      set({ session: fresh });
+    } catch {
+      // Offline or slow — try again next time. A 401 is handled by the
+      // client, which calls expire().
+    } finally {
+      refreshing = false;
+    }
+  },
+
+  // The sign-in ended on its own (expired, or the account is gone). Only
+  // the sign-in is cleared: the philosopher, readings and settings stay on
+  // the phone and the app stays where it is — unlike logout(), which is a
+  // person choosing to leave and wipes everything for whoever uses the
+  // phone next.
+  expire: async (token) => {
+    if (get().session?.token !== token) return;
+    await persist(null);
+    set({ session: null });
   },
 
   logout: async () => {
