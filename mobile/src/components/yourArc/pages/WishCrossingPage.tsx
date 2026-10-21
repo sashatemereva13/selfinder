@@ -9,7 +9,7 @@ import { SavedWish } from '../../../api/wish';
 import { JourneyKey } from '../../../types';
 import { Locale } from '../../../store/localeStore';
 import { WishPromptEntry } from '../../../content/wishPrompts';
-import { JOURNEY_LABEL_KEYS } from './JourneysPage';
+import { JOURNEY_LABEL_KEYS } from '../moments';
 import { makeSharedArcPageStyles } from './arcPageShared';
 import { WishPromptBankPage } from './WishPromptBankPage';
 

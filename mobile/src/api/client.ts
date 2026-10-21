@@ -2,18 +2,97 @@ import { useLocaleStore } from '../store/localeStore';
 
 const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
-// Carries the real HTTP status alongside the backend's human-readable
-// message (see the !res.ok branch below) — added 2026-09-06 so a 401
-// caused by an EXPIRED/invalid token (auth.js's requireAuth) can be told
-// apart from any other failure without string-matching the message
-// itself, which would be both fragile and locale-dependent. See
-// handleExpiredSession below, the actual consumer of `status`.
-export class ApiError extends Error {
+// The only errors whose text may ever reach the screen (2026-10-21): what
+// a person sees is always one of the messages written in this file, never
+// the server's own wording, a stack trace, or a library's message — those
+// can leak internals (an IP, a field name, a validation rule's shape).
+// Callers show `errorText(err, fallback)`, which falls back for anything
+// that isn't a SafeError.
+export class SafeError extends Error {}
+
+export function errorText(err: unknown, fallback: string): string {
+  return err instanceof SafeError ? err.message : fallback;
+}
+
+// Carries the HTTP status alongside the safe message, so a dead session
+// (401 on a request that sent a token) can be told apart from any other
+// failure without matching on text.
+export class ApiError extends SafeError {
   status: number;
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
   }
+}
+
+type Localized = { en: string; ru: string };
+
+// The server's messages a person can act on, each with its own wording in
+// both languages. Anything not here gets a generic message by status.
+const KNOWN_ERRORS: Record<string, Localized> = {
+  'Invalid credentials': {
+    en: "That username and password don't match.",
+    ru: 'Имя пользователя и пароль не совпадают.',
+  },
+  'username and password are required': {
+    en: 'Enter a username and password.',
+    ru: 'Введите имя пользователя и пароль.',
+  },
+  'Username already taken': { en: 'That username is taken.', ru: 'Это имя пользователя уже занято.' },
+  'Email already in use': {
+    en: 'That email is already used by another account.',
+    ru: 'Этот email уже используется другим аккаунтом.',
+  },
+  'Password must be at least 8 characters': {
+    en: 'The password needs at least 8 characters.',
+    ru: 'Пароль должен быть не короче 8 символов.',
+  },
+  'New password must be at least 8 characters': {
+    en: 'The new password needs at least 8 characters.',
+    ru: 'Новый пароль должен быть не короче 8 символов.',
+  },
+  "That doesn't look like a valid email": {
+    en: "That doesn't look like a valid email.",
+    ru: 'Похоже, это неверный email.',
+  },
+  'A valid email is required': { en: "That doesn't look like a valid email.", ru: 'Похоже, это неверный email.' },
+  'You must accept the privacy policy to create an account': {
+    en: 'To create an account, accept the privacy policy.',
+    ru: 'Чтобы создать аккаунт, примите политику конфиденциальности.',
+  },
+  'Current password is incorrect': {
+    en: "The current password isn't right.",
+    ru: 'Текущий пароль неверный.',
+  },
+  'Invalid or expired code': {
+    en: "That code isn't right, or it has expired.",
+    ru: 'Код неверный или устарел.',
+  },
+  'Too many attempts — request a new code': {
+    en: 'Too many attempts. Request a new code.',
+    ru: 'Слишком много попыток. Запросите новый код.',
+  },
+};
+const SESSION_ENDED: Localized = {
+  en: 'Your sign-in has ended. Sign in again to keep saving.',
+  ru: 'Вход истёк. Войдите снова, чтобы продолжить сохранять.',
+};
+const TOO_MANY: Localized = {
+  en: 'Too many tries just now. Wait a moment and try again.',
+  ru: 'Слишком много попыток. Подождите немного и попробуйте снова.',
+};
+const GENERIC: Localized = {
+  en: 'Something went wrong. Try again.',
+  ru: 'Что-то пошло не так. Попробуйте ещё раз.',
+};
+
+function safeMessage(status: number, serverMessage: string | null, sentToken: boolean): string {
+  const locale = useLocaleStore.getState().locale;
+  const pick = (m: Localized) => m[locale] ?? m.en;
+  if (status === 401 && sentToken) return pick(SESSION_ENDED);
+  if (serverMessage && KNOWN_ERRORS[serverMessage]) return pick(KNOWN_ERRORS[serverMessage]);
+  if (status === 429) return pick(TOO_MANY);
+  return pick(GENERIC);
 }
 
 // Shown when fetch() itself throws — i.e. the request never reached the
@@ -79,57 +158,43 @@ async function request<T>(path: string, body?: unknown, options: RequestOptions 
   } catch (err) {
     const locale = useLocaleStore.getState().locale;
     if (err instanceof Error && err.name === 'AbortError') {
-      throw new Error(TIMEOUT_ERROR_MESSAGE[locale] ?? TIMEOUT_ERROR_MESSAGE.en);
+      throw new SafeError(TIMEOUT_ERROR_MESSAGE[locale] ?? TIMEOUT_ERROR_MESSAGE.en);
     }
     // fetch() itself threw for some other reason — the request never got
     // a response at all, so there's no res.status/res.text() to inspect.
     // See the comment on CONNECTION_ERROR_MESSAGE above for why this
     // needs its own message rather than letting the raw thrown error
     // propagate.
-    throw new Error(CONNECTION_ERROR_MESSAGE[locale] ?? CONNECTION_ERROR_MESSAGE.en);
+    throw new SafeError(CONNECTION_ERROR_MESSAGE[locale] ?? CONNECTION_ERROR_MESSAGE.en);
   } finally {
     clearTimeout(timeoutId);
   }
   if (!res.ok) {
-    // The backend's error responses are already human-readable ({"error":
-    // "Username already taken"}, etc — see authController.js) — every
-    // caller in the app displays err.message directly to the user (e.g.
-    // AccountSection.tsx's setError(err.message)), so this has to extract
-    // that string rather than wrap it in debug-style "API /path 409: ..."
-    // formatting, which is what was happening before and is not something
-    // a user should ever see.
+    // The server's own wording is read only to choose which safe message
+    // to show (see KNOWN_ERRORS) — it never reaches the screen itself.
     const text = await res.text().catch(() => '');
-    let message = res.statusText || `Something went wrong (${res.status})`;
+    let serverMessage: string | null = null;
     if (text) {
       try {
         const parsed = JSON.parse(text);
-        if (typeof parsed?.error === 'string' && parsed.error) message = parsed.error;
+        if (typeof parsed?.error === 'string') serverMessage = parsed.error;
       } catch {
-        // Non-JSON error body (e.g. a proxy/HTML error page) — fall back
-        // to the generic message above rather than showing raw HTML/text.
+        // Non-JSON body (a proxy's HTML error page) — nothing to read.
       }
     }
-    const err = new ApiError(message, res.status);
-    // A 401 specifically caused by a token that was actually SENT (not
-    // just "no token, anonymous request") means the stored session is
-    // dead — expired (backend/controllers/authController.js signs tokens
-    // with a 7-day expiry, and there's no refresh mechanism) or otherwise
-    // rejected by the server. Before this fix, authStore's session object
-    // just stayed populated forever in that case (nothing ever cleared
-    // it), so the app kept believing it was signed in while every
-    // authenticated call — arcLine, Spill, wishes, crossings, journeys —
-    // silently failed with "Token invalid or expired" logged to the
-    // console and nothing shown to the user (confirmed live 2026-09-06:
-    // every one of those calls failing at once, all with this exact
-    // message, is the signature of this bug, not five separate broken
-    // endpoints). Calling logout() here makes a dead session self-heal
-    // into "signed out" — which the app already handles correctly
-    // (_layout.tsx redirects to onboarding) — instead of limping along
-    // silently broken. Dynamic import avoids a require cycle (authStore
-    // itself calls into several *Api modules that go through this file).
+    const err = new ApiError(safeMessage(res.status, serverMessage, !!options.token), res.status);
+    // A 401 on a request that SENT a token means that sign-in has ended
+    // (expired, or the account is gone). It only clears the sign-in —
+    // nothing on the phone is wiped, the app stays where it is
+    // (2026-10-21; it used to log out fully, wiping the philosopher and
+    // sending the person back to onboarding). The token is passed so a
+    // late reply to an old token can't end a newer sign-in. Dynamic
+    // import avoids a require cycle (authStore calls into *Api modules
+    // that go through this file).
     if (res.status === 401 && options.token) {
+      const sentToken = options.token;
       import('../store/authStore').then(({ useAuthStore }) => {
-        useAuthStore.getState().logout();
+        useAuthStore.getState().expire(sentToken);
       });
     }
     throw err;

@@ -3,6 +3,7 @@ import { requireAuth } from "../middleware/auth.js";
 import {
   register,
   login,
+  refresh,
   changePassword,
   requestPasswordReset,
   resetPassword,
@@ -12,6 +13,7 @@ const router = Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/refresh", requireAuth, refresh);
 router.post("/change-password", requireAuth, changePassword);
 router.post("/forgot-password", requestPasswordReset);
 router.post("/reset-password", resetPassword);

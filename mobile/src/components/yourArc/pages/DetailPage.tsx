@@ -10,7 +10,7 @@ import { SavedConversation } from '../../../api/conversation';
 import { SavedSpillEntry } from '../../../api/spill';
 import { SavedMeasureResult } from '../../../types';
 import { ChatTurn } from '../ChatTurn';
-import { getLocalizedLevelName } from '../../../content/measureConfig';
+import { VIBRATION_LEVELS, getLocalizedLevelName } from '../../../content/measureConfig';
 import { Locale } from '../../../store/localeStore';
 import { formatDate } from '../../../utils/relativeTime';
 import { makeSharedArcPageStyles } from './arcPageShared';
@@ -97,7 +97,12 @@ export function DetailPage({
         </>
       ) : (
         <>
-          <Text style={[sharedStyles.headline, styles.detailLevel]}>{selected.levelSlug}</Text>
+          <Text style={[sharedStyles.headline, styles.detailLevel]}>
+            {(() => {
+              const level = VIBRATION_LEVELS.find((l) => l.slug === selected.levelSlug);
+              return level ? getLocalizedLevelName(level, locale) : selected.levelSlug;
+            })()}
+          </Text>
           {hasSession && !hasRichHistory && (
             <Text style={styles.detailNote}>{t('yourArc.turnOnSavingNote')}</Text>
           )}

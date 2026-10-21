@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useThemeColors } from '../src/theme/useThemeColors';
 import { useThemeStore } from '../src/store/themeStore';
 import type { Colors } from '../src/theme/colors';
@@ -104,6 +105,7 @@ function CenterScreen() {
   const theme = useThemeStore((s) => s.theme);
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const session = useAuthStore((s) => s.session);
   const columnWidth = useReadingColumnWidth();
   const accentRgb = useAppAccentRgb();
@@ -225,6 +227,9 @@ function CenterScreen() {
           <Text style={styles.kicker}>{t('center.kicker')}</Text>
           <Text style={styles.title}>{t('center.title')}</Text>
           <Text style={styles.introLine}>{t('center.signInLine')}</Text>
+          <Pressable style={styles.getButton} onPress={() => router.push('/profile')} accessibilityRole="button">
+            <Text style={styles.getButtonText}>{t('journey.signInAction')}</Text>
+          </Pressable>
         </ScrollView>
       ) : purchases === null ? (
         // Loading (session exists, profile fetch still in flight) — a bare

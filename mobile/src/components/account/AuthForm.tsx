@@ -6,6 +6,7 @@ import { requestPasswordReset, resetPassword } from '../../api/auth';
 import { PRIVACY_POLICY_URL } from '../../utils/privacyPolicy';
 import { PasswordInput } from './PasswordInput';
 import { makeStyles } from './accountStyles';
+import { errorText } from '../../api/client';
 
 export function AuthForm({
   onLogin,
@@ -45,7 +46,7 @@ export function AuthForm({
         await onRegister(username.trim(), password, accepted, email.trim());
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
+      setError(errorText(err, t('account.somethingWentWrong')));
     } finally {
       setLoading(false);
     }
@@ -60,7 +61,7 @@ export function AuthForm({
       setNotice(t('account.forgotRequestSent'));
       setMode('forgot-reset');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
+      setError(errorText(err, t('account.somethingWentWrong')));
     } finally {
       setLoading(false);
     }
@@ -78,7 +79,7 @@ export function AuthForm({
       setCode('');
       setNewPassword('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('account.somethingWentWrong'));
+      setError(errorText(err, t('account.somethingWentWrong')));
     } finally {
       setLoading(false);
     }
