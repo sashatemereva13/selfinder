@@ -13,6 +13,7 @@ import { useReadingColumnWidth } from '../src/theme/responsive';
 import { usePhilosopherStore } from '../src/store/philosopherStore';
 import { useLocaleStore, Locale } from '../src/store/localeStore';
 import { useReminderStore } from '../src/store/reminderStore';
+import { useAuthStore } from '../src/store/authStore';
 import { useAppAccentTextRgb } from '../src/utils/appAccent';
 import { PhilosopherPicker } from '../src/components/shared/PhilosopherPicker';
 import { AccountSection } from '../src/components/AccountSection';
@@ -38,6 +39,10 @@ export default function ProfileScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const [changing, setChanging] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const session = useAuthStore((s) => s.session);
+  // Where "Walking with" sits, so changing the philosopher scrolls to the
+  // picker rather than to the sign-in form above it.
+  const philosopherY = useRef(0);
   // Drives which block is actually mounted (see the setTimeout unmounts
   // below) — kept separate from `changing` itself so the outgoing block can
   // finish fading out before it's removed, instead of `changing` flipping
@@ -122,10 +127,27 @@ export default function ProfileScreen() {
             popping the stack genuinely returns there. */}
         <BackLink style={styles.backRow} />
 
+        {/* Signed out, signing in is what someone came here for — Explore's
+            row says "Sign in" — so the form comes first (2026-10-21).
+            Signed in, the account (consent, export, delete) stays at the
+            end, below everything used more often. */}
+        {!session && (
+          <>
+            <AccountSection />
+            <View style={styles.divider} />
+          </>
+        )}
+
         {/* "Walking with", not "Your guide" — the walk is the app's one
             recurring metaphor (walk it through → who walks beside you →
             Walk with Socrates), and this label keeps it going. */}
-        <Text style={styles.kicker} accessibilityRole="header">{t('you.walkingWith')}</Text>
+        <Text
+          style={styles.kicker}
+          accessibilityRole="header"
+          onLayout={(e) => (philosopherY.current = e.nativeEvent.layout.y)}
+        >
+          {t('you.walkingWith')}
+        </Text>
 
         {showCurrent && philosopher && (
           <Animated.View style={[styles.currentSection, currentFadeStyle]}>
@@ -135,7 +157,7 @@ export default function ProfileScreen() {
             <Pressable
               onPress={() => {
                 crossfadeTo('picker');
-                scrollRef.current?.scrollTo({ y: 0, animated: false });
+                scrollRef.current?.scrollTo({ y: session ? 0 : philosopherY.current, animated: false });
               }}
             >
               <Text style={styles.changeLink}>{t('you.changeWhoWalksBesideYou')}</Text>
@@ -255,8 +277,12 @@ export default function ProfileScreen() {
             AccountSection already renders its own "Account" kicker
             internally (account.kicker), so adding a second one directly
             above it would read as the same label twice in a row. */}
-        <View style={styles.divider} />
-        <AccountSection />
+        {session && (
+          <>
+            <View style={styles.divider} />
+            <AccountSection />
+          </>
+        )}
         {/* Always there, last (crisis safety net, 2026-10-10). */}
         <View style={styles.divider} />
         <CrisisLine kind="help" />

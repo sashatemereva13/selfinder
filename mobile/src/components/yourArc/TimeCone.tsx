@@ -46,11 +46,10 @@ export interface TimeConePoint {
   // to know anything about real dates; the caller (Your Arc) maps actual
   // timestamps to this range.
   depth: number;
-  // Angular position around the cone's own axis, in turns (0..1) — purely
-  // for visual spread so multiple points at similar depths don't stack on
-  // the same spot. Not meaningful information; caller can assign stable
-  // per-point values (e.g. a hash of the point's id) so a point doesn't
-  // jump position across re-renders.
+  // Angular position around the cone's own axis, in turns (0..1). Your Arc
+  // uses it for the state (2026-10-21): each rim is the seventeen-state
+  // ring seen in perspective. Keep values stable per point so a point
+  // doesn't jump position across re-renders.
   angle: number;
   label?: string;
   // "rgb(r,g,b)" for a reading point (its own real level color, same

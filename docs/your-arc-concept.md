@@ -7,9 +7,9 @@ Journeys. The governing rules are in `RULES.md` ("Three places, one
 chain", "The answers are already inside the person", "History is the
 product").
 
-Status (2026-10-09): agreed in conversation, not built. Replaces the
-2026-09-05 hub/sub-pager structure (`your-arc.tsx`, `your-arc-past.tsx`,
-`your-arc-future.tsx`).
+Status (2026-10-21): the entry cone and the Past page are built; the
+Future page (intentions) is not. The 2026-10-09 version put the dial on
+the entry; it moved to the Past page so the entry is only about time.
 
 ---
 
@@ -33,41 +33,44 @@ from where you stand.**
 - Center appeared both at "now" and inside the past.
 - Shift sessions — the flagship — left no trace.
 
-## 3. The screen
+## 3. The screens (revised 2026-10-21)
 
-One screen: the cone, with the person's own record in it on arrival.
+**The entry is only the cone, and it is about time itself:** the past
+narrows into one point, now; the future opens out of it. Three parts, each
+a door — nothing else on the screen (no dial, no names, no links):
 
 ```
-                 ✦ ✦                      ← intentions: lights in the future
-               ╲     ╱
-                ╲   ╱     FUTURE
-                 ╲ ╱
-                  ●   Today: Neutrality   ← now
-                 ╱ ╲
-                ╱ · ╲     PAST
-               ╱ ·  ·╲    ← real points, in their states' colours,
-                                nearer the vertex the more recent
-              ( dial )                    ← turn to move through time
+          ✦        ✦             What you're reaching toward  → Future page
+      ╲               ╱
+          ╲       ╱
+              ●                  Now                          → Today
+          ╱  ·    ╲
+        ╱   ·  ·    ╲            Where you've been            → Past page
+     (·  ·  ·    ·   · )
 ```
 
-- **The record on arrival.** The past cone holds the person's real
-  points — readings, and Shift sessions as two joined points (before and
-  after) — placed by date, closer to "now" the more recent.
-- **The dial moves through time.** The round dial (`ArcDial`) stays and
-  gets a bigger job: turning it moves the focus down into the past,
-  through now, up into the future — on this one screen, not across
-  separate routes. What's in focus is named and opens on tap: a past
-  point opens that moment (`DetailPage` content); "now" opens Today; an
-  intention opens that intention.
-- **First visit:** one plain line under the cone — "Below is where
-  you've been. Above is what you're reaching toward. You stand where they
-  meet." Never again after.
-- **One action at a time,** chosen by the philosopher, in the same place
-  as on every other screen: with no intention yet, the future invites
-  ("Find your intention"); with one, the past invites understanding when
-  a past Journey fits.
-- **Signed out:** the readings kept on the phone, and one line — "Sign
-  in to keep your whole Arc."
+- **Her points are drawn, not tappable.** Distance from now is time (a
+  point reaches the rim at about three months, on a logarithmic scale);
+  the angle around the cone is the state — each rim is the seventeen-
+  state ring seen in perspective — so a state she keeps returning to
+  draws a trail. A shape from the record alone, never an interpretation.
+- **Now → Today** (the tab). Today already is the "now" page; a second
+  one would be the redundancy RULES.md warns about.
+- **Past → "Where you've been"** (`your-arc-past.tsx`): every moment —
+  readings, Shift sessions, completed Journeys — on the dial, oldest to
+  newest, landing on the most recent. The moment the dial is on shows in
+  full right above it: what was said, the reflection, the conversation
+  and writing kept close to it; a session's from → to and its words; a
+  Journey's result. Free: the last 14 days, the dial's last stop beyond
+  them the Selfinder+ offer ("Your whole Arc") — built as a switch that
+  starts off. Selfinder+: every moment.
+- **Future → "What you're reaching toward"** (`your-arc-future.tsx`):
+  Selfinder+ — her intentions, each its own (§5); with none, "Find your
+  intention" → Possible Selves. Free — one line on what an intention is,
+  and the offer. Until intentions are built, this still opens the old
+  future pages.
+- **Signed out:** the past shows the readings kept on the phone; the
+  future, one line about signing in.
 
 ## 4. The past — a story, not a collection
 
@@ -117,12 +120,17 @@ Unsaid, Enough) stay in Explore and at the end of Shift sessions.
 
 - **Center** (the kaleidoscope) → Explore, Receive: "A pattern from your
   history." One place only.
-- **The second cone page** in the past (`TimeConePage`) — the first
-  screen is the cone now.
+- **The second cone page** in the past (`TimeConePage`) — gone
+  (2026-10-21); the entry is the cone now.
 - **The closing page** — its "one small act" lives in Shift sessions.
-- **The facts page** — at most one plain line ("Since August: 14
-  readings, 3 shifts") if it earns its place; facts, never a score.
-- **The separate past/future routes and their pagers** — one screen.
+- **The facts page** — gone (2026-10-21); the cone already shows it, and
+  a count edges toward a score.
+- **The old past pager** — replaced by the Past page (2026-10-21), with
+  the Journeys list and the separate moment screen folded into the dial.
+- **The old future pager** (wish form, crossings) — replaced by the
+  Future page once intentions exist. Crossings stop being shown (texts
+  the app generated about a wish); their data stays, covered by export
+  and deletion.
 
 ## 7. Rules this must keep
 
@@ -135,13 +143,18 @@ Unsaid, Enough) stay in Explore and at the end of Shift sessions.
 
 ## 8. Build order
 
-1. Center → Explore (Receive).
-2. The cone with real points (readings + Shift sessions) and the dial
-   moving through time; tap to open a moment.
-3. Intentions: existing wishes shown as intentions; release ("It carried
-   me" / "I've set it down").
-4. Possible Selves' final step creates an intention; The Threshold
+1. Center → Explore (Receive). Done.
+2. The entry cone — points by time and state, the three doors — and the
+   Past page with the dial; Journeys as stops on it. Done 2026-10-21.
+3. The cone's arrival motion: the past settles, now lights in today's
+   colour, the future opens.
+4. Intentions: the Future page; existing wishes shown as intentions;
+   release ("It carried me" / "I've set it down", a backend change:
+   `releasedAt`, `releasedAs`); a released intention becomes a stop on
+   the Past page.
+5. Possible Selves' final step creates an intention; The Threshold
    attaches to one.
-5. Past Journeys' closing words placed in the past; the fitting-Journey
-   offer from the past.
-6. Retire the old pages and routes.
+6. The free 14-day line on the Past page and the offer on the Future
+   page, as switches that start off.
+7. The fitting-Journey offer from the past.
+8. Retire the old future pager and its pages.

@@ -131,7 +131,7 @@ export default function RootLayout() {
       'control', 'the-choice', 'the-loop', 'whose-voice', 'the-road-not-taken',
       'letting-go', 'the-mirror', 'the-unsaid', 'becoming', 'the-threshold',
       'possible-selves', 'enough',
-      'your-arc', 'your-arc-past', 'your-arc-future', 'your-arc-moment', 'level', 'crisis-support',
+      'your-arc', 'your-arc-past', 'your-arc-future', 'level', 'crisis-support',
       'journeys-grounding',
     ].includes(segments[0] as string);
     // Onboarding is excluded from the second branch: it saves the chosen
@@ -186,7 +186,6 @@ export default function RootLayout() {
           <Stack.Screen name="your-arc"   />
           <Stack.Screen name="your-arc-past" />
           <Stack.Screen name="your-arc-future" />
-          <Stack.Screen name="your-arc-moment" />
           <Stack.Screen name="crisis-support" />
           <Stack.Screen name="journeys-grounding" />
         </Stack>

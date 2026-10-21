@@ -181,7 +181,9 @@ wrong regardless of how clean it looks in isolation.
   borderless surface (`colors.bg.elevated`, rounded) is fine where
   something is genuinely an object — a symbol on its card, a message.
   Space and typography still separate ordinary content; a surface is for
-  a thing, not a way of dividing a page.
+  a thing, not a way of dividing a page. A thin divider line between
+  sections (e.g. on the account screen) is not a border (2026-10-21) — it
+  separates, it doesn't enclose; a line that closes around something is.
 - **Never show a bare numeric score next to a level name** — position on
   a ring instead. This is a deliberate anti-judgment rule: Selfinder
   never implies a vibration is good or bad.

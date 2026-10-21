@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { useThemeStore } from '../../store/themeStore';
 import type { Colors } from '../../theme/colors';
@@ -70,6 +71,7 @@ export function JourneyScreenShell({
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const accentRgb = useAppAccentRgb();
+  const router = useRouter();
   const {
     session,
     purchases,
@@ -89,6 +91,15 @@ export function JourneyScreenShell({
         <ScrollView contentContainerStyle={styles.teaserContent}>
           <Text style={styles.title}>{t(titleKey)}</Text>
           <Text style={styles.introLine}>{t('journey.signInBody')}</Text>
+          {/* The way on, not just the reason (2026-10-21) — the sign-in
+              form is the first thing on the account screen when signed out. */}
+          <Pressable
+            style={[styles.doItAgainButton, styles.signInButton]}
+            onPress={() => router.push('/profile')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.doItAgainButtonText}>{t('journey.signInAction')}</Text>
+          </Pressable>
         </ScrollView>
       ) : purchases === null || !mostRecentPurchase ? (
         <View style={styles.centerFill}>
@@ -147,6 +158,7 @@ function makeStyles(colors: Colors) {
       borderRadius: radius.full,
       backgroundColor: colors.accent.buttonFill,
     },
+    signInButton: { alignSelf: 'center', marginTop: spacing[4] },
     doItAgainButtonText: { color: colors.onAccent, fontFamily: fonts.medium, fontSize: fontSizes.sm },
     savedInYourArcNote: {
       color: colors.text.faint,

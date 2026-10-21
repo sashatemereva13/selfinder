@@ -274,8 +274,8 @@
     "crossingSendHint": "Kept, in your own words",
     "loadingMore": "Still gathering the rest of your record…",
     "arcLineDialLabel": "Your Arc",
-    "zonePresentLabel": "The eternal now",
-    "zonePastLabel": "How you've told it",
+    "zonePresentLabel": "Now",
+    "zonePastLabel": "Where you've been",
     "zoneFutureLabel": "What you're reaching toward",
     "closingDialLabel": "Held",
     "detailDialLabel": "That day",
@@ -329,7 +329,8 @@
     "momentGratitude": "Three small things",
     "momentAct": "One kind thing",
     "momentWhere": "Where it could go",
-    "coneIntroEmpty": "Each time you measure, a point gathers here — below, where you have been; above, what you are reaching toward."
+    "coneIntroEmpty": "Each time you measure, a point gathers here — below, where you have been; above, what you are reaching toward.",
+    "pastEmpty": "Each time you measure, the moment is kept here — what you said, and what you did with it."
   },
   "saveMessage": {
     "saveImageLabel": "Save image",
@@ -423,6 +424,7 @@
     "somethingWentWrong": "Something went wrong. Try again.",
     "signInTitle": "Sign in to begin",
     "signInBody": "This Journey is tied to your account, so it can be picked up right where you left it.",
+    "signInAction": "Sign in",
     "doItAgain": "Do this Journey again",
     "savedInYourArcNote": "You can find all your saved data in Your Arc.",
     "reflectionBegan": "You began with:",

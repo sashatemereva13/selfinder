@@ -216,7 +216,8 @@ rectangles as the default way to
 separate content (`borderWidth` + `backgroundColor: colors.bg.elevated`
 boxes). Separate things with space, typographic hierarchy, and group
 labels instead — the philosopher-picker screen and onboarding never use
-a box to mean "this is a thing." (Depths used to be built entirely from
+a box to mean "this is a thing." A thin divider line between sections is
+not a border (decided 2026-10-21): it separates without enclosing. (Depths used to be built entirely from
 cards — sphere rows, tool rows, the lucky row — and was the one screen
 that didn't match; it was rebuilt around this rule.)
 
