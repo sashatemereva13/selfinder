@@ -54,7 +54,7 @@ export const BASE_AURA_DISPLAY_SIZE = 170;
 // lowered everything with it; this makes only the figure smaller, standing
 // on the same ground). Tune this to change the figure's size; tune
 // BASE_AURA_DISPLAY_SIZE to change the whole composition.
-export const AURA_FIGURE_SIZE = 150;
+export const AURA_FIGURE_SIZE = 180;
 // 2026-09-02 — how much of the spiral's own topmost region (curve +
 // wheel, whichever sits highest) is allowed to render past the fixed
 // zone's own visible top edge and get cropped there — at the user's own
@@ -160,7 +160,7 @@ const SPIRAL_WIDTH = Math.min(
 // ellipticalClearance for why an ellipse: the aura figure is tall and
 // narrow, so a single scalar radius was either too tight sideways or too
 // loose vertically.
-const AURA_CLEARANCE_MARGIN = 40;
+const AURA_CLEARANCE_MARGIN = 60;
 
 // buildDepthsGeometry — 2026-09-02: the entire AURA_METRICS/AURA_FIELD_
 // GEOMETRY/SPIRAL_AURA_HALF_*/SPIRAL_RISE_HEIGHT/CORE_*/MENU_* constant
@@ -224,7 +224,7 @@ export function buildDepthsGeometry(auraDisplaySize: number) {
   // ellipse: the aura figure is tall and narrow, so a single scalar
   // radius was either too tight sideways or too loose vertically.
   const spiralAuraHalfWidth =
-    auraFieldGeometry.svgWidth / 2 + AURA_CLEARANCE_MARGIN;
+    auraFieldGeometry.svgWidth / 3 + AURA_CLEARANCE_MARGIN;
   const spiralAuraHalfHeight =
     auraFieldGeometry.svgHeight / 2 + AURA_CLEARANCE_MARGIN;
   // 2026-09-02 — the spiral's own h=0 destination moved from the aura's

@@ -3,7 +3,6 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Image,
   Platform,
 } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -69,12 +68,7 @@ import {
   type SphereKey,
 } from "../../../src/components/depths/AuraField";
 import { AURA_NEUTRAL_COLOR } from "../../../src/components/shared/AuraFigure";
-import {
-  AURA_LEVEL_IMAGES,
-  AURA_NEUTRAL_IMAGE,
-  AURA_LEVEL_IMAGES_LIGHT,
-  AURA_NEUTRAL_IMAGE_LIGHT,
-} from "../../../src/content/auraLevelImages";
+import { EnergyBody } from "../../../src/components/shared/EnergyBody";
 import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
@@ -855,24 +849,14 @@ function DepthsContent() {
                       glowColor={levelColor}
                       neutralAura={
                         <AuraWithDots
-                          source={
-                            theme === "light"
-                              ? AURA_NEUTRAL_IMAGE_LIGHT
-                              : AURA_NEUTRAL_IMAGE
-                          }
+                          slug={null}
                           overlay
                           geometry={geometry}
                         />
                       }
                       settledAura={
                         <AuraWithDots
-                          source={
-                            theme === "light"
-                              ? (AURA_LEVEL_IMAGES_LIGHT[ringLevelSlug!] ??
-                                AURA_LEVEL_IMAGES_LIGHT[lastLevel.slug])
-                              : (AURA_LEVEL_IMAGES[ringLevelSlug!] ??
-                                AURA_LEVEL_IMAGES[lastLevel.slug])
-                          }
+                          slug={ringLevelSlug ?? lastLevel.slug}
                           overlay
                           geometry={geometry}
                         />
@@ -1069,11 +1053,7 @@ function DepthsContent() {
                 </View>
                 <View style={styles.groundWrap}>
                   <AuraWithDots
-                    source={
-                      theme === "light"
-                        ? AURA_NEUTRAL_IMAGE_LIGHT
-                        : AURA_NEUTRAL_IMAGE
-                    }
+                    slug={null}
                     overlay
                     geometry={geometry}
                   />
@@ -1657,27 +1637,24 @@ function ArrivalReveal({
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-// The aura figure image itself — the current reading's color (or the
-// neutral tone pre-reading). This used to also render a SECOND, separately
-// animatable dot field on top of the image (see auraBodyToPixel/HOME_DOTS,
-// removed) — that extra layer was cut once it became clear it wasn't
-// carrying any meaning of its own beyond what's already baked into the
-// image ("every detail must carry a purpose"). The dots visible around
-// the figure now come from the pre-baked PNG art itself (see
-// auraLevelImages.ts) — generateAuraDots' own original intent (still
-// true of these) is "energy escaping the body," scattered outward from
-// the body's edge rather than sitting as noise inside it.
+// The figure itself — since 2026-10-27 the energy body (EnergyBody.tsx):
+// the reading's state as a pose, its light in the reading's color, or the
+// ivory figure before any reading. It replaced the pre-baked AuraFigure
+// PNGs (auraLevelImages.ts, still used by AuraSettle) and draws in the same
+// 240x420 box with its light on the same chest point, so the rings and the
+// spiral around it didn't move.
 // `overlay` positions it absolutely, centered — for layering on top of
 // ringWrap's ring (the post-reading composition). Without it, this renders
 // in normal document flow — the pre-reading branch has no ring to overlay,
 // and absolute-positioning it there floated it over the surrounding text
 // instead of sitting in its own space between the two lines around it.
 function AuraWithDots({
-  source,
+  slug,
   overlay = false,
   geometry,
 }: {
-  source: number;
+  // The level slug whose pose to show, or null before any reading.
+  slug: string | null;
   overlay?: boolean;
   // 2026-09-02 — see AuraArrival's own `geometry` prop comment: the aura
   // image's own box must genuinely shrink on a short screen, not just
@@ -1704,15 +1681,15 @@ function AuraWithDots({
           width: AURA_METRICS.width,
           height: AURA_METRICS.height,
           transform: [
-            { translateY: (AURA_METRICS.height * (1 - FIGURE_SCALE)) / 2 },
+            { translateY: (AURA_METRICS.height * (0.76 - FIGURE_SCALE)) / 2 },
             { scale: FIGURE_SCALE },
           ],
         }}
       >
-        <Image
-          source={source}
-          style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}
-          resizeMode="contain"
+        <EnergyBody
+          slug={slug}
+          width={AURA_METRICS.width}
+          height={AURA_METRICS.height}
         />
       </View>
     </View>
