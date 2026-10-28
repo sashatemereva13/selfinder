@@ -11,6 +11,7 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { useLevelColors } from '../../content/measureConfig';
@@ -55,6 +56,14 @@ const BONES_START_MS = 1250;
 const BONE_STAGGER_MS = 90;
 const SETTLED_MS = 3000;
 const BREATH_MS = 4500;
+// The heartbeat (2026-10-28): every WAVE_MS a wave of light leaves the
+// chest and travels out through the joints, nearest first, to the hands and
+// feet — the energy body made visible, and the only thing on Today that
+// moves on its own. WAVE_SPREAD is how much of each cycle it takes to reach
+// the outermost joint; WAVE_WIDTH how long each joint stays lit.
+const WAVE_MS = 5200;
+const WAVE_SPREAD = 0.35;
+const WAVE_WIDTH = 0.12;
 
 export function EnergyBody({
   slug,
@@ -78,7 +87,10 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
   const pose = getEnergyPose(slug);
   const lightRgb = (slug && levelColors[slug]) || colors.accent.ivoryRgb;
   const light = `rgb(${lightRgb})`;
-  const lineColor = colors.text.primary;
+  // The figure is drawn in the reading's colour (2026-10-28) — the world
+  // around it stays ivory, so it's the one coloured presence on screen.
+  // Before a reading `light` is ivory too.
+  const lineColor = light;
 
   // Line widths are chosen in screen pixels and converted into the pose's
   // 240-unit space, so the lines stay crisp at any size the figure is drawn.
@@ -91,6 +103,8 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
 
   const spark = useSharedValue(reduceMotion ? 1 : 0);
   const breath = useSharedValue(0.5);
+  // Starts past the end of a cycle, so nothing is lit until it begins.
+  const wave = useSharedValue(2);
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -99,7 +113,14 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
       SETTLED_MS,
       withRepeat(withTiming(1, { duration: BREATH_MS, easing: Easing.inOut(Easing.sin) }), -1, true),
     );
-    return () => cancelAnimation(breath);
+    wave.value = withDelay(
+      SETTLED_MS,
+      withRepeat(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: WAVE_MS, easing: Easing.linear })), -1, false),
+    );
+    return () => {
+      cancelAnimation(breath);
+      cancelAnimation(wave);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion]);
 
@@ -114,7 +135,6 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
     <View style={{ width, height }} pointerEvents="none">
       <Svg width={width} height={height} viewBox={viewBox}>
         <G transform={`translate(${dx}, ${dy})`}>
-
           {pose.strokes.map((s, i) => (
             <DrawStroke
               key={`b${i}`}
@@ -136,6 +156,8 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
             ring
             width={1 * px}
             delay={HEAD_MS}
+            wave={wave}
+            phase={WAVE_SPREAD * 0.5}
             reduceMotion={reduceMotion}
           />
 
@@ -149,6 +171,8 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
               color={lineColor}
               width={0.8 * px}
               delay={STARS_START_MS + i * STAR_STAGGER_MS}
+              wave={wave}
+              phase={(i / Math.max(1, pose.joints.length - 1)) * WAVE_SPREAD}
               reduceMotion={reduceMotion}
             />
           ))}
@@ -263,6 +287,8 @@ function Star({
   ring = false,
   width = 1,
   delay,
+  wave,
+  phase = 0,
   reduceMotion,
 }: {
   cx: number;
@@ -274,6 +300,10 @@ function Star({
   ring?: boolean;
   width?: number;
   delay: number;
+  // The heartbeat: this star swells and brightens as the wave passes
+  // `phase` (see WAVE_MS).
+  wave?: SharedValue<number>;
+  phase?: number;
   reduceMotion: boolean;
 }) {
   const scale = useSharedValue(reduceMotion ? 1 : 0);
@@ -288,14 +318,23 @@ function Star({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion]);
-  const coreProps = useAnimatedProps(() => ({
-    r: r * scale.value,
-    opacity: scale.value > 0.01 ? (ring ? 0.65 : opacity) : 0,
-  }));
-  const haloProps = useAnimatedProps(() => ({
-    r: (halo ?? 0) * scale.value,
-    strokeOpacity: scale.value > 0.01 ? 0.25 : 0,
-  }));
+  const coreProps = useAnimatedProps(() => {
+    const t = wave ? (wave.value - phase) / WAVE_WIDTH : -1;
+    const pulse = t > 0 && t < 1 ? Math.sin(t * Math.PI) : 0;
+    const base = ring ? 0.65 : opacity;
+    return {
+      r: r * scale.value * (1 + (ring ? 0.12 : 0.55) * pulse),
+      opacity: scale.value > 0.01 ? base + (1 - base) * pulse : 0,
+    };
+  });
+  const haloProps = useAnimatedProps(() => {
+    const t = wave ? (wave.value - phase) / WAVE_WIDTH : -1;
+    const pulse = t > 0 && t < 1 ? Math.sin(t * Math.PI) : 0;
+    return {
+      r: (halo ?? 0) * scale.value * (1 + 0.6 * pulse),
+      strokeOpacity: scale.value > 0.01 ? 0.25 + 0.4 * pulse : 0,
+    };
+  });
   return (
     <>
       {halo ? <AnimatedCircle cx={cx} cy={cy} fill="none" stroke={color} strokeWidth={width} animatedProps={haloProps} /> : null}
