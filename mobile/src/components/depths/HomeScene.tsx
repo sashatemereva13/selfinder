@@ -34,14 +34,16 @@ const NIGHT_START = 19;
 
 // Each philosopher has their own place by day (2026-10-28): you're inside
 // it, with them. Marcus Aurelius' is his inner citadel; Socrates', a
-// portico in the Athenian Agora; Aristotle's, his library at the Lyceum. The others' aren't drawn yet, so they show
+// portico in the Athenian Agora; Aristotle's, his library at the Lyceum;
+// Camus', Sisyphus' mountainside. The others' aren't drawn yet, so they show
 // no place rather than borrowing someone else's.
-export type HomePlace = 'citadel' | 'portico' | 'library' | 'fire' | null;
+export type HomePlace = 'citadel' | 'portico' | 'library' | 'slope' | 'fire' | null;
 
 const DAY_PLACES: Record<string, HomePlace> = {
   stoics: 'citadel',
   socrates: 'portico',
   aristotle: 'library',
+  camus: 'slope',
 };
 
 export function homePlaceFor(hour: number, philosopherId: string | null | undefined): HomePlace {
@@ -388,6 +390,86 @@ function buildLibrary() {
   return { beam, frames: frames.join(' '), scrolls: scrolls.join(' '), cores: cores.join(' '), sphere, floor };
 }
 
+// ---- Camus: Sisyphus' slope ------------------------------------------------
+
+// Camus' place (2026-10-28) — The Myth of Sisyphus, and "one must imagine
+// Sisyphus happy". Far off, across the top band, a long gentle hillside
+// rises to the right, and Sisyphus pushes his boulder up it — small, like a
+// frieze, the way the battlements and the entablature sit in the others'
+// places. It has to be a gentle slope: on a steep flank (tried first) the
+// man lay along the line and didn't read. Low on the left, distant rounded
+// hills; the ground line runs behind you. The boulder is Camus' own symbol
+// from the philosopher picker — a faceted rock (PhilosopherObject's
+// boulderWireframe) — in the reading's colour; Sisyphus is plain thin
+// lines, no stars and no light, so he's never mistaken for you.
+
+// The hillside: a straight, gentle incline under the text, starting clear
+// of "Mind" and passing above "Heart", rising off the right edge.
+const HILL_FROM = { x: 186, y: 508 };
+const HILL_TO = { x: W + 10, y: 440 };
+const GROUND_Y = 712;
+
+function hillAt(x: number): Pt {
+  const t = (x - HILL_FROM.x) / (HILL_TO.x - HILL_FROM.x);
+  return { x, y: HILL_FROM.y + (HILL_TO.y - HILL_FROM.y) * t };
+}
+
+function buildSlope() {
+  const rng = makeRng('camus-slope');
+  const ground = `M-10,${GROUND_Y} L${LEGS.l},${GROUND_Y} M${LEGS.r},${GROUND_Y} L${W + 10},${GROUND_Y}`;
+  const hill = `M${HILL_FROM.x},${HILL_FROM.y} L${HILL_TO.x},${HILL_TO.y}`;
+  // A few faint strokes under the hillside, for its rock.
+  const hatch: string[] = [];
+  for (let x = 204; x < W; x += 22 + rng() * 10) {
+    const p = hillAt(x);
+    hatch.push(`M${f(p.x)},${f(p.y + 4)} L${f(p.x + 6)},${f(p.y + 11)}`);
+  }
+  // Distant rounded hills on the left, low and faint, below "Spirit".
+  const ridge = 'M-10,664 C4,640 16,620 30,622 C42,624 46,604 58,602 C74,600 84,640 98,676 C104,692 108,704 114,712';
+
+  // Along the hillside: `dir` points uphill, `up` away from the ground.
+  const dl = Math.hypot(HILL_TO.x - HILL_FROM.x, HILL_TO.y - HILL_FROM.y);
+  const dir = { x: (HILL_TO.x - HILL_FROM.x) / dl, y: (HILL_TO.y - HILL_FROM.y) / dl };
+  const up = { x: dir.y, y: -dir.x };
+  const on = (x: number, along: number, height: number) => {
+    const g = hillAt(x);
+    return { x: g.x + dir.x * along + up.x * height, y: g.y + dir.y * along + up.y * height };
+  };
+
+  // The boulder, resting on the hillside.
+  const R = 11;
+  const c = on(318, 0, R);
+  const pts: Pt[] = [];
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 - Math.PI / 2 + (rng() - 0.5) * 0.3;
+    const rad = R * (0.8 + rng() * 0.32);
+    pts.push({ x: c.x + rad * Math.cos(a), y: c.y + rad * Math.sin(a) });
+  }
+  const chords = [[0, 3], [3, 6], [1, 5], [2, 7]]
+    .map(([a, b]) => `M${f(pts[a].x)},${f(pts[a].y)} L${f(pts[b].x)},${f(pts[b].y)}`)
+    .join(' ');
+  const boulder = `${line(pts)} Z ${chords}`;
+
+  // Sisyphus, just downhill, leaning his whole body into it.
+  const sx = 286;
+  const backFoot = on(sx, -8, 0);
+  const frontFoot = on(sx, 6, 0);
+  const knee = on(sx, 9, 7);
+  const hips = on(sx, 2, 13);
+  const shoulders = on(sx, 16, 22);
+  const head = on(sx, 21, 27);
+  const hands = on(318, -R * 0.9, R * 1.05);
+  const sisyphus = [
+    `M${f(backFoot.x)},${f(backFoot.y)} L${f(hips.x)},${f(hips.y)}`,
+    `M${f(frontFoot.x)},${f(frontFoot.y)} L${f(knee.x)},${f(knee.y)} L${f(hips.x)},${f(hips.y)}`,
+    `M${f(hips.x)},${f(hips.y)} L${f(shoulders.x)},${f(shoulders.y)}`,
+    `M${f(shoulders.x)},${f(shoulders.y)} L${f(hands.x)},${f(hands.y)}`,
+    `M${f(shoulders.x)},${f(shoulders.y - 1)} L${f(hands.x + up.x * 3)},${f(hands.y + up.y * 3)}`,
+    circlePath(head.x, head.y, 3.2),
+  ].join(' ');
+  return { ground, hill, hatch: hatch.join(' '), ridge, boulder, sisyphus };
+}
+
 // ---- the fire -----------------------------------------------------------
 
 function flame(bx: number, by: number, h: number, lean: number, wmax: number) {
@@ -450,6 +532,7 @@ export function HomeScene({ lightRgb }: {
   const field = useMemo(buildCitadelHall, []);
   const portico = useMemo(buildPortico, []);
   const library = useMemo(buildLibrary, []);
+  const slope = useMemo(buildSlope, []);
   const fire = useMemo(buildFire, []);
   const lineColor = colors.text.primary;
   const fireColor = theme === 'light' ? '#c98a3d' : '#f3cf95';
@@ -494,6 +577,16 @@ export function HomeScene({ lightRgb }: {
             <Path d={library.cores} strokeOpacity={0.2} strokeWidth={0.8} />
             <Path d={library.sphere} stroke={`rgb(${lightRgb})`} strokeOpacity={0.8} strokeWidth={0.9} />
             <Path d={library.floor} strokeOpacity={0.24} strokeWidth={1} />
+          </G>
+        )}
+        {place === 'slope' && (
+          <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
+            <Path d={slope.ridge} strokeOpacity={0.16} strokeWidth={1} />
+            <Path d={slope.ground} strokeOpacity={0.26} strokeWidth={1} />
+            <Path d={slope.hill} strokeOpacity={0.34} strokeWidth={1.1} />
+            <Path d={slope.hatch} strokeOpacity={0.16} strokeWidth={0.9} />
+            <Path d={slope.sisyphus} strokeOpacity={0.6} strokeWidth={1.1} />
+            <Path d={slope.boulder} stroke={`rgb(${lightRgb})`} strokeOpacity={0.8} strokeWidth={1} />
           </G>
         )}
         {place === 'fire' && (
