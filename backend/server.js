@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { globalAiLimiter } from "./middleware/aiRequestLimits.js";
+import { safeErrorHandler } from "./middleware/safeErrorHandler.js";
 
 import { connectDB } from "./db.js";
 import { logger, httpLogger } from "./logger.js";
@@ -19,8 +21,12 @@ import authRouter         from "./routes/auth.js";
 import userRouter         from "./routes/user.js";
 import eventsRouter       from "./routes/events.js";
 import journeysRouter     from "./routes/journeys.js";
+import aiConsentRouter    from "./routes/aiConsent.js";
 
 const app = express();
+// Safe only for the current single nginx proxy hop. If deployment topology
+// changes, replace with an explicit trusted-proxy range before release.
+app.set("trust proxy", 1);
 const port = Number(process.env.PORT || 3001);
 const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
   .split(",")
@@ -42,7 +48,9 @@ app.use(cors({
     callback(new Error(`Origin ${origin} not allowed by CORS`));
   },
 }));
-app.use(express.json());
+// Bound parsing cost before any route/controller runs. The app sends short
+// reflections and structured history; 64 KB is ample for current flows.
+app.use(express.json({ limit: "64kb", strict: true }));
 app.use(httpLogger);
 app.use(metricsMiddleware);
 
@@ -54,17 +62,22 @@ app.get("/metrics", async (req, res) => {
 app.use("/api/health",        healthRouter);
 app.use("/api/philosophers",  philosophersRouter);
 app.use("/api/auth",          authRouter);
+app.use("/api/ai-consent",    aiConsentRouter);
 app.use("/api/user",          userRouter);
-app.use("/api/chat",          chatRouter);
-app.use("/api/measure",       measureRouter);
+app.use("/api/chat",          globalAiLimiter, chatRouter);
+app.use("/api/measure",       globalAiLimiter, measureRouter);
 app.use("/api/conversation",  conversationRouter);
 app.use("/api/spill",         spillRouter);
 app.use("/api/wish",          wishRouter);
-app.use("/api/crossing",      crossingRouter);
-app.use("/api/arc-line",      arcLineRouter);
+app.use("/api/crossing",      globalAiLimiter, crossingRouter);
+app.use("/api/arc-line",      globalAiLimiter, arcLineRouter);
 app.use("/api/feedback",      feedbackRouter);
 app.use("/api/events",        eventsRouter);
-app.use("/api/journeys",      journeysRouter);
+app.use("/api/journeys",      globalAiLimiter, journeysRouter);
+
+// Keep this last so parser, middleware, and uncaught route errors use a
+// controlled response instead of Express's default error page.
+app.use(safeErrorHandler);
 
 connectDB()
   .then(() => {

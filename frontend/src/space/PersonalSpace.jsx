@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "../auth/AuthContext";
 import { apiUrl } from "../api/baseUrl";
+import { safeRequestJson } from "../api/safeRequest";
 import { useChat } from "../guide/ChatContext";
 import { clearAllLocalData, LOCAL_CONSENT_KEY, ROOM_KEYS, readMeasureResult, readAllRooms } from "../hooks/useRoomProgress";
 import LocalDataRecord from "./LocalDataRecord";
@@ -140,13 +141,11 @@ export default function PersonalSpace() {
     setEmailMsg("");
     setEmailError("");
     try {
-      const res = await fetch(`${API}/me/email`, {
+      await safeRequestJson(`${API}/me/email`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ email: emailInput.trim() }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Failed to update email");
+      }, "Failed to update email");
       await refreshProfile();
       setEmailMsg("Email saved. Password resets can now be sent to it.");
     } catch (err) {
