@@ -3,7 +3,7 @@ import { makeRng } from '../utils/auraDots';
 // The energy body (2026-10-27) — one pose per vibration level, plus `none`
 // for before any reading. The light in the chest is the subject; the body
 // is a constellation that carries it — joints as small stars, bones as
-// fine lines, orbits around the light — drawn in the same thin construction
+// fine lines — drawn in the same thin construction
 // lines as the philosopher symbols and the cards. Each state's pose and ray
 // shape echo that state's natural event in NatureSymbol.tsx (courage's
 // rays rise like a flame in wind, grief's fall like rain, love's spread
@@ -37,9 +37,6 @@ export interface EnergyPose {
   // The stars: each bone's ends, nearest the light first (the order they
   // appear in), with near-duplicates merged where bones meet.
   joints: Pt[];
-  // Three tilted orbits around the light; the tilt is seeded per state so
-  // no two figures look stamped from one template.
-  orbits: { rx: number; ry: number; rotation: number }[];
   burst: { x: number; y: number };
   rays: EnergyRay[];
   // Small marks in the light's colour (rain drops, stars, a waterline).
@@ -341,7 +338,7 @@ const cache = new Map<string, EnergyPose>();
 const SHORT_BONE = 22;
 
 // The pose for a level slug, or `none` before any reading (and for an
-// unknown slug). Built once per slug — the rays and orbits are seeded, so
+// unknown slug). Built once per slug — the rays are seeded, so
 // the same state always draws the same figure. (Each stroke's second value
 // is the limb thickness the poses were drawn with; the constellation draws
 // every bone as one fine line, so it isn't used here.)
@@ -360,16 +357,10 @@ export function getEnergyPose(slug: string | null | undefined): EnergyPose {
     }
   }
   joints.sort((a, b) => Math.hypot(a.x - burst.x, a.y - burst.y) - Math.hypot(b.x - burst.x, b.y - burst.y));
-  const tilt = (makeRng(`${key}-orbits`)() - 0.5) * 40;
   const pose: EnergyPose = {
     head: { x: s.head[0], y: s.head[1], r: 13 },
     strokes: bones.map((pts) => ({ d: polyD(pts), length: polyLength(pts) })),
     joints,
-    orbits: [
-      { rx: 64, ry: 20, rotation: tilt - 14 },
-      { rx: 86, ry: 28, rotation: tilt + 22 },
-      { rx: 110, ry: 38, rotation: tilt - 4 },
-    ],
     burst,
     rays: s.rays(),
     dots: s.dots?.(),

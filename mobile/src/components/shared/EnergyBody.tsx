@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import Svg, { Defs, RadialGradient, Stop, G, Circle, Path } from 'react-native-svg';
+import Svg, { G, Circle, Path } from 'react-native-svg';
 import Animated, {
   cancelAnimation,
   Easing,
@@ -22,22 +22,22 @@ import {
 
 // The energy body (2026-10-27, replacing the pre-rendered AuraFigure images
 // on Depths) — a constellation carrying a burst of light in its chest:
-// joints as small stars, bones as fine lines, three orbits around the
-// light, drawn in the same thin construction lines as the philosopher
-// symbols and the cards. Poses, joints, orbits and ray shapes live in
+// joints as small stars, bones as fine lines, drawn in the same thin construction lines as the philosopher
+// symbols and the cards. Poses, joints and ray shapes live in
 // energyBodyPoses.ts.
 //
 // Motion follows docs/design/aesthetic.md — causality, then life: the
 // spark lights, the rays reach out, the stars appear nearest the light
-// first, the bones connect them, the head appears, the orbits close around
-// it all. After that the glow breathes and the orbits turn very slowly, at
-// different speeds and directions. Reduce Motion shows it drawn and still.
+// first, the bones connect them, the head appears. After that the spark
+// breathes. Reduce Motion shows it drawn and still. The figure has no orbits
+// of its own on Today (removed 2026-10-28): Depths' spiral already circles
+// it, and two sets of rings around one body fought each other.
+// No soft glow around the light (removed 2026-10-28, with the glow column
+// behind the figure on Today): lines and the spark only read cleaner.
 //
 // Only SVG props are animated, never a native view's transform: an
 // animated scale on the View around an Svg made the whole layer vanish on
-// iOS. The orbits turn by recomputing their own path each frame rather
-// than through a rotate prop, since react-native-svg resolves transform
-// props on the JS side, where an animated value never reaches them.
+// iOS.
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
@@ -53,13 +53,8 @@ const STAR_MS = 700;
 const HEAD_MS = 1150;
 const BONES_START_MS = 1250;
 const BONE_STAGGER_MS = 90;
-const ORBITS_START_MS = 2000;
-const ORBIT_STAGGER_MS = 250;
-const ORBIT_DRAW_MS = 1600;
-const SETTLED_MS = 3600;
+const SETTLED_MS = 3000;
 const BREATH_MS = 4500;
-// One full turn per orbit, each its own speed and direction.
-const ORBIT_TURN_MS = [180000, -280000, 400000];
 
 export function EnergyBody({
   slug,
@@ -112,43 +107,13 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
     opacity: spark.value,
     r: (1.5 + 3 * spark.value) * (0.92 + 0.16 * breath.value),
   }));
-  const glowProps = useAnimatedProps(() => ({
-    opacity: spark.value * (0.7 + 0.3 * breath.value),
-    r: 60 + 16 * breath.value,
-  }));
 
   const viewBox = `0 0 ${ENERGY_BODY_VIEWBOX.width} ${ENERGY_BODY_VIEWBOX.height}`;
-  const glowId = `energy-glow-${slug ?? 'none'}`;
 
   return (
     <View style={{ width, height }} pointerEvents="none">
       <Svg width={width} height={height} viewBox={viewBox}>
-        <Defs>
-          <RadialGradient id={glowId} cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={light} stopOpacity={0.45} />
-            <Stop offset="0.5" stopColor={light} stopOpacity={0.14} />
-            <Stop offset="1" stopColor={light} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
         <G transform={`translate(${dx}, ${dy})`}>
-          <AnimatedCircle cx={pose.burst.x} cy={pose.burst.y} fill={`url(#${glowId})`} animatedProps={glowProps} />
-
-          {pose.orbits.map((o, k) => (
-            <Orbit
-              key={`o${k}`}
-              cx={pose.burst.x}
-              cy={pose.burst.y}
-              rx={o.rx}
-              ry={o.ry}
-              rotation={o.rotation}
-              turnMs={ORBIT_TURN_MS[k]}
-              color={lineColor}
-              opacity={0.3 - k * 0.07}
-              width={0.8 * px}
-              delay={ORBITS_START_MS + k * ORBIT_STAGGER_MS}
-              reduceMotion={reduceMotion}
-            />
-          ))}
 
           {pose.strokes.map((s, i) => (
             <DrawStroke
@@ -210,7 +175,7 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
               length={200}
               color={light}
               opacity={l.opacity}
-              delay={ORBITS_START_MS}
+              delay={BONES_START_MS + 600}
               reduceMotion={reduceMotion}
             />
           ))}
@@ -343,79 +308,5 @@ function Star({
         animatedProps={coreProps}
       />
     </>
-  );
-}
-
-function ellipsePath(cx: number, cy: number, rx: number, ry: number, degrees: number) {
-  'worklet';
-  const a = (degrees * Math.PI) / 180;
-  const cos = Math.cos(a);
-  const sin = Math.sin(a);
-  let d = '';
-  for (let i = 0; i <= 48; i++) {
-    const t = (i / 48) * Math.PI * 2;
-    const ex = rx * Math.cos(t);
-    const ey = ry * Math.sin(t);
-    d += `${i === 0 ? 'M' : ' L'}${(cx + ex * cos - ey * sin).toFixed(1)},${(cy + ex * sin + ey * cos).toFixed(1)}`;
-  }
-  return d;
-}
-
-// A tilted ellipse around the light that draws itself closed, then turns
-// slowly forever. The path is rebuilt each frame from the current angle.
-function Orbit({
-  cx,
-  cy,
-  rx,
-  ry,
-  rotation,
-  turnMs,
-  color,
-  opacity,
-  width,
-  delay,
-  reduceMotion,
-}: {
-  cx: number;
-  cy: number;
-  rx: number;
-  ry: number;
-  rotation: number;
-  turnMs: number;
-  color: string;
-  opacity: number;
-  width: number;
-  delay: number;
-  reduceMotion: boolean;
-}) {
-  const progress = useDelayedProgress(delay, ORBIT_DRAW_MS, reduceMotion);
-  const turn = useSharedValue(0);
-  useEffect(() => {
-    if (reduceMotion) return;
-    turn.value = withDelay(
-      SETTLED_MS,
-      withRepeat(withTiming(1, { duration: Math.abs(turnMs), easing: Easing.linear }), -1, false),
-    );
-    return () => cancelAnimation(turn);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reduceMotion]);
-  // Ramanujan's approximation — close enough for the draw-in's dash length.
-  const h = ((rx - ry) * (rx - ry)) / ((rx + ry) * (rx + ry));
-  const length = Math.PI * (rx + ry) * (1 + (3 * h) / (10 + Math.sqrt(4 - 3 * h))) + 2;
-  const direction = turnMs < 0 ? -1 : 1;
-  const animatedProps = useAnimatedProps(() => ({
-    d: ellipsePath(cx, cy, rx, ry, rotation + direction * 360 * turn.value),
-    strokeDashoffset: length * (1 - progress.value),
-    strokeOpacity: progress.value > 0.002 ? opacity : 0,
-  }));
-  return (
-    <AnimatedPath
-      d={ellipsePath(cx, cy, rx, ry, rotation)}
-      fill="none"
-      stroke={color}
-      strokeWidth={width}
-      strokeDasharray={[length, length]}
-      animatedProps={animatedProps}
-    />
   );
 }
