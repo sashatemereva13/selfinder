@@ -314,7 +314,7 @@ export async function postBadgeComment(req, res) {
       (req.body.pageContext && ((req.body.pageContext.label !== undefined && !textWithin(req.body.pageContext.label, 200)) ||
         (req.body.pageContext.description !== undefined && !textWithin(req.body.pageContext.description, 1000)))) ||
       (req.body.fallbackComment !== undefined && !textWithin(req.body.fallbackComment, 1000)) ||
-      (pageContext?.themes !== undefined && (!Array.isArray(pageContext.themes) || pageContext.themes.length > 5 || pageContext.themes.some((theme) => !textWithin(theme, 100)))) {
+      (pageContext?.themes !== undefined && (!Array.isArray(pageContext.themes) || pageContext.themes.length > 5 || pageContext.themes.some((theme) => !textWithin(theme, 100))))) {
     return res.status(400).json({ error: "A valid philosopherId is required" });
   }
 
