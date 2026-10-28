@@ -73,7 +73,7 @@ export async function saveWishIfConsented(
     const result = await request<{ id: string } | { blocked: true; category: 'concerning' | 'self-harm' }>(
       '/wish/save',
       { text, measureResultId, woop: woop ?? undefined },
-      { token: session.token }
+      { token: session.token, aiConsent: true }
     );
     if ('blocked' in result && result.blocked) {
       return { ok: false, blocked: true, category: result.category };
@@ -100,7 +100,7 @@ export async function setWishWoop(
     const result = await request<{ id: string; woop: WishWoop } | { blocked: true; category: 'concerning' | 'self-harm' }>(
       `/wish/${id}/woop`,
       { woop },
-      { method: 'PATCH', token }
+      { method: 'PATCH', token, aiConsent: true }
     );
     if ('blocked' in result && result.blocked) {
       return { ok: false, blocked: true, category: result.category };

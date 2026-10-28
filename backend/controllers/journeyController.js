@@ -3,6 +3,7 @@ import { logger } from "../logger.js";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import User from "../models/User.js";
 import JourneySession from "../models/JourneySession.js";
+import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
 import { JOURNEY_KEYS } from "../../shared/journeyKeys.mjs";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
@@ -682,8 +683,15 @@ export async function postJourneyExchange(req, res) {
     structuredAnswer,
   } = req.body;
 
-  if (!purchaseId || !journey || !Number.isInteger(stageIndex) || !stageId || !openingQuestion || typeof answer !== "string") {
+  if (!textWithin(purchaseId, 100) || !textWithin(journey, 100) || !Number.isInteger(stageIndex) ||
+      !textWithin(stageId, 100) || !textWithin(openingQuestion, 1000) || !textWithin(answer, 4000) || !validLocale(locale) ||
+      (nextOpeningQuestion !== undefined && nextOpeningQuestion !== null && !textWithin(nextOpeningQuestion, 1000)) ||
+      !Array.isArray(priorStages) || priorStages.length > 30 || priorStages.some((stage) =>
+        !stage || !textWithin(stage.question, 1000) || !textWithin(stage.answer, 4000))) {
     return res.status(400).json({ error: "purchaseId, journey, stageIndex, stageId, openingQuestion, and answer are required" });
+  }
+  if (priorStages.reduce((total, stage) => total + stage.question.length + stage.answer.length, 0) + answer.length > 30000) {
+    return res.status(400).json({ error: "Journey history is too large" });
   }
 
   const owns = await ownsPurchase(req.user.id, journey, purchaseId);

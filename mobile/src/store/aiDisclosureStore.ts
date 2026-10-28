@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
 import { File, Paths } from 'expo-file-system';
+import request from '../api/client';
 
 const STORAGE_KEY = 'selfinder_ai_disclosure_acknowledged';
+const GRANT_KEY = 'selfinder_ai_processing_consent_grant';
+const DISCLOSURE_VERSION = '2026-09-26';
 
 // A plain document-directory marker, not Keychain-backed — this is the
 // actual "have I been installed before" signal. iOS Keychain data (what
@@ -36,6 +39,7 @@ interface AIDisclosureStore {
   // AIConsentSheet and resolves with the person's answer.
   requestConsent: () => Promise<boolean>;
   respond: (accepted: boolean) => Promise<void>;
+  resetConsent: () => Promise<void>;
 }
 
 // Resolvers for every requestConsent() call made while the sheet is up —
@@ -78,6 +82,7 @@ export const useAIDisclosureStore = create<AIDisclosureStore>((set, get) => ({
       // stores can't disagree with each other going forward.
       try {
         await SecureStore.deleteItemAsync(STORAGE_KEY);
+        await SecureStore.deleteItemAsync(GRANT_KEY);
       } catch {
         // Unavailable — nothing to clear.
       }
@@ -91,15 +96,29 @@ export const useAIDisclosureStore = create<AIDisclosureStore>((set, get) => ({
     } catch {
       // SecureStore unavailable — fall through, same as every other store.
     }
-    set({ acknowledged: stored === 'true', hydrated: true });
+    let grant: string | null = null;
+    try {
+      grant = await SecureStore.getItemAsync(GRANT_KEY);
+    } catch {
+      // Treat an unreadable grant as no consent for server calls.
+    }
+    set({ acknowledged: stored === 'true' && !!grant, hydrated: true });
   },
 
   acknowledge: async () => {
-    set({ acknowledged: true });
     try {
+      const grant = await request<{ token: string; version: string }>('/ai-consent/grant', {
+        accepted: true,
+        version: DISCLOSURE_VERSION,
+      });
+      await SecureStore.setItemAsync(GRANT_KEY, grant.token);
       await SecureStore.setItemAsync(STORAGE_KEY, 'true');
+      set({ acknowledged: true });
     } catch {
-      // Unavailable — acknowledged stays true for this session only.
+      // Without a server-issued grant, don't record acceptance or allow
+      // client AI requests to proceed.
+      set({ acknowledged: false });
+      throw new Error('Could not record AI processing consent');
     }
   },
 
@@ -112,11 +131,35 @@ export const useAIDisclosureStore = create<AIDisclosureStore>((set, get) => ({
   },
 
   respond: async (accepted) => {
-    if (accepted) await get().acknowledge();
     const resolvers = pendingResolvers;
-    pendingResolvers = [];
-    set({ pending: false });
-    resolvers.forEach((resolve) => resolve(accepted));
+    if (!accepted) {
+      pendingResolvers = [];
+      set({ pending: false });
+      resolvers.forEach((resolve) => resolve(false));
+      return;
+    }
+    try {
+      await get().acknowledge();
+      pendingResolvers = [];
+      set({ pending: false });
+      resolvers.forEach((resolve) => resolve(true));
+    } catch {
+      // Keep the disclosure open so the person can retry when connected;
+      // no request is released without the server grant.
+      resolvers.forEach((resolve) => resolve(false));
+    }
+  },
+
+  resetConsent: async () => {
+    set({ acknowledged: false });
+    try {
+      await Promise.all([
+        SecureStore.deleteItemAsync(STORAGE_KEY),
+        SecureStore.deleteItemAsync(GRANT_KEY),
+      ]);
+    } catch {
+      // In-memory state still prevents requests until restart.
+    }
   },
 }));
 
@@ -144,4 +187,16 @@ export class AIConsentDeclinedError extends Error {
 // that forgets to ask first still can't send anything without consent.
 export async function requireAIConsent(): Promise<void> {
   if (!(await ensureAIConsent())) throw new AIConsentDeclinedError();
+}
+
+export async function getAIConsentGrant(): Promise<string | null> {
+  try {
+    return await SecureStore.getItemAsync(GRANT_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function resetAIConsent(): Promise<void> {
+  await useAIDisclosureStore.getState().resetConsent();
 }

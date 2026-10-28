@@ -27,6 +27,6 @@ export async function submitInterview(qaPairs: QAPair[], systemPrompt: string, t
   return request<Omit<MeasureResult, 'savedAt'>>(
     '/measure/interview',
     { qaPairs, systemPrompt, locale: useLocaleStore.getState().locale },
-    { token, timeoutMs: INTERVIEW_TIMEOUT_MS }
+    { token, timeoutMs: INTERVIEW_TIMEOUT_MS, aiConsent: true }
   );
 }

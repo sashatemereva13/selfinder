@@ -3,6 +3,7 @@ import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import ArcLine from "../models/ArcLine.js";
 import MeasureResult from "../models/MeasureResult.js";
 import Wish from "../models/Wish.js";
+import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // Same model/param story as crossingController.js's CROSSING_MODEL — see
@@ -83,7 +84,7 @@ Hard rules, no exceptions:
 export async function getArcLine(req, res) {
   const { systemPrompt, locale, philosopherId } = req.body;
 
-  if (!systemPrompt || !philosopherId) {
+  if (!textWithin(philosopherId, 100) || !validLocale(locale)) {
     return res.status(400).json({ error: "systemPrompt and philosopherId are required" });
   }
 

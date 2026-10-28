@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import { CONSENT_VERSION } from "../stores.js";
 import { sendPasswordResetEmail } from "../email.js";
 import { EMAIL_RE } from "../validators.js";
+import { generateResetCode } from "../utils/resetCode.js";
 
 const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
@@ -148,10 +149,6 @@ export async function changePassword(req, res) {
   res.json({ success: true });
 }
 
-function generateResetCode() {
-  return String(Math.floor(100000 + Math.random() * 900000)); // 6 digits
-}
-
 // Always responds the same way regardless of whether the username/email
 // exists, to avoid leaking account existence. Silently no-ops if the
 // account has no email on file — there's nowhere to send the code.
@@ -196,6 +193,9 @@ export async function resetPassword(req, res) {
   const { username, code, newPassword } = req.body;
   if (!username || !code || !newPassword) {
     return res.status(400).json({ error: "username, code, and newPassword are required" });
+  }
+  if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
+    return res.status(400).json({ error: "Invalid or expired code" });
   }
   if (newPassword.length < 8) {
     return res.status(400).json({ error: "New password must be at least 8 characters" });

@@ -1,5 +1,6 @@
 import Groq from "groq-sdk";
 import { logger } from "../logger.js";
+import { textWithin } from "../middleware/aiRequestLimits.js";
 
 // A narrowly-scoped classifier, architecturally separate from anything in
 // the reflection/save path — this function's ONLY job is pass/fail plus a
@@ -56,6 +57,7 @@ Rules:
 // discipline (e.g. saveMeasureResultIfConsented) specifically because
 // this is the one safety-relevant check in the whole wish flow.
 export async function moderateWish(text) {
+  if (!textWithin(text, 4000)) return { category: "concerning" };
   try {
     const response = await groq.chat.completions.create({
       model: MODERATION_MODEL,
