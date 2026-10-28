@@ -48,6 +48,9 @@ jobs:
       - name: install dependencies
         run: npm ci
 
+      - name: check JavaScript syntax
+        run: find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
+
       - name: run tests
         run: npm test
 
