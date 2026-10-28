@@ -183,6 +183,36 @@ function topArcPathD(cx: number, cy: number, rx: number, ry: number, centerAngle
   return `M ${startX} ${startY} A ${rx} ${ry} 0 0 1 ${endX} ${endY}`;
 }
 
+// Length of the arc topArcPathD/bottomArcPathD draw (same either way).
+function arcLength(rx: number, ry: number, spanRatio = ARC_SPAN_RATIO): number {
+  const steps = 48;
+  let length = 0;
+  let px = 0;
+  let py = 0;
+  for (let i = 0; i <= steps; i++) {
+    const t = -spanRatio + (2 * spanRatio * i) / steps;
+    const x = rx * Math.sin(t);
+    const y = ry * Math.cos(t);
+    if (i > 0) length += Math.hypot(x - px, y - py);
+    px = x;
+    py = y;
+  }
+  return length;
+}
+
+// A curved label shrinks just enough to fit its arc (2026-10-21) — on
+// native, letters past the end of a TextPath are simply not drawn, so a
+// long label ("What you're reaching toward") lost its end, and on a
+// narrower phone most of it. Etude Noire's capitals average about 0.86 of
+// the font size per letter, spaces included (measured on the simulator);
+// 0.9 and a small margin keep the estimate on the safe side.
+const LABEL_CHAR_WIDTH = 0.9;
+function fitLabel(text: string, length: number, fontSize: number, letterSpacing: number) {
+  const estimated = text.length * (fontSize * LABEL_CHAR_WIDTH + letterSpacing);
+  const scale = Math.min(1, (length * 0.94) / estimated);
+  return { fontSize: fontSize * scale, letterSpacing: letterSpacing * scale };
+}
+
 // Same short arc, across the BOTTOM-center of the ellipse instead — for
 // a label meant to sit along a shape's underside (the past rim's own
 // front-facing curve) rather than its top. Endpoints below cy, sweep
@@ -324,6 +354,11 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
   const labelScale = Math.max(0.65, Math.min(1, width / 290));
   const labelFontSize = fontSizes.xs * labelScale;
   const labelSpacing = 2 * labelScale;
+  const rimArc = arcLength(geometry.baseRx, geometry.baseRy);
+  const planeArc = arcLength(geometry.baseRx * PLANE_RX_RATIO, geometry.baseRy * PLANE_RY_RATIO, 1.1);
+  const futureLabel = curvedLabels?.future ? fitLabel(curvedLabels.future, rimArc, labelFontSize, labelSpacing) : null;
+  const pastLabel = curvedLabels?.past ? fitLabel(curvedLabels.past, rimArc, labelFontSize, labelSpacing) : null;
+  const planeLabel = curvedLabels?.plane ? fitLabel(curvedLabels.plane, planeArc, labelFontSize, labelSpacing) : null;
   const strokeColor = colors.text.faint;
   // extraRings' own radii, evenly spaced beyond the base rim — ring i
   // (1-indexed) sits at (1 + i * EXTRA_RING_STEP) × the base rim's own
@@ -536,8 +571,8 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             unambiguous on every platform (see topArcPathD's own comment
             for why this replaced the old 25%-of-a-full-ellipse approach,
             which rendered mirrored on native). */}
-        {curvedLabels?.future && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
+        {curvedLabels?.future && futureLabel && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={futureLabel.fontSize} letterSpacing={futureLabel.letterSpacing}>
             <TextPath href="#cone-future-rim-path" startOffset="0%" textAnchor="start">
               {curvedLabels.future.toUpperCase()}
             </TextPath>
@@ -594,8 +629,8 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             future rim's own label above — cone-past-rim-path
             (bottomArcPathD) IS this label's own short arc, not a
             fraction of a longer path. */}
-        {curvedLabels?.past && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
+        {curvedLabels?.past && pastLabel && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={pastLabel.fontSize} letterSpacing={pastLabel.letterSpacing}>
             <TextPath href="#cone-past-rim-path" startOffset="0%" textAnchor="start">
               {curvedLabels.past.toUpperCase()}
             </TextPath>
@@ -628,8 +663,8 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
             of ArcLinePage's centered quote text. Same startOffset 0% /
             textAnchor "start"
             reasoning as the future/past rim labels above. */}
-        {curvedLabels?.plane && (
-          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={labelFontSize} letterSpacing={labelSpacing}>
+        {curvedLabels?.plane && planeLabel && (
+          <SvgText fill={colors.text.muted} fontFamily={fonts.medium} fontSize={planeLabel.fontSize} letterSpacing={planeLabel.letterSpacing}>
             <TextPath href="#cone-plane-path" startOffset="0%" textAnchor="start">
               {curvedLabels.plane.toUpperCase()}
             </TextPath>

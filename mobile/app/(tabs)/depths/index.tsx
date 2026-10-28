@@ -3,7 +3,6 @@ import {
   Text,
   Pressable,
   StyleSheet,
-  Image,
   Platform,
 } from "react-native";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -12,10 +11,6 @@ import { useIsFocused, useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Svg, {
   Ellipse as SvgEllipse,
-  Defs,
-  RadialGradient,
-  Stop,
-  Rect as SvgRect,
 } from "react-native-svg";
 import * as Haptics from "expo-haptics";
 import Animated, {
@@ -69,12 +64,8 @@ import {
   type SphereKey,
 } from "../../../src/components/depths/AuraField";
 import { AURA_NEUTRAL_COLOR } from "../../../src/components/shared/AuraFigure";
-import {
-  AURA_LEVEL_IMAGES,
-  AURA_NEUTRAL_IMAGE,
-  AURA_LEVEL_IMAGES_LIGHT,
-  AURA_NEUTRAL_IMAGE_LIGHT,
-} from "../../../src/content/auraLevelImages";
+import { EnergyBody } from "../../../src/components/shared/EnergyBody";
+import { HomeScene } from "../../../src/components/depths/HomeScene";
 import { useAppAccentRgb, useAppAccentTextRgb } from "../../../src/utils/appAccent";
 import { formatRelativeDay } from "../../../src/utils/relativeTime";
 import { DepthsSpiralCore } from "../../../src/components/depths/DepthsSpiralCore";
@@ -624,6 +615,8 @@ function DepthsContent() {
       onLayout={(e) => setRootHeight(e.nativeEvent.layout.height)}
     >
       {theme === "dark" && <AmbientGlow />}
+      {/* Where the figure is — a field by day, a fire at night. */}
+      <HomeScene lightRgb={levelRgb} />
       {/* 2026-09-01 — replaces the old single root ScrollView with a
           fixed/scroll split (see the plan this implements: "the aura
           figure — 'the main event' — always on screen, never scrolled
@@ -852,27 +845,16 @@ function DepthsContent() {
                       sphereScores={sphereScores}
                       selectedSphere={selectedSphere}
                       geometry={geometry}
-                      glowColor={levelColor}
                       neutralAura={
                         <AuraWithDots
-                          source={
-                            theme === "light"
-                              ? AURA_NEUTRAL_IMAGE_LIGHT
-                              : AURA_NEUTRAL_IMAGE
-                          }
+                          slug={null}
                           overlay
                           geometry={geometry}
                         />
                       }
                       settledAura={
                         <AuraWithDots
-                          source={
-                            theme === "light"
-                              ? (AURA_LEVEL_IMAGES_LIGHT[ringLevelSlug!] ??
-                                AURA_LEVEL_IMAGES_LIGHT[lastLevel.slug])
-                              : (AURA_LEVEL_IMAGES[ringLevelSlug!] ??
-                                AURA_LEVEL_IMAGES[lastLevel.slug])
-                          }
+                          slug={ringLevelSlug ?? lastLevel.slug}
                           overlay
                           geometry={geometry}
                         />
@@ -1069,11 +1051,7 @@ function DepthsContent() {
                 </View>
                 <View style={styles.groundWrap}>
                   <AuraWithDots
-                    source={
-                      theme === "light"
-                        ? AURA_NEUTRAL_IMAGE_LIGHT
-                        : AURA_NEUTRAL_IMAGE
-                    }
+                    slug={null}
                     overlay
                     geometry={geometry}
                   />
@@ -1145,7 +1123,6 @@ function AuraArrival({
   settledAura,
   selectedSphere,
   geometry,
-  glowColor,
 }: {
   arriving: boolean;
   // Flips true on a tap anywhere on the reveal (see the wrapping Pressable
@@ -1164,10 +1141,6 @@ function AuraArrival({
   neutralAura: React.ReactNode;
   settledAura: React.ReactNode;
   selectedSphere: SphereKey | null;
-  // The reading's own one accent color (same value driving the headline
-  // and rings) — see AuraGlow below for why this needed to be threaded in
-  // rather than recomputed locally.
-  glowColor: string;
   // 2026-09-02 — the live (possibly shrunk) geometry, threaded down from
   // the screen's own useMemo rather than read off a module constant, so
   // the ring/aura genuinely resize on a short screen (see
@@ -1360,23 +1333,10 @@ function AuraArrival({
 
   return (
     <View style={styles.ringWrap}>
-      {/* 2026-09-12, at the user's own request — a first-time viewer's eye
-          wasn't landing on the aura first (the wheel's size and the
-          quote's saturated color were winning that contest instead, see
-          this session's own discussion). Rather than shrinking either of
-          those (the wheel is this app's main concept and must stay big;
-          the quote was just widened to stop truncating), this gives the
-          aura itself a real contrast advantage: a soft radial glow in
-          the reading's own color, centered behind it, so it's the
-          brightest thing on the canvas purely by luminance — no layout
-          change. Depths' aura is a pre-rendered PNG (AuraWithDots), not
-          the live AuraFigure SVG used elsewhere in the app, so its own
-          baked-in rim can't be tuned here — this is a separate glow
-          layer behind it instead, same RadialGradient technique
-          AmbientGlow already uses for the page-level glow, just tighter
-          and centered on the aura specifically rather than the whole
-          screen. */}
-      <AuraGlow color={glowColor} />
+      {/* The glow column that sat behind the figure (AuraGlow, added
+          2026-09-12 to make the old dark figure win the eye) was removed
+          2026-10-28: the constellation carries its own light in the chest,
+          and the column read as a spotlight over the scene behind it. */}
       <AnimatedAuraField
         size={geometry.auraDisplaySize}
         colors={ringOnlySlugs}
@@ -1392,33 +1352,6 @@ function AuraArrival({
           {settledAura}
         </Animated.View>
       </Animated.View>
-    </View>
-  );
-}
-
-// A tight radial glow centered on the aura's own chest, one solid color
-// (the reading's own accent — same value the headline/rings already use,
-// never a second competing hue) fading to transparent. Purely decorative
-// (pointerEvents 'none'), sits behind AnimatedAuraField in paint order so
-// the rings/aura render on top of it, not the other way around.
-function AuraGlow({ color }: { color: string }) {
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Svg width="100%" height="100%">
-        <Defs>
-          {/* Fully transparent by 0.62 of the radius: centred at 62%
-              down, the box's bottom edge is only 38% away (0.69 of r),
-              and the glow used to still be visible there — a hard edge
-              under the feet and a faint box around the body
-              (2026-10-09). */}
-          <RadialGradient id="auraFocusGlow" cx="50%" cy="62%" r="55%">
-            <Stop offset="0" stopColor={color} stopOpacity={0.22} />
-            <Stop offset="0.32" stopColor={color} stopOpacity={0.08} />
-            <Stop offset="0.62" stopColor={color} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <SvgRect width="100%" height="100%" fill="url(#auraFocusGlow)" />
-      </Svg>
     </View>
   );
 }
@@ -1657,27 +1590,24 @@ function ArrivalReveal({
   return <Animated.View style={style}>{children}</Animated.View>;
 }
 
-// The aura figure image itself — the current reading's color (or the
-// neutral tone pre-reading). This used to also render a SECOND, separately
-// animatable dot field on top of the image (see auraBodyToPixel/HOME_DOTS,
-// removed) — that extra layer was cut once it became clear it wasn't
-// carrying any meaning of its own beyond what's already baked into the
-// image ("every detail must carry a purpose"). The dots visible around
-// the figure now come from the pre-baked PNG art itself (see
-// auraLevelImages.ts) — generateAuraDots' own original intent (still
-// true of these) is "energy escaping the body," scattered outward from
-// the body's edge rather than sitting as noise inside it.
+// The figure itself — since 2026-10-27 the energy body (EnergyBody.tsx):
+// the reading's state as a pose, its light in the reading's color, or the
+// ivory figure before any reading. It replaced the pre-baked AuraFigure
+// PNGs (auraLevelImages.ts, still used by AuraSettle) and draws in the same
+// 240x420 box with its light on the same chest point, so the rings and the
+// spiral around it didn't move.
 // `overlay` positions it absolutely, centered — for layering on top of
 // ringWrap's ring (the post-reading composition). Without it, this renders
 // in normal document flow — the pre-reading branch has no ring to overlay,
 // and absolute-positioning it there floated it over the surrounding text
 // instead of sitting in its own space between the two lines around it.
 function AuraWithDots({
-  source,
+  slug,
   overlay = false,
   geometry,
 }: {
-  source: number;
+  // The level slug whose pose to show, or null before any reading.
+  slug: string | null;
   overlay?: boolean;
   // 2026-09-02 — see AuraArrival's own `geometry` prop comment: the aura
   // image's own box must genuinely shrink on a short screen, not just
@@ -1704,15 +1634,15 @@ function AuraWithDots({
           width: AURA_METRICS.width,
           height: AURA_METRICS.height,
           transform: [
-            { translateY: (AURA_METRICS.height * (1 - FIGURE_SCALE)) / 2 },
+            { translateY: (AURA_METRICS.height * (0.76 - FIGURE_SCALE)) / 2 },
             { scale: FIGURE_SCALE },
           ],
         }}
       >
-        <Image
-          source={source}
-          style={{ width: AURA_METRICS.width, height: AURA_METRICS.height }}
-          resizeMode="contain"
+        <EnergyBody
+          slug={slug}
+          width={AURA_METRICS.width}
+          height={AURA_METRICS.height}
         />
       </View>
     </View>
