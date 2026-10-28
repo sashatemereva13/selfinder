@@ -6,6 +6,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
   withDelay,
+  withSequence,
   cancelAnimation,
   Easing,
 } from "react-native-reanimated";
@@ -34,6 +35,12 @@ import {
   buildSpiralCoreGeometry,
   type SpiralSpherePoint,
 } from "./depthsSpiralGeometry";
+
+// The 17-level wheel's opacity while it rests on the whole reading, and how
+// long it stays fully lit after it starts to spin — VibrationSpectrum's own
+// ROTATE_DURATION_MS (1100) plus a moment once it has landed.
+const WHEEL_REST_OPACITY = 0.35;
+const WHEEL_SPIN_MS = 1400;
 
 // DepthsSpiralCore — the FIXED-zone half of what used to be one
 // DepthsSpiral component (split 2026-09-01, see depthsSpiralGeometry.ts's
@@ -427,18 +434,44 @@ export function DepthsSpiralCore({
   // (tapping a different sphere, deselecting back to the overall reading)
   // just updates the ring's marker/label in place, no fade, since the
   // wheel itself never disappears again.
+  //
+  // 2026-10-28 — quiet at rest, lit while it moves: showing the whole
+  // reading, the wheel rests at WHEEL_REST_OPACITY so the figure's light
+  // stays the one thing the eye lands on; whenever it spins (a reading
+  // arriving, or a tapped sphere turning it to that sphere's state) it
+  // lights up fully and eases back once it has landed. While one sphere is
+  // selected it stays fully lit — then it's what's being read.
   const hasWheelContent = Boolean(selectedWheelLevelSlug);
-  const wheelOpacity = useSharedValue(hasWheelContent ? 1 : 0);
+  const restOpacity = isAggregateReading ? WHEEL_REST_OPACITY : 1;
+  const wheelOpacity = useSharedValue(hasWheelContent ? restOpacity : 0);
   const EMPHASIS_DURATION_MS = 380;
+  const prevWheelSlug = useRef(selectedWheelLevelSlug);
   useEffect(() => {
     if (!hasWheelContent) return;
+    const spun = prevWheelSlug.current != null && prevWheelSlug.current !== selectedWheelLevelSlug;
+    prevWheelSlug.current = selectedWheelLevelSlug;
     cancelAnimation(wheelOpacity);
-    wheelOpacity.value = withTiming(1, {
-      duration: EMPHASIS_DURATION_MS,
-      easing: SOFT_EASE,
-    });
+    wheelOpacity.value = spun
+      ? withSequence(
+          withTiming(1, { duration: 250, easing: SOFT_EASE }),
+          withDelay(WHEEL_SPIN_MS, withTiming(restOpacity, { duration: 700, easing: SOFT_EASE })),
+        )
+      : withTiming(restOpacity, { duration: EMPHASIS_DURATION_MS, easing: SOFT_EASE });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasWheelContent]);
+  }, [hasWheelContent, selectedWheelLevelSlug, restOpacity]);
+  // A reading arriving: lit for the whole arrival, then back to rest.
+  useEffect(() => {
+    if (!playArrivalDescent) return;
+    cancelAnimation(wheelOpacity);
+    wheelOpacity.value = withSequence(
+      withTiming(1, { duration: 250, easing: SOFT_EASE }),
+      withDelay(
+        arrivalDescentDelayMs + arrivalDescentDurationMs,
+        withTiming(restOpacity, { duration: 700, easing: SOFT_EASE }),
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playArrivalDescent]);
   const wheelAnimatedStyle = useAnimatedStyle(() => ({
     opacity: wheelOpacity.value,
   }));
