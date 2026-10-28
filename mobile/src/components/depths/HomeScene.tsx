@@ -5,6 +5,8 @@ import Svg, { Defs, RadialGradient, Stop, Rect, Path, G } from 'react-native-svg
 import { useThemeColors } from '../../theme/useThemeColors';
 import { GROUND_RX_RATIO, GROUND_RY_RATIO } from './AuraField';
 import { useThemeStore } from '../../store/themeStore';
+import { usePhilosopherStore } from '../../store/philosopherStore';
+import { makeRng } from '../../utils/auraDots';
 
 // Where the figure is (2026-10-27) — Today's home: a field by day, a room
 // by a fire at night, chosen by the clock, not the theme. Drawn in the same
@@ -30,10 +32,21 @@ const H = 844;
 const DAY_START = 6;
 const NIGHT_START = 19;
 
-export type HomePlace = 'field' | 'fire';
+// Each philosopher has their own place by day (2026-10-28): you're inside
+// it, with them. Marcus Aurelius' is his inner citadel; Socrates', a
+// portico in the Athenian Agora; Aristotle's, his library at the Lyceum. The others' aren't drawn yet, so they show
+// no place rather than borrowing someone else's.
+export type HomePlace = 'citadel' | 'portico' | 'library' | 'fire' | null;
 
-export function homePlaceForHour(hour: number): HomePlace {
-  return hour >= DAY_START && hour < NIGHT_START ? 'field' : 'fire';
+const DAY_PLACES: Record<string, HomePlace> = {
+  stoics: 'citadel',
+  socrates: 'portico',
+  aristotle: 'library',
+};
+
+export function homePlaceFor(hour: number, philosopherId: string | null | undefined): HomePlace {
+  if (hour < DAY_START || hour >= NIGHT_START) return 'fire';
+  return (philosopherId && DAY_PLACES[philosopherId]) || null;
 }
 
 type Pt = { x: number; y: number };
@@ -46,7 +59,7 @@ function line(pts: Pt[]) {
   return `M${pts.map((p) => `${f(p.x)},${f(p.y)}`).join(' L')}`;
 }
 
-// ---- the field ----------------------------------------------------------
+// ---- Marcus Aurelius: the citadel ---------------------------------------
 
 // Marcus Aurelius' place (2026-10-28): you are inside the citadel — his
 // "inner citadel" (Hadot's phrase for the Meditations) is somewhere you go
@@ -124,7 +137,7 @@ function banner(x0: number, x1: number) {
   return { rod, cloth, emblem: cone.join(' ') };
 }
 
-function buildField() {
+function buildCitadelHall() {
   const arc = (x0: number, x1: number, y: (x: number) => number) => {
     const pts: Pt[] = [];
     for (let x = x0; x <= x1 + 0.01; x += 5) pts.push({ x, y: y(x) });
@@ -203,6 +216,178 @@ function buildField() {
   return { back, battlements, course, joints: joints.join(' '), banners, tiles };
 }
 
+// ---- Socrates: the portico --------------------------------------------------
+
+// Socrates' place (2026-10-28) — a portico in the Athenian Agora, where he
+// did his questioning. It has to be recognisable at a glance (a plane tree
+// and Plato's cave were tried first and didn't read), and Greek columns
+// are: fluted shafts, an entablature with a row of dentils, a temple step.
+// Laid out like the citadel — the entablature across the top band where
+// the battlements are, one column at each screen edge where the banners
+// are, all clear of the spiral's labels. The columns are Ionic, and an
+// Ionic capital's volutes are spirals — Socrates' own emblem from the
+// philosopher picker — so they're drawn in the reading's colour.
+
+const COLUMNS = [
+  { l: 12, r: 46 },
+  { l: W - 46, r: W - 12 },
+];
+const ENTABLATURE = { cornice: 440, dentilTop: 448, dentilBottom: 455, architrave: 466 };
+const CAPITAL_Y = 480; // the abacus, where the capital meets the architrave
+const BASE_Y = 712; // the step the columns stand on
+
+// An Ionic volute: a spiral coiling inward, `dir` 1 to curl clockwise.
+function volute(cx: number, cy: number, r: number, dir: 1 | -1) {
+  const pts: Pt[] = [];
+  const turns = 1.75;
+  for (let i = 0; i <= 70; i++) {
+    const t = (i / 70) * Math.PI * 2 * turns;
+    const rr = r * (1 - i / 80);
+    pts.push({ x: cx + dir * rr * Math.cos(t - Math.PI / 2), y: cy + rr * Math.sin(t - Math.PI / 2) });
+  }
+  return line(pts);
+}
+
+function buildPortico() {
+  const E = ENTABLATURE;
+  const entablature = [
+    `M-10,${E.cornice} L${W + 10},${E.cornice}`,
+    `M-10,${E.architrave} L${W + 10},${E.architrave}`,
+    `M-10,${E.architrave + 6} L${W + 10},${E.architrave + 6}`,
+  ].join(' ');
+  const dentils: string[] = [];
+  for (let x = -4; x < W + 10; x += 12) {
+    dentils.push(`M${x},${E.dentilTop} L${x},${E.dentilBottom} L${x + 7},${E.dentilBottom} L${x + 7},${E.dentilTop} Z`);
+  }
+
+  const shafts: string[] = [];
+  const flutes: string[] = [];
+  const capitals: string[] = [];
+  const volutes: string[] = [];
+  COLUMNS.forEach(({ l, r }) => {
+    const top = CAPITAL_Y + 12;
+    const baseTop = BASE_Y - 14;
+    // The shaft, and its flutes.
+    shafts.push(`M${l},${top} L${l},${baseTop} M${r},${top} L${r},${baseTop}`);
+    for (let k = 1; k < 5; k++) {
+      const x = l + ((r - l) * k) / 5;
+      flutes.push(`M${f(x)},${top + 4} L${f(x)},${baseTop - 4}`);
+    }
+    // The base: two mouldings, wider than the shaft.
+    shafts.push(
+      `M${l - 4},${baseTop} L${r + 4},${baseTop} M${l - 6},${BASE_Y - 6} L${r + 6},${BASE_Y - 6} M${l - 8},${BASE_Y} L${r + 8},${BASE_Y}`,
+    );
+    // The capital: the abacus slab, the band below it.
+    capitals.push(`M${l - 10},${CAPITAL_Y} L${r + 10},${CAPITAL_Y} M${l - 8},${CAPITAL_Y + 5} L${r + 8},${CAPITAL_Y + 5} M${l},${top} L${r},${top}`);
+    // The volutes curling down at each end — Socrates' spiral.
+    volutes.push(volute(l - 3, CAPITAL_Y + 12, 7, -1), volute(r + 3, CAPITAL_Y + 12, 7, 1));
+  });
+
+  // The temple's step behind the figure, broken behind its legs.
+  const step = [
+    `M-10,${BASE_Y} L${LEGS.l},${BASE_Y} M${LEGS.r},${BASE_Y} L${W + 10},${BASE_Y}`,
+    `M-10,${BASE_Y + 9} L${LEGS.l - 6},${BASE_Y + 9} M${LEGS.r + 6},${BASE_Y + 9} L${W + 10},${BASE_Y + 9}`,
+  ].join(' ');
+
+  return {
+    entablature,
+    dentils: dentils.join(' '),
+    shafts: shafts.join(' '),
+    flutes: flutes.join(' '),
+    capitals: capitals.join(' '),
+    volutes: volutes.join(' '),
+    step,
+  };
+}
+
+// ---- Aristotle: the library ----------------------------------------------
+
+// Aristotle's place (2026-10-28) — his library at the Lyceum, the first
+// great library of the ancient world, for a man who wrote on almost
+// everything. Laid out like the citadel and the portico: a beam across the
+// top band, one tall case of scroll shelves at each screen edge (clear of
+// the spiral's labels), the floor below. Each cubby holds a few rolled
+// scrolls, seen end-on as small circles. On one shelf of the right case
+// stands an armillary sphere — Aristotle's sphere from the philosopher
+// picker, and his cosmos of nested spheres — in the reading's colour.
+
+const CASES = [
+  { l: 8, r: 56 },
+  { l: W - 56, r: W - 8 },
+];
+const SHELF_TOP = 452;
+const SHELF_STEP = 44;
+const FLOOR_Y = 712;
+// The right case's compartment that holds the sphere (counted from the top).
+const SPHERE_SHELF = 2;
+
+function circlePath(cx: number, cy: number, r: number) {
+  return `M${f(cx - r)},${f(cy)} a${r},${r} 0 1,0 ${2 * r},0 a${r},${r} 0 1,0 ${-2 * r},0`;
+}
+
+// An ellipse as a path, tilted by `deg` — for the sphere's rings.
+function ellipsePath(cx: number, cy: number, rx: number, ry: number, deg: number) {
+  const a = (deg * Math.PI) / 180;
+  const pts: Pt[] = [];
+  for (let i = 0; i <= 48; i++) {
+    const t = (i / 48) * Math.PI * 2;
+    const x = rx * Math.cos(t);
+    const y = ry * Math.sin(t);
+    pts.push({ x: cx + x * Math.cos(a) - y * Math.sin(a), y: cy + x * Math.sin(a) + y * Math.cos(a) });
+  }
+  return `${line(pts)} Z`;
+}
+
+function buildLibrary() {
+  const rng = makeRng('aristotle-library');
+  const beam = `M-10,436 L${W + 10},436 M-10,444 L${W + 10},444`;
+  const frames: string[] = [];
+  const scrolls: string[] = [];
+  const cores: string[] = [];
+  let sphere = '';
+  CASES.forEach(({ l, r }, c) => {
+    const mid = (l + r) / 2;
+    frames.push(`M${l},444 L${l},${FLOOR_Y} M${r},444 L${r},${FLOOR_Y}`);
+    for (let y = SHELF_TOP, k = 0; y < FLOOR_Y; y += SHELF_STEP, k++) {
+      const bottom = Math.min(y + SHELF_STEP, FLOOR_Y);
+      frames.push(`M${l},${bottom} L${r},${bottom}`);
+      const isSphere = c === 1 && k === SPHERE_SHELF;
+      if (isSphere) {
+        // The armillary sphere: an outer ring, the equator, a tilted
+        // ecliptic, a meridian, and a small stand.
+        const cx = mid;
+        const cy = y + 19;
+        const R = 13;
+        sphere = [
+          circlePath(cx, cy, R),
+          ellipsePath(cx, cy, R, R * 0.32, 0),
+          ellipsePath(cx, cy, R, R * 0.32, -24),
+          ellipsePath(cx, cy, R * 0.35, R, 0),
+          circlePath(cx, cy, 1.6),
+          `M${cx},${cy + R} L${cx},${bottom - 2} M${cx - 7},${bottom} L${cx + 7},${bottom}`,
+        ].join(' ');
+        continue;
+      }
+      frames.push(`M${mid},${y} L${mid},${bottom}`);
+      // Scrolls in each half: a stack of one to three, seen end-on.
+      [l, mid].forEach((x0) => {
+        const count = 1 + Math.floor(rng() * 3);
+        const spots = [
+          [x0 + 7, bottom - 5.5],
+          [x0 + 17, bottom - 5.5],
+          [x0 + 12, bottom - 14],
+        ].slice(0, count);
+        spots.forEach(([sx, sy]) => {
+          scrolls.push(circlePath(sx, sy, 4.5));
+          cores.push(circlePath(sx, sy, 1.2));
+        });
+      });
+    }
+  });
+  const floor = `M-10,${FLOOR_Y} L${LEGS.l},${FLOOR_Y} M${LEGS.r},${FLOOR_Y} L${W + 10},${FLOOR_Y}`;
+  return { beam, frames: frames.join(' '), scrolls: scrolls.join(' '), cores: cores.join(' '), sphere, floor };
+}
+
 // ---- the fire -----------------------------------------------------------
 
 function flame(bx: number, by: number, h: number, lean: number, wmax: number) {
@@ -260,8 +445,11 @@ export function HomeScene({ lightRgb }: {
   const theme = useThemeStore((s) => s.theme);
   // Re-read the clock whenever Today comes back into view.
   const isFocused = useIsFocused();
-  const place = useMemo(() => homePlaceForHour(new Date().getHours()), [isFocused]);
-  const field = useMemo(buildField, []);
+  const philosopherId = usePhilosopherStore((s) => s.philosopher?.id);
+  const place = useMemo(() => homePlaceFor(new Date().getHours(), philosopherId), [isFocused, philosopherId]);
+  const field = useMemo(buildCitadelHall, []);
+  const portico = useMemo(buildPortico, []);
+  const library = useMemo(buildLibrary, []);
   const fire = useMemo(buildFire, []);
   const lineColor = colors.text.primary;
   const fireColor = theme === 'light' ? '#c98a3d' : '#f3cf95';
@@ -269,7 +457,7 @@ export function HomeScene({ lightRgb }: {
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
       <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice">
-        {place === 'field' ? (
+        {place === 'citadel' && (
           <>
             <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
               <Path d={field.back} strokeOpacity={0.3} strokeWidth={1} />
@@ -286,7 +474,29 @@ export function HomeScene({ lightRgb }: {
               <Path d={field.tiles} strokeOpacity={0.14} strokeWidth={0.9} />
             </G>
           </>
-        ) : (
+        )}
+        {place === 'portico' && (
+          <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
+            <Path d={portico.entablature} strokeOpacity={0.32} strokeWidth={1} />
+            <Path d={portico.dentils} strokeOpacity={0.2} strokeWidth={0.8} />
+            <Path d={portico.shafts} strokeOpacity={0.34} strokeWidth={1} />
+            <Path d={portico.flutes} strokeOpacity={0.16} strokeWidth={0.8} />
+            <Path d={portico.capitals} strokeOpacity={0.34} strokeWidth={1} />
+            <Path d={portico.volutes} stroke={`rgb(${lightRgb})`} strokeOpacity={0.8} strokeWidth={1} />
+            <Path d={portico.step} strokeOpacity={0.24} strokeWidth={1} />
+          </G>
+        )}
+        {place === 'library' && (
+          <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
+            <Path d={library.beam} strokeOpacity={0.32} strokeWidth={1} />
+            <Path d={library.frames} strokeOpacity={0.3} strokeWidth={1} />
+            <Path d={library.scrolls} strokeOpacity={0.26} strokeWidth={0.9} />
+            <Path d={library.cores} strokeOpacity={0.2} strokeWidth={0.8} />
+            <Path d={library.sphere} stroke={`rgb(${lightRgb})`} strokeOpacity={0.8} strokeWidth={0.9} />
+            <Path d={library.floor} strokeOpacity={0.24} strokeWidth={1} />
+          </G>
+        )}
+        {place === 'fire' && (
           <>
             <Defs>
               <RadialGradient id="home-fireglow" cx={FIRE.x} cy={FIRE.base - 40} r={360} gradientUnits="userSpaceOnUse">
