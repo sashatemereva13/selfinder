@@ -1,6 +1,6 @@
 # VPS config snapshots — nginx + firewall
 
-These are captured, not managed, as of 2026-08-18. `srv1229561.hstgr.cloud`
+These are captured, not managed, as of 2026-10-28. `srv1229561.hstgr.cloud`
 is a shared, multi-tenant VPS — it fronts several unrelated projects
 (Amber, Aureliu, Estelle, SpotifyVisualiser, this apply subdomain, and
 Selfinder) via one nginx install and one host-level firewall. Everything
@@ -10,11 +10,20 @@ intentionally not captured here.
 
 ## `selfinder.conf`
 
-Verbatim copy of `/etc/nginx/sites-available/selfinder`. Confirms:
+Reference copy updated from the live `/etc/nginx/sites-enabled/selfinder`
+output supplied on 2026-10-28. The captured file confirms:
 Certbot-managed TLS (Let's Encrypt), HTTP→HTTPS redirect on port 80,
 static frontend served from `/var/www/selfinder/frontend` (matches
 `deploy-frontend.yml`'s rsync target), `/api/` reverse-proxied to
 `localhost:3002` (matches the backend container's published port).
+
+The reference config includes recommended HTTPS response headers and a
+64 KB `/api/` request-body cap matching Express's JSON parser. These are
+proposed local changes; they have **not** been applied to the VPS. Before
+applying, back up the live file, merge the directives into its HTTPS
+server block and `/api/` location, run `sudo nginx -t`, then reload nginx.
+Do not replace the live file wholesale: this is a shared VPS and the
+snapshot is not deployment automation.
 
 ## Firewall (`ufw`), not yet captured as a file
 

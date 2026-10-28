@@ -19,7 +19,7 @@ import request from '../api/client';
 
 export async function checkTextForCrisis(text: string): Promise<boolean> {
   try {
-    const { crisis } = await request<{ crisis: boolean }>('/chat/safety-check', { text });
+    const { crisis } = await request<{ crisis: boolean }>('/chat/safety-check', { text }, { aiConsent: true });
     return crisis === true;
   } catch {
     return false;

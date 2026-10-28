@@ -2,9 +2,11 @@ import { Router } from "express";
 import { requireAuth } from "../middleware/auth.js";
 import { requireConsent } from "../middleware/requireConsent.js";
 import { saveWish, getWish, listMyWishes, markWishResurfaced, markWishFulfilled, unmarkWishFulfilled, setWishWoop } from "../controllers/wishController.js";
+import { accountExpensiveAiLimiter, aiBudgetMiddleware } from "../middleware/aiRequestLimits.js";
+import { requireAiProcessingConsent } from "../middleware/requireAiProcessingConsent.js";
 
 const router = Router();
-router.post("/save", requireAuth, requireConsent, saveWish);
+router.post("/save", requireAuth, requireConsent, requireAiProcessingConsent, accountExpensiveAiLimiter, aiBudgetMiddleware, saveWish);
 // A wish is more sensitive/personal than a Spill entry by its own
 // framing ("sacred, the user's own" — see docs/session-result-concept.md)
 // — reads are held to the same consent bar as the write here, unlike
@@ -20,6 +22,6 @@ router.delete("/:id/fulfill", requireAuth, requireConsent, unmarkWishFulfilled);
 // woop body field, for completing WOOP after the wish itself already
 // exists rather than only during the single composer session that
 // created it.
-router.patch("/:id/woop", requireAuth, requireConsent, setWishWoop);
+router.patch("/:id/woop", requireAuth, requireConsent, requireAiProcessingConsent, accountExpensiveAiLimiter, aiBudgetMiddleware, setWishWoop);
 router.get("/:id", requireAuth, requireConsent, getWish);
 export default router;

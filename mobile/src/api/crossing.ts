@@ -48,7 +48,7 @@ export async function generateCrossing(
         systemPrompt: philosopher.systemPrompt,
         locale: useLocaleStore.getState().locale,
       },
-      { token }
+      { token, aiConsent: true }
     );
   } catch (err) {
     console.error('Failed to generate Crossing:', err);

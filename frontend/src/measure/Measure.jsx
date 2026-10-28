@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import "./measure.css";
 import { MEASURE_ARRIVAL_LINE } from "../content/journeyLines";
+import { aiConsentHeaders, clearAIConsentGrant } from "../guide/chatApi";
 import { useChat } from "../guide/ChatContext";
 import { sendMeasureExchange } from "../guide/chatApi";
 import { apiUrl } from "../api/baseUrl";
@@ -125,10 +126,12 @@ const Measure = () => {
     setPhase("scoring");
     setScoringError(null);
     try {
+      const consentHeaders = await aiConsentHeaders();
       const res = await fetch(apiUrl("/measure/interview"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          ...consentHeaders,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
@@ -141,7 +144,12 @@ const Measure = () => {
         }),
       });
 
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        try {
+          if ((await res.clone().json()).code === "AI_CONSENT_REQUIRED") clearAIConsentGrant();
+        } catch {}
+        throw new Error("The request could not be completed.");
+      }
       const data = await res.json();
       setResult(data);
       track("measure_completed");

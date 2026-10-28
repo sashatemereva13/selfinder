@@ -1,4 +1,5 @@
 import { useLocaleStore } from '../store/localeStore';
+import * as SecureStore from 'expo-secure-store';
 
 const BASE = (process.env.EXPO_PUBLIC_API_URL ?? '').replace(/\/$/, '');
 
@@ -137,12 +138,21 @@ interface RequestOptions {
   method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
   token?: string | null;
   timeoutMs?: number;
+  aiConsent?: boolean;
 }
 
 async function request<T>(path: string, body?: unknown, options: RequestOptions = {}): Promise<T> {
   const method = options.method ?? (body !== undefined ? 'POST' : 'GET');
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.token) headers.Authorization = `Bearer ${options.token}`;
+  if (options.aiConsent) {
+    try {
+      const consent = await SecureStore.getItemAsync('selfinder_ai_processing_consent_grant');
+      if (consent) headers['X-AI-Consent'] = consent;
+    } catch {
+      // Server rejects the request if the grant isn't available.
+    }
+  }
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
@@ -174,13 +184,18 @@ async function request<T>(path: string, body?: unknown, options: RequestOptions 
     // to show (see KNOWN_ERRORS) — it never reaches the screen itself.
     const text = await res.text().catch(() => '');
     let serverMessage: string | null = null;
+    let serverCode: string | null = null;
     if (text) {
       try {
         const parsed = JSON.parse(text);
         if (typeof parsed?.error === 'string') serverMessage = parsed.error;
+        if (typeof parsed?.code === 'string') serverCode = parsed.code;
       } catch {
         // Non-JSON body (a proxy's HTML error page) — nothing to read.
       }
+    }
+    if (res.status === 403 && serverCode === 'AI_CONSENT_REQUIRED') {
+      import('../store/aiDisclosureStore').then(({ resetAIConsent }) => resetAIConsent());
     }
     const err = new ApiError(safeMessage(res.status, serverMessage, !!options.token), res.status);
     // A 401 on a request that SENT a token means that sign-in has ended

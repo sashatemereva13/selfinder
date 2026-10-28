@@ -53,7 +53,7 @@ export async function sendMessage(
     messages: wireMessages,
     systemPrompt,
     locale: useLocaleStore.getState().locale,
-  });
+  }, { aiConsent: true });
   return { reply, suggestSpill: suggestSpill === true };
 }
 
@@ -91,5 +91,5 @@ export async function sendMeasureExchange(
     canGoBack,
     priorAsideCount,
     locale: useLocaleStore.getState().locale,
-  });
+  }, { aiConsent: true });
 }

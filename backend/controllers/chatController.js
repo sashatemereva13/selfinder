@@ -13,6 +13,7 @@ import {
   getFrequencyBand,
   calibrateVibrationScore,
 } from "../data/vibrationLevels.js";
+import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -240,10 +241,15 @@ function cleanSpillMetaCommentary(reply) {
 export async function postChat(req, res) {
   const { messages, systemPrompt, locale } = req.body;
 
-  if (!messages || !systemPrompt) {
+  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 40 ||
+      !textWithin(systemPrompt, 12000) || !validLocale(locale) ||
+      messages.some((message) => !message || !["user", "assistant"].includes(message.role) || !textWithin(message.content, 4000))) {
     return res
       .status(400)
-      .json({ error: "messages and systemPrompt are required" });
+      .json({ error: "Invalid or oversized chat request" });
+  }
+  if (messages.reduce((total, message) => total + message.content.length, 0) > 24000) {
+    return res.status(400).json({ error: "Chat history is too large" });
   }
 
   try {
@@ -294,6 +300,7 @@ export async function postChat(req, res) {
 // only a boolean; the text is never stored or logged.
 export async function postSafetyCheck(req, res) {
   const { text } = req.body ?? {};
+  if (!textWithin(text, 4000)) return res.status(400).json({ error: "Text is required and must be 4000 characters or fewer" });
   res.json({ crisis: await detectSelfHarm(text) });
 }
 
@@ -301,7 +308,13 @@ export async function postBadgeComment(req, res) {
   const { philosopherId, pathname, pageContext, fallbackComment } = req.body;
   const systemPrompt = BADGE_COMMENT_PROMPTS[philosopherId];
 
-  if (!philosopherId || !systemPrompt) {
+  if (!philosopherId || !systemPrompt || !validLocale(req.body.locale) ||
+      (req.body.pathname !== undefined && !textWithin(req.body.pathname, 300)) ||
+      (pageContext !== undefined && (!pageContext || typeof pageContext !== "object" || Array.isArray(pageContext))) ||
+      (req.body.pageContext && ((req.body.pageContext.label !== undefined && !textWithin(req.body.pageContext.label, 200)) ||
+        (req.body.pageContext.description !== undefined && !textWithin(req.body.pageContext.description, 1000)))) ||
+      (req.body.fallbackComment !== undefined && !textWithin(req.body.fallbackComment, 1000)) ||
+      (pageContext?.themes !== undefined && (!Array.isArray(pageContext.themes) || pageContext.themes.length > 5 || pageContext.themes.some((theme) => !textWithin(theme, 100)))) {
     return res.status(400).json({ error: "A valid philosopherId is required" });
   }
 
@@ -309,7 +322,7 @@ export async function postBadgeComment(req, res) {
   const contextLabel = pageContext?.label || normalizedPath;
   const contextDescription = pageContext?.description || "A page within the Selfinder journey.";
   const contextThemes = Array.isArray(pageContext?.themes)
-    ? pageContext.themes.filter(Boolean).slice(0, 5)
+    ? pageContext.themes.filter((theme) => textWithin(theme, 100)).slice(0, 5)
     : [];
 
   const cacheKey = JSON.stringify({
@@ -381,12 +394,9 @@ export async function postJourneyLine(req, res) {
   const { philosopherId, sceneId, referenceLine } = req.body;
   const systemPrompt = JOURNEY_LINE_PROMPTS[philosopherId];
 
-  if (!philosopherId || !systemPrompt) {
+  if (!philosopherId || !systemPrompt || !validLocale(req.body.locale) ||
+      !textWithin(sceneId ?? "scene", 200) || !textWithin(referenceLine, 4000)) {
     return res.status(400).json({ error: "A valid philosopherId is required" });
-  }
-
-  if (typeof referenceLine !== "string" || !referenceLine.trim()) {
-    return res.status(400).json({ error: "A referenceLine is required" });
   }
 
   const reference = referenceLine.trim();
@@ -451,7 +461,8 @@ export async function postJourneyLine(req, res) {
 export async function postMeasureExchange(req, res) {
   const { systemPrompt, sphere, question, answer, canGoBack, priorAsideCount, locale } = req.body;
 
-  if (!systemPrompt || !sphere || !question || typeof answer !== "string") {
+  if (!textWithin(systemPrompt, 12000) || !textWithin(sphere, 40) ||
+      !textWithin(question, 1000) || !textWithin(answer, 4000) || !validLocale(locale)) {
     return res
       .status(400)
       .json({ error: "systemPrompt, sphere, question, and answer are required" });
@@ -764,8 +775,12 @@ marks.`;
 export async function postMeasureInterview(req, res) {
   const { qaPairs, systemPrompt, locale } = req.body;
 
-  if (!Array.isArray(qaPairs) || qaPairs.length < 4) {
-    return res.status(400).json({ error: "qaPairs must contain 4 sphere answers" });
+  if (!Array.isArray(qaPairs) || qaPairs.length !== 4 || !textWithin(systemPrompt, 12000) || !validLocale(locale) ||
+      qaPairs.some((pair) => !pair || !textWithin(pair.sphere, 40) || !textWithin(pair.question, 1000) || !textWithin(pair.answer, 4000))) {
+    return res.status(400).json({ error: "Invalid or oversized interview request" });
+  }
+  if (qaPairs.reduce((total, pair) => total + pair.question.length + pair.answer.length, 0) > 20000) {
+    return res.status(400).json({ error: "Interview answers are too large" });
   }
 
   const transcript = qaPairs

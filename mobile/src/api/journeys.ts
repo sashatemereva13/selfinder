@@ -47,7 +47,7 @@ export async function sendJourneyExchange(
   return request<JourneyExchangeResponse>(
     '/journeys/exchange',
     { ...params, locale: useLocaleStore.getState().locale },
-    { token }
+    { token, aiConsent: true }
   );
 }
 
