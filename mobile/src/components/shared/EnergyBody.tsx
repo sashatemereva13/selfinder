@@ -15,6 +15,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { useLevelColors } from '../../content/measureConfig';
+import { heartbeat, startHeartbeat, HEARTBEAT_BODY_END } from '../../utils/heartbeat';
 import {
   ENERGY_BODY_CHEST,
   ENERGY_BODY_VIEWBOX,
@@ -56,13 +57,12 @@ const BONES_START_MS = 1250;
 const BONE_STAGGER_MS = 90;
 const SETTLED_MS = 3000;
 const BREATH_MS = 4500;
-// The heartbeat (2026-10-28): every WAVE_MS a wave of light leaves the
-// chest and travels out through the joints, nearest first, to the hands and
-// feet — the energy body made visible, and the only thing on Today that
-// moves on its own. WAVE_SPREAD is how much of each cycle it takes to reach
-// the outermost joint; WAVE_WIDTH how long each joint stays lit.
-const WAVE_MS = 5200;
-const WAVE_SPREAD = 0.35;
+// The heartbeat (see utils/heartbeat.ts): a wave of light leaves the chest
+// and travels out through the joints, nearest first, to the hands and feet
+// — the energy body made visible. WAVE_SPREAD is how much of each cycle it
+// takes to reach the outermost joint; WAVE_WIDTH how long each joint stays
+// lit. It then carries on up Depths' spiral.
+const WAVE_SPREAD = HEARTBEAT_BODY_END - 0.12;
 const WAVE_WIDTH = 0.12;
 
 export function EnergyBody({
@@ -103,8 +103,7 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
 
   const spark = useSharedValue(reduceMotion ? 1 : 0);
   const breath = useSharedValue(0.5);
-  // Starts past the end of a cycle, so nothing is lit until it begins.
-  const wave = useSharedValue(2);
+  const wave = heartbeat;
 
   useEffect(() => {
     if (reduceMotion) return;
@@ -113,14 +112,8 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
       SETTLED_MS,
       withRepeat(withTiming(1, { duration: BREATH_MS, easing: Easing.inOut(Easing.sin) }), -1, true),
     );
-    wave.value = withDelay(
-      SETTLED_MS,
-      withRepeat(withSequence(withTiming(0, { duration: 0 }), withTiming(1, { duration: WAVE_MS, easing: Easing.linear })), -1, false),
-    );
-    return () => {
-      cancelAnimation(breath);
-      cancelAnimation(wave);
-    };
+    startHeartbeat(SETTLED_MS);
+    return () => cancelAnimation(breath);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduceMotion]);
 
@@ -142,7 +135,7 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
               width={1 * px}
               length={s.length}
               color={lineColor}
-              opacity={0.55}
+              opacity={0.45}
               delay={BONES_START_MS + i * BONE_STAGGER_MS}
               reduceMotion={reduceMotion}
             />
@@ -182,10 +175,10 @@ function EnergyBodyFigure({ slug, width, height }: { slug: string | null; width:
               <DrawStroke
                 key={`r${i}`}
                 d={ray.d}
-                width={ray.width * 0.6 * px}
+                width={ray.width * 0.5 * px}
                 length={ray.length}
                 color={light}
-                opacity={ray.opacity * 0.85}
+                opacity={ray.opacity * 0.6}
                 delay={RAYS_START_MS + i * RAY_STAGGER_MS}
                 reduceMotion={reduceMotion}
               />
@@ -332,7 +325,7 @@ function Star({
     const pulse = t > 0 && t < 1 ? Math.sin(t * Math.PI) : 0;
     return {
       r: (halo ?? 0) * scale.value * (1 + 0.6 * pulse),
-      strokeOpacity: scale.value > 0.01 ? 0.25 + 0.4 * pulse : 0,
+      strokeOpacity: scale.value > 0.01 ? 0.18 + 0.4 * pulse : 0,
     };
   });
   return (

@@ -4,6 +4,7 @@ import Svg, { Path } from "react-native-svg";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withTiming,
   withDelay,
   withSequence,
@@ -14,6 +15,8 @@ import { useThemeColors } from "../../theme/useThemeColors";
 import { fonts, fontSizes } from "../../theme/typography";
 import { type SphereKey } from "./AuraField";
 import { VibrationSpectrum, levelIndex } from "./VibrationSpectrum";
+import { estimatePathLength } from "./AnimatedCardSymbol";
+import { heartbeat, HEARTBEAT_SPIRAL_START, HEARTBEAT_SPIRAL_END } from "../../utils/heartbeat";
 import {
   SLOT_ORDER,
   H_CUT,
@@ -40,6 +43,10 @@ import {
 // long it stays fully lit after it starts to spin — VibrationSpectrum's own
 // ROTATE_DURATION_MS (1100) plus a moment once it has landed.
 const WHEEL_REST_OPACITY = 0.35;
+// The heartbeat's pulse on the spiral: a short stretch of line in the
+// reading's colour, like the light travelling through the figure.
+const PULSE_LENGTH = 44;
+const AnimatedPath = Animated.createAnimatedComponent(Path);
 const WHEEL_SPIN_MS = 1400;
 
 // DepthsSpiralCore — the FIXED-zone half of what used to be one
@@ -486,6 +493,19 @@ export function DepthsSpiralCore({
     lastWheelName.current = selectedWheelLevelName;
   }
   const strokeColor = `rgb(${accentRgb})`;
+  // The heartbeat's pulse along the spiral. The path runs from the ring
+  // down to the feet, so the pulse runs it backwards: from the end (feet)
+  // to the start (ring) over its stretch of the cycle.
+  const spiralLength = useMemo(() => estimatePathLength(geometry.pathD), [geometry.pathD]);
+  const pulseProps = useAnimatedProps(() => {
+    const t = (heartbeat.value - HEARTBEAT_SPIRAL_START) / (HEARTBEAT_SPIRAL_END - HEARTBEAT_SPIRAL_START);
+    if (t <= 0 || t >= 1) return { strokeOpacity: 0, strokeDashoffset: 0 };
+    const at = spiralLength * (1 - t); // distance from the path's start
+    return {
+      strokeOpacity: 0.9 * Math.sin(t * Math.PI) + 0.1,
+      strokeDashoffset: -(at - PULSE_LENGTH / 2),
+    };
+  });
 
   return (
     <View style={styles.outer}>
@@ -496,13 +516,30 @@ export function DepthsSpiralCore({
           viewBox={`0 0 ${width} ${height}`}
           style={StyleSheet.absoluteFill}
         >
+          {/* The spiral (2026-10-28 — white and clearer, so it reads as
+              its own line among the place's architecture), and the
+              heartbeat travelling up it from the figure's feet to the
+              ring. */}
           <Path
             d={geometry.pathD}
             fill="none"
-            stroke={strokeColor}
-            strokeOpacity={0.16}
-            strokeWidth={1}
+            stroke={colors.text.primary}
+            strokeOpacity={0.45}
+            strokeWidth={1.6}
             strokeLinecap="round"
+            // Dotted (2026-10-29): a trail of fine dots, unlike every solid
+            // line of the place, so the spiral reads as its own thing —
+            // a path of energy, echoing the figure's star joints.
+            strokeDasharray={[0.1, 6]}
+          />
+          <AnimatedPath
+            d={geometry.pathD}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeDasharray={[PULSE_LENGTH, spiralLength + PULSE_LENGTH]}
+            animatedProps={pulseProps}
           />
         </Svg>
 

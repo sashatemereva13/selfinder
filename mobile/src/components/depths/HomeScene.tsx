@@ -26,6 +26,7 @@ import { makeRng } from '../../utils/auraDots';
 // the weather and light in the philosopher's place, never a different one.
 
 const W = 390;
+const PLACE_OPACITY = 0.7;
 const H = 844;
 // Each philosopher's place. Marcus Aurelius' is his inner citadel; Socrates', a
 // portico in the Athenian Agora; Aristotle's, his library at the Lyceum;
@@ -533,7 +534,9 @@ export function HomeScene({ lightRgb }: {
   const lineColor = colors.text.primary;
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    // The whole place at PLACE_OPACITY (2026-10-29 — it read a little loud
+    // next to the figure; the place is background, the figure the subject).
+    <View style={[StyleSheet.absoluteFill, { opacity: PLACE_OPACITY }]} pointerEvents="none">
       <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice">
         {place === 'citadel' && (
           <>
