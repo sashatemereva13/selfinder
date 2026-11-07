@@ -45,18 +45,20 @@ function authHeaders() {
   }
 }
 
+// The server holds each philosopher's prompt and is the only one that
+// writes a system prompt (2026-11-07). A room's setup text travels as
+// `appNote`, which the server places in the conversation as labelled
+// background — never as instructions.
 export async function sendMessage(messages, philosopher, additionalContext = "") {
   const consentHeaders = await aiConsentHeaders();
-  const systemPrompt = additionalContext
-    ? `${philosopher.systemPrompt}\n\n${additionalContext}`
-    : philosopher.systemPrompt;
 
   const res = await fetch(apiUrl("/chat"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders(), ...consentHeaders },
     body: JSON.stringify({
-      messages,
-      systemPrompt,
+      philosopherId: philosopher.id,
+      messages: messages.map(({ role, content }) => ({ role, content })),
+      ...(additionalContext ? { appNote: additionalContext.slice(0, 4000) } : {}),
     }),
   });
   await assertAIResponse(res);
@@ -73,7 +75,7 @@ export async function sendMeasureExchange(philosopher, sphere, question, answer)
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders(), ...consentHeaders },
     body: JSON.stringify({
-      systemPrompt: philosopher.systemPrompt,
+      philosopherId: philosopher.id,
       sphere,
       question,
       answer,

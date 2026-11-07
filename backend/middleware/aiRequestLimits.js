@@ -71,6 +71,45 @@ export const passwordResetSubmitLimiter = createAiRateLimiter({
   message: "Too many reset attempts. Please try again later.",
 });
 
+// Login and sign-up (2026-11-07). Two login limits, because the two attacks
+// look different: one IP trying many accounts (credential stuffing) hits the
+// per-IP limit; many IPs trying one account (guessing a password) hit the
+// per-username one. The per-username limit only counts failed attempts, so
+// someone who signs in normally never meets it — and it's short, so an
+// attacker can't lock a real person out for long by failing on purpose.
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+
+function usernameKey(req) {
+  const username = req.body?.username;
+  return typeof username === "string" ? `login:${username.trim().toLowerCase()}` : "login:invalid";
+}
+
+export const loginIpLimiter = rateLimit({
+  windowMs: LOGIN_WINDOW_MS,
+  limit: 30,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
+  handler: (_req, res) => res.status(429).json({ error: "Too many sign-in attempts. Please wait a few minutes." }),
+});
+
+export const loginAccountLimiter = rateLimit({
+  windowMs: LOGIN_WINDOW_MS,
+  limit: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: usernameKey,
+  handler: (_req, res) => res.status(429).json({ error: "Too many sign-in attempts. Please wait a few minutes." }),
+});
+
+export const registerLimiter = createAiRateLimiter({
+  limit: 10,
+  windowMs: 60 * 60 * 1000,
+  keyByAccount: false,
+  message: "Too many new accounts from here. Please try again later.",
+});
+
 export { aiBudgetMiddleware };
 
 export function hasValidAiPayload(req, res, next) {

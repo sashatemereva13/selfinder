@@ -140,7 +140,7 @@ const Measure = () => {
             question,
             answer,
           })),
-          systemPrompt: activePhilosopher?.systemPrompt ?? "",
+          philosopherId: activePhilosopher?.id ?? "",
         }),
       });
 

@@ -3,6 +3,7 @@ import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import Crossing from "../models/Crossing.js";
 import Wish from "../models/Wish.js";
 import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
+import { resolvePhilosopher } from "../utils/philosopherPrompt.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16;
@@ -74,12 +75,14 @@ Hard rules, no exceptions:
 // thing repeatedly. Client checks eligibility via listMyCrossings before
 // calling this.
 export async function generateCrossing(req, res) {
-  const { wishId, measureResultId, pastWishId, systemPrompt, levelName, locale } = req.body;
+  const { wishId, measureResultId, pastWishId, levelName, locale } = req.body;
+  const philosopher = resolvePhilosopher(req.body);
+  const systemPrompt = philosopher?.prompt;
 
-  if (!textWithin(wishId, 100) || !textWithin(measureResultId, 100) || !textWithin(systemPrompt, 12000) ||
+  if (!textWithin(wishId, 100) || !textWithin(measureResultId, 100) || !philosopher ||
       !textWithin(levelName, 100) || !validLocale(locale) ||
       (pastWishId !== undefined && !textWithin(pastWishId, 100))) {
-    return res.status(400).json({ error: "wishId, measureResultId, systemPrompt, and levelName are required" });
+    return res.status(400).json({ error: "wishId, measureResultId, philosopherId, and levelName are required" });
   }
 
   const wish = await Wish.findOne({ id: wishId });

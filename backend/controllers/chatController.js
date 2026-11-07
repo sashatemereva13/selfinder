@@ -14,6 +14,14 @@ import {
   calibrateVibrationScore,
 } from "../data/vibrationLevels.js";
 import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
+import {
+  resolvePhilosopher,
+  buildReadingNote,
+  buildFocus,
+  appNoteMessage,
+  LABELLED_MESSAGES_RULE,
+  MAX_APP_NOTE_LENGTH,
+} from "../utils/philosopherPrompt.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
@@ -239,10 +247,14 @@ function cleanSpillMetaCommentary(reply) {
 }
 
 export async function postChat(req, res) {
-  const { messages, systemPrompt, locale } = req.body;
+  const { messages, locale, reading, focus, appNote } = req.body;
+  const philosopher = resolvePhilosopher(req.body);
 
-  if (!Array.isArray(messages) || messages.length === 0 || messages.length > 40 ||
-      !textWithin(systemPrompt, 12000) || !validLocale(locale) ||
+  // A web room may open with an empty history (the philosopher speaks
+  // first); the mobile app always sends at least one message.
+  if (!philosopher || !Array.isArray(messages) || messages.length > 40 ||
+      (messages.length === 0 && !appNote) || !validLocale(locale) ||
+      (appNote !== undefined && !textWithin(appNote, MAX_APP_NOTE_LENGTH)) ||
       messages.some((message) => !message || !["user", "assistant"].includes(message.role) || !textWithin(message.content, 4000))) {
     return res
       .status(400)
@@ -252,18 +264,32 @@ export async function postChat(req, res) {
     return res.status(400).json({ error: "Chat history is too large" });
   }
 
+  // Everything in the system prompt is written by the server; the only
+  // free text (answers, notes) goes in front of the history as labelled
+  // user-channel messages — see utils/philosopherPrompt.js.
+  const systemParts = [UNIVERSAL_RULES, philosopher.prompt, SPILL_SIGNAL_INSTRUCTION, LABELLED_MESSAGES_RULE];
+  const background = [];
+  try {
+    if (reading !== undefined) systemParts.push(buildReadingNote(reading));
+    if (focus !== undefined) {
+      const built = buildFocus(focus);
+      systemParts.push(built.note);
+      background.push(...built.answers.map((content) => ({ role: "user", content })));
+    }
+  } catch {
+    return res.status(400).json({ error: "Invalid or oversized chat request" });
+  }
+  for (const note of [philosopher.legacyNote, appNote]) {
+    if (note) background.push(appNoteMessage(note));
+  }
+
   try {
     const response = await groq.chat.completions.create({
       ...resolveModelParams(locale, models[1], 512),
       messages: [
-        {
-          role: "system",
-          content: localizedSystemPrompt(
-            UNIVERSAL_RULES + "\n\n" + systemPrompt + "\n\n" + SPILL_SIGNAL_INSTRUCTION,
-            locale
-          ),
-        },
-        ...messages,
+        { role: "system", content: localizedSystemPrompt(systemParts.join("\n\n"), locale) },
+        ...background,
+        ...messages.map(({ role, content }) => ({ role, content })),
       ],
     });
 
@@ -459,14 +485,16 @@ export async function postJourneyLine(req, res) {
 }
 
 export async function postMeasureExchange(req, res) {
-  const { systemPrompt, sphere, question, answer, canGoBack, priorAsideCount, locale } = req.body;
+  const { sphere, question, answer, canGoBack, priorAsideCount, locale } = req.body;
+  const philosopher = resolvePhilosopher(req.body);
 
-  if (!textWithin(systemPrompt, 12000) || !textWithin(sphere, 40) ||
+  if (!philosopher || !textWithin(sphere, 40) ||
       !textWithin(question, 1000) || !textWithin(answer, 4000) || !validLocale(locale)) {
     return res
       .status(400)
-      .json({ error: "systemPrompt, sphere, question, and answer are required" });
+      .json({ error: "philosopherId, sphere, question, and answer are required" });
   }
+  const systemPrompt = philosopher.prompt;
 
   const goBackPossible = canGoBack === true;
   // How many times they've already gotten stuck on THIS question (asked back,
@@ -773,9 +801,11 @@ marks.`;
 }
 
 export async function postMeasureInterview(req, res) {
-  const { qaPairs, systemPrompt, locale } = req.body;
+  const { qaPairs, locale } = req.body;
+  const philosopher = resolvePhilosopher(req.body);
+  const systemPrompt = philosopher?.prompt;
 
-  if (!Array.isArray(qaPairs) || qaPairs.length !== 4 || !textWithin(systemPrompt, 12000) || !validLocale(locale) ||
+  if (!Array.isArray(qaPairs) || qaPairs.length !== 4 || !philosopher || !validLocale(locale) ||
       qaPairs.some((pair) => !pair || !textWithin(pair.sphere, 40) || !textWithin(pair.question, 1000) || !textWithin(pair.answer, 4000))) {
     return res.status(400).json({ error: "Invalid or oversized interview request" });
   }

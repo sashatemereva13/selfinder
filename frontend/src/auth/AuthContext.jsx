@@ -61,11 +61,13 @@ export function AuthProvider({ children }) {
   }, []);
 
   const changePassword = useCallback(async (currentPassword, newPassword) => {
-    await safeRequestJson(`${API}/change-password`, {
+    const data = await safeRequestJson(`${API}/change-password`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${auth?.token}` },
       body: JSON.stringify({ currentPassword, newPassword }),
     }, "Change failed");
+    // A password change revokes every older token; keep the fresh one.
+    if (data?.token) persist(data);
   }, [auth]);
 
   return (

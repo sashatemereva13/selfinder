@@ -8,12 +8,18 @@ import {
   requestPasswordReset,
   resetPassword,
 } from "../controllers/authController.js";
-import { passwordResetRequestLimiter, passwordResetSubmitLimiter } from "../middleware/aiRequestLimits.js";
+import {
+  passwordResetRequestLimiter,
+  passwordResetSubmitLimiter,
+  loginIpLimiter,
+  loginAccountLimiter,
+  registerLimiter,
+} from "../middleware/aiRequestLimits.js";
 
 const router = Router();
 
-router.post("/register", register);
-router.post("/login", login);
+router.post("/register", registerLimiter, register);
+router.post("/login", loginIpLimiter, loginAccountLimiter, login);
 router.post("/refresh", requireAuth, refresh);
 router.post("/change-password", requireAuth, changePassword);
 router.post("/forgot-password", passwordResetRequestLimiter, requestPasswordReset);

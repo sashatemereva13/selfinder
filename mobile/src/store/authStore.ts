@@ -24,6 +24,7 @@ interface AuthStore {
   logout: () => Promise<void>;
   refreshIfStale: () => Promise<void>;
   expire: (token: string) => Promise<void>;
+  adoptSession: (session: AuthSession) => Promise<void>;
 }
 
 async function persist(session: AuthSession | null) {
@@ -112,6 +113,14 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
     if (get().session?.token !== token) return;
     await persist(null);
     set({ session: null });
+  },
+
+  // A fresh token for the same account (after a password change, which
+  // revokes every older one) — swapped in without touching anything else.
+  adoptSession: async (session) => {
+    const fresh = { ...session, refreshedAt: Date.now() };
+    await persist(fresh);
+    set({ session: fresh });
   },
 
   logout: async () => {

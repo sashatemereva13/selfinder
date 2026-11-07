@@ -6,9 +6,9 @@ import { requireAIConsent } from '../store/aiDisclosureStore';
 // Backend doesn't return `savedAt` — the caller stamps it on before persisting.
 // Passing a token lets the backend save the reading to the user's account
 // (only if they've also granted psychological-data consent) — anonymous
-// either way if no token is passed. `systemPrompt` is the philosopher's own
-// persona prompt, used server-side to generate a philosopher-voiced
-// reflection tying the four sphere readings together (`combinationMessage`).
+// either way if no token is passed. `philosopherId` names whose voice the
+// server uses (its own copy of their prompt) for the reflection tying the
+// four sphere readings together (`combinationMessage`).
 //
 // This endpoint runs two sequential Groq calls (scoring, then the
 // combination message) rather than one — on the Russian locale it also
@@ -22,11 +22,11 @@ import { requireAIConsent } from '../store/aiDisclosureStore';
 // observed so far.
 const INTERVIEW_TIMEOUT_MS = 45000;
 
-export async function submitInterview(qaPairs: QAPair[], systemPrompt: string, token?: string | null) {
+export async function submitInterview(qaPairs: QAPair[], philosopherId: string, token?: string | null) {
   await requireAIConsent();
   return request<Omit<MeasureResult, 'savedAt'>>(
     '/measure/interview',
-    { qaPairs, systemPrompt, locale: useLocaleStore.getState().locale },
+    { qaPairs, philosopherId, locale: useLocaleStore.getState().locale },
     { token, timeoutMs: INTERVIEW_TIMEOUT_MS, aiConsent: true }
   );
 }

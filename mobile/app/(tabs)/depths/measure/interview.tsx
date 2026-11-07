@@ -134,7 +134,7 @@ export default function InterviewScreen() {
       // these answers — kept out of the saved reading, used once below.
       const { crisis, ...result } = (await submitInterview(
         pairs,
-        philosopher?.systemPrompt ?? '',
+        philosopher?.id ?? '',
         authToken,
       )) as Awaited<ReturnType<typeof submitInterview>> & { crisis?: boolean };
       const savedAt = new Date().toISOString();

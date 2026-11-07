@@ -20,3 +20,10 @@ export declare const VIBRATION_LEVELS: {
   score: number;
   route: string;
 }[];
+export declare const PHILOSOPHER_PROMPTS: Readonly<{
+  socrates: string;
+  stoics: string;
+  kierkegaard: string;
+  camus: string;
+  aristotle: string;
+}>;

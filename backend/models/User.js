@@ -16,6 +16,10 @@ const userSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
   passwordHash: { type: String, required: true },
   role: { type: String, default: "user" },
+  // Bumped on every password change/reset; session tokens carry the value
+  // they were issued with, so raising it signs out every older token
+  // (middleware/auth.js). Absent on older accounts = 0.
+  tokenVersion: { type: Number, default: 0 },
   createdAt: { type: String, required: true },
   // Optional — existing accounts predate this field. Forgot-password only
   // works once an email is on file. The unique index is declared with a
