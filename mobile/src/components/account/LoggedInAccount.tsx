@@ -6,6 +6,7 @@ import { fonts } from '../../theme/typography';
 import { useLocaleStore } from '../../store/localeStore';
 import { getMe, grantConsent, withdrawConsent, exportMyData, deleteAccount, updateEmail } from '../../api/user';
 import { changePassword as changePasswordApi } from '../../api/auth';
+import { useAuthStore } from '../../store/authStore';
 import { AuthSession, UserProfile } from '../../types';
 import { PRIVACY_POLICY_URL } from '../../utils/privacyPolicy';
 import { PasswordInput } from './PasswordInput';
@@ -111,7 +112,10 @@ export function LoggedInAccount({
     setPasswordMsg(null);
     setPasswordError(null);
     try {
-      await changePasswordApi(session.token, currentPassword, newPassword);
+      const result = await changePasswordApi(session.token, currentPassword, newPassword);
+      if (result.token && result.username && result.role) {
+        await useAuthStore.getState().adoptSession({ token: result.token, username: result.username, role: result.role });
+      }
       setPasswordMsg(t('account.passwordChanged'));
       setCurrentPassword('');
       setNewPassword('');

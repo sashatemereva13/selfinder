@@ -36,10 +36,12 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
 
-      #  install dependencies
+      # Exactly the lockfile — the same dependencies CI tested.
       - name: install dependencies
-        run: npm cache clean --force && npm install
+        run: npm ci
 
       - name: run tests
         run: npm test
@@ -49,7 +51,10 @@ jobs:
         run: npm run build
 
       - name: deploy to VPS
-        uses: burnett01/rsync-deployments@8.0.5
+        # Pinned to a commit, not a tag: this step receives the server's SSH
+        # key, and a tag can be moved to different code by whoever controls
+        # the action's repo. Renovate proposes SHA bumps as reviewed PRs.
+        uses: burnett01/rsync-deployments@66257cad6bfeb2171d3b6bfa6c9a22279dd9c3a1 # 8.0.5
         with:
           switches: -avzr --delete
           path: frontend/dist/

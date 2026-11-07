@@ -2,6 +2,7 @@ import request from './client';
 import { Philosopher, Sphere } from '../types';
 import { useLocaleStore } from '../store/localeStore';
 import { requireAIConsent } from '../store/aiDisclosureStore';
+import type { GuideContext } from '../utils/readingContext';
 
 export interface ChatCompletionMessage {
   role: 'user' | 'assistant';
@@ -25,16 +26,15 @@ interface SendMessageResponse {
   suggestSpill?: boolean;
 }
 
-// Matches backend's postChat contract exactly: { messages, systemPrompt }.
+// Matches backend's postChat contract: { philosopherId, messages, reading?,
+// focus? }. The philosopher's prompt is never sent — the server holds its
+// own copy and is the only one that writes a system prompt (2026-11-07).
 export async function sendMessage(
   messages: ChatCompletionMessage[],
   philosopher: Philosopher,
-  additionalContext = ''
+  context: GuideContext | null = null
 ): Promise<{ reply: string; suggestSpill: boolean }> {
   await requireAIConsent();
-  const systemPrompt = additionalContext
-    ? `${philosopher.systemPrompt}\n\n${additionalContext}`
-    : philosopher.systemPrompt;
 
   // suggestSpill is client-side-only bookkeeping (drives the "write it out
   // instead" chip) — it must never ride along in the history sent back to
@@ -50,8 +50,10 @@ export async function sendMessage(
   // useLocaleStore is already the single app-wide source of truth, and
   // Zustand stores are readable outside React components via getState().
   const { reply, suggestSpill } = await request<SendMessageResponse>('/chat', {
+    philosopherId: philosopher.id,
     messages: wireMessages,
-    systemPrompt,
+    ...(context?.reading ? { reading: context.reading } : {}),
+    ...(context?.focus?.length ? { focus: context.focus } : {}),
     locale: useLocaleStore.getState().locale,
   }, { aiConsent: true });
   return { reply, suggestSpill: suggestSpill === true };
@@ -84,7 +86,7 @@ export async function sendMeasureExchange(
 ): Promise<MeasureExchangeResponse> {
   await requireAIConsent();
   return request<MeasureExchangeResponse>('/measure/exchange', {
-    systemPrompt: philosopher.systemPrompt,
+    philosopherId: philosopher.id,
     sphere,
     question,
     answer,

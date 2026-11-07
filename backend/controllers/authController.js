@@ -10,13 +10,29 @@ const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
 const RESET_MAX_ATTEMPTS = 5;
 
+// Every credential field must be a plain string. JSON lets a client send
+// `{"username": {"$ne": null}}`, and an object handed to a Mongo filter is
+// read as a query operator ("any username that isn't null") rather than a
+// name — NoSQL injection. db.js's sanitizeFilter is the app-wide guard;
+// this is the explicit one at the door. Lengths are capped because bcrypt
+// only reads the first 72 bytes and hashing megabytes is wasted CPU.
+const MAX_USERNAME_LENGTH = 100;
+const MAX_PASSWORD_LENGTH = 1024;
+
+function isText(value, maxLength) {
+  return typeof value === "string" && value.length > 0 && value.length <= maxLength;
+}
+
 const signToken = signSessionToken;
 
 export async function register(req, res) {
   const { username, password, privacyPolicyAccepted, adminCode, email } = req.body;
 
-  if (!username || !password) {
+  if (!isText(username, MAX_USERNAME_LENGTH) || !isText(password, MAX_PASSWORD_LENGTH)) {
     return res.status(400).json({ error: "username and password are required" });
+  }
+  if (email !== undefined && email !== null && typeof email !== "string") {
+    return res.status(400).json({ error: "That doesn't look like a valid email" });
   }
 
   if (password.length < 8) {
@@ -44,7 +60,8 @@ export async function register(req, res) {
 
   const passwordHash = await bcrypt.hash(password, 10);
   const now = new Date().toISOString();
-  const isAdmin = Boolean(process.env.ADMIN_SIGNUP_CODE) && adminCode === process.env.ADMIN_SIGNUP_CODE;
+  const isAdmin = Boolean(process.env.ADMIN_SIGNUP_CODE) && typeof adminCode === "string" &&
+    adminCode === process.env.ADMIN_SIGNUP_CODE;
 
   try {
     const user = await User.create({
@@ -89,7 +106,7 @@ export async function register(req, res) {
 export async function login(req, res) {
   const { username, password } = req.body;
 
-  if (!username || !password) {
+  if (!isText(username, MAX_USERNAME_LENGTH) || !isText(password, MAX_PASSWORD_LENGTH)) {
     return res.status(400).json({ error: "username and password are required" });
   }
 
@@ -120,7 +137,7 @@ export async function refresh(req, res) {
 export async function changePassword(req, res) {
   const { currentPassword, newPassword } = req.body;
 
-  if (!currentPassword || !newPassword) {
+  if (!isText(currentPassword, MAX_PASSWORD_LENGTH) || !isText(newPassword, MAX_PASSWORD_LENGTH)) {
     return res.status(400).json({ error: "currentPassword and newPassword are required" });
   }
   if (newPassword.length < 8) {
@@ -138,9 +155,13 @@ export async function changePassword(req, res) {
   }
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);
+  // Signs out every other device still holding a token from before the
+  // change — the point of changing a password someone else may know. This
+  // device gets a fresh token back so it stays signed in.
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
 
-  res.json({ success: true });
+  res.json({ success: true, token: signToken(user), username: user.username, role: user.role });
 }
 
 // Always responds the same way regardless of whether the username/email
@@ -148,7 +169,7 @@ export async function changePassword(req, res) {
 // account has no email on file — there's nowhere to send the code.
 export async function requestPasswordReset(req, res) {
   const { username } = req.body;
-  if (!username) {
+  if (!isText(username, MAX_USERNAME_LENGTH)) {
     return res.status(400).json({ error: "username is required" });
   }
 
@@ -185,7 +206,7 @@ export async function requestPasswordReset(req, res) {
 
 export async function resetPassword(req, res) {
   const { username, code, newPassword } = req.body;
-  if (!username || !code || !newPassword) {
+  if (!isText(username, MAX_USERNAME_LENGTH) || !code || !isText(newPassword, MAX_PASSWORD_LENGTH)) {
     return res.status(400).json({ error: "username, code, and newPassword are required" });
   }
   if (typeof code !== "string" || !/^\d{6}$/.test(code)) {
@@ -214,6 +235,9 @@ export async function resetPassword(req, res) {
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);
   user.passwordReset = { codeHash: null, expiresAt: null, attempts: 0, requestedAt: null };
+  // A reset usually means the password may be known to someone else —
+  // every existing sign-in ends.
+  user.tokenVersion = (user.tokenVersion ?? 0) + 1;
   await user.save();
 
   res.json({ success: true });

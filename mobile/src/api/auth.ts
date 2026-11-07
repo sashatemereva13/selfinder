@@ -28,7 +28,9 @@ export function changePassword(
   token: string,
   currentPassword: string,
   newPassword: string
-): Promise<{ success: boolean }> {
+): Promise<{ success: boolean } & Partial<AuthSession>> {
+  // Since 2026-11-07 the server signs out every other device on a password
+  // change and hands this one a fresh session — see authStore.adoptSession.
   return request('/auth/change-password', { currentPassword, newPassword }, { token });
 }
 

@@ -1,4 +1,5 @@
 import { getLocales } from 'expo-localization';
+import { mentionsCrisis } from '@selfinder/shared';
 import request from '../api/client';
 
 // The crisis safety net (2026-10-10). Three parts:
@@ -17,48 +18,23 @@ import request from '../api/client';
 // Only danger to life triggers anything — heavy feelings are what the app
 // is for, and never interrupt. Nothing about a check is stored or logged.
 
+// If the server can't be asked (offline, busy, consent not given yet),
+// the answer is the on-phone phrase list, not "no" — a failed check must
+// never read as a safe one (2026-11-07).
 export async function checkTextForCrisis(text: string): Promise<boolean> {
   try {
     const { crisis } = await request<{ crisis: boolean }>('/chat/safety-check', { text }, { aiConsent: true });
-    return crisis === true;
+    if (typeof crisis !== 'boolean') return mentionsCrisis(text);
+    return crisis;
   } catch {
-    return false;
+    return mentionsCrisis(text);
   }
 }
 
-// Phrases only, never single words ("die", "end") — those appear in
-// ordinary sentences far too often. Lower-cased, matched as substrings.
-const PHRASES = [
-  'kill myself',
-  'killing myself',
-  'end my life',
-  'end it all',
-  'take my own life',
-  'want to die',
-  "don't want to live",
-  'dont want to live',
-  'no reason to live',
-  'better off dead',
-  'better off without me',
-  'hurt myself',
-  'harm myself',
-  'suicide',
-  'suicidal',
-  'не хочу жить',
-  'хочу умереть',
-  'покончить с собой',
-  'убить себя',
-  'свести счёты',
-  'свести счеты',
-  'суицид',
-  'самоубий',
-  'причинить себе вред',
-  'лучше бы меня не было',
-];
-
+// The phrase list lives in @selfinder/shared, so the server falls back to
+// exactly the same one when its classifier can't answer.
 export function mentionsCrisisOnDevice(...texts: (string | undefined)[]): boolean {
-  const all = texts.filter(Boolean).join(' ').toLowerCase();
-  return PHRASES.some((p) => all.includes(p));
+  return mentionsCrisis(...texts);
 }
 
 export interface CrisisResources {

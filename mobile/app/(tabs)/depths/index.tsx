@@ -232,7 +232,7 @@ function DepthsContent() {
     ? [...shiftSessions].reverse().find((s) => s.readingAt === currentResult.savedAt)
     : undefined;
   const addReading = useGuideChatStore((s) => s.addReading);
-  const addContext = useGuideChatStore((s) => s.addContext);
+  const addFocus = useGuideChatStore((s) => s.addFocus);
   const sendToGuide = useGuideChatStore((s) => s.send);
   // When the reflection was said, as a quiet word beside the
   // philosopher's name — "today", "yesterday", then a date.
@@ -526,10 +526,14 @@ function DepthsContent() {
       context: buildReadingContext(currentResult),
       measureResultId: currentResult.measureResultId,
     });
-    addContext(
-      philosopher.id,
-      `The person is asking about what they said for their ${selectedLine.key} in this reading, which read as ${selectedLine.vibrationLevel.name}. They said: "${selectedAnswer.answer}". Only they can know the answer to their question: don't tell them what they feel or what mattered to them. Help them find it — point back to their own words, and ask.`,
-    );
+    // The instruction to help them find it rather than answer for them is
+    // written by the server (backend/utils/philosopherPrompt.js's
+    // buildFocus); the app only says which answer.
+    addFocus(philosopher.id, {
+      sphere: selectedLine.key,
+      level: selectedLine.vibrationLevel.slug,
+      answer: selectedAnswer.answer,
+    });
     router.push("/guide");
     sendToGuide(philosopher, answerQuestion);
   };

@@ -59,3 +59,20 @@ export function metricsMiddleware(req, res, next) {
 
   next();
 }
+
+// Content-Security-Policy violations reported by browsers (routes/cspReport.js).
+// `directive` is collapsed to a fixed list — like `route` above, a label
+// value an outsider can choose would be an unbounded cardinality source.
+export const CSP_DIRECTIVES = [
+  "default-src", "script-src", "script-src-elem", "script-src-attr",
+  "style-src", "style-src-elem", "style-src-attr", "img-src", "font-src",
+  "connect-src", "media-src", "worker-src", "frame-src", "frame-ancestors",
+  "object-src", "base-uri", "form-action", "manifest-src",
+];
+
+export const cspViolationsTotal = new client.Counter({
+  name: "csp_violations_total",
+  help: "Content-Security-Policy violations reported by browsers",
+  labelNames: ["directive"],
+  registers: [register],
+});

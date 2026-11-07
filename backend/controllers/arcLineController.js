@@ -4,6 +4,8 @@ import ArcLine from "../models/ArcLine.js";
 import MeasureResult from "../models/MeasureResult.js";
 import Wish from "../models/Wish.js";
 import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
+import { isPhilosopherId } from "../utils/philosopherPrompt.js";
+import { PHILOSOPHER_PROMPTS } from "../../shared/philosopherPrompts.mjs";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // Same model/param story as crossingController.js's CROSSING_MODEL — see
@@ -82,11 +84,13 @@ Hard rules, no exceptions:
 // something exists" discipline as Crossing — Your Arc's Cover page calls
 // this once per visit; a cached hit costs no Groq call at all.
 export async function getArcLine(req, res) {
-  const { systemPrompt, locale, philosopherId } = req.body;
+  const { locale, philosopherId } = req.body;
 
-  if (!textWithin(philosopherId, 100) || !validLocale(locale)) {
-    return res.status(400).json({ error: "systemPrompt and philosopherId are required" });
+  // The prompt comes from the server's own copy, never from the request.
+  if (!isPhilosopherId(philosopherId) || !validLocale(locale)) {
+    return res.status(400).json({ error: "A valid philosopherId is required" });
   }
+  const systemPrompt = PHILOSOPHER_PROMPTS[philosopherId];
 
   const dateKey = todayKey();
 

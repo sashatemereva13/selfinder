@@ -46,7 +46,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: copy backup script to the VPS
-        uses: appleboy/scp-action@v1
+        uses: appleboy/scp-action@ff85246acaad7bdce478db94a363cd2bf7c90345 # v1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}
@@ -55,7 +55,7 @@ jobs:
           target: "/tmp/selfinder-backup-deploy"
 
       - name: install script and cron entry
-        uses: appleboy/ssh-action@v1.2.1
+        uses: appleboy/ssh-action@8faa84277b88b6cd1455986f459aa66cf72bc8a3 # v1.2.1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}

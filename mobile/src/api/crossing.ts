@@ -45,7 +45,6 @@ export async function generateCrossing(
         levelName,
         pastWishId: pastWishId ?? null,
         philosopherId: philosopher.id,
-        systemPrompt: philosopher.systemPrompt,
         locale: useLocaleStore.getState().locale,
       },
       { token, aiConsent: true }

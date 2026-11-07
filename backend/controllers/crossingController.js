@@ -3,6 +3,7 @@ import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import Crossing from "../models/Crossing.js";
 import Wish from "../models/Wish.js";
 import { textWithin, validLocale } from "../middleware/aiRequestLimits.js";
+import { resolvePhilosopher } from "../utils/philosopherPrompt.js";
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 // llama-3.3-70b-versatile was decommissioned by Groq on 2026-08-16;
@@ -74,12 +75,18 @@ Hard rules, no exceptions:
 // thing repeatedly. Client checks eligibility via listMyCrossings before
 // calling this.
 export async function generateCrossing(req, res) {
-  const { wishId, measureResultId, pastWishId, systemPrompt, levelName, locale } = req.body;
+  const { wishId, measureResultId, pastWishId, levelName, locale } = req.body;
+  const philosopher = resolvePhilosopher(req.body);
+  const systemPrompt = philosopher?.prompt;
 
-  if (!textWithin(wishId, 100) || !textWithin(measureResultId, 100) || !textWithin(systemPrompt, 12000) ||
+  // pastWishId is optional: the app sends null when there's no earlier wish
+  // (until 2026-11-07 that null was rejected here, so those Crossings
+  // silently never generated). When present it must be a plain string.
+  const hasPastWish = pastWishId !== undefined && pastWishId !== null;
+  if (!textWithin(wishId, 100) || !textWithin(measureResultId, 100) || !philosopher ||
       !textWithin(levelName, 100) || !validLocale(locale) ||
-      (pastWishId !== undefined && !textWithin(pastWishId, 100))) {
-    return res.status(400).json({ error: "wishId, measureResultId, systemPrompt, and levelName are required" });
+      (hasPastWish && (typeof pastWishId !== "string" || !textWithin(pastWishId, 100)))) {
+    return res.status(400).json({ error: "wishId, measureResultId, philosopherId, and levelName are required" });
   }
 
   const wish = await Wish.findOne({ id: wishId });
@@ -94,7 +101,7 @@ export async function generateCrossing(req, res) {
 
   let pastWishText = null;
   let pastWishDate = null;
-  if (pastWishId) {
+  if (hasPastWish && typeof pastWishId === "string") {
     const pastWish = await Wish.findOne({ id: pastWishId });
     if (pastWish && pastWish.userId === req.user.id) {
       pastWishText = pastWish.text;

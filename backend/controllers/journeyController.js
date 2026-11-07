@@ -1,4 +1,5 @@
 import Groq from "groq-sdk";
+import mongoose from "mongoose";
 import { logger } from "../logger.js";
 import { UNIVERSAL_RULES } from "../data/universalAIrules.js";
 import User from "../models/User.js";
@@ -1071,7 +1072,7 @@ export async function getJourneySession(req, res) {
 export async function getJourneySessions(req, res) {
   const sessions = await JourneySession.find({
     userId: req.user.id,
-    completedAt: { $ne: null },
+    completedAt: mongoose.trusted({ $ne: null }),
   })
     .sort({ completedAt: -1 })
     .limit(100);

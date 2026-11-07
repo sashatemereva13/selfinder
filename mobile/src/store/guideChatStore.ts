@@ -5,6 +5,7 @@ import { Philosopher } from '../types';
 import { track } from '../utils/analytics';
 import { ensureAIConsent } from './aiDisclosureStore';
 import { checkTextForCrisis } from '../utils/safety';
+import type { FocusFacts, GuideContext, ReadingFacts } from '../utils/readingContext';
 
 // Mirrors web's ChatContext.jsx: in-memory only, no persistence — resets on
 // app restart. Keyed by philosopher id so switching your guide (via the You
@@ -24,19 +25,15 @@ interface GuideChatStore {
   // unchanged conversation when the Guide screen is merely revisited.
   lastSavedMessageCount: Record<string, number>;
   // What the philosopher needs to know about the reading this conversation
-  // is currently about (level, spheres, axis) — appended to the system
-  // prompt on every send while set, since the reflection message alone
-  // only carries what was said, not the reading's own details. Replaces
-  // the old scripted "I just measured myself: …" opener, which carried
-  // those details by putting words in the person's mouth.
-  readingContext: Record<string, string | null>;
-  // additionalContext is appended to the philosopher's system prompt for
-  // this one exchange only — never shown as a chat bubble. Used so a
-  // sphere-specific "Talk about it" (see Depths) can hand the philosopher
-  // the person's own Measure answer for that sphere, so the first reply
-  // can speak to their specific situation instead of the generic level
-  // description — the visible message stays a clean, human line.
-  send: (philosopher: Philosopher, text: string, additionalContext?: string) => Promise<void>;
+  // is currently about (level, spheres, axis) and any of the person's own
+  // answers they're asking about — sent as structured facts on every send
+  // while set; the server turns them into what the philosopher reads
+  // (utils/readingContext.ts). The reflection message alone only carries
+  // what was said, not the reading's own details. Replaces the old
+  // scripted "I just measured myself: …" opener, which carried those
+  // details by putting words in the person's mouth.
+  readingContext: Record<string, GuideContext | null>;
+  send: (philosopher: Philosopher, text: string) => Promise<void>;
   // The philosopher's first line from onboarding's meet step, so the
   // conversation starts where the person first heard them — only if
   // nothing is there yet.
@@ -47,12 +44,14 @@ interface GuideChatStore {
   // so Measure finishing and a later "Talk about it" can both call it.
   addReading: (
     philosopherId: string,
-    reading: { savedAt: string; reflection: string | null; context: string; measureResultId?: string | null }
+    reading: { savedAt: string; reflection: string | null; context: ReadingFacts; measureResultId?: string | null }
   ) => void;
-  // Adds to what the philosopher knows about the reading this
-  // conversation is about — e.g. the one Measure answer the person is
-  // asking about from Depths. Not repeated if already there.
-  addContext: (philosopherId: string, context: string) => void;
+  // Adds one of the person's own Measure answers to what the philosopher
+  // knows about the reading — the answer they're asking about from Depths,
+  // so the first reply can speak to their specific situation while the
+  // visible message stays a clean, human line. Not repeated if already
+  // there.
+  addFocus: (philosopherId: string, focus: FocusFacts) => void;
   clearConversation: (philosopherId: string) => void;
   resetAll: () => void;
   setPendingMeasureResultId: (philosopherId: string, measureResultId: string | null | undefined) => void;
@@ -70,7 +69,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
   lastSavedMessageCount: {},
   readingContext: {},
 
-  send: async (philosopher, text, additionalContext) => {
+  send: async (philosopher, text) => {
     const trimmed = text.trim();
     if (!trimmed || get().isLoading) return;
     // Asked before the message is added, so "Not now" leaves the
@@ -88,7 +87,7 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
     track('guide_message_sent');
 
     try {
-      const context = [get().readingContext[philosopher.id], additionalContext].filter(Boolean).join('\n\n');
+      const context = get().readingContext[philosopher.id] ?? null;
       // The crisis check runs alongside the reply, not before it — no
       // extra wait (crisis safety net, 2026-10-10).
       const [{ reply, suggestSpill }, crisis] = await Promise.all([
@@ -129,17 +128,20 @@ export const useGuideChatStore = create<GuideChatStore>((set, get) => ({
               [philosopherId]: [...existing, { role: 'assistant', content: reflection, readingAt: savedAt }],
             }
           : state.conversations,
-      readingContext: { ...state.readingContext, [philosopherId]: context },
+      readingContext: { ...state.readingContext, [philosopherId]: { reading: context } },
       pendingMeasureResultId: { ...state.pendingMeasureResultId, [philosopherId]: measureResultId ?? null },
     }));
   },
 
-  addContext: (philosopherId, context) => {
-    const base = get().readingContext[philosopherId];
+  addFocus: (philosopherId, focus) => {
+    const base = get().readingContext[philosopherId] ?? {};
+    const existing = base.focus ?? [];
+    if (existing.some((f) => f.sphere === focus.sphere && f.answer === focus.answer)) return;
     set((state) => ({
       readingContext: {
         ...state.readingContext,
-        [philosopherId]: base?.includes(context) ? base : [base, context].filter(Boolean).join('\n\n'),
+        // The server accepts up to four; the newest matter most.
+        [philosopherId]: { ...base, focus: [...existing, focus].slice(-4) },
       },
     }));
   },
