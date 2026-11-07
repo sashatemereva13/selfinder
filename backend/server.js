@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { globalAiLimiter } from "./middleware/aiRequestLimits.js";
+import { globalAiLimiter, apiBaselineLimiter } from "./middleware/aiRequestLimits.js";
 import { safeErrorHandler } from "./middleware/safeErrorHandler.js";
 
 import { connectDB } from "./db.js";
@@ -62,6 +62,8 @@ app.get("/metrics", async (req, res) => {
   res.set("Content-Type", register.contentType);
   res.end(await register.metrics());
 });
+
+app.use("/api", apiBaselineLimiter);
 
 app.use("/api/health",        healthRouter);
 app.use("/api/philosophers",  philosophersRouter);

@@ -79,9 +79,13 @@ export async function generateCrossing(req, res) {
   const philosopher = resolvePhilosopher(req.body);
   const systemPrompt = philosopher?.prompt;
 
+  // pastWishId is optional: the app sends null when there's no earlier wish
+  // (until 2026-11-07 that null was rejected here, so those Crossings
+  // silently never generated). When present it must be a plain string.
+  const hasPastWish = pastWishId !== undefined && pastWishId !== null;
   if (!textWithin(wishId, 100) || !textWithin(measureResultId, 100) || !philosopher ||
       !textWithin(levelName, 100) || !validLocale(locale) ||
-      (pastWishId !== undefined && !textWithin(pastWishId, 100))) {
+      (hasPastWish && (typeof pastWishId !== "string" || !textWithin(pastWishId, 100)))) {
     return res.status(400).json({ error: "wishId, measureResultId, philosopherId, and levelName are required" });
   }
 
@@ -97,7 +101,7 @@ export async function generateCrossing(req, res) {
 
   let pastWishText = null;
   let pastWishDate = null;
-  if (pastWishId) {
+  if (hasPastWish && typeof pastWishId === "string") {
     const pastWish = await Wish.findOne({ id: pastWishId });
     if (pastWish && pastWish.userId === req.user.id) {
       pastWishText = pastWish.text;

@@ -112,3 +112,12 @@ test("no controller passes a request's systemPrompt to the model", async () => {
     assert.doesNotMatch(source, /\{[^}]*\bsystemPrompt\b[^}]*\}\s*=\s*req\.body/, file);
   }
 });
+
+// --- Found by CodeQL's first run (2026-11-07) ------------------------------
+
+test("every /api route sits behind the baseline rate limit", async () => {
+  const server = await readFile(new URL("../server.js", import.meta.url), "utf8");
+  const limiterAt = server.indexOf('app.use("/api", apiBaselineLimiter)');
+  const firstRoute = server.indexOf('app.use("/api/');
+  assert.ok(limiterAt !== -1 && limiterAt < firstRoute);
+});

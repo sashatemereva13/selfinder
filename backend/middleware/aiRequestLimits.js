@@ -110,6 +110,21 @@ export const registerLimiter = createAiRateLimiter({
   message: "Too many new accounts from here. Please try again later.",
 });
 
+// Baseline for every /api request (2026-11-07), in front of the stricter
+// per-feature limits. Every signed-in request now reads the account from the
+// database (middleware/auth.js), so without this anyone could turn requests
+// into database load at whatever rate they like. Keyed by IP because it runs
+// before sign-in is known. Generous on purpose: phones on mobile networks
+// often share one public IP, and the app makes several calls per screen.
+export const apiBaselineLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 600,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  keyGenerator: (req) => ipKeyGenerator(req.ip),
+  handler: (_req, res) => res.status(429).json({ error: "Too many requests. Please wait a moment." }),
+});
+
 export { aiBudgetMiddleware };
 
 export function hasValidAiPayload(req, res, next) {
