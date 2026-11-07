@@ -27,3 +27,5 @@ export declare const PHILOSOPHER_PROMPTS: Readonly<{
   camus: string;
   aristotle: string;
 }>;
+export declare const CRISIS_PHRASES: readonly string[];
+export declare function mentionsCrisis(...texts: (string | undefined | null)[]): boolean;

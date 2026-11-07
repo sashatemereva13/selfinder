@@ -22,11 +22,15 @@ import userRouter         from "./routes/user.js";
 import eventsRouter       from "./routes/events.js";
 import journeysRouter     from "./routes/journeys.js";
 import aiConsentRouter    from "./routes/aiConsent.js";
+import cspReportRouter    from "./routes/cspReport.js";
 
 const app = express();
 // Safe only for the current single nginx proxy hop. If deployment topology
 // changes, replace with an explicit trusted-proxy range before release.
 app.set("trust proxy", 1);
+// No "X-Powered-By: Express" banner — it tells a scanner which framework's
+// known vulnerabilities to try first, and tells a real user nothing.
+app.disable("x-powered-by");
 const port = Number(process.env.PORT || 3001);
 const configuredOrigins = (process.env.CLIENT_ORIGIN || "")
   .split(",")
@@ -74,6 +78,7 @@ app.use("/api/arc-line",      globalAiLimiter, arcLineRouter);
 app.use("/api/feedback",      feedbackRouter);
 app.use("/api/events",        eventsRouter);
 app.use("/api/journeys",      globalAiLimiter, journeysRouter);
+app.use("/api/csp-report",    cspReportRouter);
 
 // Keep this last so parser, middleware, and uncaught route errors use a
 // controlled response instead of Express's default error page.

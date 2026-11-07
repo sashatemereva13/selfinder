@@ -1,6 +1,7 @@
 import Groq from "groq-sdk";
 import { logger } from "../logger.js";
 import { textWithin } from "../middleware/aiRequestLimits.js";
+import { mentionsCrisis } from "../../shared/crisisPhrases.mjs";
 
 // A narrowly-scoped classifier, architecturally separate from anything in
 // the reflection/save path — this function's ONLY job is pass/fail plus a
@@ -89,13 +90,23 @@ export async function moderateWish(text) {
 
 // Is someone saying they may harm themselves? (2026-10-10 — the crisis
 // safety net beyond the wish flow: the conversation, Journeys, Measure.)
-// The same classifier, asked only one question. Fails OPEN (false) —
-// unlike the wish gate, nothing is blocked here: this only decides
-// whether a quiet line pointing to help appears, and the AI's own safety
-// rule (UNIVERSAL_RULES) still answers as a person either way. The text
-// is classified and forgotten — nothing about it is stored or logged.
+// The same classifier, asked only one question. Nothing is blocked here:
+// this only decides whether a quiet line pointing to help appears, and the
+// AI's own safety rule (UNIVERSAL_RULES) still answers as a person either
+// way. The text is classified and forgotten — nothing about it is stored
+// or logged.
+//
+// Fails SAFE (2026-11-07), not open: a classifier that errors, times out,
+// or answers in a shape we can't read used to count as "no" — so an outage
+// silently switched the safety net off. Now the shared phrase list answers
+// instead. Text past what the classifier reads (Measure joins four answers,
+// up to 16,000 characters) is checked by the phrase list too, so no part
+// of what someone wrote goes unchecked.
+const CLASSIFIER_WINDOW = 4000;
+
 export async function detectSelfHarm(text) {
   if (typeof text !== "string" || !text.trim()) return false;
+  if (text.length > CLASSIFIER_WINDOW && mentionsCrisis(text.slice(CLASSIFIER_WINDOW))) return true;
   try {
     const response = await groq.chat.completions.create({
       model: MODERATION_MODEL,
@@ -104,13 +115,15 @@ export async function detectSelfHarm(text) {
       reasoning_effort: MODERATION_REASONING_EFFORT,
       messages: [
         { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: text.slice(0, 4000) },
+        { role: "user", content: text.slice(0, CLASSIFIER_WINDOW) },
       ],
     });
     const raw = response.choices[0].message.content.trim();
     const parsed = JSON.parse(raw.slice(raw.indexOf("{"), raw.lastIndexOf("}") + 1));
+    // An answer outside the expected categories is a failed check, not a "no".
+    if (!["ok", "concerning", "self-harm"].includes(parsed?.category)) throw new Error("Unexpected category");
     return parsed.category === "self-harm";
   } catch {
-    return false;
+    return mentionsCrisis(text);
   }
 }
