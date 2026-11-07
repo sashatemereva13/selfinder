@@ -1,52 +1,50 @@
 import { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { useIsFocused } from 'expo-router';
-import Svg, { Defs, RadialGradient, Stop, Rect, Path, G } from 'react-native-svg';
+import Svg, { Path, G } from 'react-native-svg';
 import { useThemeColors } from '../../theme/useThemeColors';
 import { GROUND_RX_RATIO, GROUND_RY_RATIO } from './AuraField';
-import { useThemeStore } from '../../store/themeStore';
 import { usePhilosopherStore } from '../../store/philosopherStore';
 import { makeRng } from '../../utils/auraDots';
 
-// Where the figure is (2026-10-27) — Today's home: a field by day, a room
-// by a fire at night, chosen by the clock, not the theme. Drawn in the same
-// thin construction lines as the philosopher symbols and the cards, in the
-// theme's own line colour, so in dark mode the field reads as dusk and in
-// light mode the fire as a lamp-lit room. The point is that the figure is
-// never alone in a void: a quiet place, the kind where your own voice is
-// audible. Kept faint — the figure and its light stay the brightest thing.
+// Where the figure is — Today's place, which belongs to the chosen
+// philosopher (2026-10-28): you're inside it, with them, at any hour.
+// Drawn in the same thin construction lines as the philosopher symbols and
+// the cards, in the theme's own line colour, kept faint so the figure and
+// its light stay the brightest thing; each place carries its
+// philosopher's emblem in the reading's colour. (The first version was a
+// generic field by day and a fire room at night, chosen by the clock; it
+// was replaced by the philosophers' places, and the night switch removed.)
 //
 // Laid out in a 390x844 design space (the phone the composition was tuned
 // on) and scaled to fill the screen from the bottom, so the ground stays
-// under the figure's feet. Everything is placed around Today's own
-// layout: nothing where the headline, the reflection, the spiral's upper
-// turns or the ring sit; the fire stands to the right of the figure.
+// under the figure's feet. Every place shares one layout, placed around
+// Today's own: a band across the top under the text, one element at each
+// screen edge, a floor line broken behind the figure's legs — nothing
+// where the headline, the reflection, the spiral's labels or the ring sit.
 //
 // The state isn't shown here yet — the plan is for each state to become
-// the weather and light in this same place (rain over the field for
-// grief, the fire flaring for courage), never a different location.
+// the weather and light in the philosopher's place, never a different one.
 
 const W = 390;
+const PLACE_OPACITY = 0.7;
 const H = 844;
-// Day runs from 06:00 to 19:00; the rest is the fire.
-const DAY_START = 6;
-const NIGHT_START = 19;
+// Each philosopher's place. Marcus Aurelius' is his inner citadel; Socrates', a
+// portico in the Athenian Agora; Aristotle's, his library at the Lyceum;
+// Camus', Sisyphus' hillside; Kierkegaard's, the two doors of Either/Or.
+// A philosopher without a drawn place would show no place rather than
+// borrowing someone else's.
+export type HomePlace = 'citadel' | 'portico' | 'library' | 'slope' | 'doors' | null;
 
-// Each philosopher has their own place by day (2026-10-28): you're inside
-// it, with them. Marcus Aurelius' is his inner citadel; Socrates', a
-// portico in the Athenian Agora; Aristotle's, his library at the Lyceum. The others' aren't drawn yet, so they show
-// no place rather than borrowing someone else's.
-export type HomePlace = 'citadel' | 'portico' | 'library' | 'fire' | null;
-
-const DAY_PLACES: Record<string, HomePlace> = {
+const PLACES: Record<string, HomePlace> = {
   stoics: 'citadel',
   socrates: 'portico',
   aristotle: 'library',
+  camus: 'slope',
+  kierkegaard: 'doors',
 };
 
-export function homePlaceFor(hour: number, philosopherId: string | null | undefined): HomePlace {
-  if (hour < DAY_START || hour >= NIGHT_START) return 'fire';
-  return (philosopherId && DAY_PLACES[philosopherId]) || null;
+export function homePlaceFor(philosopherId: string | null | undefined): HomePlace {
+  return (philosopherId && PLACES[philosopherId]) || null;
 }
 
 type Pt = { x: number; y: number };
@@ -388,52 +386,136 @@ function buildLibrary() {
   return { beam, frames: frames.join(' '), scrolls: scrolls.join(' '), cores: cores.join(' '), sphere, floor };
 }
 
-// ---- the fire -----------------------------------------------------------
+// ---- Camus: Sisyphus' slope ------------------------------------------------
 
-function flame(bx: number, by: number, h: number, lean: number, wmax: number) {
-  const left: Pt[] = [];
-  const right: Pt[] = [];
-  for (let i = 0; i <= 24; i++) {
-    const t = i / 24;
-    const taper = (1 - t) ** 0.7;
-    const drift = lean * t ** 1.6;
-    const w = wmax * taper * (1 - t * 0.3);
-    left.push({ x: bx - w + drift, y: by - t * h });
-    right.push({ x: bx + w + drift, y: by - t * h });
-  }
-  return `${line([...left, ...right.reverse()])} Z`;
+// Camus' place (2026-10-28) — The Myth of Sisyphus, and "one must imagine
+// Sisyphus happy". Far off, across the top band, a long gentle hillside
+// rises to the right, and Sisyphus pushes his boulder up it — small, like a
+// frieze, the way the battlements and the entablature sit in the others'
+// places. It has to be a gentle slope: on a steep flank (tried first) the
+// man lay along the line and didn't read. Low on the left, distant rounded
+// hills; the ground line runs behind you. The boulder is Camus' own symbol
+// from the philosopher picker — a faceted rock (PhilosopherObject's
+// boulderWireframe) — in the reading's colour; Sisyphus is plain thin
+// lines, no stars and no light, so he's never mistaken for you.
+
+// The hillside: a straight, gentle incline under the text, starting clear
+// of "Mind" and passing above "Heart", rising off the right edge.
+const HILL_FROM = { x: 186, y: 508 };
+const HILL_TO = { x: W + 10, y: 440 };
+const GROUND_Y = 712;
+
+function hillAt(x: number): Pt {
+  const t = (x - HILL_FROM.x) / (HILL_TO.x - HILL_FROM.x);
+  return { x, y: HILL_FROM.y + (HILL_TO.y - HILL_FROM.y) * t };
 }
 
-// The hearth: a wireframe box in perspective (Kierkegaard's cube, become a
-// fireplace), set to the right of the figure and partly past the screen's
-// edge, as if the room continues.
-// The scene is anchored to the bottom of Today's area (just above the tab
-// bar), so placement is read from the bottom edge (y=844): the figure's
-// feet stand about 55 above it, the spiral's last sphere ("Body") about
-// 150. The hearth stays below and to the right of that.
-const HEARTH = { x: 322, y: 712, w: 110, h: 104 };
-const FIRE = { x: HEARTH.x + HEARTH.w / 2 - 14, base: HEARTH.y + HEARTH.h - 8 };
+function buildSlope() {
+  const rng = makeRng('camus-slope');
+  const ground = `M-10,${GROUND_Y} L${LEGS.l},${GROUND_Y} M${LEGS.r},${GROUND_Y} L${W + 10},${GROUND_Y}`;
+  const hill = `M${HILL_FROM.x},${HILL_FROM.y} L${HILL_TO.x},${HILL_TO.y}`;
+  // A few faint strokes under the hillside, for its rock.
+  const hatch: string[] = [];
+  for (let x = 204; x < W; x += 22 + rng() * 10) {
+    const p = hillAt(x);
+    hatch.push(`M${f(p.x)},${f(p.y + 4)} L${f(p.x + 6)},${f(p.y + 11)}`);
+  }
+  // Distant rounded hills on the left, low and faint, below "Spirit".
+  const ridge = 'M-10,664 C4,640 16,620 30,622 C42,624 46,604 58,602 C74,600 84,640 98,676 C104,692 108,704 114,712';
 
-function buildFire() {
-  const { x, y, w, h } = HEARTH;
-  const vx = 300;
-  const vy = 690;
-  const floor: string[] = [];
-  for (let fx = -220; fx <= 640; fx += 60) floor.push(`M${vx},${vy} L${fx},${H + 40}`);
-  const boards = [748, 790, 830].map((fy, k) => ({ d: `M-10,${fy} L${W + 10},${fy}`, opacity: 0.05 + k * 0.02 }));
-  const hearth = [
-    { d: `M${x},${y} L${x + w},${y} L${x + w},${y + h} L${x},${y + h} Z`, opacity: 0.42, width: 1.2 },
-    { d: `M${x + 18},${y + 40} L${x + w - 18},${y + 40} L${x + w - 18},${y + h} M${x + 18},${y + h} L${x + 18},${y + 40}`, opacity: 0.28, width: 1 },
-    { d: `M${x - 8},${y} L${x + w + 8},${y} L${x + w + 16},${y - 10} L${x},${y - 10} Z`, opacity: 0.36, width: 1.1 },
-    { d: `M${x + 34},${y - 10} L${x + 34},${y - 46} M${x + w - 34},${y - 10} L${x + w - 34},${y - 46}`, opacity: 0.14, width: 1 },
-  ];
-  const logs = `M${x + 28},${y + h - 5} L${x + w - 26},${y + h - 13} M${x + 34},${y + h - 13} L${x + w - 30},${y + h - 5}`;
-  const flames = [
-    { d: flame(FIRE.x, FIRE.base, 52, 5, 13), opacity: 0.9, width: 1.5 },
-    { d: flame(FIRE.x - 18, FIRE.base + 2, 30, 7, 8), opacity: 0.65, width: 1.1 },
-    { d: flame(FIRE.x + 14, FIRE.base + 2, 24, 5, 7), opacity: 0.55, width: 1.1 },
-  ];
-  return { floor: floor.join(' '), boards, hearth, logs, flames };
+  // Along the hillside: `dir` points uphill, `up` away from the ground.
+  const dl = Math.hypot(HILL_TO.x - HILL_FROM.x, HILL_TO.y - HILL_FROM.y);
+  const dir = { x: (HILL_TO.x - HILL_FROM.x) / dl, y: (HILL_TO.y - HILL_FROM.y) / dl };
+  const up = { x: dir.y, y: -dir.x };
+  const on = (x: number, along: number, height: number) => {
+    const g = hillAt(x);
+    return { x: g.x + dir.x * along + up.x * height, y: g.y + dir.y * along + up.y * height };
+  };
+
+  // The boulder, resting on the hillside.
+  const R = 11;
+  const c = on(318, 0, R);
+  const pts: Pt[] = [];
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 - Math.PI / 2 + (rng() - 0.5) * 0.3;
+    const rad = R * (0.8 + rng() * 0.32);
+    pts.push({ x: c.x + rad * Math.cos(a), y: c.y + rad * Math.sin(a) });
+  }
+  const chords = [[0, 3], [3, 6], [1, 5], [2, 7]]
+    .map(([a, b]) => `M${f(pts[a].x)},${f(pts[a].y)} L${f(pts[b].x)},${f(pts[b].y)}`)
+    .join(' ');
+  const boulder = `${line(pts)} Z ${chords}`;
+
+  // Sisyphus, just downhill, leaning his whole body into it.
+  const sx = 286;
+  const backFoot = on(sx, -8, 0);
+  const frontFoot = on(sx, 6, 0);
+  const knee = on(sx, 9, 7);
+  const hips = on(sx, 2, 13);
+  const shoulders = on(sx, 16, 22);
+  const head = on(sx, 21, 27);
+  const hands = on(318, -R * 0.9, R * 1.05);
+  const sisyphus = [
+    `M${f(backFoot.x)},${f(backFoot.y)} L${f(hips.x)},${f(hips.y)}`,
+    `M${f(frontFoot.x)},${f(frontFoot.y)} L${f(knee.x)},${f(knee.y)} L${f(hips.x)},${f(hips.y)}`,
+    `M${f(hips.x)},${f(hips.y)} L${f(shoulders.x)},${f(shoulders.y)}`,
+    `M${f(shoulders.x)},${f(shoulders.y)} L${f(hands.x)},${f(hands.y)}`,
+    `M${f(shoulders.x)},${f(shoulders.y - 1)} L${f(hands.x + up.x * 3)},${f(hands.y + up.y * 3)}`,
+    circlePath(head.x, head.y, 3.2),
+  ].join(' ');
+  return { ground, hill, hatch: hatch.join(' '), ridge, boulder, sisyphus };
+}
+
+// ---- Kierkegaard: Either/Or ------------------------------------------------
+
+// Kierkegaard's place (2026-10-28) — Either/Or, his best-known book, and a
+// philosophy of choosing: two doors, one at each screen edge, mirrored and
+// identical. Both stand slightly open, both let the same light through in
+// the reading's colour — nothing marks either as the right one (Selfinder
+// never ranks; the choice, and its reasons, are the person's). Each door
+// frame is drawn as his picker symbol, the cube — a doorway with depth,
+// its corners joined. A lintel runs across the top band and the threshold
+// behind you, like the other places, all clear of the spiral's labels.
+
+const DOOR = { outer: 6, inner: 60, top: 456, bottom: 712, depth: 6 };
+
+// The left door; `mirror` reflects it to the right edge.
+function door(mirror: boolean) {
+  const X = (x: number) => (mirror ? W - x : x);
+  const { outer, inner, top, bottom, depth } = DOOR;
+  const fo = outer + depth; // the frame's inner face
+  const fi = inner - depth;
+  const ft = top + depth + 2;
+  const frame = [
+    `M${X(outer)},${bottom} L${X(outer)},${top} L${X(inner)},${top} L${X(inner)},${bottom}`,
+    `M${X(fo)},${bottom} L${X(fo)},${ft} L${X(fi)},${ft} L${X(fi)},${bottom}`,
+    // the cube's corners: front face to back face
+    `M${X(outer)},${top} L${X(fo)},${ft} M${X(inner)},${top} L${X(fi)},${ft}`,
+  ].join(' ');
+  // The leaf, hinged on the outer side and swung open into the room beyond:
+  // its free edge set back, so it narrows and drops slightly at the top.
+  const free = fo + 24;
+  const leaf = `M${X(fo)},${ft} L${X(free)},${ft + 9} L${X(free)},${bottom - 5} L${X(fo)},${bottom} Z`;
+  const panels = [
+    `M${X(fo + 5)},${ft + 16} L${X(free - 5)},${ft + 22} L${X(free - 5)},${ft + 110} L${X(fo + 5)},${ft + 108} Z`,
+    `M${X(fo + 5)},${ft + 128} L${X(free - 5)},${ft + 132} L${X(free - 5)},${bottom - 18} L${X(fo + 5)},${bottom - 16} Z`,
+  ].join(' ');
+  // The gap between the leaf's free edge and the frame: the light coming
+  // through, and three soft rays of it falling across the floor.
+  const gap = `M${X(free)},${ft + 9} L${X(fi)},${ft} L${X(fi)},${bottom} L${X(free)},${bottom - 5} Z`;
+  const rays = [0, 1, 2]
+    .map((k) => {
+      const x0 = free + 4 + k * 8;
+      return `M${X(x0)},${bottom + 2} L${X(x0 + 34 + k * 22)},${bottom + 28 + k * 6}`;
+    })
+    .join(' ');
+  return { frame, leaf, panels, gap, rays };
+}
+
+function buildDoors() {
+  const lintel = `M-10,440 L${W + 10},440 M-10,447 L${W + 10},447`;
+  const threshold = `M-10,${DOOR.bottom} L${LEGS.l},${DOOR.bottom} M${LEGS.r},${DOOR.bottom} L${W + 10},${DOOR.bottom}`;
+  return { lintel, threshold, doors: [door(false), door(true)] };
 }
 
 export function HomeScene({ lightRgb }: {
@@ -442,20 +524,19 @@ export function HomeScene({ lightRgb }: {
   lightRgb: string;
 }) {
   const colors = useThemeColors();
-  const theme = useThemeStore((s) => s.theme);
-  // Re-read the clock whenever Today comes back into view.
-  const isFocused = useIsFocused();
   const philosopherId = usePhilosopherStore((s) => s.philosopher?.id);
-  const place = useMemo(() => homePlaceFor(new Date().getHours(), philosopherId), [isFocused, philosopherId]);
+  const place = homePlaceFor(philosopherId);
   const field = useMemo(buildCitadelHall, []);
   const portico = useMemo(buildPortico, []);
   const library = useMemo(buildLibrary, []);
-  const fire = useMemo(buildFire, []);
+  const slope = useMemo(buildSlope, []);
+  const doors = useMemo(buildDoors, []);
   const lineColor = colors.text.primary;
-  const fireColor = theme === 'light' ? '#c98a3d' : '#f3cf95';
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
+    // The whole place at PLACE_OPACITY (2026-10-29 — it read a little loud
+    // next to the figure; the place is background, the figure the subject).
+    <View style={[StyleSheet.absoluteFill, { opacity: PLACE_OPACITY }]} pointerEvents="none">
       <Svg width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMax slice">
         {place === 'citadel' && (
           <>
@@ -496,32 +577,30 @@ export function HomeScene({ lightRgb }: {
             <Path d={library.floor} strokeOpacity={0.24} strokeWidth={1} />
           </G>
         )}
-        {place === 'fire' && (
-          <>
-            <Defs>
-              <RadialGradient id="home-fireglow" cx={FIRE.x} cy={FIRE.base - 40} r={360} gradientUnits="userSpaceOnUse">
-                <Stop offset="0" stopColor={fireColor} stopOpacity={theme === 'light' ? 0.2 : 0.26} />
-                <Stop offset="0.45" stopColor={fireColor} stopOpacity={0.08} />
-                <Stop offset="1" stopColor={fireColor} stopOpacity={0} />
-              </RadialGradient>
-            </Defs>
-            <Rect x={-200} y={0} width={W + 400} height={H} fill="url(#home-fireglow)" />
-            <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
-              <Path d={fire.floor} strokeOpacity={0.06} strokeWidth={1} />
-              {fire.boards.map((b, i) => (
-                <Path key={`b${i}`} d={b.d} strokeOpacity={b.opacity} strokeWidth={1} />
-              ))}
-              {fire.hearth.map((p, i) => (
-                <Path key={`p${i}`} d={p.d} strokeOpacity={p.opacity} strokeWidth={p.width} />
-              ))}
-              <Path d={fire.logs} strokeOpacity={0.45} strokeWidth={2} />
-            </G>
-            <G fill="none" stroke={fireColor} strokeLinejoin="round">
-              {fire.flames.map((fl, i) => (
-                <Path key={`fl${i}`} d={fl.d} strokeOpacity={fl.opacity} strokeWidth={fl.width} />
-              ))}
-            </G>
-          </>
+        {place === 'slope' && (
+          <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
+            <Path d={slope.ridge} strokeOpacity={0.16} strokeWidth={1} />
+            <Path d={slope.ground} strokeOpacity={0.26} strokeWidth={1} />
+            <Path d={slope.hill} strokeOpacity={0.34} strokeWidth={1.1} />
+            <Path d={slope.hatch} strokeOpacity={0.16} strokeWidth={0.9} />
+            <Path d={slope.sisyphus} strokeOpacity={0.6} strokeWidth={1.1} />
+            <Path d={slope.boulder} stroke={`rgb(${lightRgb})`} strokeOpacity={0.8} strokeWidth={1} />
+          </G>
+        )}
+        {place === 'doors' && (
+          <G fill="none" stroke={lineColor} strokeLinecap="round" strokeLinejoin="round">
+            <Path d={doors.lintel} strokeOpacity={0.3} strokeWidth={1} />
+            <Path d={doors.threshold} strokeOpacity={0.24} strokeWidth={1} />
+            {doors.doors.map((d, i) => (
+              <G key={`d${i}`}>
+                <Path d={d.gap} stroke="none" fill={`rgb(${lightRgb})`} fillOpacity={0.16} />
+                <Path d={d.rays} stroke={`rgb(${lightRgb})`} strokeOpacity={0.35} strokeWidth={1} />
+                <Path d={d.frame} strokeOpacity={0.36} strokeWidth={1} />
+                <Path d={d.leaf} strokeOpacity={0.34} strokeWidth={1} />
+                <Path d={d.panels} strokeOpacity={0.18} strokeWidth={0.9} />
+              </G>
+            ))}
+          </G>
         )}
       </Svg>
     </View>

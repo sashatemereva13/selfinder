@@ -200,6 +200,11 @@
     "afterYourReading": "After your reading · {{date}}"
   },
   "yourArc": {
+    "welcomeTitle": "Your Arc",
+    "welcomeBody": "Every reading you take stays here, as a point in time — what you said, and what you did with it.",
+    "welcomeShape": "Everything you've lived narrows into one point — now — and everything ahead opens out of it. Below now is where you've been; above it, what you're reaching toward.",
+    "welcomeConstruction": "This part of the app is under construction.",
+    "welcomeHint": "Enter",
     "kicker": "Your arc",
     "tabExplainer": "What has been happening to you across time.",
     "nowKicker": "Now",

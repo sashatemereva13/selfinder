@@ -1,13 +1,26 @@
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Pressable,
   ScrollView,
   StyleSheet,
+  Text,
   View,
+  type StyleProp,
+  type ViewStyle,
   useWindowDimensions,
 } from "react-native";
-import Svg, { Ellipse as SvgEllipse } from "react-native-svg";
+import Svg, { Ellipse as SvgEllipse, Line } from "react-native-svg";
+import Animated, {
+  Easing,
+  useAnimatedProps,
+  useReducedMotion,
+  useSharedValue,
+  withDelay,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
+import { fonts, fontSizes } from "../../../theme/typography";
 import { useThemeColors } from "../../../theme/useThemeColors";
 import type { Colors } from "../../../theme/colors";
 import { spacing } from "../../../theme/spacing";
@@ -19,6 +32,7 @@ import {
   CURVED_LABEL_PADDING,
   PLANE_RX_RATIO,
   PLANE_RY_RATIO,
+  NOW_LABEL_MARGIN,
 } from "../TimeCone";
 
 interface ArcLinePageProps {
@@ -141,6 +155,32 @@ export function ArcLinePage({
   const planeRx = cone.baseRx * PLANE_RX_RATIO;
   const planeRy = cone.baseRy * PLANE_RY_RATIO;
 
+  // The bleed (2026-10-29): the cone's four sides run on past the cone
+  // into the screen's corners, faint, so the cone opens onto the whole
+  // screen instead of ending inside it. Same direction as TimeCone's own
+  // slant lines (its geometry is built from coneWidth × coneRenderHeight),
+  // starting where its canvas crops them and running past the screen's
+  // edges, which crop these.
+  const drawn = buildTimeConeGeometry(coneWidth, coneRenderHeight);
+  // Far enough to reach the screen edges, small enough for iOS to draw:
+  // a much taller canvas silently doesn't render on device.
+  const BLEED_PAD = 320;
+  const bleedVertex = {
+    x: width / 2 - NOW_LABEL_MARGIN / 2,
+    y: BLEED_PAD + CURVED_LABEL_PADDING + drawn.vertexY,
+  };
+  const bleedLines = [-1, 1].flatMap((dir) =>
+    [-1, 1].map((side) => {
+      const at = (scale: number) => ({
+        x: bleedVertex.x + side * drawn.baseRx * scale,
+        y: bleedVertex.y + dir * drawn.coneHeight * scale,
+      });
+      // TimeCone's canvas ends CURVED_LABEL_PADDING past its own height.
+      const canvasEdge = (drawn.vertexY + CURVED_LABEL_PADDING) / drawn.coneHeight;
+      return { from: at(canvasEdge - 0.02), to: at(8), key: `${dir}${side}` };
+    }),
+  );
+
   return (
     <ScrollView
       contentContainerStyle={[
@@ -169,6 +209,25 @@ export function ArcLinePage({
           extra height simply grows the box symmetrically around its
           existing anchored position, which is exactly the headroom the
           curved labels need with no other layout consequence. */}
+      <Svg
+        width={width}
+        height={BLEED_PAD * 2 + coneRenderHeight}
+        style={{ position: "absolute", left: 0, top: -BLEED_PAD }}
+        pointerEvents="none"
+      >
+        {bleedLines.map((l) => (
+          <Line
+            key={l.key}
+            x1={l.from.x}
+            y1={l.from.y}
+            x2={l.to.x}
+            y2={l.to.y}
+            stroke={colors.text.primary}
+            strokeOpacity={0.15}
+            strokeWidth={1}
+          />
+        ))}
+      </Svg>
       <View
         style={[styles.coneBackdrop, { width: planeCanvasWidth }]}
         pointerEvents="none"
@@ -184,11 +243,6 @@ export function ArcLinePage({
           hideNowLabel
           showEternalNowPlane
           extraRings={EXTRA_RINGS}
-          curvedLabels={{
-            future: t("yourArc.zoneFutureLabel"),
-            past: t("yourArc.zonePastLabel"),
-            plane: t("yourArc.zonePresentLabel"),
-          }}
         />
       </View>
       <View style={[styles.zoneStack, { height: coneHeight }]}>
@@ -263,110 +317,48 @@ export function ArcLinePage({
             If this component is ever reused somewhere the fill reads as
             too card-like, that's a signal to lower fillOpacity further,
             not to remove the affordance these follow-ups exist for. */}
-        <Pressable
+        <ZoneButton
           style={[
             styles.futureZone,
-            {
-              top: -spacing[6] - futureRy,
-              left: "50%",
-              marginLeft: -futureRx,
-              width: futureRx * 2,
-              height: futureRy * 2,
-              borderRadius: futureRy,
-            },
+            { top: -spacing[6] - futureRy, left: "50%", marginLeft: -futureRx },
           ]}
+          rx={futureRx}
+          ry={futureRy}
+          rgb={accentTextRgb}
+          label={t("yourArc.zoneFutureLabel")}
+          labelColor={colors.text.secondary}
+          haloColor={colors.bg.base}
+          inviteDelay={INVITE_START_MS + 2 * INVITE_STAGGER_MS}
           onPress={onJumpToFuture}
-          accessibilityRole="button"
-          accessibilityLabel={t("yourArc.zoneFutureLabel")}
-        >
-          <Svg
-            width={futureRx * 2}
-            height={futureRy * 2}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          >
-            <SvgEllipse
-              cx={futureRx}
-              cy={futureRy}
-              rx={futureRx - 1}
-              ry={futureRy - 1}
-              fill={`rgb(${accentTextRgb})`}
-              fillOpacity={0.08}
-              stroke={`rgb(${accentTextRgb})`}
-              strokeOpacity={0.85}
-              strokeWidth={1.5}
-            />
-          </Svg>
-        </Pressable>
-        <Pressable
+        />
+        <ZoneButton
+          style={styles.presentZone}
+          rx={planeRx}
+          ry={planeRy}
+          rgb={accentTextRgb}
+          label={t("yourArc.zonePresentLabel")}
+          labelColor={colors.text.secondary}
+          haloColor={colors.bg.base}
+          labelBeside
+          inviteDelay={INVITE_START_MS + INVITE_STAGGER_MS}
           disabled={!pastAndPresentTappable}
           onPress={onJumpToPresent}
-          style={[
-            styles.presentZone,
-            {
-              width: planeRx * 2,
-              height: planeRy * 2,
-              borderRadius: planeRy,
-            },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={t("yourArc.zonePresentLabel")}
-        >
-          <Svg
-            width={planeRx * 2}
-            height={planeRy * 2}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          >
-            <SvgEllipse
-              cx={planeRx}
-              cy={planeRy}
-              rx={planeRx - 1}
-              ry={planeRy - 1}
-              fill={`rgb(${accentTextRgb})`}
-              fillOpacity={0.08}
-              stroke={`rgb(${accentTextRgb})`}
-              strokeOpacity={0.85}
-              strokeWidth={1.5}
-            />
-          </Svg>
-        </Pressable>
-        <Pressable
+        />
+        <ZoneButton
           style={[
             styles.pastZone,
-            {
-              bottom: -spacing[6] - pastRy,
-              left: "50%",
-              marginLeft: -pastRx,
-              width: pastRx * 2,
-              height: pastRy * 2,
-              borderRadius: pastRy,
-            },
+            { bottom: -spacing[6] - pastRy, left: "50%", marginLeft: -pastRx },
           ]}
+          rx={pastRx}
+          ry={pastRy}
+          rgb={accentTextRgb}
+          label={t("yourArc.zonePastLabel")}
+          labelColor={colors.text.secondary}
+          haloColor={colors.bg.base}
+          inviteDelay={INVITE_START_MS}
           disabled={!pastAndPresentTappable}
           onPress={onJumpToPast}
-          accessibilityRole="button"
-          accessibilityLabel={t("yourArc.zonePastLabel")}
-        >
-          <Svg
-            width={pastRx * 2}
-            height={pastRy * 2}
-            style={StyleSheet.absoluteFill}
-            pointerEvents="none"
-          >
-            <SvgEllipse
-              cx={pastRx}
-              cy={pastRy}
-              rx={pastRx - 1}
-              ry={pastRy - 1}
-              fill={`rgb(${accentTextRgb})`}
-              fillOpacity={0.08}
-              stroke={`rgb(${accentTextRgb})`}
-              strokeOpacity={0.85}
-              strokeWidth={1.5}
-            />
-          </Svg>
-        </Pressable>
+        />
       </View>
     </ScrollView>
   );
@@ -421,4 +413,117 @@ function makeStyles(colors: Colors) {
     pastZone: { position: "absolute" },
     presentZone: {},
   });
+}
+
+// The three doors of Your Arc's entry (2026-10-29 — made easier to read as
+// doors): each ellipse carries a plain label with "→", the app's sign for
+// "go there", instead of curved capitals that read as decoration; once
+// the page has settled, each brightens briefly in turn — past, now,
+// future — inviting a tap, the way Today's spheres pulse once on arrival
+// (only on arriving, never repeating); and it brightens while pressed.
+const INVITE_START_MS = 1500;
+const INVITE_STAGGER_MS = 450;
+const AnimatedEllipse = Animated.createAnimatedComponent(SvgEllipse);
+
+function ZoneButton({
+  style,
+  rx,
+  ry,
+  rgb,
+  label,
+  labelColor,
+  haloColor,
+  labelBeside = false,
+  inviteDelay,
+  disabled,
+  onPress,
+}: {
+  style: StyleProp<ViewStyle>;
+  rx: number;
+  ry: number;
+  rgb: string;
+  label: string;
+  labelColor: string;
+  haloColor: string;
+  // The flat "now" plane: label to the side of its centre (the now-dot sits
+  // there), not over it.
+  labelBeside?: boolean;
+  inviteDelay: number;
+  disabled?: boolean;
+  onPress: () => void;
+}) {
+  const reduceMotion = useReducedMotion();
+  const invite = useSharedValue(0);
+  const press = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion || disabled) return;
+    invite.value = withDelay(
+      inviteDelay,
+      withSequence(
+        withTiming(1, { duration: 450, easing: Easing.out(Easing.quad) }),
+        withTiming(0, { duration: 900, easing: Easing.inOut(Easing.quad) }),
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const ellipseProps = useAnimatedProps(() => {
+    const lit = Math.max(invite.value, press.value);
+    return { fillOpacity: 0.08 + 0.22 * lit, strokeWidth: 1.5 + 0.8 * lit };
+  });
+  return (
+    <Pressable
+      style={[style, { width: rx * 2, height: ry * 2, borderRadius: ry }]}
+      disabled={disabled}
+      onPress={onPress}
+      onPressIn={() => {
+        press.value = withTiming(1, { duration: 120 });
+      }}
+      onPressOut={() => {
+        press.value = withTiming(0, { duration: 300 });
+      }}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Svg width={rx * 2} height={ry * 2} style={StyleSheet.absoluteFill} pointerEvents="none">
+        <AnimatedEllipse
+          cx={rx}
+          cy={ry}
+          rx={rx - 1}
+          ry={ry - 1}
+          fill={`rgb(${rgb})`}
+          stroke={`rgb(${rgb})`}
+          strokeOpacity={0.85}
+          animatedProps={ellipseProps}
+        />
+      </Svg>
+      <View
+        pointerEvents="none"
+        style={[
+          StyleSheet.absoluteFill,
+          { alignItems: labelBeside ? "flex-start" : "center", justifyContent: "center" },
+          labelBeside && { paddingLeft: rx * 0.18 },
+        ]}
+      >
+        {/* One line, shrinking to fit its ellipse; a halo in the page's
+            own colour keeps the cone's lines from running through the
+            letters. */}
+        <Text
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.75}
+          style={{
+            maxWidth: rx * 1.7,
+            fontFamily: fonts.medium,
+            fontSize: fontSizes.xs,
+            color: labelColor,
+            textShadowColor: haloColor,
+            textShadowRadius: 6,
+            textShadowOffset: { width: 0, height: 0 },
+          }}
+        >
+          {label} →
+        </Text>
+      </View>
+    </Pressable>
+  );
 }

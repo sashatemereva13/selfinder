@@ -4,8 +4,10 @@ import Svg, { Path } from "react-native-svg";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
+  useAnimatedProps,
   withTiming,
   withDelay,
+  withSequence,
   cancelAnimation,
   Easing,
 } from "react-native-reanimated";
@@ -13,6 +15,8 @@ import { useThemeColors } from "../../theme/useThemeColors";
 import { fonts, fontSizes } from "../../theme/typography";
 import { type SphereKey } from "./AuraField";
 import { VibrationSpectrum, levelIndex } from "./VibrationSpectrum";
+import { estimatePathLength } from "./AnimatedCardSymbol";
+import { heartbeat, HEARTBEAT_SPIRAL_START, HEARTBEAT_SPIRAL_END } from "../../utils/heartbeat";
 import {
   SLOT_ORDER,
   H_CUT,
@@ -34,6 +38,16 @@ import {
   buildSpiralCoreGeometry,
   type SpiralSpherePoint,
 } from "./depthsSpiralGeometry";
+
+// The 17-level wheel's opacity while it rests on the whole reading, and how
+// long it stays fully lit after it starts to spin — VibrationSpectrum's own
+// ROTATE_DURATION_MS (1100) plus a moment once it has landed.
+const WHEEL_REST_OPACITY = 0.35;
+// The heartbeat's pulse on the spiral: a short stretch of line in the
+// reading's colour, like the light travelling through the figure.
+const PULSE_LENGTH = 44;
+const AnimatedPath = Animated.createAnimatedComponent(Path);
+const WHEEL_SPIN_MS = 1400;
 
 // DepthsSpiralCore — the FIXED-zone half of what used to be one
 // DepthsSpiral component (split 2026-09-01, see depthsSpiralGeometry.ts's
@@ -427,18 +441,44 @@ export function DepthsSpiralCore({
   // (tapping a different sphere, deselecting back to the overall reading)
   // just updates the ring's marker/label in place, no fade, since the
   // wheel itself never disappears again.
+  //
+  // 2026-10-28 — quiet at rest, lit while it moves: showing the whole
+  // reading, the wheel rests at WHEEL_REST_OPACITY so the figure's light
+  // stays the one thing the eye lands on; whenever it spins (a reading
+  // arriving, or a tapped sphere turning it to that sphere's state) it
+  // lights up fully and eases back once it has landed. While one sphere is
+  // selected it stays fully lit — then it's what's being read.
   const hasWheelContent = Boolean(selectedWheelLevelSlug);
-  const wheelOpacity = useSharedValue(hasWheelContent ? 1 : 0);
+  const restOpacity = isAggregateReading ? WHEEL_REST_OPACITY : 1;
+  const wheelOpacity = useSharedValue(hasWheelContent ? restOpacity : 0);
   const EMPHASIS_DURATION_MS = 380;
+  const prevWheelSlug = useRef(selectedWheelLevelSlug);
   useEffect(() => {
     if (!hasWheelContent) return;
+    const spun = prevWheelSlug.current != null && prevWheelSlug.current !== selectedWheelLevelSlug;
+    prevWheelSlug.current = selectedWheelLevelSlug;
     cancelAnimation(wheelOpacity);
-    wheelOpacity.value = withTiming(1, {
-      duration: EMPHASIS_DURATION_MS,
-      easing: SOFT_EASE,
-    });
+    wheelOpacity.value = spun
+      ? withSequence(
+          withTiming(1, { duration: 250, easing: SOFT_EASE }),
+          withDelay(WHEEL_SPIN_MS, withTiming(restOpacity, { duration: 700, easing: SOFT_EASE })),
+        )
+      : withTiming(restOpacity, { duration: EMPHASIS_DURATION_MS, easing: SOFT_EASE });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasWheelContent]);
+  }, [hasWheelContent, selectedWheelLevelSlug, restOpacity]);
+  // A reading arriving: lit for the whole arrival, then back to rest.
+  useEffect(() => {
+    if (!playArrivalDescent) return;
+    cancelAnimation(wheelOpacity);
+    wheelOpacity.value = withSequence(
+      withTiming(1, { duration: 250, easing: SOFT_EASE }),
+      withDelay(
+        arrivalDescentDelayMs + arrivalDescentDurationMs,
+        withTiming(restOpacity, { duration: 700, easing: SOFT_EASE }),
+      ),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playArrivalDescent]);
   const wheelAnimatedStyle = useAnimatedStyle(() => ({
     opacity: wheelOpacity.value,
   }));
@@ -453,6 +493,19 @@ export function DepthsSpiralCore({
     lastWheelName.current = selectedWheelLevelName;
   }
   const strokeColor = `rgb(${accentRgb})`;
+  // The heartbeat's pulse along the spiral. The path runs from the ring
+  // down to the feet, so the pulse runs it backwards: from the end (feet)
+  // to the start (ring) over its stretch of the cycle.
+  const spiralLength = useMemo(() => estimatePathLength(geometry.pathD), [geometry.pathD]);
+  const pulseProps = useAnimatedProps(() => {
+    const t = (heartbeat.value - HEARTBEAT_SPIRAL_START) / (HEARTBEAT_SPIRAL_END - HEARTBEAT_SPIRAL_START);
+    if (t <= 0 || t >= 1) return { strokeOpacity: 0, strokeDashoffset: 0 };
+    const at = spiralLength * (1 - t); // distance from the path's start
+    return {
+      strokeOpacity: 0.9 * Math.sin(t * Math.PI) + 0.1,
+      strokeDashoffset: -(at - PULSE_LENGTH / 2),
+    };
+  });
 
   return (
     <View style={styles.outer}>
@@ -463,13 +516,30 @@ export function DepthsSpiralCore({
           viewBox={`0 0 ${width} ${height}`}
           style={StyleSheet.absoluteFill}
         >
+          {/* The spiral (2026-10-28 — white and clearer, so it reads as
+              its own line among the place's architecture), and the
+              heartbeat travelling up it from the figure's feet to the
+              ring. */}
           <Path
             d={geometry.pathD}
             fill="none"
-            stroke={strokeColor}
-            strokeOpacity={0.16}
-            strokeWidth={1}
+            stroke={colors.text.primary}
+            strokeOpacity={0.45}
+            strokeWidth={1.6}
             strokeLinecap="round"
+            // Dotted (2026-10-29): a trail of fine dots, unlike every solid
+            // line of the place, so the spiral reads as its own thing —
+            // a path of energy, echoing the figure's star joints.
+            strokeDasharray={[0.1, 6]}
+          />
+          <AnimatedPath
+            d={geometry.pathD}
+            fill="none"
+            stroke={strokeColor}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeDasharray={[PULSE_LENGTH, spiralLength + PULSE_LENGTH]}
+            animatedProps={pulseProps}
           />
         </Svg>
 

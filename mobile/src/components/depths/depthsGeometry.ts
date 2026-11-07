@@ -48,13 +48,13 @@ import {
 // this wasn't a clearance-math bug — the composition was simply taller
 // than the visible viewport at that scale. Shrinking it here is the
 // direct fix.
-export const BASE_AURA_DISPLAY_SIZE = 170;
+export const BASE_AURA_DISPLAY_SIZE = 160;
 // The figure alone, drawn at this size within the composition laid out for
 // BASE_AURA_DISPLAY_SIZE (2026-10-16 — shrinking the base size shrank and
 // lowered everything with it; this makes only the figure smaller, standing
 // on the same ground). Tune this to change the figure's size; tune
 // BASE_AURA_DISPLAY_SIZE to change the whole composition.
-export const AURA_FIGURE_SIZE = 180;
+export const AURA_FIGURE_SIZE = 220;
 // 2026-09-02 — how much of the spiral's own topmost region (curve +
 // wheel, whichever sits highest) is allowed to render past the fixed
 // zone's own visible top edge and get cropped there — at the user's own

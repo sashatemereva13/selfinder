@@ -1,4 +1,4 @@
-import { ReactNode, useMemo, useRef, useState } from 'react';
+import { ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MessageCard } from './MessageCard';
@@ -34,9 +34,12 @@ interface LongPressToSaveProps {
   message?: string;
   accentRgb?: string;
   captureChildren?: boolean;
+  // A single tap (2026-10-28 — Today's reflection opens and folds with it).
+  // Waits out the double-tap window first, so a double tap only saves.
+  onTap?: () => void;
 }
 
-export function LongPressToSave({ children, message, accentRgb, captureChildren }: LongPressToSaveProps) {
+export function LongPressToSave({ children, message, accentRgb, captureChildren, onTap }: LongPressToSaveProps) {
   const { t } = useTranslation();
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
@@ -47,13 +50,25 @@ export function LongPressToSave({ children, message, accentRgb, captureChildren 
   // A quick double tap saves too (2026-10-08) — easier to find than a
   // long-press, and what the message screen's own hint names.
   const lastTapRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => {
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+  }, []);
   const handlePress = () => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       lastTapRef.current = 0;
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      tapTimerRef.current = null;
       handleLongPress();
     } else {
       lastTapRef.current = now;
+      if (onTap) {
+        tapTimerRef.current = setTimeout(() => {
+          tapTimerRef.current = null;
+          onTap();
+        }, 300);
+      }
     }
   };
 

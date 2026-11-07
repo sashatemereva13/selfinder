@@ -25,6 +25,8 @@ import Animated, {
   runOnJS,
   cancelAnimation,
   Easing,
+  interpolate,
+  Extrapolation,
   type SharedValue,
 } from "react-native-reanimated";
 import { useThemeColors } from "../../../src/theme/useThemeColors";
@@ -96,6 +98,22 @@ import { makeStyles } from "../../../src/components/depths/depthsStyles";
 // Depths feels like the same hand as the very first bloom-in, not a
 // separate, unrelated animation system.
 const SOFT_EASE = Easing.bezier(0.16, 1, 0.3, 1);
+
+// Today's arrival (2026-10-28): when the screen opens, only the figure's
+// light is there at first — the spark ignites and the figure draws itself
+// out of it — and then the rest fades in, in order: the place, the spiral
+// and its spheres, the state's name and the reflection. It plays when the
+// app opens and again after ARRIVAL_AGAIN_MS away from Today, never on quick
+// hops between tabs; a tap anywhere skips it. A reading arriving fresh from
+// Measure has its own arrival, and Reduce Motion shows everything at once.
+const ARRIVAL_AGAIN_MS = 5 * 60 * 1000;
+const ARRIVAL_REST_DELAY_MS = 1100;
+const ARRIVAL_REST_MS = 1800;
+let lastTodayArrival = 0;
+
+function shouldPlayTodayArrival() {
+  return lastTodayArrival === 0 || Date.now() - lastTodayArrival > ARRIVAL_AGAIN_MS;
+}
 // PHASE B — the reveal animation for the concentric-rings field (see
 // AuraField.tsx for why this replaced the earlier 17-dot wheel entirely).
 // Two acts, same discipline as the wheel version: suspense before payoff,
@@ -173,6 +191,7 @@ export default function DepthsScreen() {
 
 function DepthsContent() {
   const { t } = useTranslation();
+  const isFocused = useIsFocused();
   const colors = useThemeColors();
   const levelTextColors = useLevelTextColors();
   const theme = useThemeStore((s) => s.theme);
@@ -189,6 +208,8 @@ function DepthsContent() {
   const accentTextRgb = useAppAccentTextRgb();
   const accentColor = `rgb(${accentTextRgb})`;
   const philosopher = usePhilosopherStore((s) => s.philosopher);
+  // Today's reflection is folded to two lines until tapped open.
+  const [reflectionOpen, setReflectionOpen] = useState(false);
   const sphereAnswerSeen = useEngagementStore((s) => s.discovered.sphereAnswer);
   // The shape of the path, said once — after the very first reading,
   // until its state's page has been opened (2026-10-09).
@@ -247,6 +268,51 @@ function DepthsContent() {
   // then reset back to false once onSettled fires (see the Pressable
   // wrapping AuraArrival below).
   const [skipArrival, setSkipArrival] = useState(reduceMotion);
+
+  // Today's arrival — see ARRIVAL_AGAIN_MS. `arrival` runs 0 → 1 as the rest
+  // of the screen fades in; `arrivalKey` makes the figure draw itself again.
+  const [arrivalKey, setArrivalKey] = useState(0);
+  const arrival = useSharedValue(
+    !isArriving && !reduceMotion && shouldPlayTodayArrival() ? 0 : 1,
+  );
+  const arrivalPlayed = useRef(false);
+  useEffect(() => {
+    if (!isFocused) return;
+    const play = !isArriving && !reduceMotion && shouldPlayTodayArrival();
+    lastTodayArrival = Date.now();
+    if (!play) {
+      arrival.value = 1;
+      return;
+    }
+    // The first play reuses the figure's own first draw-in; later ones
+    // redraw it.
+    if (arrivalPlayed.current) setArrivalKey((k) => k + 1);
+    arrivalPlayed.current = true;
+    arrival.value = 0;
+    arrival.value = withDelay(
+      ARRIVAL_REST_DELAY_MS,
+      withTiming(1, { duration: ARRIVAL_REST_MS, easing: Easing.inOut(Easing.quad) }),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFocused]);
+  const skipTodayArrival = () => {
+    if (arrival.value < 1) {
+      cancelAnimation(arrival);
+      arrival.value = withTiming(1, { duration: 250 });
+    }
+  };
+  // Each part fades in over its own stretch of the arrival, in order.
+  // (`arrival.value` is read directly in each style — Reanimated only
+  // re-runs a style for shared values it reads itself, not inside a helper.)
+  const placeArrivalStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(arrival.value, [0, 0.45], [0, 1], Extrapolation.CLAMP),
+  }));
+  const spiralArrivalStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(arrival.value, [0.2, 0.7], [0, 1], Extrapolation.CLAMP),
+  }));
+  const wordsArrivalStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(arrival.value, [0.45, 1], [0, 1], Extrapolation.CLAMP),
+  }));
   // Starts fully opaque black ONLY when arriving fresh from Measure — the
   // mirror image of interview.tsx's own exitFade: that screen fades TO
   // black and holds before navigating here, so this screen needs to
@@ -613,10 +679,13 @@ function DepthsContent() {
     <View
       style={styles.root}
       onLayout={(e) => setRootHeight(e.nativeEvent.layout.height)}
+      onTouchStart={skipTodayArrival}
     >
       {theme === "dark" && <AmbientGlow />}
-      {/* Where the figure is — a field by day, a fire at night. */}
-      <HomeScene lightRgb={levelRgb} />
+      {/* Where the figure is — the chosen philosopher's place. */}
+      <Animated.View style={[StyleSheet.absoluteFill, placeArrivalStyle]} pointerEvents="none">
+        <HomeScene lightRgb={levelRgb} />
+      </Animated.View>
       {/* 2026-09-01 — replaces the old single root ScrollView with a
           fixed/scroll split (see the plan this implements: "the aura
           figure — 'the main event' — always on screen, never scrolled
@@ -774,7 +843,7 @@ function DepthsContent() {
                 compete with the reveal itself. No-op once settled (the
                 Pressable stops intercepting taps via pointerEvents below). */}
                 <View style={styles.auraCoreWrap}>
-                  <View style={styles.spiralOverlay} pointerEvents="box-none">
+                  <Animated.View style={[styles.spiralOverlay, spiralArrivalStyle]} pointerEvents="box-none">
                     <DepthsSpiralCore
                       width={CORE_GEOMETRY.width}
                       height={CORE_GEOMETRY.totalHeight}
@@ -805,7 +874,7 @@ function DepthsContent() {
                           : undefined
                       }
                     />
-                  </View>
+                  </Animated.View>
                   {/* Once settled, tapping the aura figure itself clears a
                       selected sphere — the way back from "one sphere's own
                       reading" to "the whole reading," the same body the
@@ -848,6 +917,7 @@ function DepthsContent() {
                       neutralAura={
                         <AuraWithDots
                           slug={null}
+                          drawKey={arrivalKey}
                           overlay
                           geometry={geometry}
                         />
@@ -855,6 +925,7 @@ function DepthsContent() {
                       settledAura={
                         <AuraWithDots
                           slug={ringLevelSlug ?? lastLevel.slug}
+                          drawKey={arrivalKey}
                           overlay
                           geometry={geometry}
                         />
@@ -898,7 +969,7 @@ function DepthsContent() {
                   wheel's own bleed never occupied in the first place —
                   reverify this is still true (screenshot-check the wheel
                   edge) if the column is ever widened again. */}
-                <View style={styles.quoteBubbleWrap} pointerEvents="box-none">
+                <Animated.View style={[styles.quoteBubbleWrap, wordsArrivalStyle]} pointerEvents="box-none">
                   {/* The headline (2026-10-12): the overall state, the one
                       answer to "where am I" — read first, before the
                       philosopher's reflection holds all four together. */}
@@ -946,9 +1017,13 @@ function DepthsContent() {
                     <LongPressToSave
                       message={headlineMessage}
                       accentRgb={levelRgb}
+                      onTap={() => setReflectionOpen((open) => !open)}
                     >
+                      {/* Folded to two lines (2026-10-28) so the figure's
+                          light stays the one thing the eye lands on; a tap
+                          opens the rest, and folds it again. */}
                       <Text
-                        numberOfLines={5}
+                        numberOfLines={reflectionOpen ? 5 : 2}
                         style={[styles.title, { color: levelColor }]}
                       >
                         {headlineMessage}
@@ -956,7 +1031,7 @@ function DepthsContent() {
                     </LongPressToSave>
                   ) : (
                     <Text
-                      numberOfLines={5}
+                      numberOfLines={2}
                       style={[styles.title, { color: levelColor }]}
                     >
                       {headlineMessage}
@@ -992,7 +1067,7 @@ function DepthsContent() {
                       spheres pulse once on arrival to invite a tap. */}
                   </>
                   )}
-                </View>
+                </Animated.View>
               </View>
             </>
           ) : (
@@ -1002,8 +1077,8 @@ function DepthsContent() {
                   to be a small "Before your first reading" label over an
                   empty half-screen). */}
               {philosopher ? (
-                <View
-                  style={[styles.quoteBubbleWrap, { top: insets.top + spacing[4] * fixedZoneScale }]}
+                <Animated.View
+                  style={[styles.quoteBubbleWrap, { top: insets.top + spacing[4] * fixedZoneScale }, wordsArrivalStyle]}
                   pointerEvents="none"
                 >
                   <View style={styles.reflectionByline}>
@@ -1013,7 +1088,7 @@ function DepthsContent() {
                   <Text style={[styles.title, { color: colors.text.primary }]}>
                     {getSeamLine(philosopher.id, "firstMeasure", locale)}
                   </Text>
-                </View>
+                </Animated.View>
               ) : (
                 <Text style={styles.lastReadingLabel}>
                   {t("depths.beforeFirstReading")}
@@ -1026,7 +1101,7 @@ function DepthsContent() {
                 spiral coincides with the aura's own center by
                 construction, not by measurement. */}
               <View style={styles.auraCoreWrap}>
-                <View style={styles.spiralOverlay} pointerEvents="box-none">
+                <Animated.View style={[styles.spiralOverlay, spiralArrivalStyle]} pointerEvents="box-none">
                   <DepthsSpiralCore
                     width={CORE_GEOMETRY.width}
                     height={CORE_GEOMETRY.totalHeight}
@@ -1048,10 +1123,11 @@ function DepthsContent() {
                     selectedWheelLevelSlug={null}
                     selectedWheelLevelName={null}
                   />
-                </View>
+                </Animated.View>
                 <View style={styles.groundWrap}>
                   <AuraWithDots
                     slug={null}
+                    drawKey={arrivalKey}
                     overlay
                     geometry={geometry}
                   />
@@ -1603,11 +1679,14 @@ function ArrivalReveal({
 // instead of sitting in its own space between the two lines around it.
 function AuraWithDots({
   slug,
+  drawKey = 0,
   overlay = false,
   geometry,
 }: {
   // The level slug whose pose to show, or null before any reading.
   slug: string | null;
+  // Changing it makes the figure draw itself in again (Today's arrival).
+  drawKey?: number;
   overlay?: boolean;
   // 2026-09-02 — see AuraArrival's own `geometry` prop comment: the aura
   // image's own box must genuinely shrink on a short screen, not just
@@ -1640,6 +1719,7 @@ function AuraWithDots({
         }}
       >
         <EnergyBody
+          key={drawKey}
           slug={slug}
           width={AURA_METRICS.width}
           height={AURA_METRICS.height}
