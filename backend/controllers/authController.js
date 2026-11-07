@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
+import { signSessionToken } from "../utils/tokens.js";
 import User from "../models/User.js";
 import { CONSENT_VERSION } from "../stores.js";
 import { sendPasswordResetEmail } from "../email.js";
@@ -10,13 +10,7 @@ const RESET_CODE_TTL_MS = 15 * 60 * 1000;
 const RESET_REQUEST_COOLDOWN_MS = 60 * 1000;
 const RESET_MAX_ATTEMPTS = 5;
 
-function signToken(user) {
-  return jwt.sign(
-    { id: user.id, username: user.username, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "30d" }
-  );
-}
+const signToken = signSessionToken;
 
 export async function register(req, res) {
   const { username, password, privacyPolicyAccepted, adminCode, email } = req.body;

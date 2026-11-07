@@ -45,6 +45,28 @@ const depthFor = (ts: number, now: number) => {
   return MIN_DEPTH + (1 - MIN_DEPTH) * Math.min(1, Math.log1p(days) / Math.log1p(RIM_DAYS));
 };
 
+// Your points in the cone: every reading and every Shift session, placed
+// by time (depth) and state (angle). Shared with the welcome screen's
+// small cone.
+export function useArcPastPoints(): TimeConePoint[] {
+  const levelColors = useLevelColors();
+  const readingLog = useMeasureStore((s) => s.readingLog);
+  const sessions = useShiftStore((s) => s.sessions);
+  return useMemo(() => {
+    const now = Date.now();
+    return [
+      ...readingLog.map((e) => ({ id: `reading-${e.ts}`, ts: e.ts, slug: e.levelSlug })),
+      // A Shift session sits where it arrived.
+      ...sessions.map((s) => ({ id: `shift-${s.at}`, ts: new Date(s.at).getTime(), slug: s.toSlug })),
+    ].map((p) => ({
+      id: p.id,
+      depth: depthFor(p.ts, now),
+      angle: angleFor(p.slug, p.id),
+      colorRgb: levelColors[p.slug],
+    }));
+  }, [readingLog, sessions, levelColors]);
+}
+
 export default function YourArcRoute() {
   const colors = useThemeColors();
   const [ready, setReady] = useState(false);
@@ -67,11 +89,8 @@ function YourArcScreen() {
   const styles = useMemo(() => makeStyles(colors), [colors]);
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const levelColors = useLevelColors();
   const accentRgb = useAppAccentRgb();
-  const readingLog = useMeasureStore((s) => s.readingLog);
   const currentResult = useMeasureStore((s) => s.currentResult);
-  const sessions = useShiftStore((s) => s.sessions);
   const hydrateShifts = useShiftStore((s) => s.hydrate);
   // The cone fits the space it has.
   const [coneAreaHeight, setConeAreaHeight] = useState(0);
@@ -81,19 +100,8 @@ function YourArcScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const pastPoints: TimeConePoint[] = useMemo(() => {
-    const now = Date.now();
-    return [
-      ...readingLog.map((e) => ({ id: `reading-${e.ts}`, ts: e.ts, slug: e.levelSlug })),
-      // A Shift session sits where it arrived.
-      ...sessions.map((s) => ({ id: `shift-${s.at}`, ts: new Date(s.at).getTime(), slug: s.toSlug })),
-    ].map((p) => ({
-      id: p.id,
-      depth: depthFor(p.ts, now),
-      angle: angleFor(p.slug, p.id),
-      colorRgb: levelColors[p.slug],
-    }));
-  }, [readingLog, sessions, levelColors]);
+  const levelColors = useLevelColors();
+  const pastPoints = useArcPastPoints();
 
   const nowSlug = currentResult?.vibrationLevel.slug;
   const open = (part: 'past' | 'now' | 'future') => {

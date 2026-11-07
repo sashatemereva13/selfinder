@@ -1,4 +1,14 @@
-import { useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
+import Animated, {
+  Easing,
+  cancelAnimation,
+  useAnimatedProps,
+  useReducedMotion,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  type SharedValue,
+} from 'react-native-reanimated';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import Svg, {
   Defs,
@@ -118,7 +128,7 @@ export const CURVED_LABEL_PADDING = fontSizes.xs * 1.5;
 // the cone itself, the label's left position (centerX + baseRx + a few
 // px) would land right at or past the box's own right edge for the
 // width/height this component is actually given.
-const NOW_LABEL_MARGIN = 34;
+export const NOW_LABEL_MARGIN = 34;
 
 export function buildTimeConeGeometry(width: number, height: number) {
   const centerX = (width - NOW_LABEL_MARGIN) / 2;
@@ -671,6 +681,16 @@ export function TimeCone({ width, height, pastPoints, futurePoints, onPointPress
           </SvgText>
         )}
 
+        <ConeRipple
+          centerX={geometry.centerX}
+          vertexY={geometry.vertexY}
+          coneHeight={geometry.coneHeight}
+          baseRx={geometry.baseRx}
+          baseRy={geometry.baseRy}
+          maxScale={outermostRingScale}
+          color={colors.text.primary}
+        />
+
         {/* The vertex itself — "here and now." A small, bright dot, same
             "core orb" register AuraFigure's own chest glow uses for "this
             is the person." */}
@@ -801,3 +821,122 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 });
+
+
+// The cone breathing (2026-10-29 — Your Arc's entry made alive, like
+// Today): a faint ghost of the whole cone — both cones' slant lines and
+// their rims — shrinks into "now", the vertex, and expands back out to the
+// cone's full size, slowly, over and over. The past and the future both
+// gathered into the present and opening out of it again. The ghost's slant
+// lines lie on the cone's own, so they show as light running along the
+// cone's sides out to where the ghost's rims are. Only the ghost
+// moves; the cone itself and the points (the record) stay still. Reduce
+// Motion: no ghost. Three ghost rims on each side, nested, moving
+// together — gathering into now at the same moment and opening out together.
+const AnimatedEllipse = Animated.createAnimatedComponent(SvgEllipse);
+const AnimatedLine = Animated.createAnimatedComponent(Line);
+// One full breath (in and out).
+const BREATH_MS = 8400;
+const GHOST_OPACITY = 0.38;
+// Ghost rims on each side, nested: all breathe together, at these
+// fractions of the cone's full size.
+const GHOST_SPREAD = [1, 0.66, 0.33];
+
+function ConeRipple({
+  centerX,
+  vertexY,
+  coneHeight,
+  baseRx,
+  baseRy,
+  maxScale,
+  color,
+}: {
+  centerX: number;
+  vertexY: number;
+  coneHeight: number;
+  baseRx: number;
+  baseRy: number;
+  maxScale: number;
+  color: string;
+}) {
+  const reduceMotion = useReducedMotion();
+  const clock = useSharedValue(0);
+  useEffect(() => {
+    if (reduceMotion) return;
+    clock.value = withRepeat(withTiming(1, { duration: BREATH_MS, easing: Easing.linear }), -1, false);
+    return () => cancelAnimation(clock);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reduceMotion]);
+  if (reduceMotion) return null;
+  const parts = [];
+  for (let i = 0; i < GHOST_SPREAD.length; i++) {
+    const offset = 0;
+    const spread = GHOST_SPREAD[i];
+    for (const dir of [-1, 1] as const) {
+      parts.push(
+        <GhostRim key={`rim${i}${dir}`} clock={clock} offset={offset} dir={dir} centerX={centerX} vertexY={vertexY} coneHeight={coneHeight} baseRx={baseRx} baseRy={baseRy} maxScale={maxScale * spread} color={color} />,
+      );
+      // The light along the sides follows the outermost ghost only, so
+      // three copies don't stack up on the cone's own lines.
+      if (i === 0) {
+        for (const side of [-1, 1] as const) {
+          parts.push(
+            <GhostSlant key={`slant${dir}${side}`} clock={clock} offset={offset} dir={dir} side={side} centerX={centerX} vertexY={vertexY} coneHeight={coneHeight} baseRx={baseRx} maxScale={maxScale} color={color} />,
+          );
+        }
+      }
+    }
+  }
+  return <>{parts}</>;
+}
+
+// Where the ghosts are in their breath: 0 gathered into now, 1 open to the
+// rims — a smooth in-and-out.
+function breathAt(clock: number, offset: number) {
+  'worklet';
+  return 0.5 - 0.5 * Math.cos(((clock + offset) % 1) * Math.PI * 2);
+}
+
+type GhostProps = {
+  clock: SharedValue<number>;
+  offset: number;
+  dir: -1 | 1;
+  centerX: number;
+  vertexY: number;
+  coneHeight: number;
+  baseRx: number;
+  maxScale: number;
+  color: string;
+};
+
+function GhostRim({ baseRy, ...p }: GhostProps & { baseRy: number }) {
+  const { clock, offset, dir, vertexY, coneHeight, baseRx, maxScale } = p;
+  const animatedProps = useAnimatedProps(() => {
+    const b = breathAt(clock.value, offset);
+    const scale = maxScale * b;
+    return {
+      cy: vertexY + dir * coneHeight * scale,
+      rx: Math.max(0.01, baseRx * scale),
+      ry: Math.max(0.01, baseRy * scale),
+      // Fades as it gathers into now, so it doesn't pile up on the dot.
+      strokeOpacity: GHOST_OPACITY * Math.min(1, b * 2.5),
+    };
+  });
+  return <AnimatedEllipse cx={p.centerX} fill="none" stroke={p.color} strokeWidth={1} animatedProps={animatedProps} />;
+}
+
+function GhostSlant({ side, ...p }: GhostProps & { side: -1 | 1 }) {
+  const { clock, offset, dir, centerX, vertexY, coneHeight, baseRx, maxScale } = p;
+  const animatedProps = useAnimatedProps(() => {
+    const b = breathAt(clock.value, offset);
+    const scale = maxScale * b;
+    return {
+      x2: centerX + side * baseRx * scale,
+      y2: vertexY + dir * coneHeight * scale,
+      strokeOpacity: GHOST_OPACITY * 1.4 * Math.min(1, b * 2.5),
+    };
+  });
+  return (
+    <AnimatedLine x1={centerX} y1={vertexY} stroke={p.color} strokeWidth={1} animatedProps={animatedProps} />
+  );
+}

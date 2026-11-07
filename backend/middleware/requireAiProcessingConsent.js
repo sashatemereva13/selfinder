@@ -1,5 +1,5 @@
-import jwt from "jsonwebtoken";
 import { AI_DISCLOSURE_VERSION } from "../controllers/aiConsentController.js";
+import { verifyConsentToken } from "../utils/tokens.js";
 
 export function requireAiProcessingConsent(req, res, next) {
   const token = req.get("X-AI-Consent");
@@ -8,7 +8,7 @@ export function requireAiProcessingConsent(req, res, next) {
   }
 
   try {
-    const grant = jwt.verify(token, process.env.JWT_SECRET, { audience: "selfinder-ai-processing" });
+    const grant = verifyConsentToken(token);
     if (grant.purpose !== "ai_processing_consent" || grant.version !== AI_DISCLOSURE_VERSION) throw new Error("Invalid consent grant");
     req.aiConsent = { version: grant.version };
     next();

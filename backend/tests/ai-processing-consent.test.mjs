@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import jwt from "jsonwebtoken";
 import { requireAiProcessingConsent } from "../middleware/requireAiProcessingConsent.js";
 import { AI_DISCLOSURE_VERSION, grantAiProcessingConsent } from "../controllers/aiConsentController.js";
+import { verifyConsentToken } from "../utils/tokens.js";
 
 process.env.JWT_SECRET = "test-only-secret-for-consent-middleware";
 
@@ -55,7 +56,9 @@ test("grant endpoint only issues a token for explicit, versioned acceptance", as
   const res = responseRecorder();
   await grantAiProcessingConsent({ body: { accepted: true, version: AI_DISCLOSURE_VERSION } }, res);
   assert.equal(res.statusCode, 200);
-  const decoded = jwt.verify(res.body.token, process.env.JWT_SECRET, { audience: "selfinder-ai-processing" });
+  // Signed with its own key, not the session secret.
+  assert.throws(() => jwt.verify(res.body.token, process.env.JWT_SECRET));
+  const decoded = verifyConsentToken(res.body.token);
   assert.equal(decoded.purpose, "ai_processing_consent");
   assert.equal(decoded.version, AI_DISCLOSURE_VERSION);
 
