@@ -48,6 +48,10 @@ jobs:
       - name: install dependencies
         run: npm ci
 
+      - name: dependency gate (high/critical, production)
+        working-directory: .
+        run: node scripts/audit-gate.mjs backend
+
       - name: check JavaScript syntax
         run: find . -type f -name '*.js' -not -path './node_modules/*' -print0 | xargs -0 -n1 node --check
 
@@ -55,7 +59,7 @@ jobs:
         run: npm test
 
       - name: login to GitHub Container Registry
-        uses: docker/login-action@v4
+        uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -63,7 +67,7 @@ jobs:
 
       - name: build and push backend image
         id: build
-        uses: docker/build-push-action@v7
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7
         with:
           context: .
           file: ./backend/Dockerfile
@@ -83,7 +87,9 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: deploy backend container
-        uses: appleboy/ssh-action@v1.2.1
+        # Pinned to a commit, not a tag: this step receives the server's SSH
+        # key and the registry token. Renovate proposes SHA bumps as PRs.
+        uses: appleboy/ssh-action@8faa84277b88b6cd1455986f459aa66cf72bc8a3 # v1.2.1
         with:
           host: ${{ secrets.SERVER_HOST }}
           username: ${{ secrets.SERVER_USER }}

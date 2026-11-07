@@ -1,0 +1,4 @@
+{
+  "_readme": "Dated exceptions for scripts/audit-gate.mjs. Each entry needs: package, advisory (a GHSA id), reason (why it's safe to ship for now — e.g. not reachable, no fix exists), owner, and expires (YYYY-MM-DD, at most 90 days out). An expired entry fails CI again. Keep this list short; an empty list is the goal.",
+  "exceptions": []
+}

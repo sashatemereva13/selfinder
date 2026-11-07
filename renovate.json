@@ -3,7 +3,7 @@
 
   "assignees": ["sashatemereva13"],
 
-  "extends": ["config:recommended"],
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
 
   "labels": ["dependencies"],
 
@@ -45,6 +45,15 @@
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
+    },
+
+    {
+      "description": "Third-party actions that receive deploy secrets (SSH key, registry token) are never merged without a human reading the diff.",
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["appleboy/ssh-action", "appleboy/scp-action", "burnett01/rsync-deployments", "docker/login-action", "docker/build-push-action", "renovatebot/github-action", "hashicorp/setup-terraform"],
+      "groupName": "Deploy actions (secrets)",
+      "automerge": false,
+      "addLabels": ["needs-review"]
     }
   ],
 

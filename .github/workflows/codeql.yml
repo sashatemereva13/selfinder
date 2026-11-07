@@ -1,0 +1,57 @@
+name: CodeQL
+
+# Static analysis (SAST) for the JavaScript/TypeScript code and the workflow
+# files themselves (Session D). It traces data from where it enters (a
+# request body, a URL) to where it's dangerous (a database query, a shell
+# command, HTML) and flags the paths with no check in between — the class
+# of bug behind the NoSQL injection fixed on 2026-11-07. It can't judge
+# whether an authorization rule is *right*; tests and review still do that.
+#
+# Findings appear under the repository's Security tab. Once `main` requires
+# this check, a PR that introduces a new high-severity finding can't merge.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Weekly, so new CodeQL queries also run over code nobody has touched.
+    - cron: "17 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          queries: security-extended
+          config: |
+            paths-ignore:
+              - "**/node_modules/**"
+              - "atlas/**"
+              - "**/dist/**"
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"
