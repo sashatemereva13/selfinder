@@ -11,6 +11,8 @@
 
   "prConcurrentLimit": 5,
 
+  "prHourlyLimit": 0,
+
   "rangeStrategy": "bump",
 
   "packageRules": [
@@ -33,7 +35,7 @@
     {
       "matchDepTypes": ["devDependencies"],
       "matchUpdateTypes": ["minor", "patch"],
-      "groupName": "dev dependenciesn (minor + patch)",
+      "groupName": "dev dependencies (minor + patch)",
       "automerge": true,
       "automergeType": "pr",
       "platformAutomerge": true
